@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 11 - Auth, Testing &amp; Deployment</title>
+  <link rel="icon" type="image/svg+xml" href="/django/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #22c55e; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #22c55e; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #22c55e; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #22c55e; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
+    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #001a0a; border-left: 3px solid #22c55e; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #86efac; }
+    .aha strong { color: #22c55e; }
+    .warning { background: #1a1500; border-left: 3px solid #eab308; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .warning p { color: #fde68a; }
+    .warning strong { color: #eab308; }
+    .quiz { background: #001a0a; border: 1px solid #22c55e44; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #22c55e; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #22c55e; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #22c55e; text-decoration: none; }
+    .file-tree { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; margin: 1rem 0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.8; }
+    .file-tree .folder { color: #818cf8; }
+    .file-tree .file { color: #bbb; }
+    .file-tree .highlight { color: #22c55e; font-weight: 600; }
+    .file-tree .muted { color: #555; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th { text-align: left; color: #22c55e; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
+    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
+    td code { font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>11</span> Auth, Testing &amp; Deployment &mdash; Ship It Like Production</h1>
+    <a href="/django/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #22c55e;">You know NextAuth, Jest, and Vercel. Django has built-in equivalents for all three.</strong> This lesson covers authentication, testing, and deployment &mdash; everything you need to go from local dev to production.</p>
+
+    <!-- ============================================ -->
+    <!-- DJANGO AUTH SYSTEM                           -->
+    <!-- ============================================ -->
+
+    <h2>Django Auth &mdash; Built-in Authentication</h2>
+
+    <p>Next.js doesn't ship with auth &mdash; you reach for NextAuth/Auth.js, Clerk, or roll your own. Django includes a complete auth system out of the box: users, login, logout, passwords, permissions, groups.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js Auth Stack</h5>
+        <ul>
+          <li><code>npm install next-auth</code></li>
+          <li>Configure providers (Google, GitHub...)</li>
+          <li>Create API route for auth</li>
+          <li>Session provider wrapper</li>
+          <li>Custom sign-in pages</li>
+          <li>Middleware for protection</li>
+          <li><em>~100+ lines of setup</em></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Django Auth (Built-in)</h5>
+        <ul>
+          <li>Already in <code>INSTALLED_APPS</code></li>
+          <li>User model included</li>
+          <li>Login/logout views included</li>
+          <li>Password hashing automatic</li>
+          <li>Session management automatic</li>
+          <li><code>@login_required</code> decorator</li>
+          <li><em>~10 lines of setup</em></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> Django auth is like if NextAuth came pre-installed, pre-configured, with a built-in User model, password hashing, session cookies, and permission system &mdash; and you just needed to point it at your templates. Zero provider configuration for username/password auth.</p>
+    </div>
+
+    <h3>The User Model</h3>
+
+    <pre><code><span class="comment"># Django's built-in User model has these fields:</span>
+<span class="comment"># username, password, email, first_name, last_name,</span>
+<span class="comment"># is_active, is_staff, is_superuser, date_joined, last_login</span>
+
+<span class="comment"># Using it in views:</span>
+from django.contrib.auth.models import User
+
+<span class="comment"># Create a user</span>
+user = User.objects.create_user(
+    username='trevor',
+    email='trevor@newsroom.com',
+    password='securepassword123'
+)
+
+<span class="comment"># Check in a view</span>
+def dashboard(request):
+    if request.user.is_authenticated:
+        print(request.user.username)  <span class="comment"># 'trevor'</span>
+        print(request.user.email)     <span class="comment"># 'trevor@newsroom.com'</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Custom User models:</strong> For real projects, always create a custom User model before your first migration. Extend <code>AbstractUser</code> (add fields) or <code>AbstractBaseUser</code> (full control). Changing the User model after migrations exist is painful &mdash; like trying to change your Prisma schema's primary key type after you have data.</p>
+    </div>
+
+    <h3>Login &amp; Logout Views</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>NextAuth Setup</h5>
+        <pre><code><span class="comment">// app/api/auth/[...nextauth]/route.ts</span>
+import NextAuth from 'next-auth';
+import Credentials from
+  'next-auth/providers/credentials';
+
+export const handler = NextAuth({
+  providers: [
+    Credentials({
+      authorize(credentials) {
+        <span class="comment">// manual validation...</span>
+      }
+    })
+  ],
+  pages: {
+    signIn: '/login',
+  }
+});</code></pre>
+      </div>
+      <div>
+        <h5>Django Auth URLs</h5>
+        <pre><code><span class="comment"># urls.py — that's it</span>
+from django.contrib.auth import views as auth
+
+urlpatterns = [
+    path('login/', auth.LoginView.as_view(
+        template_name='login.html'
+    ), name='login'),
+    path('logout/', auth.LogoutView.as_view(),
+        name='logout'),
+    path('password-change/',
+        auth.PasswordChangeView.as_view(),
+        name='password_change'),
+]
+<span class="comment"># Login, logout, password reset — done.</span></code></pre>
+      </div>
+    </div>
+
+    <h3>Protecting Views &mdash; @login_required</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js Middleware</h5>
+        <pre><code><span class="comment">// middleware.ts</span>
+import { auth } from './auth';
+
+export default auth((req) =&gt; {
+  if (!req.auth &&
+      req.nextUrl.pathname
+        .startsWith('/dashboard')) {
+    return Response.redirect(
+      new URL('/login', req.url)
+    );
+  }
+});</code></pre>
+      </div>
+      <div>
+        <h5>Django Decorator</h5>
+        <pre><code><span class="comment"># views.py</span>
+from django.contrib.auth.decorators \
+    import login_required
+
+@login_required
+def dashboard(request):
+    <span class="comment"># Only authenticated users reach here</span>
+    <span class="comment"># Others redirect to LOGIN_URL</span>
+    return render(request,
+        'dashboard.html',
+        {'user': request.user}
+    )</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>One decorator vs. a middleware file.</strong> Django's <code>@login_required</code> goes directly on the view function. No separate middleware file, no route matching patterns. If the user isn't authenticated, Django redirects to <code>LOGIN_URL</code> (set in settings.py, defaults to <code>/accounts/login/</code>). After login, it redirects back to the original page automatically.</p>
+    </div>
+
+    <h3>Permissions &amp; Groups</h3>
+
+    <pre><code><span class="comment"># Django auto-creates permissions for every model:</span>
+<span class="comment"># blog.add_article, blog.change_article, blog.delete_article, blog.view_article</span>
+
+<span class="comment"># Check permissions in views</span>
+from django.contrib.auth.decorators import permission_required
+
+@permission_required('blog.add_article', raise_exception=True)
+def create_article(request):
+    <span class="comment"># Only users with "add_article" permission can access</span>
+    ...
+
+<span class="comment"># Check in templates</span>
+<span class="comment"># {% if perms.blog.add_article %}</span>
+<span class="comment">#   &lt;a href="{% url 'create-article' %}"&gt;New Article&lt;/a&gt;</span>
+<span class="comment"># {% endif %}</span>
+
+<span class="comment"># Groups — bundle permissions together</span>
+from django.contrib.auth.models import Group
+
+editors = Group.objects.create(name='Editors')
+editors.permissions.add(
+    Permission.objects.get(codename='add_article'),
+    Permission.objects.get(codename='change_article'),
+)
+<span class="comment"># Assign user to group</span>
+user.groups.add(editors)</code></pre>
+
+    <div class="callout">
+      <p><strong>Newsroom mental model:</strong> Groups are like roles. Create an "Editors" group with edit/publish permissions and a "Reporters" group with create-only permissions. Assign users to groups instead of managing individual permissions. It's like role-based access control (RBAC) built right into the framework.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TESTING                                      -->
+    <!-- ============================================ -->
+
+    <h2>Testing with pytest-django</h2>
+
+    <p>Django ships with its own test framework built on Python's <code>unittest</code>. But most teams use <strong>pytest-django</strong> for cleaner syntax. If you know Jest, pytest feels natural.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Jest + React Testing Library</h5>
+        <pre><code><span class="comment">// __tests__/api.test.ts</span>
+import { GET } from '@/app/api/posts/route';
+
+describe('Posts API', () =&gt; {
+  it('returns posts', async () =&gt; {
+    const res = await GET();
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(data.posts).toHaveLength(2);
+  });
+});</code></pre>
+      </div>
+      <div>
+        <h5>pytest-django</h5>
+        <pre><code><span class="comment"># tests/test_views.py</span>
+import pytest
+from django.test import Client
+
+@pytest.mark.django_db
+def test_posts_list():
+    client = Client()
+    response = client.get('/api/posts/')
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data['posts']) == 2</code></pre>
+      </div>
+    </div>
+
+    <h3>The Test Client &mdash; Your Supertest/Fetch</h3>
+
+    <pre><code><span class="comment"># The Django test Client simulates HTTP requests — no server needed</span>
+from django.test import Client
+
+client = Client()
+
+<span class="comment"># GET request</span>
+response = client.get('/blog/')
+assert response.status_code == 200
+assert 'My Blog' in response.content.decode()
+
+<span class="comment"># POST request with data</span>
+response = client.post('/blog/create/', {
+    'title': 'Test Article',
+    'body': 'This is a test.',
+})
+assert response.status_code == 302  <span class="comment"># redirect on success</span>
+
+<span class="comment"># Login and test protected views</span>
+client.login(username='trevor', password='testpass123')
+response = client.get('/dashboard/')
+assert response.status_code == 200  <span class="comment"># now accessible</span></code></pre>
+
+    <div class="aha">
+      <p><strong>No server needed!</strong> Django's test <code>Client</code> sends HTTP requests directly to your views without starting a server. It's like if Jest could call your Next.js API routes directly. Each test uses a fresh database that's destroyed after the test &mdash; no test pollution.</p>
+    </div>
+
+    <h3>Testing Models</h3>
+
+    <pre><code><span class="comment"># tests/test_models.py</span>
+import pytest
+from blog.models import Article
+from django.contrib.auth.models import User
+
+@pytest.mark.django_db
+def test_article_creation():
+    user = User.objects.create_user(username='trevor', password='pass')
+    article = Article.objects.create(
+        title='Election Results 2024',
+        body='The results are in...',
+        author=user,
+    )
+    assert article.title == 'Election Results 2024'
+    assert article.author.username == 'trevor'
+    assert str(article) == 'Election Results 2024'  <span class="comment"># tests __str__</span>
+
+@pytest.mark.django_db
+def test_article_slug_auto_generated():
+    article = Article.objects.create(title='Breaking News Today')
+    assert article.slug == 'breaking-news-today'</code></pre>
+
+    <h3>Fixtures &amp; Factories</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Jest Fixtures</h5>
+        <pre><code><span class="comment">// test-utils.ts</span>
+function createMockUser(overrides = {}) {
+  return {
+    id: 1,
+    name: 'Trevor',
+    email: 'trevor@test.com',
+    ...overrides,
+  };
+}
+
+<span class="comment">// In test</span>
+const user = createMockUser({
+  name: 'Editor'
+});</code></pre>
+      </div>
+      <div>
+        <h5>factory_boy (Python)</h5>
+        <pre><code><span class="comment"># tests/factories.py</span>
+import factory
+from django.contrib.auth.models import User
+
+class UserFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = User
+    username = factory.Sequence(
+        lambda n: f'user{n}')
+    email = factory.LazyAttribute(
+        lambda o: f'{o.username}@test.com')
+
+<span class="comment"># In test</span>
+user = UserFactory(username='editor')</code></pre>
+      </div>
+    </div>
+
+    <pre><code><span class="comment"># pytest fixtures — like Jest's beforeEach but more powerful</span>
+import pytest
+from tests.factories import UserFactory, ArticleFactory
+
+@pytest.fixture
+def editor():
+    user = UserFactory(username='editor')
+    editors_group = Group.objects.create(name='Editors')
+    user.groups.add(editors_group)
+    return user
+
+@pytest.fixture
+def sample_articles(editor):
+    return ArticleFactory.create_batch(5, author=editor)
+
+<span class="comment"># Use fixtures as function arguments — pytest injects them</span>
+@pytest.mark.django_db
+def test_editor_can_see_articles(editor, sample_articles):
+    client = Client()
+    client.force_login(editor)
+    response = client.get('/dashboard/')
+    assert len(response.context['articles']) == 5</code></pre>
+
+    <div class="callout">
+      <p><strong>pytest fixtures vs. Jest beforeEach:</strong> In Jest, <code>beforeEach</code> runs setup for every test in the file. pytest fixtures are declared as function parameters &mdash; each test explicitly requests what it needs. A test that takes <code>(editor, sample_articles)</code> gets both injected automatically. More explicit, more composable.</p>
+    </div>
+
+    <h3>What to Test</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>What to Test</th>
+          <th>Jest Equivalent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Models</td>
+          <td>Validation, methods, str(), properties</td>
+          <td>Unit tests for data layer</td>
+        </tr>
+        <tr>
+          <td>Views</td>
+          <td>Status codes, redirects, context data</td>
+          <td>API route / handler tests</td>
+        </tr>
+        <tr>
+          <td>Forms</td>
+          <td>Validation, clean methods, error messages</td>
+          <td>Schema validation tests</td>
+        </tr>
+        <tr>
+          <td>Templates</td>
+          <td>Correct content rendered</td>
+          <td>Component render tests (RTL)</td>
+        </tr>
+        <tr>
+          <td>Integration</td>
+          <td>Full request/response cycles</td>
+          <td>E2E tests (Playwright/Cypress)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="warning">
+      <p><strong>Common mistake:</strong> Don't test Django's built-in functionality. You don't need to test that <code>CharField</code> accepts strings &mdash; Django already tests that. Focus on YOUR custom logic: custom validation, business rules, permissions, and edge cases. Test what you wrote, not what Django wrote.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEPLOYMENT                                   -->
+    <!-- ============================================ -->
+
+    <h2>Deployment &mdash; From Dev to Production</h2>
+
+    <p>Deploying Django is conceptually the same as deploying Next.js, but with different tools at each step.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js / Vercel</h5>
+        <ul>
+          <li><code>next build</code></li>
+          <li>Node.js server</li>
+          <li>Static files via CDN</li>
+          <li><code>vercel deploy</code></li>
+          <li>Environment variables in dashboard</li>
+          <li>Auto-scaling, serverless</li>
+        </ul>
+      </div>
+      <div>
+        <h5>Django / Any Platform</h5>
+        <ul>
+          <li><code>collectstatic</code></li>
+          <li>Gunicorn WSGI server</li>
+          <li>Static files via nginx/WhiteNoise/S3</li>
+          <li><code>git push</code> to Railway/Render/Fly</li>
+          <li>Environment variables via <code>.env</code> or platform</li>
+          <li>Process-based scaling</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>WSGI &amp; ASGI &mdash; Django's "Node Server"</h3>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> WSGI is to Django what Node.js is to Next.js. It's the server that actually runs your Python code. In development, <code>runserver</code> handles this. In production, you use <strong>Gunicorn</strong> (like PM2 for Node). ASGI is the async version &mdash; use it with <strong>Uvicorn</strong> or <strong>Daphne</strong> when you need WebSockets or async views.</p>
+    </div>
+
+    <pre><code><span class="comment"># Development</span>
+python manage.py runserver  <span class="comment"># built-in dev server (like next dev)</span>
+
+<span class="comment"># Production — NEVER use runserver in production</span>
+pip install gunicorn
+gunicorn mysite.wsgi:application --bind 0.0.0.0:8000 --workers 4
+
+<span class="comment"># Async production</span>
+pip install uvicorn
+uvicorn mysite.asgi:application --host 0.0.0.0 --port 8000</code></pre>
+
+    <h3>Static Files &mdash; collectstatic</h3>
+
+    <p>In development, Django serves static files automatically. In production, you need to collect them all into one directory and serve them efficiently.</p>
+
+    <pre><code><span class="comment"># settings.py</span>
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'   <span class="comment"># where collectstatic puts files</span>
+STATICFILES_DIRS = [BASE_DIR / 'static'] <span class="comment"># where your source static files live</span>
+
+<span class="comment"># Run before deploying</span>
+python manage.py collectstatic
+<span class="comment"># Copies ALL static files (CSS, JS, images) from your apps</span>
+<span class="comment"># and STATICFILES_DIRS into STATIC_ROOT</span>
+
+<span class="comment"># Serve with WhiteNoise (simplest option)</span>
+pip install whitenoise
+
+<span class="comment"># settings.py</span>
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  <span class="comment"># add after security</span>
+    ...
+]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'</code></pre>
+
+    <div class="callout">
+      <p><strong>WhiteNoise is Django's "Vercel for static files."</strong> It serves static files directly from your Python process with compression and caching headers. For most projects, it's all you need. For high-traffic sites, offload to nginx, a CDN, or S3 &mdash; like how Vercel puts static assets on its CDN edge network.</p>
+    </div>
+
+    <h3>Environment Variables &amp; Security</h3>
+
+    <pre><code><span class="comment"># Install python-decouple (like dotenv for Python)</span>
+pip install python-decouple
+
+<span class="comment"># .env (NEVER commit this)</span>
+SECRET_KEY=your-super-secret-key-here
+DEBUG=False
+DATABASE_URL=postgres://user:pass@host:5432/mydb
+ALLOWED_HOSTS=mysite.com,www.mysite.com
+
+<span class="comment"># settings.py</span>
+from decouple import config
+
+SECRET_KEY = config('SECRET_KEY')
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: v.split(','))</code></pre>
+
+    <div class="warning">
+      <p><strong>Production checklist:</strong> (1) <code>DEBUG = False</code> &mdash; NEVER run debug mode in production (exposes stack traces). (2) Set a real <code>SECRET_KEY</code> (used for CSRF, sessions, password hashing). (3) Set <code>ALLOWED_HOSTS</code> to your domain(s). (4) Use PostgreSQL, not SQLite. (5) Run <code>python manage.py check --deploy</code> &mdash; Django will flag security issues.</p>
+    </div>
+
+    <h3>Database Configuration for Production</h3>
+
+    <pre><code><span class="comment"># Install PostgreSQL adapter</span>
+pip install psycopg2-binary dj-database-url
+
+<span class="comment"># settings.py</span>
+import dj_database_url
+
+<span class="comment"># Development fallback to SQLite</span>
+DATABASES = {
+    'default': dj_database_url.config(
+        default='sqlite:///' + str(BASE_DIR / 'db.sqlite3')
+    )
+}
+<span class="comment"># Set DATABASE_URL in production:</span>
+<span class="comment"># DATABASE_URL=postgres://user:pass@host:5432/mydb</span></code></pre>
+
+    <h3>Deployment Platforms</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Platform</th>
+          <th>Django Support</th>
+          <th>Vercel Equivalent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Railway</strong></td>
+          <td>Excellent. Auto-detects Django, free Postgres.</td>
+          <td>Closest to Vercel experience</td>
+        </tr>
+        <tr>
+          <td><strong>Render</strong></td>
+          <td>Great. Free tier, managed Postgres.</td>
+          <td>Like Vercel with more config</td>
+        </tr>
+        <tr>
+          <td><strong>Fly.io</strong></td>
+          <td>Docker-based, global edge deployment.</td>
+          <td>Like Vercel Edge Functions</td>
+        </tr>
+        <tr>
+          <td><strong>Heroku</strong></td>
+          <td>Classic choice. No free tier anymore.</td>
+          <td>The original PaaS</td>
+        </tr>
+        <tr>
+          <td><strong>DigitalOcean</strong></td>
+          <td>App Platform or manual VPS.</td>
+          <td>More control, more setup</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Railway Deployment (Quickest Path)</h3>
+
+    <pre><code><span class="comment"># 1. Create requirements.txt</span>
+pip freeze &gt; requirements.txt
+
+<span class="comment"># 2. Create Procfile (tells Railway how to start)</span>
+<span class="comment"># Procfile</span>
+web: gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT
+
+<span class="comment"># 3. Create runtime.txt (optional)</span>
+python-3.12.0
+
+<span class="comment"># 4. Deploy</span>
+<span class="comment"># Connect your GitHub repo to Railway</span>
+<span class="comment"># Set environment variables in dashboard</span>
+<span class="comment"># Railway auto-detects Django and deploys</span>
+
+<span class="comment"># 5. Run migrations on the deployed database</span>
+railway run python manage.py migrate
+railway run python manage.py createsuperuser</code></pre>
+
+    <div class="aha">
+      <p><strong>Vercel vs. Railway:</strong> Vercel auto-deploys your Next.js app from a GitHub push. Railway does the same for Django. Connect your repo, set env vars, push to main &mdash; it builds, migrates, and deploys. The mental model is identical; only the config file names change (<code>vercel.json</code> vs. <code>Procfile</code>, <code>.env.local</code> vs. Railway env vars).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRODUCTION SETTINGS PATTERN                  -->
+    <!-- ============================================ -->
+
+    <h2>Production Settings Pattern</h2>
+
+    <p>A common pattern: split settings into base, development, and production. Like having different <code>.env.local</code> and <code>.env.production</code> files in Next.js.</p>
+
+    <div class="file-tree">
+      <span class="folder">mysite/</span><br>
+      &nbsp;&nbsp;<span class="folder">settings/</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">__init__.py</span> <span class="muted">......... empty</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">base.py</span> <span class="muted">............ shared settings</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">development.py</span> <span class="muted">..... DEBUG=True, SQLite</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">production.py</span> <span class="muted">...... DEBUG=False, Postgres, security</span>
+    </div>
+
+    <pre><code><span class="comment"># settings/production.py</span>
+from .base import *
+
+DEBUG = False
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: v.split(','))
+
+<span class="comment"># Security settings</span>
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_HSTS_SECONDS = 31536000
+
+<span class="comment"># Use it with: DJANGO_SETTINGS_MODULE=mysite.settings.production</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. What's the Django equivalent of wrapping a Next.js page with an auth check in middleware?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The <code>@login_required</code> decorator on the view function. It redirects unauthenticated users to the login page and returns them to the original URL after login. For permission checks, use <code>@permission_required('app.permission_name')</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>2. How is Django's test <code>Client</code> different from making HTTP requests with fetch?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The test <code>Client</code> calls your views directly in-process &mdash; no server is started, no network requests are made. It's faster and gives you access to internal details like <code>response.context</code> (the template variables) and <code>response.templates</code> (which templates were rendered). Real HTTP calls only see the response body.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What does <code>python manage.py collectstatic</code> do, and when do you run it?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It copies all static files (CSS, JS, images) from your apps and <code>STATICFILES_DIRS</code> into one <code>STATIC_ROOT</code> directory. Run it before deployment. In development, Django's dev server serves static files automatically, so you don't need it locally. It's like <code>next build</code> for static assets.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Why should you never use <code>runserver</code> in production?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>runserver</code> is single-threaded, unoptimized, auto-reloads on file changes, and hasn't been audited for security. Use Gunicorn (WSGI) or Uvicorn (ASGI) in production &mdash; they handle multiple concurrent requests, are battle-tested, and don't expose development features. It's like running <code>next dev</code> in production instead of <code>next start</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What's the difference between a pytest <code>fixture</code> and Jest's <code>beforeEach</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Jest's <code>beforeEach</code> runs the same setup for every test in a describe block. pytest fixtures are declared as function parameters &mdash; each test explicitly requests only the fixtures it needs. This is more explicit (you see what each test depends on) and more composable (fixtures can depend on other fixtures, building a dependency graph).</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/django/lessons/10-rest-api/">&larr; Prev: REST APIs</a>
+      <a href="/django/lessons/12-capstone/">Next: Capstone Project &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

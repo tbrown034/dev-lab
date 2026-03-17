@@ -1,0 +1,168 @@
+============================================================
+SECTION 1: SOURCE DOCUMENT FOR NOTEBOOKLM
+============================================================
+
+LESSON: 10 - REST APIs — Next.js API Routes to DRF
+TRACK: Django / Python (12-lesson curriculum)
+
+------------------------------------------------------------
+CONTEXT FOR HOSTS
+------------------------------------------------------------
+
+Where this lesson fits:
+Lesson 10 of 12. Lessons 7-9 covered the full MVT stack (Models, Views, Templates) for server-rendered HTML. This lesson adds a JSON API layer using Django REST Framework (DRF). This is essential because modern apps often have a React/Next.js frontend consuming a Django API. Lesson 11 covers auth, testing, and deployment.
+
+Who Trevor is:
+Trevor builds Next.js API routes daily — route.ts files with GET, POST, PUT, DELETE exports. He validates input with Zod, returns NextResponse.json(), and handles errors manually. He needs DRF mapped to this workflow. The key insight: DRF is what you'd build if you added a framework around Next.js API routes — with automatic validation, auto-generated CRUD, browsable docs, and auth built in.
+
+Key Next.js-to-DRF translations:
+- app/api/articles/route.ts -> views.py + serializers.py + urls.py
+- Zod schema -> Serializer (validates input AND shapes output)
+- NextResponse.json(data) -> Response(serializer.data)
+- await request.json() -> request.data (auto-parsed)
+- Manual validation -> serializer.is_valid(raise_exception=True)
+- Export GET/POST functions -> APIView class with get()/post() methods
+- Two route.ts files for CRUD -> One ViewSet class for all CRUD
+- Manual URL wiring -> Router auto-generates all CRUD endpoints
+- NextAuth middleware -> DRF permission classes
+- No built-in pagination -> Built-in pagination, filtering, search
+
+Mental models:
+1. Serializers are Zod schemas that also shape output — validate input AND format responses
+2. APIView is route.ts with methods — class with get(), post(), put(), delete()
+3. ViewSets are CRUD on autopilot — one class generates all 6 REST endpoints
+4. Routers auto-generate URLs — register a ViewSet, get all CRUD routes for free
+
+------------------------------------------------------------
+LESSON CONTENT
+------------------------------------------------------------
+
+THE MENTAL MODEL — WHAT DRF ACTUALLY IS
+
+Django by itself serves HTML pages. Django REST Framework (DRF) is a third-party package that adds a JSON API layer on top of Django. It gives you serializers (for shaping data), views (for handling requests), authentication, permissions, pagination — everything you need to build a production API.
+
+If Django is like Next.js pages (server-rendered HTML), then DRF is like Next.js API routes (route.ts) — but with a whole framework around them. Imagine if every route.ts file came with automatic input validation, typed responses, auth middleware, and a browsable documentation page.
+
+INSTALLATION & SETUP
+
+pip install djangorestframework. Add "rest_framework" to INSTALLED_APPS. Configure global settings in the REST_FRAMEWORK dict — pagination, auth classes, permission classes. This is your global API config that every endpoint inherits.
+
+SERIALIZERS — YOUR API'S ZOD SCHEMAS
+
+A serializer is a Zod schema + a data transformer in one object. It validates incoming data (like z.object({...}).parse(body)) and it formats outgoing data (like picking which fields to include in your JSON response). One class, two jobs.
+
+ModelSerializer reads your Django model and automatically generates fields that match. You just tell it which model and which fields to expose. It's like if Zod could read your Prisma schema and auto-generate the validation rules.
+
+Three things a serializer does:
+1. Serialize (Python object -> JSON): ArticleSerializer(article).data
+2. Deserialize + Validate (JSON -> Python): ArticleSerializer(data=request.data).is_valid()
+3. Save (validated data -> database): serializer.save(author=request.user)
+
+Custom validation: validate_title(self, value) validates just the title field. validate(self, data) validates the whole object (cross-field). DRF discovers these methods automatically by name.
+
+Nested serializers: Embed related objects in responses. author = AuthorSerializer(read_only=True) replaces the author ID with a full author object in the JSON response.
+
+APIVIEW — THE BUILDING BLOCK
+
+APIView is DRF's equivalent of a Next.js route.ts file. You write methods for each HTTP verb: get(), post(), put(), delete(). It's explicit, easy to understand, and gives you full control.
+
+The pattern: get the object, run it through the serializer, return the response. get_object_or_404() handles the "not found" case automatically.
+
+VIEWSETS & ROUTERS — CRUD ON AUTOPILOT
+
+A ViewSet combines the list view and the detail view into one class. A Router automatically generates all the URL patterns. Together, they give you a complete CRUD API in about 10 lines of code.
+
+In Next.js, you'd write 2 files and ~60 lines for full CRUD. With DRF ViewSet + Router: 1 file, ~10 lines. ModelViewSet gives you GET (list), POST (create), GET (retrieve), PUT (update), PATCH (partial update), DELETE (destroy) — all with validation, error handling, and proper status codes.
+
+The Router auto-generates: GET /api/articles/ (list), POST /api/articles/ (create), GET /api/articles/{id}/ (retrieve), PUT /api/articles/{id}/ (update), PATCH /api/articles/{id}/ (partial), DELETE /api/articles/{id}/ (delete), GET /api/ (browsable API root).
+
+FILTERING, SEARCH & ORDERING
+
+DRF integrates with django-filter for powerful filtering. Add filter_backends, filterset_fields, search_fields, and ordering_fields to your ViewSet. Clients can then use query parameters: ?status=published&search=election&ordering=-created_at.
+
+AUTHENTICATION & PERMISSIONS
+
+DRF permission classes: IsAuthenticated (must be logged in), IsAuthenticatedOrReadOnly (logged in for writes, anyone can read), IsAdminUser, custom permissions. Set globally in REST_FRAMEWORK settings or per-view.
+
+Token and JWT authentication: TokenAuthentication for simple token auth. djangorestframework-simplejwt for JWT. Configure in DEFAULT_AUTHENTICATION_CLASSES.
+
+Custom permissions: Create a class that checks has_permission() and has_object_permission(). Example: IsAuthorOrReadOnly — only the article's author can edit/delete it.
+
+PAGINATION
+
+Built-in. Set DEFAULT_PAGINATION_CLASS and PAGE_SIZE in settings. Responses automatically include count, next, previous, and results. The client gets ?page=2 support for free.
+
+THE BROWSABLE API
+
+DRF includes a browsable HTML interface at your API endpoints. Visit /api/articles/ in a browser and you get an interactive page with forms for POST/PUT, clickable links, and formatted JSON. It's like free API documentation + testing tool.
+
+------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+------------------------------------------------------------
+
+1. Serializers do two jobs — validate input AND shape output. Like Zod + data transformer in one.
+2. ViewSets generate all CRUD — one class, six endpoints, zero boilerplate.
+3. Routers auto-generate URLs — register a ViewSet, get RESTful routes for free.
+4. The browsable API is free documentation — visit your API endpoint in a browser and get an interactive explorer.
+5. Permissions are declarative — IsAuthenticatedOrReadOnly is one line, not a middleware file.
+
+------------------------------------------------------------
+COMMON PITFALLS FOR JS DEVELOPERS
+------------------------------------------------------------
+
+- Forgetting to add "rest_framework" to INSTALLED_APPS
+- Writing manual CRUD views when a ViewSet would do it in 10 lines
+- Forgetting serializer.is_valid(raise_exception=True) and wondering why validation doesn't work
+- Not setting read_only_fields for auto-generated fields (id, created_at)
+- Forgetting to pass many=True when serializing a list of objects
+- Not using nested serializers and returning raw foreign key IDs in the API
+- Trying to use Next.js-style middleware instead of DRF permission classes
+- Not setting a timeout or pagination, leading to slow/large responses
+
+------------------------------------------------------------
+REAL-WORLD CONNECTION
+------------------------------------------------------------
+
+At a broadcast TV network, the REST API serves multiple clients: the public website (React/Next.js frontend), mobile apps, the on-air graphics system, and internal dashboards. DRF ViewSets give you full CRUD for stories, datasets, and sources with minimal code. Serializers validate incoming data from reporters in the field (mobile app submissions). Permission classes ensure only editors can publish stories. The browsable API lets the development team test endpoints without Postman. Filtering and search let the newsroom search across thousands of articles: /api/stories/?search=election&status=published&ordering=-published_at. Pagination keeps responses fast when the archive grows to tens of thousands of stories. This is production API development, not a tutorial pattern.
+
+
+============================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS FOR NOTEBOOKLM
+============================================================
+
+This episode should build from familiar (APIView = route.ts) to mind-blowing (ViewSet + Router = full CRUD in 10 lines). The progression: "You know this" -> "This is a shortcut" -> "Wait, it generates EVERYTHING?"
+
+Specific mental models for THIS lesson:
+- "Serializer = Zod + transformer" — validates IN and shapes OUT in one class
+- "APIView = route.ts" — explicit methods for each HTTP verb, full control
+- "ViewSet = CRUD factory" — one class generates 6 REST endpoints
+- "Router = automatic wiring" — register a ViewSet, get all URLs generated
+
+JS/React/Next.js equivalents to reference:
+- Zod schema -> Serializer (but also shapes output, not just validates input)
+- route.ts with GET/POST -> APIView with get()/post()
+- Two route.ts files for CRUD -> One ViewSet for everything
+- Manual URL creation -> Router auto-generates routes
+- NextAuth middleware -> permission_classes = [IsAuthenticated]
+- No built-in pagination -> PageNumberPagination is one setting
+- No API docs -> Browsable API is free and interactive
+- Manual error handling -> raise_exception=True returns formatted error responses
+
+Connect back to lesson 7: "Remember your Article model from lesson 7? ModelSerializer reads that model and auto-generates a serializer with all the right field types and validation. Your model definition keeps paying dividends."
+
+Connect back to lesson 8: "APIView is just like the function-based views from lesson 8, but as a class with separate methods for each HTTP verb. Same concept, cleaner organization for APIs."
+
+Connect back to lesson 9: "Serializers validate input like Django Forms validate form submissions. The validate_fieldname() pattern is identical to the clean_fieldname() pattern from forms. Same idea, different layer."
+
+Tease lesson 11: "Next lesson covers authentication (Django's built-in auth system), testing (pytest-django — like Jest but for Django), and deployment (from dev to production). You'll learn how to protect these API endpoints with real auth."
+
+Trevor's journalism background: "Think of the API as your wire service. Just like AP sends structured data (headline, byline, dateline, body) that any newsroom can consume, your DRF API sends structured JSON that any client — website, mobile app, graphics system — can consume. Serializers are the editorial standards that ensure every story goes out with the right structure. Permission classes are the editorial controls that determine who can publish."
+
+Memorization techniques:
+- "Serializer: Zod in, transformer out" — validates incoming, shapes outgoing
+- "ViewSet = all CRUD" — List, Create, Retrieve, Update, Partial Update, Delete
+- "Router registers, URLs generate" — register once, six endpoints appear
+- "is_valid with raise" — serializer.is_valid(raise_exception=True) is the pattern
+- "many=True for lists" — serialize one object: Serializer(obj). Serialize many: Serializer(objs, many=True)
+
+Tone: The APIView section should feel comfortable — "this is just route.ts with different syntax." The ViewSet section should build excitement — "wait, one class does ALL of that?" The Router auto-generation should be the peak — "it generates all 6 endpoints AND a browsable API?" The browsable API demo should make the JS host genuinely jealous.

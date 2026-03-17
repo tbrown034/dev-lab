@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn Django - Trevor's Workshop</title>
+  <link rel="icon" type="image/svg+xml" href="/django/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      min-height: 100vh;
+    }
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #22c55e; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover, .nav a.active {
+      background: #22c55e;
+      color: #000;
+      border-color: #22c55e;
+    }
+    .nav a.python {
+      border-color: #3b82f644;
+    }
+    .nav a.python:hover {
+      background: #3b82f6;
+      border-color: #3b82f6;
+    }
+    .main {
+      padding: 2rem 3rem;
+      max-width: 1200px;
+    }
+    .main h2 { margin-bottom: 1rem; font-size: 1.3rem; }
+    .main h2 .badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+    .main h2 .badge.python { background: #3b82f622; color: #60a5fa; }
+    .main h2 .badge.django { background: #22c55e22; color: #4ade80; }
+    .lesson-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+    .lesson-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: border-color 0.2s;
+    }
+    .lesson-card:hover { border-color: #22c55e; }
+    .lesson-card.python-card:hover { border-color: #3b82f6; }
+    .lesson-card h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .lesson-card .num {
+      color: #22c55e;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .lesson-card.python-card .num { color: #60a5fa; }
+    .lesson-card p { color: #888; font-size: 0.85rem; line-height: 1.5; }
+    .lesson-card a {
+      display: inline-block;
+      margin-top: 0.75rem;
+      color: #22c55e;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    .lesson-card.python-card a { color: #60a5fa; }
+    .hero-section {
+      margin-top: 2rem;
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 2rem;
+    }
+    .hero-section h3 { margin-bottom: 1rem; }
+    .code-demo {
+      background: #0a0a0a;
+      border: 1px solid #222;
+      border-radius: 6px;
+      padding: 1.5rem;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.85rem;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+    .code-demo .comment { color: #6b7280; }
+    .code-demo .keyword { color: #c084fc; }
+    .code-demo .string { color: #22c55e; }
+    .code-demo .function { color: #60a5fa; }
+    .code-demo .decorator { color: #f472b6; }
+    .code-demo .class-name { color: #fbbf24; }
+    .code-demo .builtin { color: #22c55e; }
+    .mapping-table {
+      margin-top: 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .mapping-table .col-header {
+      padding: 0.75rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .mapping-table .col-header.js { background: #1a1a2e; color: #818cf8; border-bottom: 1px solid #222; }
+    .mapping-table .col-header.py { background: #0a1a0a; color: #22c55e; border-bottom: 1px solid #222; }
+    .mapping-table .cell {
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      color: #bbb;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .mapping-table .cell.js { background: #111118; }
+    .mapping-table .cell.py { background: #0d1a0d; }
+    .mapping-table .cell code {
+      font-size: 0.8rem;
+      background: #222;
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Learn <span>Python + Django</span></h1>
+    <div class="meta">Python first, Django second &middot; 12 lessons</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/django/" class="active">Home</a>
+    <a href="/django/lessons/01-python-fundamentals/" class="python">01 Basics</a>
+    <a href="/django/lessons/02-python-collections/" class="python">02 Collections</a>
+    <a href="/django/lessons/03-python-functions/" class="python">03 Functions</a>
+    <a href="/django/lessons/04-python-oop/" class="python">04 OOP</a>
+    <a href="/django/lessons/05-python-data-files/" class="python">05 Data</a>
+    <a href="/django/lessons/06-django-quickstart/">06 Django</a>
+    <a href="/django/lessons/07-models-orm/">07 Models</a>
+    <a href="/django/lessons/08-views-urls/">08 Views</a>
+    <a href="/django/lessons/09-templates-forms/">09 Templates</a>
+    <a href="/django/lessons/10-rest-api/">10 REST</a>
+    <a href="/django/lessons/11-auth-testing-deploy/">11 Auth</a>
+    <a href="/django/lessons/12-capstone/">12 Capstone</a>
+  </nav>
+
+  <div class="main">
+    <h2>Phase 1: Python Fundamentals <span class="badge python">5 lessons</span></h2>
+    <p style="color: #888; font-size: 0.9rem; margin-bottom: 1rem;">Learn Python through your JavaScript lens. Every concept mapped to what you already know.</p>
+    <div class="lesson-grid">
+      <div class="lesson-card python-card">
+        <div class="num">Lesson 01</div>
+        <h3>Python Fundamentals</h3>
+        <p>Variables, types, strings, operators — everything from JS translated to Python syntax.</p>
+        <a href="/django/lessons/01-python-fundamentals/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card python-card">
+        <div class="num">Lesson 02</div>
+        <h3>Collections &amp; Control Flow</h3>
+        <p>Lists, dicts, tuples, sets, loops, comprehensions. Arrays and objects, Python-style.</p>
+        <a href="/django/lessons/02-python-collections/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card python-card">
+        <div class="num">Lesson 03</div>
+        <h3>Functions &amp; Modules</h3>
+        <p>def, *args/**kwargs, lambda, imports, pip, virtual environments. Functions and npm, translated.</p>
+        <a href="/django/lessons/03-python-functions/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card python-card">
+        <div class="num">Lesson 04</div>
+        <h3>Object-Oriented Programming</h3>
+        <p>Classes, inheritance, decorators, dunder methods, dataclasses. JS class syntax → Python OOP.</p>
+        <a href="/django/lessons/04-python-oop/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card python-card">
+        <div class="num">Lesson 05</div>
+        <h3>Data &amp; File Handling</h3>
+        <p>File I/O, JSON, CSV, error handling, requests, regex. Node fs/path → Python os/pathlib.</p>
+        <a href="/django/lessons/05-python-data-files/">Start lesson &rarr;</a>
+      </div>
+    </div>
+
+    <h2 style="margin-top: 2.5rem;">Phase 2: Django Framework <span class="badge django">7 lessons</span></h2>
+    <p style="color: #888; font-size: 0.9rem; margin-bottom: 1rem;">Now that you speak Python, learn Django through Next.js and React analogies.</p>
+    <div class="lesson-grid">
+      <div class="lesson-card">
+        <div class="num">Lesson 06</div>
+        <h3>Django Quickstart</h3>
+        <p>Your first Django project. How it maps to Next.js: routing, views, templates, settings.</p>
+        <a href="/django/lessons/06-django-quickstart/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 07</div>
+        <h3>Models &amp; ORM</h3>
+        <p>Django's database layer. Like Prisma but built-in. Migrations, querysets, relationships.</p>
+        <a href="/django/lessons/07-models-orm/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 08</div>
+        <h3>Views &amp; URLs</h3>
+        <p>Function views, class-based views, URL patterns. API routes → Django views.</p>
+        <a href="/django/lessons/08-views-urls/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 09</div>
+        <h3>Templates &amp; Forms</h3>
+        <p>Django template language + form handling. JSX → DTL, React forms → Django forms.</p>
+        <a href="/django/lessons/09-templates-forms/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 10</div>
+        <h3>REST APIs (DRF)</h3>
+        <p>Django REST Framework — like tRPC or Next.js API routes with superpowers.</p>
+        <a href="/django/lessons/10-rest-api/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 11</div>
+        <h3>Auth, Testing &amp; Deployment</h3>
+        <p>Django auth, pytest, and getting to production. NextAuth → Django, Jest → pytest, Vercel → gunicorn.</p>
+        <a href="/django/lessons/11-auth-testing-deploy/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 12</div>
+        <h3>Capstone Project</h3>
+        <p>Everything combined. Build a full Newsroom Data Dashboard from scratch.</p>
+        <a href="/django/lessons/12-capstone/">Start lesson &rarr;</a>
+      </div>
+    </div>
+
+    <div class="hero-section">
+      <h3>The Translation: Next.js → Django</h3>
+      <p style="color: #888; font-size: 0.85rem; margin-bottom: 1rem;">
+        You already know full-stack web development. Django just uses different words for the same ideas.
+      </p>
+      <div class="mapping-table">
+        <div class="col-header js">Next.js / React</div>
+        <div class="col-header py">Django / Python</div>
+        <div class="cell js"><code>npx create-next-app</code></div>
+        <div class="cell py"><code>django-admin startproject</code></div>
+        <div class="cell js"><code>npm install</code> / <code>package.json</code></div>
+        <div class="cell py"><code>pip install</code> / <code>requirements.txt</code></div>
+        <div class="cell js"><code>node_modules/</code></div>
+        <div class="cell py"><code>venv/</code> (virtual environment)</div>
+        <div class="cell js"><code>next.config.js</code></div>
+        <div class="cell py"><code>settings.py</code></div>
+        <div class="cell js">File-based routing (<code>app/</code>)</div>
+        <div class="cell py"><code>urls.py</code> (explicit routing)</div>
+        <div class="cell js">API routes / Server Components</div>
+        <div class="cell py"><code>views.py</code></div>
+        <div class="cell js">JSX templates</div>
+        <div class="cell py">Django templates (<code>.html</code>)</div>
+        <div class="cell js">Prisma schema</div>
+        <div class="cell py"><code>models.py</code></div>
+        <div class="cell js"><code>npm run dev</code></div>
+        <div class="cell py"><code>python manage.py runserver</code></div>
+        <div class="cell js">Vercel deploy</div>
+        <div class="cell py">gunicorn + nginx / Docker</div>
+      </div>
+    </div>
+
+    <div class="hero-section" style="margin-top: 1rem;">
+      <h3>Sample Django View</h3>
+      <p style="color: #888; font-size: 0.85rem; margin-bottom: 1rem;">
+        By the end of this course, code like this will read like English.
+      </p>
+      <div class="code-demo">
+        <span class="comment"># views.py — this is like a Next.js API route</span><br>
+        <span class="keyword">from</span> django.http <span class="keyword">import</span> JsonResponse<br>
+        <span class="keyword">from</span> .models <span class="keyword">import</span> <span class="class-name">Article</span><br>
+        <br>
+        <span class="keyword">def</span> <span class="function">latest_articles</span>(request):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># Like: const articles = await prisma.article.findMany()</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;articles = <span class="class-name">Article</span>.objects.<span class="function">filter</span>(<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;published=<span class="builtin">True</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;).<span class="function">order_by</span>(<span class="string">'-created_at'</span>)[:<span class="builtin">10</span>]<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># Like: return NextResponse.json(data)</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;data = [{<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'title'</span>: a.title,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'author'</span>: a.author.name,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'date'</span>: a.created_at.isoformat(),<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;} <span class="keyword">for</span> a <span class="keyword">in</span> articles]<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="function">JsonResponse</span>({<span class="string">'articles'</span>: data})
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

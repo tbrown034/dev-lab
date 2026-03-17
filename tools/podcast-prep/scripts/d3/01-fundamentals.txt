@@ -1,0 +1,146 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+LESSON TITLE: Lesson 01 - Pure SVG: The Canvas You're Painting On
+TRACK: D3.js (12-lesson curriculum)
+
+--- CONTEXT FOR HOSTS ---
+
+Curriculum Position: This is lesson 1 of 12 -- the very foundation. No JavaScript in this lesson at all. It covers pure SVG as the raw material that D3 produces. Everything that follows in lessons 2-12 builds on SVG fluency.
+
+What the learner already knows: Trevor has 15+ years as an investigative journalist and is a self-taught web developer comfortable with React, Next.js, TypeScript, and Tailwind CSS. He knows HTML elements like div, p, img, and span intimately. He's used to CSS positioning and the box model. He has never worked extensively with SVG or D3.
+
+Learner's goal: Build expert-level D3.js skills for a potential role at Tenga, a chain of broadcast TV networks. The job involves building election dashboards, weather maps, census data overlays, and breaking-news graphics -- all things that live and die on D3-powered SVG.
+
+Specific analogies and connections for THIS lesson:
+- SVG tags are just HTML tags for shapes instead of text content. If Trevor knows <div> and <p>, he already understands the concept -- these are just <rect>, <circle>, <line>, <text> instead.
+- SVG's coordinate system with Y going downward is like how CSS positions elements from the top of the page down. The mental adjustment is that "taller bars need SMALLER Y values."
+- The <g> element with transform="translate(x, y)" is like CSS position: relative -- it shifts everything inside it without affecting outside elements.
+- The margins convention is like the matting inside a picture frame -- the SVG is the frame, the <g> group is the art, and the margins are the mat where labels live.
+- For a journalist, think of the SVG viewport as the broadcast screen -- fixed dimensions, everything must be precisely placed.
+
+Key mental models:
+- SVG is just HTML for shapes. No magic, no framework, no compile step.
+- The coordinate system has Y inverted from math class -- (0,0) is top-left, Y increases downward.
+- D3 does not use canvas or WebGL -- it writes SVG tags. When you inspect a D3 chart, you see the exact same <rect> and <circle> tags taught here.
+
+--- LESSON CONTENT ---
+
+What is SVG?
+
+SVG stands for Scalable Vector Graphics. It is a set of HTML tags for drawing shapes. Just as standard HTML has <div>, <p>, and <img> for content, SVG adds tags like <rect>, <circle>, <line>, <text>, and <path> for visual shapes. An SVG element acts as a container (like a <div>) and you put shapes inside it.
+
+Example: An <svg> with width="300" and height="100" containing a <rect> at position x="10" y="10" with width="200" height="80" and fill="orange" draws an orange rectangle.
+
+The key insight: This is the ENTIRE foundation of D3. Every bar chart, line chart, map, and visualization that D3 produces is just SVG elements like this. D3 doesn't use canvas or WebGL by default -- it writes these exact HTML tags into the page.
+
+The Coordinate System (The One Gotcha)
+
+SVG's coordinate system has one critical difference from math class:
+- (0, 0) is the TOP-LEFT corner
+- X increases going right (normal)
+- Y increases going DOWN (opposite of math class)
+
+This is why, when making a bar chart, taller bars need SMALLER Y values (to reach higher on screen). This feels backwards at first but becomes natural. D3's scales handle this later, but understanding WHY is essential.
+
+Every Shape You Need to Know
+
+RECT -- Rectangles (bars in bar charts): Uses x, y for the top-left corner position, width and height for size, fill for color, and rx for optional rounded corners.
+
+CIRCLE -- Circles (dots in scatter plots): Uses cx, cy for the CENTER position (not top-left!), r for radius, and fill for color. The positioning difference between rect (top-left) and circle (center) trips people up constantly.
+
+LINE -- Lines: Uses x1, y1 for the start point and x2, y2 for the end point. Lines use stroke for color (not fill!) and stroke-width for thickness. A line with no stroke is invisible.
+
+TEXT -- Labels: The x, y position refers to where the text sits on its baseline (like where a letter rests on a ruled line), not the top-left corner like rect. The key feature is text-anchor which controls horizontal alignment relative to the x-position:
+- text-anchor="start" -- text flows right from the point
+- text-anchor="middle" -- text centers on the point
+- text-anchor="end" -- text flows left from the point
+
+The pattern: text-anchor="middle" for labels centered on bars in vertical charts. text-anchor="end" for labels beside bars in horizontal charts. These two cover almost every chart labeling scenario.
+
+G + TRANSFORM -- "Move everything as a group": The <g> element groups shapes together. Adding transform="translate(x, y)" slides everything inside the group x pixels right and y pixels down. All children draw from (0, 0) of the group's new position. This is like position: relative in CSS. In D3, you rarely position each shape individually -- D3 creates a <g> for each data point, translates it into position, then draws shapes inside at (0, 0).
+
+The Margins Convention: Every D3 chart uses a pattern where the outer SVG is the full canvas, and a single <g> group is translated inward to create margins for axes and labels. This is the #1 D3 pattern: create SVG, define margins, create a <g> translated by the margins. All chart code draws inside that group. Axes sit in the margin space around it.
+
+PATH -- Complex Shapes: The <path> element draws anything using a mini drawing language in its d attribute. M = Move to (pick up the pen), L = Line to (draw a line). A line chart in D3 is a single <path> element. D3's d3.line() generator writes the d attribute string from your data array. You never write path commands manually.
+
+Quick Reference:
+- rect: x, y, width, height, fill, rx -- bars, backgrounds, heatmap cells
+- circle: cx, cy, r, fill -- scatter plot dots, bubble charts
+- line: x1, y1, x2, y2, stroke -- grid lines, reference lines
+- text: x, y, text-anchor, fill, font-size -- labels, axis ticks, annotations
+- path: d, fill, stroke -- lines, areas, arcs, map outlines
+- g: transform -- grouping, positioning, margins
+
+Fill vs Stroke: fill is the inside color. stroke is the border/line color. Lines and paths NEED stroke to be visible. opacity controls transparency (0 = invisible, 1 = solid).
+
+Build exercises: The lesson includes hand-coding a bar chart and scatter plot in pure HTML with no JavaScript. The bar chart uses rect and text elements with text-anchor for alignment. The scatter plot uses circle elements where cx represents one variable and cy represents another.
+
+The Inspect Trick: Right-click any D3 visualization on the web and click "Inspect" to see the raw SVG elements. There is no magic layer between D3's code and what appears on screen. This is why SVG fluency matters -- when you debug D3, you're debugging SVG.
+
+--- KEY CONCEPTS TO EMPHASIZE ---
+
+1. SVG is just HTML tags for shapes -- rect, circle, line, text, path, g cover 95% of D3 output
+2. The Y-axis is inverted: (0,0) is top-left, Y increases downward -- taller bars need smaller Y values
+3. Rect positions from top-left corner; circle positions from center -- a common source of positioning bugs
+4. The <g> + translate pattern is the foundation of all D3 layout, especially the margins convention
+5. text-anchor controls text alignment relative to the x position -- essential for labeling charts
+
+--- COMMON PITFALLS ---
+
+- Forgetting that circle uses cx/cy (center) while rect uses x/y (top-left corner)
+- Setting fill on a line (it needs stroke to be visible)
+- Not understanding why taller bars need smaller Y values (the inverted coordinate system)
+- Positioning text without text-anchor, causing labels to be misaligned
+- Trying to put HTML content inside SVG (you can't -- use <text> for words in SVG)
+
+--- BROADCAST TV CONNECTION ---
+
+- Every election night dashboard with colored state maps, vote tally bars, and percentage labels is made of these exact SVG elements
+- Weather map overlays use <path> elements for state and county boundaries
+- Breaking-news lower thirds with animated bars and numbers are SVG rects and text elements
+- The margins convention creates the structured layout that broadcast graphics require -- precise placement of chart area vs. labels vs. titles
+- Census data visualizations layer circles (population dots) and paths (geographic boundaries) on the same SVG canvas
+- The coordinate system precision matters on TV: every pixel counts on a 1920x1080 broadcast frame
+
+
+========================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+========================================
+
+PODCAST CUSTOMIZATION FOR LESSON 01: Pure SVG
+
+TARGET MENTAL MODELS:
+- SVG as "HTML for shapes" -- draw the direct parallel to tags Trevor already uses daily
+- The inverted Y-axis as the "one gotcha" that unlocks everything
+- The margins convention as "the picture frame" for every chart
+- <g> + translate as CSS position: relative for SVG
+
+SPECIFIC ANALOGIES TO USE:
+- "Think of SVG the way you think about HTML. You know <div> for boxes and <p> for text. SVG just adds <rect> for rectangles and <circle> for dots. Same concept, different tags."
+- "The Y-axis thing is like how CSS positions from the top of the page down. A div at top: 0 is at the very top. SVG works the same way -- y=0 is the top."
+- "The margins convention is like matting a picture frame. Your art goes in the middle, and there's space around it for the frame and label."
+- For a journalist: "When you lay out a story on a page, you leave margins for headers and gutters. Same thing here -- leave margins for your axis labels."
+
+CONNECTIONS TO OTHER LESSONS:
+- This is the foundation. Emphasize that everything in lessons 2-12 produces these exact SVG tags.
+- Tease Lesson 02: "Next time, you'll learn how D3 automates the math of turning data into pixel positions -- no more eyeballing where things go."
+- Tease the margins convention: "You'll copy-paste the margins pattern into literally every chart you build for the rest of this course."
+
+TREVOR'S BACKGROUND TO REFERENCE:
+- As a React developer, he's used to thinking in components and JSX. SVG elements are just like HTML elements he already renders in JSX.
+- As a journalist, he's used to structured layouts and precise placement. SVG gives him pixel-perfect control.
+- His broadcast TV goal means every SVG concept directly maps to on-screen graphics he'll be building.
+
+MEMORIZATION TECHNIQUES:
+- "6 elements cover 95% of D3: rect, circle, line, text, path, g" -- memorize this list
+- "Rect from corner, circle from center" -- say it as a rhyme
+- "Fill for inside, stroke for outside" -- simple rule
+- The Inspect trick: make it a habit to right-click every D3 chart on the web and look at the SVG
+
+TONE:
+- Two experienced devs chatting. One is the "D3 expert" who's been building broadcast graphics for years. The other is the "curious dev who knows React but is new to D3" (this mirrors Trevor's position).
+- The React-dev host should react with recognition: "Oh wait, so it's literally just HTML tags? I've been overthinking this."
+- Keep it practical: connect every concept to "what does this look like in a real chart?"
+- The D3-expert host should share war stories: "I remember the first time I built an election bar chart and all my bars were upside down because of the Y-axis thing..."

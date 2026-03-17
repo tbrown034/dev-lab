@@ -1,0 +1,178 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+LESSON TITLE: Lesson 10 - Maps & Geography
+TRACK: D3.js (12-lesson curriculum)
+
+--- CONTEXT FOR HOSTS ---
+
+Curriculum Position: Lesson 10 of 12. Trevor now enters the geographic visualization realm. This lesson introduces the pipeline for turning geographic data into visual maps: geographic data formats (GeoJSON/TopoJSON), projections (flattening the globe), and path generators (d3.geoPath). The choropleth pattern -- coloring regions by data values -- is the primary technique.
+
+What came before: Lessons 08-09 covered path generators for lines, areas, and arcs. Trevor understands that generators are function factories. Lessons 01-07 gave him the complete chart toolkit. He has used scaleSequential for color mapping (Lesson 05).
+
+What's coming next: Lesson 11 covers interactivity and polish (events, tooltips, transitions, responsiveness, accessibility).
+
+What Trevor already knows: D3 scales (especially scaleSequential for color mapping), path generators from Lessons 08-09, data binding, enter/update/exit, SVG paths.
+
+Learner's goal: Broadcast TV relies heavily on geographic visualizations -- election result maps, weather maps, census population maps. Choropleth maps are arguably the single most important broadcast data graphic. This is the lesson that directly enables the broadcast map work Trevor would do at Tenga.
+
+Specific analogies for THIS lesson:
+- A projection is "just another scale" -- scales translate data values to pixels, projections translate lat/lng coordinates to pixels
+- d3.geoPath() is "just another path generator" like d3.line() but for geography instead of time series
+- TopoJSON to GeoJSON conversion is like decompressing a zip file -- smaller for storage, expanded for use
+- .fitSize() is like "auto-fit" in a design tool -- it scales and centers the map to fill your canvas
+- The choropleth pattern is "paint by numbers" -- look up each region's data value and color accordingly
+
+Key mental models:
+- The map pipeline: Geographic data → Projection → Path generator → SVG paths
+- A projection is a scale for coordinates (latitude/longitude → pixels)
+- d3.geoPath() converts projected geographic coordinates into SVG path strings
+- TopoJSON is compressed GeoJSON -- convert with topojson.feature() in the browser
+- Choropleth = data lookup map + sequential color scale + fill each path by value
+
+--- LESSON CONTENT ---
+
+The Pipeline
+
+Drawing a map in D3 follows a three-step pipeline:
+
+1. Geographic data (GeoJSON or TopoJSON) -- shapes represented as arrays of coordinates (latitude/longitude pairs)
+
+2. Projection -- a function that flattens the 3D globe onto a 2D surface. Like peeling an orange and laying the skin flat. Different projections make different tradeoffs about shape, area, and distance distortion.
+
+3. Path generator -- d3.geoPath(projection) converts the projected coordinates into SVG path strings, just like d3.line() converts data points into line path strings.
+
+import * as topojson from "topojson-client";
+
+// 1. Load geographic data
+const us = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json");
+const states = topojson.feature(us, us.objects.states);
+
+// 2. Create projection
+const projection = d3.geoAlbersUsa()
+  .fitSize([width, height], states);
+
+// 3. Create path generator
+const path = d3.geoPath(projection);
+
+// 4. Draw
+svg.selectAll("path")
+  .data(states.features)
+  .join("path")
+  .attr("d", path)           // path generator creates "d" attribute
+  .attr("fill", d => color(getData(d)))
+  .attr("stroke", "#333");
+
+GeoJSON vs TopoJSON
+
+GeoJSON is the standard format. Each geographic feature has its own complete set of coordinates. Simple to understand but large files -- a US states file can be 2MB or more.
+
+TopoJSON is a compressed format. It shares border coordinates between adjacent features -- California and Nevada share a border, so why store it twice? TopoJSON files are 80-90% smaller (around 200KB for US states). You convert to GeoJSON in the browser using topojson.feature().
+
+topojson.mesh() generates a single path for all internal borders. The filter function (a, b) => a !== b excludes exterior borders, giving you clean, non-overlapping border lines without the visual artifacts of per-state strokes.
+
+Projections
+
+d3.geoAlbersUsa() -- the projection for US maps. Includes insets for Alaska and Hawaii. Uses equal-area projection so state sizes are proportional. This is the standard for election maps, census maps, and any US geographic visualization.
+
+d3.geoMercator() -- the Google Maps projection. Familiar but severely distorts area near the poles. Alaska appears much larger than it actually is relative to the lower 48 states.
+
+d3.geoEqualEarth() -- a modern world map projection. Preserves area accurately. Good for global visualizations.
+
+.fitSize() is Essential
+
+Instead of manually calculating the scale and translate values to position your map, call projection.fitSize([width, height], geojsonData). It automatically scales and centers the map to fit your SVG dimensions. This is like setting domain and range on a regular scale -- but for geographic coordinates.
+
+The Choropleth Pattern
+
+A choropleth map colors geographic regions according to data values. The standard pattern:
+
+1. Create a data lookup map: const dataMap = new Map(data.map(d => [d.fips, d.value]))
+2. Create a sequential color scale: d3.scaleSequential(d3.interpolateYlOrRd).domain([min, max])
+3. Color each path: .attr("fill", d => { const val = dataMap.get(d.id); return val ? color(val) : "#333"; })
+
+The lookup map uses FIPS codes (federal geographic identifiers) to match geographic features to data values.
+
+Making Maps Responsive
+
+Use viewBox on the SVG element and .fitSize() on the projection. The viewBox creates a virtual coordinate system that scales with the container. .fitSize() ensures the map fills that space. No fixed pixel dimensions needed.
+
+Accessibility
+
+Color-only encoding is problematic for colorblind users. In production, always add tooltips with actual values, ARIA labels for screen readers, and consider colorblind-safe color schemes like d3.interpolateViridis.
+
+The lesson demonstrates a US state choropleth map showing median household income by state, with hover tooltips, highlighted borders on hover, a gradient color legend, and state name display.
+
+--- KEY CONCEPTS TO EMPHASIZE ---
+
+1. A projection is just another scale -- it translates lat/lng to pixels, just like scaleLinear translates data values to pixels
+2. d3.geoPath() is just another path generator -- like d3.line() but for geographic shapes
+3. TopoJSON is compressed GeoJSON -- convert with topojson.feature(), 80-90% smaller files
+4. geoAlbersUsa() is THE projection for US maps -- includes Alaska/Hawaii insets
+5. .fitSize() auto-scales the projection to fill your SVG -- no manual calculation needed
+6. The choropleth pattern: data lookup map + sequential color scale + fill each path
+
+--- COMMON PITFALLS ---
+
+- Using geoMercator for US maps (Alaska appears massive; no Hawaii inset)
+- Not converting TopoJSON to GeoJSON before passing to d3.geoPath() (the path generator expects GeoJSON features)
+- Manually setting projection scale and translate instead of using .fitSize()
+- Forgetting that geographic features have ID properties (usually FIPS codes) for matching data
+- Not handling missing data gracefully (some features may not have matching data -- provide a fallback color)
+- Using per-state strokes instead of topojson.mesh() for borders (creates visual artifacts at shared borders)
+
+--- BROADCAST TV CONNECTION ---
+
+- Election night: the red/blue state map is a choropleth. Every network's election map uses this exact pattern.
+- Census population maps: coloring states by population, density, growth rate, or demographic data
+- Weather maps: temperature gradients across regions using sequential color scales
+- Income inequality: median household income by state or county -- the exact demo in this lesson
+- COVID case rate maps: heat maps showing infection rates by region were omnipresent during the pandemic
+- The hover tooltip pattern (highlighting borders, showing state name and value) is standard on interactive broadcast web companions
+- .fitSize() ensures maps display correctly on broadcast screens of any resolution
+
+
+========================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+========================================
+
+PODCAST CUSTOMIZATION FOR LESSON 10: Maps & Geography
+
+TARGET MENTAL MODELS:
+- Projection as "just another scale" -- the most important mental model for this lesson
+- d3.geoPath() as "d3.line() but for geography" -- same generator pattern, different input type
+- TopoJSON as "compressed GeoJSON" -- like gzip for geographic data
+- The choropleth as "paint by numbers" -- lookup the value, apply the color
+
+SPECIFIC ANALOGIES TO USE:
+- "A projection IS a scale. scaleLinear maps numbers to pixels. A projection maps [latitude, longitude] to [x, y] pixels. .fitSize() is like setting .domain() and .range() in one call. If you understand scales, you understand projections."
+- "d3.geoPath() is the geographic version of d3.line(). Just like d3.line() takes data points and returns a path string, d3.geoPath() takes geographic coordinates and returns a path string. Same factory pattern, different input type."
+- "TopoJSON is like webpack bundling shared dependencies. California and Nevada share a border. In GeoJSON, that border is stored twice. In TopoJSON, it's stored once and referenced by both. That's why TopoJSON files are 80-90% smaller."
+- "The election night red/blue map? That's a choropleth. Every network does it the same way: load the state shapes, look up the election results by FIPS code, color each state by the winner. You now know exactly how CNN, Fox, and MSNBC build those maps."
+
+CONNECTIONS TO OTHER LESSONS:
+- Connect to Lesson 05: "Remember scaleSequential from the scales deep dive? This is where it becomes essential. scaleSequential(d3.interpolateYlOrRd) maps data values to colors. The choropleth is the application."
+- Connect to Lesson 08: "d3.geoPath() follows the same generator pattern as d3.line() and d3.area(). Configure with a projection (instead of scales), call with geographic features (instead of data arrays), get path strings."
+- Connect to Lesson 09: "Like arc paths, geographic paths use .data().join('path'). Each state is a separate path element, each with geographic feature data bound to it."
+- Connect to Lesson 04: "Data binding with .data(states.features).join('path') -- the same selectAll-data-join pattern, just with geographic features instead of population numbers."
+- Tease Lesson 11: "Next lesson adds the interactive polish: hover tooltips on each state, transitions when data changes, responsive sizing for different screens."
+- Tease Lesson 12: "The capstone dashboard combines a map with bar and donut charts. Click a state, and the other charts filter to that state's region."
+
+TREVOR'S BACKGROUND TO REFERENCE:
+- React: "In React, you'd fetch geographic data in useEffect and render it in JSX. In D3, you fetch with d3.json(), convert with topojson.feature(), and render with d3.geoPath(). Different syntax, same pattern: load data, transform it, render it."
+- Journalism: "The choropleth map is the journalist's most powerful geographic tool. Election results, census data, economic indicators, health statistics -- all visualized the same way. Master this pattern and you can tell geographic stories with any dataset."
+- Broadcast TV: "This is THE lesson for your Tenga interview prep. Election maps, weather maps, census overlays -- all use projections and geoPath. When they ask you to build a state choropleth, you'll know the exact pipeline: TopoJSON → feature() → projection with fitSize() → geoPath → data lookup → color scale."
+
+MEMORIZATION TECHNIQUES:
+- "Projection = scale for coordinates" -- one sentence, the key insight
+- "geoAlbersUsa for US, geoEqualEarth for world" -- two projections cover 90% of use cases
+- "fitSize() auto-scales" -- never manually set projection scale and translate
+- "FIPS codes match data to geography" -- the bridge between your data and the map shapes
+- The pipeline: "Load → Convert → Project → Path → Color" -- five steps, every map
+
+TONE:
+- This should feel like "the big one." The React-dev host: "This is what I've been waiting for. The election map. This is exactly what I'd build at Tenga."
+- D3-expert: "And the beautiful thing is that if you understand scales and path generators, you already understand 80% of this. A projection IS a scale. geoPath IS a path generator. You're applying the same mental models to geographic data."
+- Celebrate the .fitSize() revelation: "Wait, I don't have to manually calculate the projection scale and offset? .fitSize() just handles it?" "Yes. Like .nice() for scales, .fitSize() is one of those D3 conveniences that saves you hours of trial and error."
+- End with the broadcast connection: "When you walk into an interview and they say 'build us an election map,' you know the exact pipeline. Five steps, same every time. Load the TopoJSON, convert to GeoJSON, create a projection with fitSize, generate paths with geoPath, color with a sequential scale."

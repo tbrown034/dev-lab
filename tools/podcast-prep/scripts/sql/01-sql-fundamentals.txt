@@ -1,0 +1,317 @@
+================================================================================
+SECTION 1: SOURCE DOCUMENT
+================================================================================
+
+TITLE: SQL Fundamentals -- From Prisma to Raw SQL
+TRACK: SQL / PostgreSQL (Lesson 1 of 12)
+
+--------------------------------------------------------------------------------
+CONTEXT FOR HOSTS
+--------------------------------------------------------------------------------
+
+This is the opening lesson of a 12-lesson SQL curriculum. Nothing comes before it. Next up is Lesson 02: SELECT & Filtering Deep Dive, which expands on the SELECT, WHERE, and pattern-matching concepts introduced here.
+
+THE LEARNER: Trevor is an investigative journalist with 15+ years of experience who taught himself web development (React, Next.js, TypeScript, Tailwind). He has been using Prisma as his ORM and understands the concept of querying a database through that abstraction. He is now learning raw SQL/PostgreSQL to prepare for a potential role at Tenga, a chain of broadcast TV networks, where he would work with election dashboards, weather maps, and census data. His learning philosophy is "mental models first, syntax second." He learns best through building and through analogies to things he already knows.
+
+WHAT TREVOR ALREADY KNOWS THAT CONNECTS:
+- Prisma ORM: prisma.user.findMany(), prisma.user.create(), etc. -- he has been writing these for months. This lesson shows the SQL that Prisma generates under the hood.
+- TypeScript interfaces: a SQL table is like a TypeScript interface that also stores data. Columns are like properties.
+- JavaScript array methods: .filter() maps to WHERE, .sort() maps to ORDER BY, .slice() maps to LIMIT/OFFSET, .map() maps to SELECT (choosing which columns).
+- JavaScript objects: a database row is like a JavaScript object with specific key-value pairs.
+- Prisma schema: model User { ... } maps to CREATE TABLE users (...).
+
+TREVOR'S GOAL: Querying and managing broadcast TV data -- election results by precinct, census demographics, weather station data, ad revenue tables.
+
+INVESTIGATIVE JOURNALISM CONNECTION: SQL is the foundational tool of data journalism. Every major investigative story involving public records, campaign finance data, FOIA datasets, or government databases relies on SQL to find patterns in the data. For a journalist with 15 years of investigative experience, learning SQL is like getting a superpower for the skills they already have.
+
+MENTAL MODELS THAT MATTER MOST:
+1. Prisma is a translator -- it converts your JavaScript calls into SQL. The database only speaks SQL. You are now learning the database's native language.
+2. SQL reads like English -- SELECT title FROM articles WHERE published = true literally says what it means.
+3. SQL is declarative -- you tell it WHAT you want, not HOW to get it. This is the opposite of imperative JavaScript where you write loops and conditionals.
+4. The query template pipeline: FROM (which table) -> WHERE (filter rows) -> SELECT (pick columns) -> ORDER BY (sort) -> LIMIT (cap results). Like chaining array methods.
+
+--------------------------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+--------------------------------------------------------------------------------
+
+1. SQL IS THE DATABASE'S LANGUAGE: Prisma, Drizzle, every ORM -- they all generate SQL. Learning SQL means you understand what is actually happening when you interact with a database. This is not learning something new so much as peeking behind a curtain Trevor has been standing in front of for months.
+
+2. CRUD IN SQL: CREATE TABLE, INSERT INTO, SELECT, UPDATE, DELETE. These map directly to Prisma's model, .create(), .findMany(), .update(), .delete(). The entire lesson is structured around this mapping.
+
+3. THE WHERE CLAUSE IS .filter(): This is probably the most important mental bridge. WHERE published = true is articles.filter(a => a.published === true). AND/OR map to &&/||. Comparison operators (=, !=, <, >, <=, >=) are almost identical.
+
+4. ALWAYS USE WHERE WITH UPDATE AND DELETE: Without WHERE, UPDATE and DELETE affect every row in the table. This is the SQL equivalent of rm -rf /. This is a safety lesson that matters on day one.
+
+5. SQL CLAUSE ORDER IS A PIPELINE: SELECT...FROM...WHERE...ORDER BY...LIMIT...OFFSET. Each clause is a step. This maps to chaining array methods: table.filter().sort().slice().map().
+
+--------------------------------------------------------------------------------
+DATA JOURNALISM CONNECTION
+--------------------------------------------------------------------------------
+
+SQL is THE tool for data journalism. When a journalist gets a FOIA dataset with 500,000 rows of government spending records, they load it into a database and use SQL to find the story. "Show me the top 10 contractors by total amount WHERE department = 'defense' ORDER BY total DESC" -- that is a SQL query, and it is how investigative stories about waste, fraud, and abuse begin.
+
+Campaign finance: Every dollar donated to a political campaign is a public record in a database. SELECT donor_name, amount FROM donations WHERE candidate = 'Smith' AND amount > 10000 ORDER BY amount DESC -- this is literally how journalists find the big-money donors behind a candidate.
+
+For Trevor specifically: imagine having a database of every election result from every precinct in your broadcast coverage area. SELECT precinct, candidate, vote_count FROM election_results WHERE county = 'Harris' ORDER BY vote_count DESC -- that is a story about who won and where, ready for the 10 o'clock news.
+
+--------------------------------------------------------------------------------
+BROADCAST TV SCENARIOS
+--------------------------------------------------------------------------------
+
+ELECTION DATA:
+- Table: election_results (id, precinct, county, state, candidate, party, vote_count, total_registered, reporting_pct)
+- "Get all precincts in Harris County where reporting is complete": SELECT * FROM election_results WHERE county = 'Harris' AND reporting_pct = 100;
+- "Which candidate leads in each precinct?": SELECT precinct, candidate, vote_count FROM election_results WHERE county = 'Harris' ORDER BY precinct, vote_count DESC;
+
+WEATHER DATA:
+- Table: weather_stations (id, station_name, city, state, temperature, humidity, wind_speed, recorded_at)
+- "Get current readings from all Texas stations": SELECT station_name, temperature, humidity FROM weather_stations WHERE state = 'TX' ORDER BY temperature DESC;
+- "Which stations are reporting extreme heat?": SELECT * FROM weather_stations WHERE temperature > 100;
+
+CENSUS DATA:
+- Table: census_demographics (id, county, state, population, median_income, median_age, pct_college_educated)
+- "Find the most populated counties in our coverage area": SELECT county, population FROM census_demographics WHERE state = 'TX' ORDER BY population DESC LIMIT 10;
+
+AD REVENUE:
+- Table: ad_revenue (id, advertiser, campaign, amount, air_date, time_slot, station)
+- "Total ad spend by time slot": This foreshadows aggregation in Lesson 04, but even here you could SELECT * FROM ad_revenue WHERE time_slot = 'primetime' ORDER BY amount DESC;
+
+--------------------------------------------------------------------------------
+LESSON CONTENT
+--------------------------------------------------------------------------------
+
+WHAT IS SQL?
+
+SQL stands for Structured Query Language. It is the language you use to talk directly to a database. Every database understands it: PostgreSQL, MySQL, SQLite, SQL Server.
+
+Key insight: Prisma is a translator. When you write prisma.user.findMany(), Prisma turns that into SQL and sends it to your database. The database only speaks SQL. Prisma just makes it more convenient.
+
+Prisma code:
+  const users = await prisma.user.findMany({
+    where: { active: true },
+    orderBy: { name: 'asc' },
+  });
+
+What the database actually receives (SQL):
+  SELECT *
+  FROM users
+  WHERE active = true
+  ORDER BY name ASC;
+
+Why learn raw SQL? Three reasons: (1) You will debug Prisma issues faster when you understand what it generates. (2) Some queries are too complex for ORMs. (3) Job interviews and data journalism almost always require SQL.
+
+SQL has a small core vocabulary:
+- CREATE TABLE: Define a new table (Prisma equivalent: model User { ... } in schema)
+- INSERT INTO: Add rows (Prisma: prisma.user.create())
+- SELECT: Read rows (Prisma: prisma.user.findMany())
+- WHERE: Filter rows (Prisma: where: { ... })
+- UPDATE: Change rows (Prisma: prisma.user.update())
+- DELETE: Remove rows (Prisma: prisma.user.delete())
+
+DATABASES AND TABLES
+
+- A database is like your project folder -- it holds everything.
+- A table is like a TypeScript interface that also stores data. It defines the shape AND holds the rows.
+- A row is like a JavaScript object -- one record with specific values.
+- A column is like a property on that object -- name, email, age.
+
+TypeScript interface:
+  interface User {
+    id: number;
+    name: string;
+    email: string;
+    age: number;
+    active: boolean;
+  }
+
+SQL table (same idea):
+  | id | name   | email           | age | active |
+  |----|--------|-----------------|-----|--------|
+  |  1 | Sarah  | sarah@mail.com  |  28 | true   |
+  |  2 | Marcus | marcus@mail.com |  34 | true   |
+  |  3 | Priya  | priya@mail.com  |  31 | false  |
+
+Naming convention: In PostgreSQL, tables and columns use snake_case (lowercase with underscores): first_name, created_at, user_id. Different from Prisma/TypeScript camelCase. Prisma maps between them automatically with @map.
+
+CREATE TABLE
+
+In Prisma you define your data shape in schema.prisma. In SQL you use CREATE TABLE. Same concept, different syntax.
+
+Prisma schema:
+  model Article {
+    id        Int      @id @default(autoincrement())
+    title     String
+    body      String
+    published Boolean  @default(false)
+    views     Int      @default(0)
+    createdAt DateTime @default(now())
+  }
+
+SQL equivalent:
+  CREATE TABLE articles (
+    id         SERIAL PRIMARY KEY,
+    title      VARCHAR(255) NOT NULL,
+    body       TEXT NOT NULL,
+    published  BOOLEAN DEFAULT false,
+    views      INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW()
+  );
+
+Key terms: SERIAL = auto-incrementing integer. PRIMARY KEY = unique identifier. VARCHAR(255) = string up to 255 chars. TEXT = unlimited string. NOT NULL = required. DEFAULT = default value.
+
+Common SQL data types: INTEGER (whole numbers), SERIAL (auto-incrementing), VARCHAR(n) (string with max length), TEXT (unlimited string), BOOLEAN (true/false), TIMESTAMP (date+time), NUMERIC(p,s) (exact decimal), JSONB (JSON storage).
+
+INSERT -- Adding Data
+
+INSERT is like prisma.article.create(). You specify which table, which columns, and what values.
+
+  INSERT INTO articles (title, body, published)
+  VALUES ('Breaking Story', 'The investigation...', true);
+
+Pattern: INSERT INTO table (columns) VALUES (values). You do not need to specify id or created_at -- those have defaults.
+
+Multiple rows:
+  INSERT INTO articles (title, body)
+  VALUES
+    ('Story 1', 'Content 1'),
+    ('Story 2', 'Content 2'),
+    ('Story 3', 'Content 3');
+
+Important: Strings in SQL use single quotes, not double quotes. 'hello' is correct. "hello" means something different in SQL (it refers to a column or table name).
+
+SELECT -- Reading Data
+
+SELECT is the most important SQL command. You will use it 90% of the time. Think of it like array.map() -- it picks which columns you want from the result.
+
+  SELECT * FROM articles;  -- all columns
+  SELECT title, body FROM articles;  -- specific columns
+
+The * in SELECT * means "all columns." Read it like English: "Select the title and body from the articles table."
+
+WHERE -- Filtering Rows
+
+WHERE is like .filter() in JavaScript or the where clause in Prisma. It keeps only the rows that match your condition.
+
+  SELECT * FROM articles WHERE published = true;
+  SELECT * FROM articles WHERE views > 1000;
+  SELECT * FROM articles WHERE published = true AND views > 1000;
+
+Comparison operators: = (equals), != or <> (not equal), < (less than), > (greater than), <= (less or equal), >= (greater or equal).
+
+LIKE for pattern matching (% wildcard = any characters):
+  WHERE title LIKE '%election%'  -- contains 'election'
+  WHERE title LIKE 'Breaking%'   -- starts with 'Breaking'
+
+IN for multiple values:
+  WHERE status IN ('draft', 'review')
+
+BETWEEN for ranges:
+  WHERE views BETWEEN 100 AND 1000
+
+AND, OR for combining conditions:
+  WHERE published = true AND views > 1000
+  WHERE status = 'draft' OR status = 'review'
+
+ORDER BY -- Sorting Results
+
+ORDER BY is like .sort() in JavaScript. ASC = ascending (default), DESC = descending.
+
+  SELECT * FROM articles ORDER BY created_at DESC;
+  SELECT * FROM articles ORDER BY published DESC, title ASC;
+
+LIMIT and OFFSET -- Pagination
+
+LIMIT and OFFSET are Prisma's take and skip.
+
+  SELECT * FROM articles LIMIT 10;           -- first 10
+  SELECT * FROM articles LIMIT 10 OFFSET 20; -- page 3
+
+LIMIT goes at the very end. The order of SQL clauses matters: SELECT...FROM...WHERE...ORDER BY...LIMIT...OFFSET.
+
+UPDATE and DELETE -- Modifying Data
+
+UPDATE changes existing rows. Always include WHERE!
+
+  UPDATE articles SET title = 'Updated Title', published = true WHERE id = 5;
+
+DELETE removes rows. Always include WHERE!
+
+  DELETE FROM articles WHERE id = 5;
+
+CRITICAL SAFETY: Without WHERE, UPDATE and DELETE affect EVERY row. UPDATE articles SET views = 0 without WHERE resets views for ALL articles.
+
+KEY MENTAL MODEL -- SQL Reads Like English
+
+  SELECT title, published, views
+  FROM articles
+  WHERE published = true AND views > 1000
+  ORDER BY views DESC
+  LIMIT 5;
+
+In English: "Select the title, published status, and view count from the articles table, where published is true and views are more than 1000, ordered by views descending, give me the top 5."
+
+SQL is declarative -- you tell it what you want, not how to get it.
+
+The Full Query Template:
+  SELECT columns        -- What columns to return (like .map())
+  FROM table_name       -- Which table to query
+  WHERE conditions      -- Filter rows (like .filter())
+  ORDER BY column       -- Sort results (like .sort())
+  LIMIT n               -- Cap the results (like .slice())
+  OFFSET n;             -- Skip results (for pagination)
+
+You do not need all of these every time. SELECT...FROM... is the minimum.
+
+================================================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+================================================================================
+
+LESSON-SPECIFIC INSTRUCTIONS FOR NOTEBOOKLM PODCAST HOSTS:
+
+MENTAL MODELS TO FOCUS ON:
+- The "Prisma is a translator" model. Trevor has been writing Prisma for months. He is not learning something brand new -- he is learning the language his database has been speaking all along. Frame it as "pulling back the curtain."
+- The array method mapping: .filter() = WHERE, .sort() = ORDER BY, .slice() = LIMIT, .map() = SELECT. Hit this analogy hard and early. It is the fastest path to making SQL feel natural for a JavaScript developer.
+- SQL reads like English. Encourage reading queries out loud. This is a genuine advantage of SQL that experienced developers sometimes forget to appreciate.
+
+JS ARRAY METHOD EQUIVALENTS:
+- WHERE = .filter()
+- ORDER BY = .sort()
+- LIMIT = .slice(0, n)
+- OFFSET + LIMIT = .slice(start, start + n)
+- SELECT columns = .map(item => ({ col1: item.col1, col2: item.col2 }))
+- SELECT * = no .map(), return everything
+
+INVESTIGATIVE JOURNALISM ANGLE:
+Frame SQL as the investigative journalist's most powerful tool. "Every big investigative story in the last 20 years that involved data -- campaign finance, government spending, environmental violations, police misconduct records -- was found using SQL." This is not an exaggeration. Data journalism runs on SQL. For Trevor, learning SQL is not about switching careers to engineering; it is about adding a rocket booster to the investigative skills he has spent 15 years building.
+
+Example to weave in: "Imagine you get a FOIA dataset with 200,000 rows of police use-of-force records. Without SQL, you are opening that in Excel and scrolling. With SQL, you write SELECT officer_name, COUNT(*) as incidents FROM use_of_force GROUP BY officer_name ORDER BY incidents DESC LIMIT 10 and you have your lead in seconds."
+
+CONNECTIONS TO PREVIOUS/NEXT LESSONS:
+- This is Lesson 1, so there is nothing to connect backward.
+- Tease Lesson 02: "Next time we go deep on SELECT and filtering -- LIKE patterns, CASE expressions, NULL handling. All the tools you need to do serious data exploration."
+- Mention that everything learned today (SELECT, WHERE, ORDER BY, LIMIT) will be used in every single subsequent lesson. This is the vocabulary; fluency comes next.
+
+TREVOR'S BACKGROUND:
+- 15+ years investigative journalism
+- Self-taught web dev (React, Next.js, TypeScript, Tailwind)
+- Has been using Prisma ORM
+- Learning SQL for a potential role at Tenga (broadcast TV networks)
+- Learning philosophy: "Mental models first, syntax second"
+
+TONE:
+- One host should be a database expert who also has a data journalism background -- someone who has used SQL to break stories.
+- The other host should be a web developer learning SQL, mirroring Trevor's journey -- "Oh, so WHERE is just .filter()? That makes total sense."
+- Keep it conversational, not lecture-y. Build on the "you already know this" framing from the lesson itself.
+
+MEMORIZATION TECHNIQUES FOR THIS LESSON:
+- The query template as a pipeline: FROM -> WHERE -> SELECT -> ORDER BY -> LIMIT. Memorize this order. It is the order SQL actually executes (not the order you write it, which starts with SELECT).
+- "Always WHERE with UPDATE and DELETE" -- make this a mantra. Say it more than once. The horror story of accidentally running DELETE FROM articles without a WHERE clause is a rite of passage that is better experienced as a story than in production.
+- Single quotes for strings, not double quotes. This trips up every JavaScript developer. 'hello' not "hello".
+
+BROADCAST TV DATA EXAMPLES:
+Use these table names throughout: election_results (columns: precinct, county, candidate, vote_count, reporting_pct), weather_stations (columns: station_name, city, temperature, wind_speed), census_demographics (columns: county, population, median_income), ad_revenue (columns: advertiser, amount, time_slot, station).
+
+Example queries to weave in:
+- "Get all precincts in Harris County that have finished reporting": SELECT * FROM election_results WHERE county = 'Harris' AND reporting_pct = 100;
+- "Which weather stations are reporting extreme cold?": SELECT station_name, temperature FROM weather_stations WHERE temperature < 32 ORDER BY temperature ASC;
+- "Top 5 advertisers by spend in primetime": SELECT advertiser, amount FROM ad_revenue WHERE time_slot = 'primetime' ORDER BY amount DESC LIMIT 5;

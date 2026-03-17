@@ -1,0 +1,190 @@
+============================================================
+SECTION 1: SOURCE DOCUMENT FOR NOTEBOOKLM
+============================================================
+
+LESSON: 04 - Python Object-Oriented Programming
+TRACK: Django / Python (12-lesson curriculum)
+
+------------------------------------------------------------
+CONTEXT FOR HOSTS
+------------------------------------------------------------
+
+Where this lesson fits:
+Lesson 4 of 12. Lessons 1-3 covered Python basics, collections, functions, and modules. This lesson covers OOP: classes, self vs this, dunder methods, properties, inheritance, dataclasses. Lesson 5 covers data/file handling, then lesson 6 jumps into Django itself. OOP is critical because EVERY Django model is a Python class. Every Django view can be a class. Every form is a class. Understanding classes here = understanding Django's architecture.
+
+Who Trevor is:
+Trevor knows ES6 classes, constructors, inheritance, static methods, getters/setters. He's comfortable with class-based patterns from React (class components, though he mostly uses hooks now). He needs to map JS class concepts to Python equivalents, especially the explicit "self" parameter, dunder methods, and multiple inheritance (which JS doesn't support).
+
+Key JS-to-Python translations:
+- constructor() -> __init__()
+- this -> self (but self must be explicitly declared as first parameter!)
+- new ClassName() -> just ClassName() (no "new" keyword)
+- extends -> parentheses: class Child(Parent):
+- instanceof -> isinstance(obj, Class)
+- toString() -> __str__() and __repr__()
+- get/set properties -> @property / @name.setter
+- static -> @staticmethod (no class access) or @classmethod (gets class as cls)
+- # private fields -> _ convention (not enforced)
+- Multiple inheritance: JS can't do it. Python can: class Child(Parent1, Parent2)
+
+Mental models:
+1. self is just a regular parameter, not magic — Python passes the instance explicitly
+2. Dunder methods are Python's protocol system — they connect your classes to built-in operators and functions
+3. @dataclass eliminates boilerplate — auto-generates __init__, __repr__, __eq__
+4. Multiple inheritance enables Django's mixin pattern
+
+------------------------------------------------------------
+LESSON CONTENT
+------------------------------------------------------------
+
+CLASSES — THE BASICS
+
+Three differences from JS:
+1. constructor() becomes __init__()
+2. this becomes self — but self MUST be the first parameter of every method
+3. No "new" keyword — just call the class like a function: Article("Scoop", "Trevor")
+
+Forgetting self is the #1 class bug. Every instance method must include self as its first parameter. Without it: TypeError: publish() takes 0 positional arguments but 1 was given.
+
+SELF VS THIS — EXPLICIT VS IMPLICIT
+
+In JavaScript, "this" is implicit and its value depends on HOW the function is called (causing endless binding bugs). In Python, self is explicit and always refers to the instance.
+
+When you call a.publish(), Python translates that to Article.publish(a). No magic. No surprises.
+
+This is why Python doesn't need arrow functions — there's no "this" binding to fix.
+
+INSTANCE VS CLASS VARIABLES
+
+Class variables (defined outside __init__) are shared by ALL instances. Instance variables (defined with self.x in __init__) are unique per instance.
+
+Mutable class variable trap: If you put tricks = [] as a class variable, ALL instances share that same list. Always define mutable attributes inside __init__.
+
+DUNDER METHODS — Python's Operator Overloading
+
+"Dunder" means double underscore. These special methods are called automatically by operators, built-in functions, and language features.
+
+__str__: For humans. What print() shows. Django admin uses this to display model records.
+__repr__: For developers. What the REPL shows. Should look like valid Python code.
+__len__: Makes len(obj) work.
+__eq__: Makes == work between objects.
+__lt__: Makes < work and enables sorted().
+__contains__: Makes "x in obj" work.
+__getitem__: Makes obj[key] work.
+__iter__: Makes "for x in obj" work. Uses yield for generators.
+__call__: Makes obj() work (callable objects).
+
+The mental model: When you write len(obj), Python calls obj.__len__(). When you write obj[key], Python calls obj.__getitem__(key). Every operator has a corresponding dunder. This is how Django's ORM makes queryset[0:5] and "item in queryset" feel like native Python.
+
+@PROPERTY — GETTERS AND SETTERS
+
+Same concept as JS get/set, different syntax. @property makes a method behave like an attribute (no parentheses to access it).
+
+JS: get area() { return ... } -> Python: @property def area(self): return ...
+JS: set diameter(d) { ... } -> Python: @diameter.setter def diameter(self, d): ...
+
+Django uses @property on models for computed fields like full_name or is_overdue.
+
+INHERITANCE & SUPER()
+
+extends becomes parentheses: class Circle(Shape):
+instanceof becomes isinstance(c, Shape)
+super().method() works the same way.
+
+Multiple inheritance: JS can't do it. Python can. class Article(Timestamped, Slugified): combines both parents' capabilities. Django uses this heavily for class-based views: class MyView(LoginRequiredMixin, ListView): combines authentication with list rendering.
+
+@STATICMETHOD AND @CLASSMETHOD
+
+@staticmethod: utility function namespaced to the class, no access to class or instance. Like JS static.
+@classmethod: receives the class as cls, enabling factory methods. Using cls() instead of ClassName() means subclasses automatically get the right type back. JS has no equivalent.
+
+DATACLASSES — TypeScript Interfaces Meet Classes
+
+@dataclass reads type-annotated fields and auto-generates __init__, __repr__, __eq__. Like TypeScript interfaces that actually DO things at runtime.
+
+@dataclass class Article: title: str; author: str; views: int = 0; published: bool = False
+
+Mutable defaults in dataclasses use field(default_factory=list) instead of [].
+frozen=True makes instances immutable (like Object.freeze).
+order=True enables sorting by fields.
+
+Django models are similar but more powerful — they generate database tables AND admin interfaces from field declarations.
+
+PRIVACY CONVENTIONS
+
+Python has no true privacy. _single_underscore = "treat as private" (convention). __double_underscore = name mangling (harder to access but still not truly private). JS #private fields are genuinely inaccessible.
+
+Python's philosophy: "We're all consenting adults here."
+
+ABSTRACT CLASSES
+
+Python's ABC (Abstract Base Class) enforces at runtime — trying to instantiate an abstract class raises TypeError. TypeScript's abstract is compile-time only.
+
+Django uses abstract models (class Meta: abstract = True) for shared fields that don't create database tables.
+
+------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+------------------------------------------------------------
+
+1. self is not magic — it's just the first parameter. a.method() is really Class.method(a). This eliminates all binding confusion.
+2. __str__ on every model — Django admin uses it to display records. Always define it. Without it, you see "Article object (1)" everywhere.
+3. Dunder methods connect your classes to Python's built-in ecosystem — they're the reason len(), ==, "in", for loops, and [] all work on custom objects.
+4. Multiple inheritance enables Django's mixin pattern — understanding this unlocks class-based views.
+5. @dataclass eliminates boilerplate — but Django models do even more (database tables + admin UI from class declarations).
+
+------------------------------------------------------------
+COMMON PITFALLS FOR JS DEVELOPERS
+------------------------------------------------------------
+
+- Forgetting self as the first parameter of every method
+- Using "new" before class instantiation (Python doesn't use new)
+- Putting mutable values (lists, dicts) as class variables instead of instance variables
+- Expecting # syntax for private fields (Python uses _ convention)
+- Not defining __str__ on classes (Django admin shows ugly "Object (1)" without it)
+- Trying single inheritance workarounds when multiple inheritance would be cleaner
+- Forgetting the @property decorator and calling computed attributes with parentheses
+
+------------------------------------------------------------
+REAL-WORLD CONNECTION
+------------------------------------------------------------
+
+Every Django model is a class. When you write class Article(models.Model) in lesson 7, that's Python inheritance — Article inherits from Django's Model base class, which provides all the database magic. The __str__ method you define shows up in Django admin. The @property decorator creates computed fields. Django class-based views use multiple inheritance for mixins: class StoryList(LoginRequiredMixin, ListView) combines authentication and list display. At a broadcast network, your data models for shows, episodes, ratings, and schedules are all Python classes with dunder methods making them sortable, comparable, and printable.
+
+
+============================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS FOR NOTEBOOKLM
+============================================================
+
+This episode should have two "revelation" moments: (1) self is not magic, and (2) dunder methods are how Python connects your classes to the language.
+
+Specific mental models for THIS lesson:
+- "self is just a parameter" — a.method() = Class.method(a). No binding surprises. This is THE key insight.
+- "Dunders are protocols" — __len__ connects to len(), __str__ connects to print(), __iter__ connects to for loops. It's a protocol system.
+- "Classes declare, dunders integrate" — you declare the class, dunders integrate it into Python's ecosystem
+
+JS/React equivalents to reference:
+- constructor -> __init__, this -> self (explicit), new -> nothing
+- toString() -> __str__ (for users) and __repr__ (for devs)
+- get/set -> @property / @prop.setter
+- extends -> parentheses class Child(Parent)
+- static -> @staticmethod or @classmethod
+- TypeScript interfaces -> @dataclass (but runtime, not compile-time)
+- React HOCs (withAuth(Component)) -> mixins via multiple inheritance
+- Object.freeze() -> @dataclass(frozen=True)
+
+Connect back to lesson 3: "Remember decorators? @property and @staticmethod are decorators you USE, not write. Same concept — a function that wraps another function."
+
+Tease lesson 5: "Next lesson covers file I/O, JSON, CSV, and error handling — the practical data work you'll do in Django management commands."
+
+Tease lesson 7: "When you see class Article(models.Model): in lesson 7, that's inheritance from Django's Model class. And the __str__ you define shows up in Django's free admin panel."
+
+Trevor's journalism background: "Think of dunder methods like editorial standards. __str__ is your AP Style headline — clean, human-readable. __repr__ is your internal story slug — has all the metadata a developer needs. Django admin uses __str__ to display your records, just like a CMS uses headlines."
+
+Memorization techniques:
+- "self is always first" — picture self standing at the front of the line
+- "dunder = double under" — say "dunder init" not "underscore underscore init"
+- "str for strings, repr for recreation" — __str__ for humans, __repr__ should recreate the object
+- "class(Parent) not class extends Parent" — parentheses, not extends keyword
+- "star for static, class for classmethod" — @staticmethod gets nothing, @classmethod gets cls
+
+Tone: The self explanation should be a genuine lightbulb moment. "Oh, so THAT'S why Python doesn't need arrow functions." The dunder methods section should build excitement about how Django uses them. Multiple inheritance should be framed as "wait, Python can do THAT?" since JS developers haven't seen this pattern.

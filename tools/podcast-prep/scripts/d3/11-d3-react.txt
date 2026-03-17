@@ -1,0 +1,188 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+LESSON TITLE: Lesson 11 - Interactivity & Polish
+TRACK: D3.js (12-lesson curriculum)
+
+--- CONTEXT FOR HOSTS ---
+
+Curriculum Position: Lesson 11 of 12. This is the "polish" lesson -- taking charts from functional to professional. Trevor learns mouse events, tooltips, transitions (animations), responsive design with viewBox, and accessibility basics. These are the finishing touches that make the difference between a developer's chart and a broadcast-quality visualization.
+
+What came before: Lessons 01-10 covered all chart types and shapes: bars, lines, areas, arcs, and maps. Trevor can build any chart type from scratch. What's missing is interactivity and polish.
+
+What's coming next: Lesson 12 is the capstone -- a complete broadcast data dashboard combining maps, bar charts, donut charts, filters, tooltips, and transitions.
+
+What Trevor already knows: React event handlers (onClick, onMouseEnter, etc.), CSS transitions, DOM events, responsive design concepts, React accessibility patterns.
+
+Learner's goal: Broadcast-quality visualizations require smooth animations, hover interactions, professional tooltips, and responsive sizing. This lesson bridges the gap between "works" and "polished."
+
+Specific analogies for THIS lesson:
+- D3 events are like React event handlers: .on("click", handler) instead of onClick={handler}
+- Tooltips are just positioned HTML divs -- nothing magical
+- Transitions are like CSS transitions but for any SVG attribute, including path shapes
+- viewBox makes SVG responsive like an <img> tag -- define a virtual canvas, let the browser scale it
+- Easing functions are like animation curves in CSS -- how the animation accelerates and decelerates
+
+Key mental models:
+- D3 v7 events: (event, d) as arguments -- event first, bound data second
+- Tooltips: HTML div outside SVG, positioned with event.clientX/clientY, styled with CSS
+- Transitions: .transition().duration().delay().ease() chain between attribute changes
+- Responsive: viewBox creates a virtual coordinate system that scales automatically
+- Accessibility: role="img", aria-label, <title>/<desc>, tabindex, keyboard handlers
+
+--- LESSON CONTENT ---
+
+Mouse Events in D3 v7
+
+D3's event pattern is callbacks, same concept as React. Instead of <div onClick={handleClick}>, it is .on("click", handleClick).
+
+In D3 v7, the event is the FIRST argument to the handler function:
+
+selection.on("mouseenter", function(event, d) {
+  console.log(event);   // native DOM event (pageX, pageY, etc.)
+  console.log(d);        // bound data (the __data__ property)
+  console.log(this);     // the DOM element -- use d3.select(this)
+});
+
+Common events: mouseenter (hover start), mousemove (cursor tracking), mouseleave (hover end), click.
+
+IMPORTANT: In older D3 versions (v5 and earlier), events were accessed via the global d3.event object. In D3 v7, the event is passed as the first argument. If you see d3.event in old tutorials and Stack Overflow answers, it will NOT work in v7. This is one of the most common interview questions about D3 version differences.
+
+Building Tooltips
+
+Tooltips are HTML <div> elements positioned near the cursor. Use HTML divs (not SVG <text>) because divs support rich formatting, automatic word wrap, and are easier to style with CSS.
+
+Pattern:
+1. Create a div outside the SVG with position: fixed, display: none, and pointer-events: none
+2. On mouseenter: show the div, set its content with .html()
+3. On mousemove: update position with event.clientX and event.clientY
+4. On mouseleave: hide the div
+
+The highlight effect on hover: change the bar's fill to a brighter color and add a stroke border using d3.select(this). Use a short transition for smoothness.
+
+Transitions
+
+Insert .transition() between a selection and attribute changes to animate the change:
+
+selection
+  .transition()
+  .duration(800)              // animation length in milliseconds
+  .delay((d, i) => i * 50)   // stagger each element by index
+  .ease(d3.easeCubicInOut)    // easing curve
+  .attr("height", d => yScale(d.value));
+
+Chaining transitions: call .transition() twice. The second transition automatically starts after the first completes:
+
+selection
+  .transition().duration(500).attr("height", h)
+  .transition().duration(300).attr("fill", "green");
+
+Easing Functions
+
+Easing controls the acceleration profile of animations:
+
+d3.easeCubicInOut -- smooth acceleration and deceleration. Natural feel. Best general-purpose easing.
+d3.easeLinear -- constant speed. Good for progress bars and continuous motion.
+d3.easeBounce -- bouncy ending. Use very sparingly.
+d3.easeElastic -- springy overshoot. Only for playful UIs.
+d3.easeCubicOut -- fast start, slow end. Good for entrance animations (elements arriving).
+
+Responsive Charts with viewBox
+
+The simplest way to make D3 charts responsive:
+
+const svg = d3.select("#chart")
+  .append("svg")
+  .attr("viewBox", "0 0 700 400")  // virtual 700x400 canvas
+  .style("width", "100%")
+  .style("max-width", "800px");
+
+viewBox defines a virtual coordinate system. You draw everything as if the canvas is 700x400 pixels. The browser scales the entire SVG to fit its container while maintaining the aspect ratio. All coordinates stay the same regardless of actual rendered size.
+
+viewBox handles 90% of responsive needs. Only use ResizeObserver when you need layout changes at different sizes (e.g., switching from horizontal to vertical bar orientation on mobile).
+
+Accessibility Basics
+
+Every D3 chart should include:
+- role="img" and aria-label="Description" on the SVG element
+- <title> and <desc> elements inside the SVG for screen readers
+- tabindex="0" on interactive elements to make them keyboard-focusable
+- Keyboard event handlers (keydown) alongside mouse events
+- Never rely on color alone -- add patterns, labels, or tooltips for colorblind users
+
+The lesson demonstrates:
+- A bar chart with hover tooltips showing city name, population, and density, with entrance animations and highlight effects
+- An animated data transition demo where clicking FY 2022/2023/2024 buttons smoothly transitions bars between different budget datasets, using the enter/update/exit pattern with staggered delays and easing
+
+--- KEY CONCEPTS TO EMPHASIZE ---
+
+1. D3 v7 events: (event, d) -- event is the first argument, not d3.event (old pattern)
+2. Tooltips are HTML divs positioned with event.clientX/clientY, not SVG text
+3. .transition().duration().delay().ease() is the transition chain
+4. viewBox makes SVG responsive without ResizeObserver
+5. Accessibility: role="img", aria-label, never rely on color alone
+
+--- COMMON PITFALLS ---
+
+- Using d3.event (D3 v5 pattern) instead of the event argument (D3 v7) -- this is a breaking change that comes up in interviews
+- Placing tooltips inside the SVG -- they should be HTML divs outside the SVG for proper formatting and positioning
+- Forgetting pointer-events: none on tooltip divs (causes flickering when cursor moves over the tooltip)
+- Using arrow functions with .each() or .on() when you need "this" to refer to the DOM element -- arrow functions don't bind "this"
+- Applying transitions to selections that are being removed -- transitions on exiting elements need .transition() before .remove()
+- Not using viewBox and instead setting fixed width/height (chart won't resize with the container)
+
+--- BROADCAST TV CONNECTION ---
+
+- Broadcast graphics always have hover/click interactions on their web companions -- this lesson teaches exactly that
+- The staggered bar entrance animation is a standard on-air effect -- bars grow up one by one during a reveal
+- Smooth transitions between datasets (FY 2022 vs FY 2023) is exactly what a broadcast data team does when switching between data views during a live show
+- Tooltips showing detailed values are essential for broadcast web apps -- the viewer watches the simple graphic on TV and explores the details online
+- viewBox responsiveness ensures the same chart works on TV (1920x1080), desktop browsers, and mobile devices
+- Easing functions control the "feel" of broadcast animations -- too bouncy looks unprofessional; easeCubicOut is the safe default
+- Accessibility compliance is a legal requirement for broadcast network websites
+
+
+========================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+========================================
+
+PODCAST CUSTOMIZATION FOR LESSON 11: Interactivity & Polish
+
+TARGET MENTAL MODELS:
+- D3 events as "React event handlers with different syntax"
+- Tooltips as "positioned HTML divs" -- demystify them completely
+- Transitions as "CSS transitions for any SVG attribute"
+- viewBox as "responsive mode" -- one attribute handles 90% of responsive needs
+
+SPECIFIC ANALOGIES TO USE:
+- "D3 events are literally React's event handlers in different clothes. React: onClick={(event) => handleClick(event, data)}. D3: .on('click', (event, d) => handleClick(event, d)). Same concept. The only difference is that D3 gives you the bound data automatically as the second argument."
+- "A tooltip is just a div. That's it. No special D3 API, no magic component. Create a div, hide it, show it on hover, position it near the cursor, hide it on leave. You've probably built this in React with useState and onMouseEnter."
+- "viewBox is like setting a virtual resolution. Remember when you'd design a website at 1920x1080 and let the browser scale it? viewBox does that for SVG. You design at 700x400 and the browser scales to any container size while keeping the aspect ratio."
+- "Easing functions are the difference between a student project and a broadcast graphic. easeCubicOut for entrances, easeCubicInOut for transitions. Those two cover 95% of professional animation needs."
+
+CONNECTIONS TO OTHER LESSONS:
+- Connect to Lesson 07: "The animated data transition demo uses enter/update/exit with .join(enter, update, exit). Same pattern you learned for the filterable bar chart. Now add .transition() calls inside each callback for smooth animations."
+- Connect to Lesson 04: "Remember the __data__ sticky note? When you hover a bar and write .on('mouseenter', (event, d) => {}), that d is the exact __data__ you inspected in DevTools in Lesson 04."
+- Connect to Lesson 06: "Your axes from Lesson 06 can be animated too. When the data changes and the scale domain updates, transition the axis: axisGroup.transition().duration(600).call(d3.axisLeft(yScale)). The ticks slide smoothly."
+- Connect to Lesson 10: "The map tooltips from Lesson 10 use this exact pattern. Hover a state, show the tooltip with state name and data value. The code is identical."
+- Tease Lesson 12: "The capstone dashboard combines ALL of this: tooltips on every chart, smooth transitions when filters change, responsive layout, and accessibility attributes. Everything from this lesson applied at scale."
+
+TREVOR'S BACKGROUND TO REFERENCE:
+- React: "In React, you manage tooltip visibility with useState. In D3, you toggle display: block/none directly. In React, you position with refs and getBoundingClientRect. In D3, you use event.clientX/clientY. Different mechanism, identical concept."
+- Broadcast TV: "In a broadcast control room, the director calls for graphics to animate onto screen. The entrance animation (bars growing up with staggered delays) is exactly what happens when a producer triggers a data graphic during a live show. easing controls whether it looks professional or amateurish."
+- Journalism/Accessibility: "Broadcast network websites have legal accessibility requirements. role='img', aria-label, keyboard navigation -- these aren't nice-to-haves. They're requirements that a data team has to implement on every visualization."
+
+MEMORIZATION TECHNIQUES:
+- "D3 v7: (event, d) -- event first" -- the number one thing to remember about D3 v7 events
+- "Tooltip = HTML div, not SVG text" -- always outside the SVG
+- ".transition().duration().delay().ease()" -- the transition chain, in order
+- "viewBox = responsive" -- one attribute, done
+- "Two easings: cubicOut for entrance, cubicInOut for transitions" -- covers 95% of needs
+
+TONE:
+- This should feel like the "finishing touches" episode. The React-dev host: "So this is what makes a chart look professional? Animations, tooltips, and responsive sizing?"
+- D3-expert: "Exactly. The chart without these looks like a homework assignment. With them, it looks like a broadcast graphic. The code changes are small, but the visual impact is massive."
+- The v7 event pattern should get special attention: "If you Google D3 tooltip tutorials, half of them will use d3.event. That's the old way. In v7, it's just the first argument to your handler. This comes up in interviews."
+- Celebrate the simplicity of viewBox: "That's it? One attribute and my chart is responsive? No ResizeObserver, no media queries?" "For 90% of cases, yes. viewBox handles it. Only reach for more complex solutions when you need layout changes at breakpoints."
+- End with polish as a professional differentiator: "The difference between a developer's chart and a broadcast graphic is polish. Smooth transitions, professional easing, clean tooltips, responsive sizing, accessible markup. That's this lesson."

@@ -1,0 +1,335 @@
+================================================================================
+SECTION 1: SOURCE DOCUMENT
+================================================================================
+
+TITLE: Subqueries & CTEs -- Queries Inside Queries
+TRACK: SQL / PostgreSQL (Lesson 5 of 12)
+
+--------------------------------------------------------------------------------
+CONTEXT FOR HOSTS
+--------------------------------------------------------------------------------
+
+This is Lesson 5 of a 12-lesson SQL curriculum. In Lessons 01-04, Trevor learned single-table queries, pattern matching, NULL handling, JOINs, and aggregation with GROUP BY. Now he learns to compose queries -- using the result of one query as input to another. This is where SQL moves from individual queries to multi-step analysis.
+
+THE LEARNER: Trevor is an investigative journalist with 15+ years of experience who taught himself web development (React, Next.js, TypeScript, Tailwind). He has been using Prisma as his ORM. He is learning raw SQL/PostgreSQL for a potential role at Tenga, a chain of broadcast TV networks.
+
+WHAT TREVOR ALREADY KNOWS THAT CONNECTS:
+- Function calls in JavaScript: A subquery is like a function call -- it returns a value, and you use that value in an expression. WHERE views > getAverage() is the same concept as WHERE views > (SELECT AVG(views) FROM articles).
+- Promise chains (.then()): CTEs are like named steps in a Promise chain. Each step gets a result, and the next step uses it.
+- Nested Prisma queries: When Trevor writes prisma.article.findMany({ where: { author: { beat: 'politics' } } }), Prisma generates a subquery under the hood.
+- const variables: A CTE (WITH name AS (...)) is like const name = ... -- a named intermediate result that you can reference later.
+- Closures: A correlated subquery references a variable from the outer query, like a closure capturing a variable from the enclosing scope.
+- $queryRaw: Prisma's escape hatch for queries too complex for the query builder. Subqueries and CTEs are the main reason you need $queryRaw.
+
+TREVOR'S GOAL: Building multi-step analyses for broadcast TV data -- finding above-average precincts, comparing candidates to overall performance, building performance reports that require intermediate calculations.
+
+DATA JOURNALISM CONNECTION: Subqueries and CTEs are how data journalists build complex investigations step by step. "Find all officers with more complaints than the department average" is a subquery. "First calculate each district's spending, then find districts that spend more than twice the state average" is a CTE. These are not theoretical -- they are the actual queries that produce investigative stories.
+
+MENTAL MODELS THAT MATTER MOST:
+1. Subqueries are function calls -- they return a value (scalar), a list (IN), or a table (FROM), and you use that result in the outer query.
+2. CTEs are const variables -- named intermediate results that make complex queries readable.
+3. Correlated vs uncorrelated is closures vs pure functions -- an uncorrelated subquery runs once (pure function), a correlated subquery runs per row (closure that captures outer scope).
+4. CTEs read top to bottom like a story, while nested subqueries read inside-out like nested function calls.
+
+--------------------------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+--------------------------------------------------------------------------------
+
+1. SUBQUERIES IN WHERE: The most common use. Scalar subqueries return one value (WHERE views > (SELECT AVG(views))). IN subqueries return a list (WHERE author_id IN (SELECT id FROM authors WHERE beat = 'politics')). EXISTS checks if any rows exist (WHERE EXISTS (SELECT 1 FROM articles WHERE author_id = au.id)).
+
+2. CORRELATED VS UNCORRELATED: Uncorrelated subqueries run once independently (like a pure function). Correlated subqueries reference the outer query and run once per row (like a closure). Correlated subqueries are more flexible but can be slower.
+
+3. SUBQUERIES IN FROM (DERIVED TABLES): A subquery in FROM creates a temporary table you can query against. Must have an alias. Solves the problem of filtering on aggregated results without HAVING.
+
+4. SUBQUERIES IN SELECT: A scalar subquery in SELECT adds a computed column to each row. Runs once per row. Useful for showing individual values alongside overall statistics.
+
+5. CTEs (COMMON TABLE EXPRESSIONS): Named temporary results defined with WITH ... AS (...). Make complex queries readable by naming each step. Can reference earlier CTEs. Read top to bottom instead of inside-out.
+
+6. RECURSIVE CTEs: Handle tree-structured data like org charts, category hierarchies, threaded comments. Base case + UNION ALL + recursive step. The CTE calls itself to walk down the tree level by level.
+
+7. EXISTS VS IN: EXISTS is better when you just need to know if rows exist, when the subquery might return NULLs (NOT IN fails with NULLs, NOT EXISTS handles them safely), or when the subquery returns a huge list. IN is better when the list is small and readable.
+
+8. PRISMA $queryRaw: Prisma cannot express subqueries, CTEs, or recursive queries in its query builder. Use prisma.$queryRaw with tagged template literals for these cases. The template literal automatically parameterizes variables to prevent SQL injection.
+
+--------------------------------------------------------------------------------
+DATA JOURNALISM CONNECTION
+--------------------------------------------------------------------------------
+
+Subqueries and CTEs are how investigative journalists build the complex analyses that produce front-page stories.
+
+Finding Outliers: "Which officers have more complaints than the department average?" That is a scalar subquery: WHERE complaint_count > (SELECT AVG(complaint_count) FROM officers). Finding outliers is the foundation of investigative journalism.
+
+Multi-Step Analysis: "First calculate each school district's per-student spending. Then find districts that spend less than half the state average." This is a CTE: WITH district_spending AS (SELECT district, SUM(budget) / student_count AS per_student FROM schools GROUP BY district), then SELECT from district_spending WHERE per_student < (SELECT AVG(per_student) FROM district_spending) / 2.
+
+Cross-Referencing Datasets: "Find donors who appear in both the campaign donation records AND the government contractor database." This is a subquery with IN or EXISTS. WHERE donor_name IN (SELECT contractor_name FROM gov_contracts). This is literally how journalists find conflicts of interest.
+
+For Trevor specifically: imagine election night analysis. "Which precincts are performing above the county average for a specific candidate?" That requires a correlated subquery or CTE: first calculate each county's average vote share, then compare each precinct to its county's average. That analysis powers the "watch these precincts" callout on the election dashboard.
+
+Recursive CTEs are relevant for organizational structures: "Show the complete reporting chain for every employee at Tenga" -- CEO to VP to Director to Manager to the individual contributor. A recursive CTE walks the tree.
+
+--------------------------------------------------------------------------------
+BROADCAST TV SCENARIOS
+--------------------------------------------------------------------------------
+
+ELECTION DATA:
+- "Precincts with above-average turnout": SELECT precinct, county, vote_count FROM election_results WHERE vote_count > (SELECT AVG(vote_count) FROM election_results) ORDER BY vote_count DESC;
+- "Find counties where at least one precinct has 100% reporting": SELECT DISTINCT county FROM election_results WHERE EXISTS (SELECT 1 FROM election_results er2 WHERE er2.county = election_results.county AND er2.reporting_pct = 100);
+- CTE: "Compare each precinct to its county average":
+  WITH county_avg AS (
+    SELECT county, AVG(vote_count) AS avg_votes
+    FROM election_results GROUP BY county
+  )
+  SELECT er.precinct, er.county, er.vote_count, ca.avg_votes,
+    er.vote_count - ca.avg_votes AS diff_from_avg
+  FROM election_results er
+  JOIN county_avg ca ON er.county = ca.county
+  ORDER BY diff_from_avg DESC;
+
+WEATHER DATA:
+- "Stations hotter than the state average": SELECT station_name, temperature, state FROM weather_stations ws WHERE temperature > (SELECT AVG(temperature) FROM weather_stations ws2 WHERE ws2.state = ws.state);
+
+AD REVENUE:
+- CTE: "Find advertisers who spend more than the average advertiser":
+  WITH advertiser_totals AS (
+    SELECT advertiser, SUM(amount) AS total_spend
+    FROM ad_revenue GROUP BY advertiser
+  )
+  SELECT advertiser, total_spend
+  FROM advertiser_totals
+  WHERE total_spend > (SELECT AVG(total_spend) FROM advertiser_totals)
+  ORDER BY total_spend DESC;
+
+--------------------------------------------------------------------------------
+LESSON CONTENT
+--------------------------------------------------------------------------------
+
+THE MENTAL MODEL -- QUERIES AS BUILDING BLOCKS
+
+Think of subqueries like function calls in JavaScript. A function returns a value, and you use that value in an expression. A subquery returns data (a single value, a list, or a table), and you use that data inside another query.
+
+  JavaScript:
+    const avg = getAverage(articles.views);
+    const aboveAvg = articles.filter(a => a.views > avg);
+
+  SQL:
+    SELECT * FROM articles
+    WHERE views > (SELECT AVG(views) FROM articles);
+
+The inner query SELECT AVG(views) FROM articles runs first and returns a number. The outer query then uses that number in its WHERE clause. Nesting. Just like functions.
+
+Three places for subqueries:
+- In WHERE -- filter based on another query's result
+- In FROM -- treat a query result as a temporary table
+- In SELECT -- compute a value for each row
+
+SUBQUERIES IN WHERE
+
+Scalar Subqueries -- Return One Value:
+A scalar subquery returns exactly one row, one column. Use it anywhere you would use a number or string.
+
+  SELECT title, views FROM articles
+  WHERE views > (SELECT AVG(views) FROM articles);
+
+The subquery returns a single number (say 3214). The outer query becomes WHERE views > 3214.
+
+  -- Most recent article
+  SELECT title, published_at FROM articles
+  WHERE published_at = (SELECT MAX(published_at) FROM articles);
+
+  -- Articles by the author with the most views
+  SELECT title, views FROM articles
+  WHERE author_id = (
+    SELECT author_id FROM articles
+    GROUP BY author_id ORDER BY SUM(views) DESC LIMIT 1
+  );
+
+IN Subqueries -- Return a List:
+When a subquery returns multiple values (one column, many rows), use IN:
+
+  Prisma: await prisma.article.findMany({ where: { author: { beat: 'politics' } } });
+  SQL: SELECT title FROM articles WHERE author_id IN (
+    SELECT id FROM authors WHERE beat = 'politics'
+  );
+
+The inner query returns a list of IDs: (1, 5, 12). The outer query becomes WHERE author_id IN (1, 5, 12).
+
+  -- NOT IN: articles NOT by politics-beat authors
+  SELECT title FROM articles
+  WHERE author_id NOT IN (SELECT id FROM authors WHERE beat = 'politics');
+
+Watch out for NULLs with NOT IN. If the subquery returns any NULL values, NOT IN returns no rows at all. This is a notorious SQL gotcha. Use NOT EXISTS instead if NULLs are possible.
+
+EXISTS Subqueries -- Check If Rows Exist:
+EXISTS returns true if the subquery finds at least one row. It does not care about the values -- just whether anything matches.
+
+  -- Authors who have written at least one article
+  SELECT name FROM authors au
+  WHERE EXISTS (SELECT 1 FROM articles a WHERE a.author_id = au.id);
+
+  -- Authors who have NEVER written an article
+  SELECT name FROM authors au
+  WHERE NOT EXISTS (SELECT 1 FROM articles a WHERE a.author_id = au.id);
+
+EXISTS vs IN: EXISTS is better when (1) you just need to know if rows exist, (2) the subquery might return NULLs, (3) the subquery returns a huge list (EXISTS stops at the first match).
+
+CORRELATED VS UNCORRELATED SUBQUERIES
+
+Uncorrelated -- Independent Inner Query:
+Runs once, produces a result, outer query uses it. Like a pure function:
+
+  SELECT title, views FROM articles
+  WHERE views > (SELECT AVG(views) FROM articles);
+
+Correlated -- Inner Query References Outer Query:
+References a column from the outer query, runs once per row. Like a closure:
+
+  -- Each article's views compared to its category's average
+  SELECT title, category, views FROM articles a
+  WHERE views > (
+    SELECT AVG(views) FROM articles a2 WHERE a2.category = a.category
+  );
+
+The inner query references a.category from the outer query. For each article, SQL runs the subquery with that article's category. Powerful but can be slow on large datasets.
+
+SUBQUERIES IN FROM -- DERIVED TABLES
+
+A subquery in FROM creates a temporary table that you can query against:
+
+  SELECT name, article_count FROM (
+    SELECT au.name, COUNT(a.id) AS article_count
+    FROM authors au
+    LEFT JOIN articles a ON au.id = a.author_id
+    GROUP BY au.id, au.name
+  ) AS author_stats
+  WHERE article_count > 3;
+
+The subquery in FROM must have an alias (AS author_stats). Derived tables solve the "cannot filter on aggregates in WHERE" problem.
+
+SUBQUERIES IN SELECT -- COMPUTED COLUMNS
+
+A scalar subquery in SELECT adds a computed column to each row:
+
+  SELECT
+    title, views,
+    (SELECT AVG(views) FROM articles) AS overall_avg,
+    views - (SELECT AVG(views) FROM articles) AS diff_from_avg
+  FROM articles
+  ORDER BY diff_from_avg DESC;
+
+CTEs -- COMMON TABLE EXPRESSIONS (WITH)
+
+CTEs are the clean, readable alternative to nested subqueries. Instead of nesting queries inside queries, you define named temporary results at the top using WITH, then use them below. Think of CTEs as const variables for queries.
+
+  JavaScript:
+    const authorStats = getAuthorStats();
+    const avgCount = average(authorStats.map(a => a.count));
+    const aboveAvg = authorStats.filter(a => a.count > avgCount);
+
+  SQL:
+    WITH author_stats AS (
+      SELECT author_id, COUNT(*) AS cnt FROM articles GROUP BY author_id
+    ),
+    avg_count AS (
+      SELECT AVG(cnt) AS val FROM author_stats
+    )
+    SELECT au.name, s.cnt FROM author_stats s
+    JOIN authors au ON s.author_id = au.id
+    WHERE s.cnt > (SELECT val FROM avg_count);
+
+CTEs make complex queries readable: each step has a name, reads top to bottom like a story instead of inside-out like nested function calls.
+
+When to use CTEs vs subqueries:
+- CTEs: multiple logical steps, need to reference a result more than once, readability matters, building complex analysis
+- Subqueries: simple one-off filter, result used only once, query is short
+
+RECURSIVE CTEs -- HIERARCHICAL DATA
+
+Recursive CTEs handle tree-structured data: org charts, category hierarchies, threaded comments.
+
+  WITH RECURSIVE org_tree AS (
+    -- Base case: start with the CEO
+    SELECT id, name, manager_id, 0 AS depth, name AS chain
+    FROM employees WHERE manager_id IS NULL
+
+    UNION ALL
+
+    -- Recursive step: find each person's reports
+    SELECT e.id, e.name, e.manager_id, t.depth + 1,
+      t.chain || ' > ' || e.name
+    FROM employees e
+    INNER JOIN org_tree t ON e.manager_id = t.id
+  )
+  SELECT name, depth, chain FROM org_tree ORDER BY chain;
+
+Pattern: base case (top of tree), UNION ALL, recursive step that joins back to the CTE itself. SQL runs the base case first, then repeats the recursive step until no new rows are found.
+
+Be careful: if data has cycles, recursion loops forever. Add a WHERE depth < 10 safeguard.
+
+PRISMA AND COMPLEX QUERIES
+
+Prisma cannot express subqueries, CTEs, or recursive queries. Use prisma.$queryRaw:
+
+  const result = await prisma.$queryRaw`
+    WITH author_stats AS (
+      SELECT author_id, COUNT(*) AS article_count, AVG(views) AS avg_views
+      FROM articles GROUP BY author_id
+    )
+    SELECT au.name, s.article_count, s.avg_views
+    FROM author_stats s
+    JOIN authors au ON s.author_id = au.id
+    WHERE s.article_count > ${minCount}
+  `;
+
+The template literal automatically parameterizes variables (${minCount}) to prevent SQL injection. Never use string concatenation with raw SQL.
+
+================================================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+================================================================================
+
+LESSON-SPECIFIC INSTRUCTIONS FOR NOTEBOOKLM PODCAST HOSTS:
+
+MENTAL MODELS TO FOCUS ON:
+- Subqueries are function calls. Trevor calls functions in JavaScript all the time. WHERE views > getAvg() is exactly WHERE views > (SELECT AVG(views) FROM articles). The subquery "returns a value" just like a function does.
+- CTEs are const variables. WITH author_stats AS (...) is like const authorStats = .... Named, readable, referenceable. This analogy makes CTEs click instantly for a JavaScript developer.
+- Correlated vs uncorrelated is closures vs pure functions. An uncorrelated subquery is a pure function -- same input, same output, runs once. A correlated subquery is a closure -- it captures a variable from the outer scope and runs once per row.
+- CTEs read like a story (top to bottom). Nested subqueries read like nested function calls (inside out). CTEs are the same logic but dramatically easier to read.
+
+JS/PRISMA EQUIVALENTS TO HIGHLIGHT:
+- Scalar subquery in WHERE = using a function return value in a condition
+- IN subquery = array.includes() with a dynamically computed list
+- EXISTS = checking if an array has any matching elements
+- CTE (WITH ... AS) = const variable for intermediate results
+- Recursive CTE = recursive function with base case + recursive step
+- prisma.$queryRaw = the escape hatch for complex SQL
+- Correlated subquery = closure capturing outer scope
+
+INVESTIGATIVE JOURNALISM ANGLE:
+Frame subqueries as the outlier-detection tool: "Every investigative story starts with 'who is above average?' or 'who is an outlier?' Subqueries answer these questions directly. WHERE complaint_count > (SELECT AVG(complaint_count) FROM officers) -- that one query finds every officer who has more complaints than the department average. That is your lead list."
+
+Frame CTEs as the multi-step investigation: "An investigation has steps. Step 1: calculate spending per district. Step 2: find the state average. Step 3: find districts spending less than half the average. CTEs map directly to investigative steps. Each WITH clause is a step in your analysis, named and readable."
+
+The EXISTS pattern matters for cross-referencing: "Find donors who are also government contractors. WHERE EXISTS (SELECT 1 FROM gov_contracts WHERE contractor_name = donors.name). This is how journalists find conflicts of interest -- by cross-referencing datasets."
+
+CONNECTIONS TO PREVIOUS/NEXT LESSONS:
+- Connect back to Lesson 04: "Aggregation gave you summary statistics. Subqueries let you use those summaries as filters. 'Show me everything above the average' requires aggregation inside a subquery."
+- Connect back to Lesson 03: "CTEs can include JOINs. You can build a CTE that joins two tables, then reference that combined result in the final query."
+- Tease Lesson 06 (Data Modification): "So far we have only read data. Next lesson we learn INSERT, UPDATE, DELETE with advanced techniques -- RETURNING, UPSERT, transactions. Modifying data safely."
+
+TONE:
+- One host should emphasize the analytical power -- "CTEs let you build investigations step by step. Each step is named, testable, debuggable."
+- The other host should make JavaScript connections -- "Oh, so a CTE is just a const? And a correlated subquery is a closure? I already understand these patterns."
+- The $queryRaw section should acknowledge the Prisma/SQL tradeoff: "Prisma handles 80% of queries beautifully. But for this 20% -- subqueries, CTEs, recursive queries -- you need raw SQL. And now you know how to write it."
+
+MEMORIZATION TECHNIQUES:
+- Three places for subqueries: WHERE (filter), FROM (temp table), SELECT (computed column).
+- EXISTS vs IN: "EXISTS = does anything match? IN = is this value in the list?"
+- CTE syntax: WITH name AS (query), another AS (query) SELECT ... -- define then use.
+- Recursive CTE pattern: base case + UNION ALL + recursive step.
+- NOT IN trap: "If the subquery returns NULLs, NOT IN breaks. Use NOT EXISTS instead."
+
+BROADCAST TV DATA EXAMPLES:
+- "Precincts with above-average turnout": WHERE vote_count > (SELECT AVG(vote_count) FROM election_results)
+- "Compare each precinct to its county average" (CTE): WITH county_avg AS (...) then JOIN to compare
+- "Stations hotter than the state average" (correlated subquery)
+- "Find advertisers who spend more than average" (CTE with two steps)
+- "Org chart for the newsroom" (recursive CTE)

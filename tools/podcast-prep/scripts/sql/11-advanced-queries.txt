@@ -1,0 +1,304 @@
+================================================================================
+SECTION 1: SOURCE DOCUMENT
+================================================================================
+
+TITLE: Transactions & Concurrency -- Safe Multi-Step Operations
+TRACK: SQL / PostgreSQL (Lesson 11 of 12)
+
+--------------------------------------------------------------------------------
+CONTEXT FOR HOSTS
+--------------------------------------------------------------------------------
+
+This is Lesson 11 of a 12-lesson SQL curriculum. In Lessons 01-10, Trevor learned to read, write, design schemas, optimize queries, use PostgreSQL features, and create reusable database objects. Now he learns about transactions -- how to group multiple operations into all-or-nothing units, how the database handles concurrent access, and how to prevent data corruption when multiple users modify data simultaneously.
+
+Note: Despite the directory name "advanced-queries," this lesson is actually about Transactions & Concurrency. Transactions were introduced briefly in Lesson 06 (Data Modification). This lesson goes much deeper into ACID properties, isolation levels, locking, and deadlocks.
+
+THE LEARNER: Trevor is an investigative journalist with 15+ years of experience who taught himself web development (React, Next.js, TypeScript, Tailwind). He has been using Prisma as his ORM. He is learning raw SQL/PostgreSQL for a potential role at Tenga, a chain of broadcast TV networks.
+
+WHAT TREVOR ALREADY KNOWS THAT CONNECTS:
+- Prisma $transaction(): Trevor has used Prisma transactions. This lesson shows the SQL that Prisma generates (BEGIN/COMMIT/ROLLBACK) and the features Prisma cannot access (SAVEPOINT, SELECT FOR UPDATE, isolation levels).
+- try/catch in JavaScript: A transaction is like a try/catch for your database. BEGIN starts the try block. COMMIT is the success path. ROLLBACK is the catch that undoes everything.
+- Git commits: A transaction is like staging changes before committing. BEGIN = start staging. Your operations are staged but not permanent. COMMIT = git commit (permanent). ROLLBACK = git checkout . (discard all staged changes).
+- Race conditions in async JavaScript: When two async functions modify the same variable concurrently, you get bugs. Databases have the same problem with concurrent transactions, and they solve it with locks and isolation levels.
+- Google Docs drafts: BEGIN = open a draft. COMMIT = publish/save. ROLLBACK = discard draft. Changes are only visible to you until you commit.
+
+TREVOR'S GOAL: Safe concurrent data operations for broadcast TV -- ensuring election result updates from multiple precincts do not corrupt each other, preventing double-booking of ad time slots, safely transferring articles between authors, and generating consistent reports while data is being modified.
+
+MENTAL MODELS THAT MATTER MOST:
+1. Transactions are the database's undo button. BEGIN starts a group of operations. COMMIT makes them permanent. ROLLBACK undoes everything. If the database crashes mid-transaction, all changes are automatically rolled back.
+2. ACID guarantees: Atomicity (all or nothing), Consistency (rules always satisfied), Isolation (transactions do not interfere), Durability (committed = saved forever).
+3. Isolation levels are a speed/safety dial. READ COMMITTED (default, fast, good enough for 95% of cases), REPEATABLE READ (snapshot for consistent reports), SERIALIZABLE (perfect but slow, for financial operations).
+4. Locks are bathroom door locks. Only one transaction can modify a row at a time. Others wait their turn.
+5. Deadlocks are two people blocking each other. Always lock rows in the same order to prevent circular waits.
+
+--------------------------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+--------------------------------------------------------------------------------
+
+1. WHAT ARE TRANSACTIONS: A group of queries wrapped in an all-or-nothing guarantee. Either every query succeeds, or none take effect. The database treats them as a single atomic operation. Without transactions, a failure between two related operations can leave data in a corrupt state.
+
+2. BEGIN, COMMIT, ROLLBACK: BEGIN starts a transaction. COMMIT saves all changes permanently. ROLLBACK undoes everything since BEGIN. Between BEGIN and COMMIT, changes are only visible to your session. If the session disconnects before COMMIT, the transaction is automatically rolled back. If any query errors inside a transaction, PostgreSQL marks it "aborted" -- you can only ROLLBACK at that point.
+
+3. SAVEPOINT -- PARTIAL ROLLBACKS: SAVEPOINT name creates a checkpoint inside a transaction. ROLLBACK TO SAVEPOINT name undoes work back to the checkpoint without losing earlier work. Useful when one step might fail but you want to continue with the rest.
+
+4. EVERY SINGLE QUERY IS A TRANSACTION: When you run a lone UPDATE outside of BEGIN/COMMIT, PostgreSQL wraps it in an implicit transaction automatically. Individual queries are always atomic.
+
+5. ACID PROPERTIES: Atomicity = all or nothing. Consistency = constraints always satisfied (NOT NULL, UNIQUE, foreign keys). Isolation = concurrent transactions do not interfere. Durability = once COMMIT returns, data survives crashes. Think of ACID like saving a file: the entire file saves, the format is valid, two programs cannot corrupt it by writing simultaneously, and once saved it survives a crash.
+
+6. ISOLATION LEVELS: READ COMMITTED (default) -- each query sees the latest committed data. Same query run twice in one transaction might return different results (non-repeatable read). REPEATABLE READ -- transaction sees a snapshot from when it started. Same query always returns same results within the transaction. Use for reports and analytics. SERIALIZABLE -- strictest. Transactions behave as if they ran one after another. Conflicts cause one to be rolled back with an error the application must catch and retry.
+
+7. ROW LOCKS (AUTOMATIC): PostgreSQL automatically locks rows when you UPDATE or DELETE them. Other transactions trying to modify the same row will wait until the first commits or rolls back.
+
+8. SELECT FOR UPDATE: Explicitly locks selected rows, preventing other transactions from modifying them. Use when you need to read, compute, then write without interference. Prevents race conditions. Without FOR UPDATE: two sessions read the same value, both increment, you lose an update. With FOR UPDATE: second session waits for the first to finish.
+
+9. TABLE LOCKS: LOCK TABLE name IN EXCLUSIVE MODE blocks all other writes. Rare but useful for bulk operations and maintenance.
+
+10. DEADLOCKS: When two transactions each wait for the other's lock. PostgreSQL detects and kills one. Prevention: always lock rows in the same consistent order (e.g., always update lower ID first).
+
+11. PRISMA.$TRANSACTION() VS RAW SQL: Prisma array form runs queries sequentially without reading intermediate results. Prisma callback form allows reading mid-transaction and making decisions. Raw SQL is needed for SELECT FOR UPDATE, explicit locking, savepoints, table locks, and custom isolation levels.
+
+12. COMMON PITFALLS: Keep transactions short (long transactions hold locks and block others). Always COMMIT or ROLLBACK (forgetting leaves locks held indefinitely). Never make network calls inside transactions (external service latency extends lock time). Catch serialization errors and retry (the database does not auto-retry).
+
+--------------------------------------------------------------------------------
+DATA JOURNALISM CONNECTION
+--------------------------------------------------------------------------------
+
+Transactions protect data integrity in journalism workflows:
+
+Multi-Step Data Import: When importing a FOIA dataset, you might need to insert records into multiple tables (payments, contractors, agencies). If the import fails halfway through, you do not want half the data in the database. A transaction ensures the entire import succeeds or fails as one unit.
+
+Consistent Report Generation: When generating an investigative report that aggregates data across multiple tables, you need consistent numbers. Using REPEATABLE READ isolation, all your queries see the same snapshot. You will never have a report where the article count on page 1 disagrees with the total on page 10 because someone published articles mid-report.
+
+Safe Data Cleanup: When cleaning dirty government data, you often need to update related records together. Standardizing contractor names across a payments table and a violations table must happen atomically -- if one update fails, rolling back both prevents inconsistencies.
+
+Concurrent Election Updates: On election night, multiple data feeds update precinct results simultaneously. Without proper transaction handling, two feeds updating the same precinct could corrupt the data. Locks ensure that updates are processed one at a time for each precinct, while different precincts update in parallel.
+
+For Trevor at Tenga: "On election night, 50 precinct feeds update simultaneously. Each feed starts a transaction, locks the precinct row with SELECT FOR UPDATE, updates the vote counts, and commits. Other feeds for the same precinct wait their turn. Different precincts update in parallel. Your dashboard runs in REPEATABLE READ so the totals are always consistent even while updates are streaming in. If a feed sends bad data and errors out, ROLLBACK ensures no partial updates corrupt the results."
+
+--------------------------------------------------------------------------------
+BROADCAST TV SCENARIOS
+--------------------------------------------------------------------------------
+
+ARTICLE TRANSFER:
+  BEGIN;
+  SELECT id, author_id FROM articles WHERE id = 42 FOR UPDATE;
+  SELECT id, active FROM users WHERE id = 8 AND active = true;
+  UPDATE articles SET author_id = 8, updated_at = NOW() WHERE id = 42;
+  INSERT INTO article_events (article_id, event_type, details, occurred_at) VALUES (42, 'author_transfer', '{"from_author": 5, "to_author": 8}', NOW());
+  UPDATE users SET article_count = article_count - 1 WHERE id = 5;
+  UPDATE users SET article_count = article_count + 1 WHERE id = 8;
+  COMMIT;
+
+BULK PUBLISHING:
+  BEGIN;
+  SELECT COUNT(*) AS expected FROM articles WHERE edition_id = 12 AND published = false;
+  UPDATE articles SET published = true, published_at = NOW() WHERE edition_id = 12 AND published = false;
+  INSERT INTO edition_events (edition_id, event_type, article_count, occurred_at) VALUES (12, 'bulk_publish', (SELECT COUNT(*) FROM articles WHERE edition_id = 12 AND published = true), NOW());
+  COMMIT;
+
+AD TIME SLOT BOOKING:
+  BEGIN;
+  SELECT * FROM ad_slots WHERE slot_id = 'primetime-2024-04-15' FOR UPDATE;
+  -- Check if slot is available in application code
+  INSERT INTO ad_bookings (slot_id, advertiser, amount) VALUES ('primetime-2024-04-15', 'Acme Corp', 15000.00);
+  UPDATE ad_slots SET booked = true WHERE slot_id = 'primetime-2024-04-15';
+  COMMIT;
+
+ELECTION REPORT:
+  BEGIN ISOLATION LEVEL REPEATABLE READ;
+  SELECT county, SUM(vote_count) AS total_votes, AVG(reporting_pct) AS avg_reporting FROM election_results GROUP BY county ORDER BY county;
+  SELECT candidate, SUM(vote_count) AS total FROM election_results GROUP BY candidate ORDER BY total DESC;
+  -- Both queries see the same snapshot, even if results update between them
+  COMMIT;
+
+PRISMA EQUIVALENT:
+  await prisma.$transaction(async (tx) => {
+    const article = await tx.article.findUniqueOrThrow({ where: { id: articleId } });
+    if (article.authorId !== fromAuthorId) throw new Error('Wrong author');
+    const newAuthor = await tx.user.findFirst({ where: { id: toAuthorId, active: true } });
+    if (!newAuthor) throw new Error('Target author inactive');
+    await tx.article.update({ where: { id: articleId }, data: { authorId: toAuthorId } });
+    await tx.user.update({ where: { id: fromAuthorId }, data: { articleCount: { decrement: 1 } } });
+    await tx.user.update({ where: { id: toAuthorId }, data: { articleCount: { increment: 1 } } });
+  });
+
+--------------------------------------------------------------------------------
+LESSON CONTENT
+--------------------------------------------------------------------------------
+
+WHAT ARE TRANSACTIONS?
+
+A transaction is a group of queries wrapped in an all-or-nothing guarantee. Either every query in the group succeeds, or none of them take effect.
+
+Think about transferring an article from one author to another. Two operations: remove from Author A, add to Author B. If step 1 succeeds but step 2 fails, the article has no author -- data corruption. Transactions prevent this.
+
+Without a transaction: step 1 succeeds, step 2 fails, article is orphaned.
+With a transaction: step 2 fails, step 1 is rolled back, article keeps its original author.
+
+The bank transfer analogy: Transferring $100 from checking to savings requires a debit and a credit. If the debit succeeds but the credit fails, you have lost $100. Transactions guarantee both happen or neither happens. That is why banks were among the first to use relational databases.
+
+BEGIN, COMMIT, ROLLBACK
+
+Three commands control transactions:
+  BEGIN -- Start a transaction (open a draft in Google Docs)
+  COMMIT -- Save all changes permanently (click Publish)
+  ROLLBACK -- Undo everything since BEGIN (click Discard draft)
+
+  BEGIN;
+  INSERT INTO articles (title, body, author_id) VALUES ('Breaking Story', 'Content here...', 5);
+  UPDATE users SET article_count = article_count + 1 WHERE id = 5;
+  COMMIT;
+
+Key behavior:
+- Between BEGIN and COMMIT, your changes are only visible to your session. Other connections cannot see them yet.
+- If your session disconnects before COMMIT, the transaction is automatically rolled back.
+- If any query errors inside a transaction, PostgreSQL marks the transaction as "aborted" -- you can only ROLLBACK.
+
+SAVEPOINT -- PARTIAL ROLLBACKS
+
+SAVEPOINT creates a checkpoint you can roll back to without losing earlier work:
+
+  BEGIN;
+  INSERT INTO articles (title, body, author_id) VALUES ('Story 1', 'Content...', 5);
+  SAVEPOINT before_story_2;
+  INSERT INTO articles (title, body, author_id) VALUES ('Story 2', 'More content...', 999);
+  -- ERROR: author 999 does not exist
+  ROLLBACK TO SAVEPOINT before_story_2;
+  INSERT INTO articles (title, body, author_id) VALUES ('Story 2', 'More content...', 3);
+  COMMIT; -- Both Story 1 and Story 2 are saved
+
+Every single query is a transaction: When you run a lone UPDATE outside of BEGIN/COMMIT, PostgreSQL wraps it in an implicit transaction. That is why individual queries are atomic.
+
+ACID -- THE FOUR GUARANTEES
+
+Atomicity: All or nothing. All queries in a transaction succeed, or none do.
+Consistency: Rules are always satisfied. Constraints (NOT NULL, UNIQUE, foreign keys) are enforced.
+Isolation: Transactions do not interfere. Two users editing at the same time cannot corrupt each other's work.
+Durability: Committed = saved forever. Once COMMIT returns, the data survives power outages, crashes, anything.
+
+Think of ACID like saving a file. Atomicity = the entire file saves, not half. Consistency = the file format is always valid. Isolation = two programs cannot corrupt the file by writing simultaneously. Durability = once saved, it survives a crash.
+
+ISOLATION LEVELS
+
+READ COMMITTED (Default): Each query within the transaction sees the most recently committed data. The same query run twice might return different results if someone committed changes between them (non-repeatable read). Use for 95% of operations.
+
+REPEATABLE READ: The transaction sees a snapshot from when it started. No changes from other transactions are visible, even if committed. Use for reports and analytics where numbers must be consistent.
+
+  BEGIN ISOLATION LEVEL REPEATABLE READ;
+  SELECT views FROM articles WHERE id = 1; -- 100
+  -- Another session updates views to 200 and commits
+  SELECT views FROM articles WHERE id = 1; -- Still 100 (frozen snapshot)
+  COMMIT;
+
+SERIALIZABLE: Strictest level. Transactions behave as if they ran one after another. If two conflict, one is rolled back with an error. Your application must catch this error and retry.
+
+  Level              Speed     Consistency   When to Use
+  READ COMMITTED     Fastest   Good enough   Most operations (default)
+  REPEATABLE READ    Medium    Snapshot      Reports, analytics
+  SERIALIZABLE       Slowest   Perfect       Financial transactions
+
+Real talk: READ COMMITTED for almost everything. REPEATABLE READ for reports. SERIALIZABLE almost never, unless money is on the line.
+
+LOCKING
+
+Row Locks (Automatic): PostgreSQL automatically locks rows when you UPDATE or DELETE. Other transactions trying to modify the same row wait until the first commits or rolls back.
+
+SELECT FOR UPDATE: Explicitly locks selected rows, preventing modification by other transactions. Use when you read, compute, then write:
+
+  BEGIN;
+  SELECT views FROM articles WHERE id = 1 FOR UPDATE; -- locks the row
+  UPDATE articles SET views = views + 1 WHERE id = 1;
+  COMMIT;
+
+Without FOR UPDATE: Two sessions read views = 100, both write 101. Expected 102, got 101.
+With FOR UPDATE: Session B waits for Session A to finish. Reads 101, writes 102.
+
+DEADLOCKS
+
+A deadlock happens when two transactions each wait for the other to release a lock. PostgreSQL detects this and kills one.
+
+  Session A locks row 1, tries to lock row 2.
+  Session B locks row 2, tries to lock row 1.
+  Both are waiting for each other. Deadlock.
+
+Prevention: Always lock rows in the same order. If you need to update articles 1 and 2, always update 1 first, then 2.
+
+PRISMA.$TRANSACTION() VS RAW SQL
+
+Prisma array form: All succeed or all fail. Runs queries sequentially without intermediate reads.
+  await prisma.$transaction([prisma.article.create(...), prisma.user.update(...)]);
+  SQL equivalent: BEGIN; INSERT...; UPDATE...; COMMIT;
+
+Prisma callback form: Read mid-transaction and make decisions.
+  await prisma.$transaction(async (tx) => { const author = await tx.user.findUnique(...); if (!author.active) throw new Error('Inactive'); await tx.article.update(...); });
+  SQL equivalent: BEGIN; SELECT...; check in app; UPDATE...; COMMIT;
+
+When to use raw SQL transactions over Prisma: SELECT FOR UPDATE, explicit locking, savepoints, table locks, custom isolation levels.
+
+COMMON PITFALLS
+
+Keep transactions short. A 30-second transaction holds locks for 30 seconds, blocking other users.
+Always COMMIT or ROLLBACK. Forgetting leaves locks held indefinitely.
+Never make HTTP requests inside transactions. External service latency extends lock time.
+The database does not retry failed transactions. Your application must catch serialization errors and retry.
+
+================================================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+================================================================================
+
+LESSON-SPECIFIC INSTRUCTIONS FOR NOTEBOOKLM PODCAST HOSTS:
+
+MENTAL MODELS TO FOCUS ON:
+- try/catch for the database. BEGIN = try, COMMIT = success, ROLLBACK = catch. If anything goes wrong, everything is undone. Trevor uses try/catch daily in JavaScript -- this is the same pattern.
+- Git commits analogy. BEGIN = start staging changes. Operations are staged but not permanent. COMMIT = git commit (permanent). ROLLBACK = git checkout . (discard staged changes). This maps perfectly to how Trevor already thinks about version control.
+- Google Docs draft. BEGIN = open a draft. Only you can see your changes. COMMIT = publish. Everyone can see them. ROLLBACK = discard draft.
+- Race conditions in async JavaScript. Two async functions incrementing the same counter without a mutex = data corruption. Two database transactions updating the same row without locks = same problem. SELECT FOR UPDATE is the database's mutex.
+- Isolation levels as a dial. Turn it left (READ COMMITTED): fast, good enough. Turn it right (SERIALIZABLE): slow, perfect. Most of the time, leave it in the default position.
+
+JS/PRISMA EQUIVALENTS TO HIGHLIGHT:
+- BEGIN/COMMIT/ROLLBACK = prisma.$transaction()
+- Array $transaction = simple BEGIN...COMMIT (no intermediate reads)
+- Callback $transaction = interactive BEGIN...reads...decisions...COMMIT
+- throw inside callback = ROLLBACK
+- No throw = COMMIT
+- isolationLevel: 'RepeatableRead' = BEGIN ISOLATION LEVEL REPEATABLE READ
+- maxWait and timeout options = transaction timeouts
+- SELECT FOR UPDATE = no Prisma equivalent (use $queryRaw)
+- SAVEPOINT = no Prisma equivalent (use $queryRaw)
+- LOCK TABLE = no Prisma equivalent (use $queryRaw)
+- Serialization retry = application-level catch and retry loop
+
+INVESTIGATIVE JOURNALISM ANGLE:
+Frame transactions as data import insurance: "You receive a 500,000-row FOIA dataset. The import inserts into three tables: payments, contractors, and agencies. If the import crashes at row 300,000, you do not want half the data in the database. A transaction ensures either all 500,000 rows make it in, or none do."
+
+Frame REPEATABLE READ as the reporter's consistent snapshot: "You are generating a story based on campaign finance data. Your article says 'Candidate X received $1.2M in donations.' If someone imports new donations mid-analysis, your numbers on page 1 might not match page 10. REPEATABLE READ freezes the data at the start of your analysis. Every query sees the same snapshot."
+
+Frame SELECT FOR UPDATE as the exclusive interview: "You are updating precinct results. SELECT FOR UPDATE is like getting an exclusive -- while you are working with this precinct's data, nobody else can modify it. When you are done (COMMIT), the next journalist gets their turn."
+
+CONNECTIONS TO PREVIOUS/NEXT LESSONS:
+- Connect back to Lesson 06: "You learned BEGIN/COMMIT/ROLLBACK basics in Lesson 06 for simple multi-step operations. Now we go deep: isolation levels, locking, deadlocks, and savepoints."
+- Connect back to Lesson 10: "Triggers from Lesson 10 run inside the same transaction as the statement that fired them. If the transaction rolls back, the trigger's effects are undone too."
+- Connect back to Lesson 08: "Indexes from Lesson 08 make locked queries faster. A SELECT FOR UPDATE on an unindexed column means a slow scan while holding locks."
+- Tease Lesson 12 (Real-World Patterns): "Next, we put everything together: pagination, full-text search, JSONB patterns, soft deletes, audit trails, and migrations. The capstone of your SQL curriculum."
+
+TONE:
+- One host should emphasize safety and the consequences of getting it wrong: "Without transactions, a crash between step 1 and step 2 means your data is in a state that should not exist. The article has no author. The money left one account but never arrived in the other."
+- The other host should connect to practical Prisma experience: "So the callback form of $transaction is for when I need to read data and make decisions inside the transaction? And throwing an error is the same as ROLLBACK?"
+- The isolation levels section should feel pragmatic, not theoretical: "READ COMMITTED for almost everything. REPEATABLE READ for reports. SERIALIZABLE almost never. Do not over-engineer this."
+- The locking section should feel like solving a real concurrency bug: "Two users click 'publish' on the same article at the same time. Without FOR UPDATE, both read published = false, both set published = true, you get duplicate publish events. FOR UPDATE prevents this."
+
+MEMORIZATION TECHNIQUES:
+- "BEGIN, COMMIT, ROLLBACK -- three words, three operations." Minimal vocabulary.
+- "ACID: All-or-nothing, Constraints enforced, Isolation from others, Durable after commit." First letter = first word of each guarantee.
+- "READ COMMITTED = live data. REPEATABLE READ = frozen snapshot. SERIALIZABLE = one at a time." Three levels, three mental images.
+- "FOR UPDATE = lock the row while I work." One phrase.
+- "Deadlocks: always lock in the same order." One rule prevents the whole category of bugs.
+- "Keep transactions short, no network calls inside." Two rules for production safety.
+- "Throw = ROLLBACK in Prisma." The JavaScript equivalent.
+
+BROADCAST TV DATA EXAMPLES:
+- Article transfer: BEGIN, lock article FOR UPDATE, verify new author, update assignment, log event, update counts, COMMIT
+- Election night: concurrent precinct updates with row locking, dashboard reads with REPEATABLE READ
+- Ad slot booking: SELECT FOR UPDATE to prevent double-booking primetime slots
+- Bulk publishing: transaction to publish an entire edition atomically with validation
+- Retry pattern: catch serialization errors and retry for critical operations

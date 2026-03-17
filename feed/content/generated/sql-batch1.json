@@ -1,0 +1,858 @@
+[
+  {
+    "id": "sql-010",
+    "track": "sql",
+    "type": "interview",
+    "author": "innerJoin",
+    "time": "2h",
+    "content": "INTERVIEW Q: You have a users table and an orders table. The PM says \"give me all users who have NEVER placed an order.\"\n\nThree different ways to write this. Which one do you reach for and why?\n\nHint: one of them has a subtle NULL trap that will ruin your afternoon.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1245,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "The three patterns:\n1. LEFT JOIN WHERE NULL (anti-join)\n2. NOT EXISTS (correlated subquery)\n3. NOT IN (subquery)\n\nAll work, but NOT IN has the NULL trap: if the subquery returns ANY NULL user_ids, the entire result set is empty. NOT EXISTS is my go-to. It's safe, readable, and the optimizer loves it.",
+        "likes": 456
+      },
+      {
+        "author": "nullHandler",
+        "content": "The NULL trap in NOT IN is my favorite thing to explain at parties. WHERE user_id NOT IN (1, 2, NULL) evaluates to WHERE user_id != 1 AND user_id != 2 AND user_id != NULL. That last comparison returns NULL for every row. NULL AND anything = NULL. Zero results. Pure existential dread.",
+        "likes": 534
+      },
+      {
+        "author": "windowFn",
+        "content": "You could also use a window function: COUNT(*) OVER (PARTITION BY user_id) on orders, joined to users, filtered for count = 0. Nobody asked for this approach. I'm offering it anyway. Chapter 4 of The Window to the Soul covers this.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "sql-011",
+    "track": "sql",
+    "type": "tip",
+    "author": "groupBy",
+    "time": "5h",
+    "content": "PRO TIP: SQL doesn't execute in the order you write it. Memorize this and half your debugging time disappears.\n\nYou WRITE: SELECT \u2192 FROM \u2192 WHERE \u2192 GROUP BY \u2192 HAVING \u2192 ORDER BY\n\nSQL EXECUTES: FROM \u2192 WHERE \u2192 GROUP BY \u2192 HAVING \u2192 SELECT \u2192 ORDER BY\n\nThis is why you can't use a column alias in WHERE (it doesn't exist yet) but you CAN use it in ORDER BY (it's already been computed).",
+    "code": "-- This FAILS:\nSELECT first_name || ' ' || last_name AS full_name\nFROM employees\nWHERE full_name LIKE 'J%';  -- ERROR: full_name doesn't exist yet\n\n-- This WORKS:\nSELECT first_name || ' ' || last_name AS full_name\nFROM employees\nORDER BY full_name;  -- alias exists by now\n\n-- Execution order:\n-- 1. FROM employees        (get the table)\n-- 2. WHERE ???              (filter rows - no alias yet!)\n-- 3. SELECT ... AS full_name (NOW the alias is created)\n-- 4. ORDER BY full_name     (alias is available)",
+    "link": { "url": "/sql/lessons/01-sql-fundamentals/", "label": "SQL execution order in Lesson 1 \u2192" },
+    "poll": null,
+    "likes": 723,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "This is why Django ORM actually helps here. When you chain .filter().values().annotate().order_by(), Django builds the SQL in the right execution order for you. One less thing to remember. ORM: 1, raw SQL: 0.",
+        "likes": 187
+      },
+      {
+        "author": "windowFn",
+        "content": "And this is why window functions go in SELECT but can't be used in WHERE. You need a subquery or CTE to filter on them. The execution order giveth and the execution order taketh away.",
+        "likes": 145
+      }
+    ]
+  },
+  {
+    "id": "sql-012",
+    "track": "sql",
+    "type": "hotTake",
+    "author": "windowFn",
+    "time": "8h",
+    "content": "hot take: if your SQL query has more than one correlated subquery, you've already lost.\n\nCorrelated subqueries run once PER ROW in the outer query. 10,000 rows = 10,000 subquery executions. That's not a query, that's a DDoS attack on your own database.\n\nRewrite it as a JOIN or a window function. Your DBA will send you a thank-you card.\n\nOVER(PARTITION BY...",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1456,
+    "reposts": 367,
+    "comments": [
+      {
+        "author": "groupBy",
+        "content": "Counterpoint: modern PostgreSQL is smart enough to decorrelate many subqueries automatically. The optimizer isn't stupid. That said, I've seen a correlated subquery turn a 50ms query into a 45-second one, so... maybe don't test the optimizer's patience.",
+        "likes": 312
+      },
+      {
+        "author": "innerJoin",
+        "content": "there's a join for that. Specifically, there's almost always a LEFT JOIN + aggregate that does the same thing as a correlated subquery. And it's usually more readable. You two should talk, you have so much in common.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "sql-013",
+    "track": "sql",
+    "type": "spotBug",
+    "author": "groupBy",
+    "time": "1d",
+    "content": "SPOT THE BUG: This query should return departments with more than 5 employees. It runs without errors. But the results are completely wrong. Why?",
+    "code": "SELECT department, COUNT(*) AS emp_count\nFROM employees\nWHERE COUNT(*) > 5\nGROUP BY department;",
+    "link": { "url": "/sql/lessons/04-aggregation/", "label": "HAVING vs WHERE in Lesson 4 \u2192" },
+    "poll": null,
+    "likes": 534,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "groupBy",
+        "content": "WHERE runs BEFORE GROUP BY. You can't filter on aggregates in WHERE because the groups don't exist yet. You need HAVING, which runs AFTER GROUP BY.\n\nSELECT department, COUNT(*) AS emp_count FROM employees GROUP BY department HAVING COUNT(*) > 5;\n\nWHERE filters rows. HAVING filters groups. Tattoo this on your forearm.",
+        "likes": 289
+      },
+      {
+        "author": "windowFn",
+        "content": "HAVING is just .filter() after .reduce(). If you think about GROUP BY as reduce, HAVING is the filter you apply to the reduced result. WHERE is the filter you apply before reducing. Two different stages, two different keywords.",
+        "likes": 167
+      }
+    ]
+  },
+  {
+    "id": "sql-014",
+    "track": "sql",
+    "type": "interview",
+    "author": "bobbyTables",
+    "time": "3h",
+    "content": "INTERVIEW Q: Your app has a search bar. Users type a name and you query the database.\n\nThe junior dev writes this. What's wrong, how do you exploit it, and how do you fix it?\n\nThis is the question that either gets you hired or gets you a follow-up about \"security awareness.\"",
+    "code": "# Python + psycopg2\ndef search_users(name):\n    query = f\"SELECT * FROM users WHERE name = '{name}'\"\n    cursor.execute(query)\n    return cursor.fetchall()",
+    "link": null,
+    "poll": null,
+    "likes": 1678,
+    "reposts": 445,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "Input: ' OR '1'='1 returns every user. Input: '; DROP TABLE users; -- deletes the table. Fix: parameterized queries. cursor.execute(\"SELECT * FROM users WHERE name = %s\", [name]). The database treats the parameter as DATA, never as SQL. This is not optional. This is not a nice-to-have. parameterize or perish.",
+        "likes": 567
+      },
+      {
+        "author": "queryset",
+        "content": "In Django: User.objects.filter(name=name). The ORM parameterizes automatically. You'd have to go out of your way to be vulnerable. Another reason ORMs exist \u2014 they make the safe path the easy path. How many queries though? Just 1.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "sql-015",
+    "track": "sql",
+    "type": "til",
+    "author": "nullHandler",
+    "time": "6h",
+    "content": "TIL: COALESCE takes multiple arguments, not just two.\n\nI've been writing COALESCE(a, COALESCE(b, COALESCE(c, 'default'))) like a clown for years. It's COALESCE(a, b, c, 'default'). Returns the first non-NULL value. I have a philosophy degree and I still can't read documentation apparently.",
+    "code": "-- What I was doing (embarrassing):\nSELECT COALESCE(nickname, COALESCE(first_name, 'Anonymous'))\nFROM users;\n\n-- What I should have been doing:\nSELECT COALESCE(nickname, first_name, 'Anonymous')\nFROM users;",
+    "link": { "url": "/sql/lessons/02-select-filtering/", "label": "COALESCE and NULL handling in Lesson 2 \u2192" },
+    "poll": null,
+    "likes": 612,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "NULLIF is COALESCE's evil twin. NULLIF(a, b) returns NULL if a = b, otherwise returns a. Great for avoiding division by zero: revenue / NULLIF(users, 0). If users is 0, you get NULL instead of an error. These two functions are the entire NULL safety toolkit.",
+        "likes": 278
+      },
+      {
+        "author": "scaleLinear",
+        "content": "First non-NULL. Like d3.extent() but for existence.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "sql-016",
+    "track": "sql",
+    "type": "mentalModel",
+    "author": "innerJoin",
+    "time": "2d",
+    "content": "MENTAL MODEL: SQL for JavaScript developers.\n\nStop memorizing SQL syntax. Start translating what you already know.\n\nSELECT = .map() \u2014 picking which columns to keep\nWHERE = .filter() \u2014 keeping rows that match\nORDER BY = .sort() \u2014 ordering results\nGROUP BY = .reduce() \u2014 collapsing rows by key\nHAVING = .filter() after .reduce()\nJOIN = Promise.all() for related tables\nLIMIT = .slice(0, n)\nDISTINCT = [...new Set()]\n\nYou already know SQL. You just know it in a different language.",
+    "code": "// JavaScript:\nusers\n  .filter(u => u.age > 21)\n  .map(u => ({ name: u.name, age: u.age }))\n  .sort((a, b) => a.age - b.age)\n  .slice(0, 10);\n\n-- SQL equivalent:\nSELECT name, age\nFROM users\nWHERE age > 21\nORDER BY age ASC\nLIMIT 10;",
+    "link": { "url": "/sql/lessons/01-sql-fundamentals/", "label": "SQL fundamentals in Lesson 1 \u2192" },
+    "poll": null,
+    "likes": 1876,
+    "reposts": 523,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "And if you use Prisma: findMany({ where: { age: { gt: 21 } }, select: { name: true, age: true }, orderBy: { age: 'asc' }, take: 10 }). Same thing, third syntax. The Great ORM Debate lives on.",
+        "likes": 345
+      },
+      {
+        "author": "groupBy",
+        "content": "I will be printing this out and laminating it for every bootcamp grad I mentor. But please add that HAVING = .filter() after .reduce(). That distinction alone saves 40% of debugging time. (I measured. In aggregate, obviously.)",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "sql-017",
+    "track": "sql",
+    "type": "hotTake",
+    "author": "bobbyTables",
+    "time": "1d",
+    "content": "hot take: every SQL tutorial should teach injection attacks in the FIRST lesson, not the last.\n\nYou learn to lock the door before you decorate the house. You learn to check your mirrors before you drive. But somehow we teach people to write vulnerable queries for 6 weeks and then go \"oh by the way, everything you've been doing is a security hole.\"\n\nMy college professor saw \"Bobby Tables\" on the class roster and asked me to sit in the back row. True story. He wasn't wrong to be nervous.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 2134,
+    "reposts": 567,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "The Paranoia Pact continues. You worry about malicious users. I worry about data that doesn't exist. Between the two of us, we've covered the entire threat landscape: people who want to destroy your data, and data that was never there to begin with.",
+        "likes": 456
+      },
+      {
+        "author": "innerJoin",
+        "content": "You two should really meet. Oh wait, you've been arguing for three years. Anyway, Bobby's right \u2014 if you learn parameterized queries from day one, it costs zero extra effort. If you learn it later, you have to unlearn bad habits. Front-load the good patterns.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "sql-018",
+    "track": "sql",
+    "type": "tip",
+    "author": "innerJoin",
+    "time": "9h",
+    "content": "PRO TIP: LEFT JOIN + WHERE IS NULL is the most underrated pattern in SQL.\n\nIt's called an \"anti-join\" \u2014 finding rows in one table that DON'T have a match in another. Once you learn it, you'll use it constantly.\n\nPrisma equivalent: findMany({ where: { orders: { none: {} } } })",
+    "code": "-- Find all users who have never placed an order\nSELECT u.id, u.name\nFROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nWHERE o.id IS NULL;\n\n-- How it works:\n-- LEFT JOIN keeps ALL users, even those with no orders\n-- For users with no orders, all order columns are NULL\n-- WHERE o.id IS NULL filters to ONLY those unmatched users\n-- Result: users with zero orders",
+    "link": { "url": "/sql/lessons/03-joins/", "label": "join patterns in Lesson 3 \u2192" },
+    "poll": null,
+    "likes": 645,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "A LEFT JOIN WHERE IS NULL is basically asking the database \"show me the loneliness.\" Show me the rows that reached out to another table and found nothing there. I relate to this pattern on a personal level.",
+        "likes": 345
+      },
+      {
+        "author": "windowFn",
+        "content": "NOT EXISTS does the same thing and often performs better because the optimizer can short-circuit. But I'll admit the LEFT JOIN version reads more intuitively for most people. Even I have limits on what I'll rewrite as a window function. This is that limit.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "sql-019",
+    "track": "sql",
+    "type": "spotBug",
+    "author": "bobbyTables",
+    "time": "4h",
+    "content": "SPOT THE BUG: A junior at Stacksworth Inc. wrote this endpoint. The code works. All tests pass. Ship it?\n\nAbsolutely not. There are TWO bugs. One will embarrass you. One will destroy you.",
+    "code": "-- Python/Flask endpoint\n@app.route('/users')\ndef get_users():\n    role = request.args.get('role')\n    query = f\"\"\"\n        SELECT name, email, role\n        FROM users\n        WHERE role = '{role}'\n        ORDER BY name\n    \"\"\"\n    results = db.execute(query)\n    return jsonify(results)",
+    "link": null,
+    "poll": null,
+    "likes": 823,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "Bug 1 (embarrassing): If role is None (param not provided), the query becomes WHERE role = 'None'. Python string, not SQL NULL. You'll get 0 results. Bug 2 (catastrophic): SQL injection via the role parameter. role='; DROP TABLE users; -- and your table is gone. Parameterize. Always. parameterize or perish.",
+        "likes": 412
+      },
+      {
+        "author": "nullHandler",
+        "content": "Bug 1 is my jurisdiction. Python's None becomes the string 'None' in an f-string, not SQL NULL. It's a perfect example of how NULL confusion spans languages. In SQL, you'd need IS NULL, but in this code, you'd need to check for None before building the query. Of course, if you parameterized, the driver would handle this correctly.",
+        "likes": 298
+      }
+    ]
+  },
+  {
+    "id": "sql-020",
+    "track": "sql",
+    "type": "interview",
+    "author": "groupBy",
+    "time": "2d",
+    "content": "INTERVIEW Q: Write a query that returns the top 3 highest-paid employees in EACH department.\n\nNot top 3 overall. Top 3 PER DEPARTMENT.\n\nThis is the question that separates \"I know GROUP BY\" from \"I actually understand SQL.\"\n\nHow do you approach it?",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1345,
+    "reposts": 356,
+    "comments": [
+      {
+        "author": "windowFn",
+        "content": "My time to shine. OVER(PARTITION BY...\n\nSELECT * FROM (SELECT *, DENSE_RANK() OVER (PARTITION BY department ORDER BY salary DESC) AS rank FROM employees) ranked WHERE rank <= 3;\n\nDENSE_RANK handles ties correctly. If two people tie for 2nd, they both get rank 2 and the next person gets rank 3. ROW_NUMBER would arbitrarily break the tie. Chapter 7 of The Window to the Soul covers this exact scenario.",
+        "likes": 489
+      },
+      {
+        "author": "groupBy",
+        "content": "I grudgingly admit this is a window function problem, not a GROUP BY problem. GROUP BY collapses rows \u2014 you'd lose the individual employee data. Window functions let you rank WITHOUT collapsing. This is the one time I concede the Aggregation Wars to @window_fn.",
+        "likes": 378
+      },
+      {
+        "author": "innerJoin",
+        "content": "And there it is \u2014 the Aggregation Wars cease-fire of 2026. I'm framing this. For the record: GROUP BY is for \"give me one answer per group.\" Window functions are for \"give me a per-group calculation on every row.\" Different tools, same toolbox. there's a join for that... wait, no. There isn't this time.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "sql-021",
+    "track": "sql",
+    "type": "ratiod",
+    "author": "groupBy",
+    "time": "5h",
+    "content": "SELECT * is fine in production. It's cleaner. It's less to type. The database knows what columns exist. Stop gatekeeping column lists.\n\nI said what I said.",
+    "code": "-- \"Clean\" and \"simple\":\nSELECT * FROM users WHERE active = true;\n\n-- vs supposedly \"better\":\nSELECT id, name, email, role, created_at\nFROM users\nWHERE active = true;",
+    "link": null,
+    "poll": null,
+    "likes": 234,
+    "reposts": 12,
+    "comments": [
+      {
+        "author": "windowFn",
+        "content": "Love you Greta but this is wrong. SELECT * in production means:\n1. Someone adds a 10MB blob column \u2192 your API now sends 10MB per row\n2. Column order changes \u2192 your positional code breaks\n3. The optimizer can't use covering indexes \u2192 performance tanks\n4. Your API exposes every column, including password_hash\n\nSELECT * is for exploration. Column lists are for production.",
+        "likes": 567
+      },
+      {
+        "author": "bobbyTables",
+        "content": "Point 4 is the one that keeps me up at night. SELECT * FROM users just sent password_hash, reset_token, and ssn_last_four to the frontend. Congrats, you're now featured in a breach notification email. Explicit column lists are a security boundary. parameterize or perish, and also, enumerate your columns.",
+        "likes": 489
+      },
+      {
+        "author": "groupBy",
+        "content": "ok I'll take the L on this one. In my defense, I was testing in psql and got lazy. Explicit columns in production, SELECT * in the terminal. Adding this to the quarterly analytics under \"times Greta was publicly wrong.\" Current count: 1.",
+        "likes": 678
+      }
+    ]
+  },
+  {
+    "id": "sql-022",
+    "track": "sql",
+    "type": "til",
+    "author": "innerJoin",
+    "time": "3h",
+    "content": "TIL: You can join a table to ITSELF.\n\nA self-join is just a regular join where both sides are the same table with different aliases. Mind-blowing when you first see it, obvious in hindsight.\n\nUse case: any time rows in a table reference OTHER rows in the same table. Employees and their managers. Categories and subcategories. Friends referencing friends.",
+    "code": "-- Find each employee and their manager's name\nSELECT\n  e.name AS employee,\n  m.name AS manager\nFROM employees e\nLEFT JOIN employees m ON e.manager_id = m.id;",
+    "link": null,
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "LEFT JOIN here is crucial. The CEO has no manager, so manager_id is NULL. An INNER JOIN would silently drop the CEO from results. NULL strikes again, quietly excluding people from query results like an existential bouncer.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "sql-023",
+    "track": "sql",
+    "type": "hotTake",
+    "author": "nullHandler",
+    "time": "1d",
+    "content": "hot take: NULL is the most misunderstood concept in all of programming. Not just SQL. All of it.\n\nJavaScript has null AND undefined. Python has None. Rust has Option<T>. Every language reinvents the concept of \"this value might not exist\" and every language gets it slightly wrong.\n\nSQL at least is honest about it. NULL means \"I don't know.\" Not zero. Not empty string. Not false. Unknown. And unknown propagates \u2014 any operation on unknown produces unknown.\n\nThree-valued logic is not a bug. It's the only honest answer to \"what happens when you compare something to nothing?\"",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1567,
+    "reposts": 423,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "The Paranoia Pact gets philosophical. I worry about inputs that shouldn't exist. You worry about values that don't exist. Together we worry about everything. This is fine. We're fine.",
+        "likes": 534
+      },
+      {
+        "author": "bindData",
+        "content": "This is the data binding philosophy applied to databases. In D3, when data is missing from a join, the element enters an \"exit\" state. It doesn't become zero \u2014 it's marked for removal. SQL's NULL and D3's exit selection are both saying the same thing: absence is not the same as emptiness. data in, meaning out.",
+        "likes": 278
+      }
+    ]
+  },
+  {
+    "id": "sql-024",
+    "track": "sql",
+    "type": "tip",
+    "author": "bobbyTables",
+    "time": "7h",
+    "content": "PRO TIP: LIKE with user input is an injection vector that nobody talks about.\n\nEven if you parameterize the query, the user can still send % and _ as wildcards. A search for \"%\" returns every row in the table. Not catastrophic, but it's a data leak and a performance bomb.\n\nEscape your LIKE wildcards. Always.",
+    "code": "-- Parameterized but still vulnerable to wildcard abuse:\nSELECT * FROM products\nWHERE name LIKE '%' || $1 || '%';\n-- If $1 = '%', this becomes LIKE '%%%' = every row\n\n-- Safe version: escape wildcards in the input\nSELECT * FROM products\nWHERE name LIKE '%' || replace(\n  replace($1, '%', '\\%'),\n  '_', '\\_'\n) || '%';",
+    "link": { "url": "/sql/lessons/02-select-filtering/", "label": "LIKE and wildcards in Lesson 2 \u2192" },
+    "poll": null,
+    "likes": 534,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "And if $1 is NULL? LIKE '%' || NULL || '%' = LIKE NULL = no results. The unknown contaminates the pattern. COALESCE($1, '') if you want NULL to match everything, or handle it before the query. NULL doesn't care about your LIKE clause.",
+        "likes": 198
+      },
+      {
+        "author": "innerJoin",
+        "content": "Also worth noting: LIKE is case-sensitive in PostgreSQL. Use ILIKE for case-insensitive matching. Coming from MySQL where LIKE is case-insensitive by default, this trips people up constantly.",
+        "likes": 167
+      }
+    ]
+  },
+  {
+    "id": "sql-025",
+    "track": "sql",
+    "type": "interview",
+    "author": "windowFn",
+    "time": "2d",
+    "content": "INTERVIEW Q: You have a table of daily stock prices (ticker, date, close_price). The interviewer says:\n\n\"For each stock, calculate the 7-day moving average of the closing price.\"\n\nNo subqueries. No self-joins. One clean query.\n\nThis is a window function question wearing a finance costume. Don't overthink it.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1123,
+    "reposts": 289,
+    "comments": [
+      {
+        "author": "windowFn",
+        "content": "SELECT ticker, date, close_price, AVG(close_price) OVER (PARTITION BY ticker ORDER BY date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg_7d FROM stock_prices;\n\nThe ROWS BETWEEN clause is the frame. It defines the \"window\" within the partition. 6 preceding + current row = 7 days. This is Chapter 9 of The Window to the Soul: \"Frames of Reference.\"",
+        "likes": 456
+      },
+      {
+        "author": "groupBy",
+        "content": "I hate admitting this but GROUP BY can't do this. You'd need a self-join to a date range, which is ugly and slow. Window functions were literally invented for this kind of problem. Aggregation Wars score update: Winda 2, Greta 0 this week.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "sql-026",
+    "track": "sql",
+    "type": "slackPost",
+    "author": "innerJoin",
+    "time": "4h",
+    "content": "OVERHEARD IN #databases AT STACKSWORTH INC.\n\njunior_dev_2024: Hey quick question, I ran a DELETE on the staging database to clean up test data\njunior_dev_2024: but the connection string might have been pointing at production\njunior_dev_2024: how do I check which database I'm connected to?\ndba_sarah: SELECT current_database();\njunior_dev_2024: oh no\ndba_sarah: did you use a WHERE clause\njunior_dev_2024: ...\ndba_sarah: @channel NOBODY TOUCH THE PRODUCTION DATABASE\ndba_sarah: @junior_dev_2024 my office. now.\nsenior_dev_mike: this is why we have point-in-time recovery\njunior_dev_2024: I just wanted to delete the test users :(\ndba_sarah: how many rows affected?\njunior_dev_2024: it said 847,293\ndba_sarah: that's all of them. that's all the users.\nsenior_dev_mike: Stacksworth's PostgreSQL has been running since 2018 and this is the closest it's come to dying",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 3456,
+    "reposts": 876,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "BEGIN; before any DELETE or UPDATE. Check the results. Then COMMIT; or ROLLBACK;. PostgreSQL gives you transactions for exactly this reason. Also: production connection strings should require SSL and a different user with limited permissions. parameterize or perish, and also, use transactions or perish.",
+        "likes": 678
+      },
+      {
+        "author": "nullHandler",
+        "content": "DELETE FROM users; with no WHERE clause is the SQL equivalent of an existential crisis. All users are now NULL. Everyone is unknown. This is the most Nully thing that has ever happened at Stacksworth Inc. and I had nothing to do with it.",
+        "likes": 534
+      },
+      {
+        "author": "groupBy",
+        "content": "Adding this to the quarterly report under \"Incidents by Severity.\" SELECT severity, COUNT(*) FROM incidents GROUP BY severity ORDER BY severity DESC. This one's a P0.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "sql-027",
+    "track": "sql",
+    "type": "mentalModel",
+    "author": "nullHandler",
+    "time": "1d",
+    "content": "MENTAL MODEL: SQL has three truth values, not two.\n\nEvery other language: TRUE / FALSE\nSQL: TRUE / FALSE / NULL (unknown)\n\nThis means:\n\u2022 TRUE AND NULL = NULL (something AND unknown = unknown)\n\u2022 FALSE AND NULL = FALSE (if one side is false, the whole thing is false)\n\u2022 TRUE OR NULL = TRUE (if one side is true, the whole thing is true)\n\u2022 FALSE OR NULL = NULL (maybe? we don't know)\n\nOnce you see SQL as a three-valued logic system, every \"weird\" NULL behavior becomes predictable.\n\nNULL is not nothing. NULL is the unknown.",
+    "code": "-- These are NOT equivalent:\nSELECT * FROM users WHERE status = 'active';\nSELECT * FROM users WHERE NOT (status != 'active');\n-- Second query ALSO excludes NULL status!\n-- Because: NULL != 'active' = NULL, NOT NULL = NULL\n\n-- To get NULLs too:\nSELECT * FROM users\nWHERE status = 'active' OR status IS NULL;",
+    "link": { "url": "/sql/lessons/01-sql-fundamentals/", "label": "NULL in WHERE clauses in Lesson 1 \u2192" },
+    "poll": null,
+    "likes": 945,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "Three values. Domain: {TRUE, FALSE, NULL}. Range: behavior you didn't expect.",
+        "likes": 312
+      },
+      {
+        "author": "bobbyTables",
+        "content": "And this is why the Paranoia Pact exists. Three-valued logic means your WHERE clause might be silently excluding rows you thought were included. Security bug? Data bug? Yes. Both. Always both.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "sql-028",
+    "track": "sql",
+    "type": "spotBug",
+    "author": "windowFn",
+    "time": "6h",
+    "content": "SPOT THE BUG: This query should return each department's name alongside its total salary cost. It runs without errors but returns wrong numbers. The totals are way too high.\n\nThe table has 100 employees. The query returns correct department names but inflated salary totals. What's happening?",
+    "code": "SELECT\n  d.name AS department_name,\n  SUM(e.salary) AS total_salary\nFROM departments d\nJOIN employees e ON d.id = e.department_id\nJOIN projects p ON e.id = p.employee_id\nGROUP BY d.name;",
+    "link": null,
+    "poll": null,
+    "likes": 567,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "Classic fan-out problem. If an employee is on 3 projects, the JOIN to projects creates 3 rows for that employee. SUM(salary) counts their salary 3 times. Fix: aggregate employees first, then join to projects. Or use a subquery to get distinct employee salaries per department. there's a join for that \u2014 but sometimes the join IS the problem.",
+        "likes": 345
+      },
+      {
+        "author": "groupBy",
+        "content": "SUM(DISTINCT e.salary) seems tempting but DON'T. If two employees genuinely have the same salary, DISTINCT drops the duplicate. The real fix is restructuring the query so each employee appears once before you aggregate. This is why I tell people: but what does it look like in aggregate? Check your row count BEFORE aggregating.",
+        "likes": 278
+      }
+    ]
+  },
+  {
+    "id": "sql-029",
+    "track": "sql",
+    "type": "interview",
+    "author": "innerJoin",
+    "time": "3d",
+    "content": "INTERVIEW Q: You have two tables:\n\u2022 customers (id, name, email)\n\u2022 orders (id, customer_id, total, created_at)\n\nThe PM wants: \"A report showing every customer, their total order count, their total spend, and their most recent order date. Include customers who have never ordered.\"\n\nThat last sentence is the trap. Which join do you pick and why?",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 987,
+    "reposts": 245,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "LEFT JOIN. If you use INNER JOIN, customers with zero orders silently vanish from the report.\n\nSELECT c.name, COUNT(o.id) AS order_count, COALESCE(SUM(o.total), 0) AS total_spend, MAX(o.created_at) AS last_order FROM customers c LEFT JOIN orders o ON c.id = o.customer_id GROUP BY c.id, c.name;\n\nNote: COUNT(o.id) not COUNT(*). COUNT(*) would return 1 for customers with no orders because the LEFT JOIN row still exists.",
+        "likes": 456
+      },
+      {
+        "author": "nullHandler",
+        "content": "COALESCE(SUM(o.total), 0) is doing critical work here. Without it, customers with no orders show NULL for total_spend instead of 0. And MAX(o.created_at) will naturally be NULL for non-ordering customers, which is correct \u2014 their most recent order date IS unknown. NULL as intended, for once.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "sql-030",
+    "track": "sql",
+    "type": "poll",
+    "author": "groupBy",
+    "time": "8h",
+    "content": "What does this return?\n\nSELECT COUNT(*), COUNT(email), COUNT(DISTINCT email)\nFROM users;\n\nThe table has 100 rows. 10 have NULL email. Of the 90 non-NULL emails, 5 are duplicates.",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        { "text": "100, 90, 85", "pct": 47 },
+        { "text": "100, 100, 85", "pct": 18 },
+        { "text": "90, 90, 85", "pct": 23 },
+        { "text": "100, 90, 90", "pct": 12 }
+      ],
+      "totalVotes": 6234
+    },
+    "likes": 876,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "groupBy",
+        "content": "Answer: 100, 90, 85.\n\nCOUNT(*) counts all rows including NULLs = 100.\nCOUNT(email) skips NULL emails = 90.\nCOUNT(DISTINCT email) skips NULLs AND removes duplicates = 85.\n\nThree different COUNTs, three different answers. If you got this right, but what does it look like in aggregate? You already think like an analyst.",
+        "likes": 345
+      },
+      {
+        "author": "nullHandler",
+        "content": "COUNT(*) vs COUNT(column) is the most important distinction in SQL aggregation and nobody teaches it properly. COUNT(*) sees everything. COUNT(column) is blind to NULL. It's not a bug, it's a philosophical stance: you can't count what you don't know.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "sql-031",
+    "track": "sql",
+    "type": "hotTake",
+    "author": "groupBy",
+    "time": "2d",
+    "content": "hot take: HAVING is the most underused keyword in SQL.\n\nEveryone learns WHERE. Almost nobody learns HAVING. They're the same concept applied at different stages.\n\nWHERE filters individual rows BEFORE grouping.\nHAVING filters groups AFTER grouping.\n\nIf you've ever written a subquery just to filter on an aggregate, you probably needed HAVING.\n\nThink of it this way: WHERE is .filter() before .reduce(). HAVING is .filter() after .reduce().",
+    "code": "-- \"Show me departments where average salary exceeds 80k\"\n-- Subquery approach (unnecessary):\nSELECT * FROM (\n  SELECT department, AVG(salary) AS avg_sal\n  FROM employees\n  GROUP BY department\n) sub\nWHERE avg_sal > 80000;\n\n-- HAVING approach (clean):\nSELECT department, AVG(salary) AS avg_sal\nFROM employees\nGROUP BY department\nHAVING AVG(salary) > 80000;",
+    "link": { "url": "/sql/lessons/04-aggregation/", "label": "HAVING clause in Lesson 4 \u2192" },
+    "poll": null,
+    "likes": 1234,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "windowFn",
+        "content": "Counterpoint: window functions can do this without GROUP BY at all. Filter with QUALIFY in databases that support it, or wrap in a subquery. But yes, for basic aggregate filtering, HAVING is the right tool. I'm being reasonable today. Enjoy it while it lasts.",
+        "likes": 234
+      },
+      {
+        "author": "queryset",
+        "content": "Django equivalent: Employee.objects.values('department').annotate(avg_sal=Avg('salary')).filter(avg_sal__gt=80000). The ORM chains .annotate() (GROUP BY + aggregate) then .filter() (HAVING). It figures out WHERE vs HAVING based on what you're filtering. How many queries though? Just 1.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "sql-032",
+    "track": "sql",
+    "type": "tip",
+    "author": "nullHandler",
+    "time": "5h",
+    "content": "PRO TIP: CASE WHEN is SQL's ternary operator. Once you learn it, you'll use it everywhere.\n\nInside SELECT for computed columns. Inside WHERE for conditional logic. Inside aggregate functions for conditional counting. It's the Swiss Army knife of SQL expressions.",
+    "code": "-- Conditional column:\nSELECT name, salary,\n  CASE\n    WHEN salary > 100000 THEN 'senior'\n    WHEN salary > 60000 THEN 'mid'\n    ELSE 'junior'\n  END AS level\nFROM employees;\n\n-- Conditional aggregation (the real power move):\nSELECT\n  department,\n  COUNT(*) AS total,\n  COUNT(CASE WHEN status = 'active' THEN 1 END) AS active,\n  COUNT(CASE WHEN status = 'inactive' THEN 1 END) AS inactive\nFROM employees\nGROUP BY department;",
+    "link": { "url": "/sql/lessons/02-select-filtering/", "label": "CASE WHEN in Lesson 2 \u2192" },
+    "poll": null,
+    "likes": 567,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "groupBy",
+        "content": "Conditional aggregation is how you pivot data without a PIVOT keyword. One query, multiple filtered counts. This is how I build every dashboard report. COUNT with CASE is the analyst's best friend.",
+        "likes": 234
+      },
+      {
+        "author": "nullHandler",
+        "content": "Note: CASE WHEN with no ELSE defaults to NULL. If none of your WHEN conditions match, you get NULL, not an error. This is either a feature or a trap depending on whether you remembered it exists. (It's usually a trap.)",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "sql-033",
+    "track": "sql",
+    "type": "interview",
+    "author": "bobbyTables",
+    "time": "1d",
+    "content": "INTERVIEW Q: You're reviewing a pull request. The code looks like this. The developer says \"it's fine, the input is validated on the frontend.\"\n\nWhat do you tell them? How do you fix it? And what's the ONE argument that ends the debate?",
+    "code": "-- Node.js/Express handler\napp.get('/products', (req, res) => {\n  const category = req.query.category;\n  const minPrice = req.query.minPrice;\n  const sql = `\n    SELECT name, price, category\n    FROM products\n    WHERE category = '${category}'\n    AND price >= ${minPrice}\n    ORDER BY price ASC\n  `;\n  db.query(sql).then(rows => res.json(rows));\n});",
+    "link": null,
+    "poll": null,
+    "likes": 1567,
+    "reposts": 398,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "The argument that ends the debate: curl 'yourapi.com/products?category=%27%3BDROP+TABLE+products%3B--&minPrice=0'. Frontend validation doesn't exist for anyone with a terminal. The fix: db.query('SELECT name, price, category FROM products WHERE category = $1 AND price >= $2 ORDER BY price ASC', [category, minPrice]). Parameterized. Safe. Done. parameterize or perish.",
+        "likes": 534
+      },
+      {
+        "author": "managePy",
+        "content": "Back in Django 1.4, someone at my company said the exact same thing about frontend validation. The penetration test lasted 4 minutes. The incident report lasted 4 weeks. There's a battery for that \u2014 it's called parameterized queries, and every framework does them by default if you let it.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "sql-034",
+    "track": "sql",
+    "type": "spotBug",
+    "author": "innerJoin",
+    "time": "8h",
+    "content": "SPOT THE BUG: This query is supposed to find users who signed up in the last 30 days and have placed at least one order. It returns nothing, even though you KNOW there are recent signups with orders.\n\nTwo tables, one subtle mistake.",
+    "code": "SELECT u.name, u.email, o.total\nFROM users u\nJOIN orders o ON u.id = o.user_id\nWHERE u.created_at > NOW() - 30;",
+    "link": null,
+    "poll": null,
+    "likes": 489,
+    "reposts": 87,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "NOW() - 30 subtracts 30 SECONDS, not 30 days. PostgreSQL treats integers in arithmetic with timestamps as seconds. You want: NOW() - INTERVAL '30 days'. Or use: u.created_at > CURRENT_DATE - 30 which does subtract 30 days because CURRENT_DATE is a date, not a timestamp. Type matters in date arithmetic.",
+        "likes": 312
+      },
+      {
+        "author": "windowFn",
+        "content": "PostgreSQL date/timestamp arithmetic gotchas:\n\u2022 DATE - INTEGER = days subtracted\n\u2022 TIMESTAMP - INTEGER = seconds subtracted\n\u2022 Always use INTERVAL for clarity\n\nAlways. Use. INTERVAL. Your future self will thank you.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "sql-035",
+    "track": "sql",
+    "type": "commitMsg",
+    "author": "bobbyTables",
+    "time": "3d",
+    "content": "COMMIT MSG FROM HELL spotted in the Stacksworth Inc. repo:\n\n\"fix sql thing\"\n\nThe diff: removed string concatenation from 47 queries across 12 files and replaced with parameterized queries. Changed the database user permissions from admin to read-only for the API service. Added input validation middleware.\n\nThat's not \"fix sql thing.\" That's \"prevent the next Equifax.\" Your commit messages should match the gravity of your changes.\n\nThe intern who wrote this has since been promoted. The commit message haunts them at every performance review.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 2345,
+    "reposts": 567,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "I once wrote a commit message that said \"handle edge case.\" The \"edge case\" was that our entire user table returned zero results because of a NOT IN subquery with NULLs. 4 hours of debugging, 3 characters of fix (IS NOT NULL), 1 vague commit message. We are our own worst documentarians.",
+        "likes": 456
+      },
+      {
+        "author": "groupBy",
+        "content": "Quarterly commit message analytics: 67% of commits at Stacksworth Inc. are \"fix thing\" or \"update stuff.\" 12% are one word. 3% are just emoji. I have the data. I have a chart. Nobody wants to see the chart.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "sql-036",
+    "track": "sql",
+    "type": "mentalModel",
+    "author": "innerJoin",
+    "time": "12h",
+    "content": "MENTAL MODEL: Every JOIN is a Venn diagram.\n\nINNER JOIN = the overlap. Only rows that match in BOTH tables.\nLEFT JOIN = all of the left circle, plus the overlap.\nRIGHT JOIN = all of the right circle, plus the overlap.\nFULL OUTER JOIN = both entire circles.\nCROSS JOIN = not a Venn diagram. It's a multiplication table. Every row times every row.\n\nWhen you write a JOIN, draw the Venn diagram first. Ask yourself: \"which parts of these circles do I want?\" The answer IS the join type.",
+    "code": "-- Venn diagram: LEFT circle = users, RIGHT circle = orders\n\n-- INNER: users WITH orders\nSELECT * FROM users u\nINNER JOIN orders o ON u.id = o.user_id;\n\n-- LEFT: ALL users, orders if they exist\nSELECT * FROM users u\nLEFT JOIN orders o ON u.id = o.user_id;\n\n-- LEFT WHERE NULL: users WITHOUT orders (anti-join)\nSELECT * FROM users u\nLEFT JOIN orders o ON u.id = o.user_id\nWHERE o.id IS NULL;",
+    "link": { "url": "/sql/lessons/03-joins/", "label": "visual join guide in Lesson 3 \u2192" },
+    "poll": null,
+    "likes": 1456,
+    "reposts": 367,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "The anti-join (LEFT WHERE NULL) is the saddest Venn diagram. You're selecting the part of the circle that's alone. The rows that reached out and found no match. I should stop projecting emotions onto set operations but I won't.",
+        "likes": 345
+      },
+      {
+        "author": "windowFn",
+        "content": "Good model, one correction: CROSS JOIN isn't just \"not a Venn diagram.\" It's a Cartesian product. If left has 1,000 rows and right has 1,000 rows, the result has 1,000,000 rows. It has legitimate uses (generating combinations, calendar scaffolds) but 99% of the time it's an accidental ON clause omission.",
+        "likes": 256
+      }
+    ]
+  },
+  {
+    "id": "sql-037",
+    "track": "sql",
+    "type": "tip",
+    "author": "windowFn",
+    "time": "1d",
+    "content": "PRO TIP: LAG() and LEAD() let you access the previous or next row without a self-join.\n\nNeed to compare today's value to yesterday's? LAG(). Need to peek at the next row? LEAD(). No self-join, no correlated subquery, no suffering.\n\nOVER(PARTITION BY...",
+    "code": "-- Calculate day-over-day revenue change\nSELECT\n  date,\n  revenue,\n  LAG(revenue) OVER (ORDER BY date) AS prev_day_revenue,\n  revenue - LAG(revenue) OVER (ORDER BY date) AS daily_change,\n  ROUND(\n    (revenue - LAG(revenue) OVER (ORDER BY date))::numeric\n    / NULLIF(LAG(revenue) OVER (ORDER BY date), 0) * 100,\n    2\n  ) AS pct_change\nFROM daily_revenue;",
+    "link": null,
+    "poll": null,
+    "likes": 678,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "NULLIF doing the lord's work on that division. LAG() returns NULL for the first row (no previous row exists), and division by NULL gives NULL, not an error. But if the previous revenue was actually 0, you'd get division by zero. NULLIF(LAG(...), 0) handles both. NULL is the safety net you didn't know you needed.",
+        "likes": 278
+      },
+      {
+        "author": "groupBy",
+        "content": "This is the kind of query that makes finance people think you're a wizard. \"You calculated percentage change in one query?\" Yes. With a window function. Don't tell them how easy it was. Bill for three hours.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "sql-038",
+    "track": "sql",
+    "type": "interview",
+    "author": "groupBy",
+    "time": "6h",
+    "content": "INTERVIEW Q: You have a table of login events (user_id, logged_in_at). The PM wants to know:\n\n\"How many users logged in on each day of the week? And which day has the most logins?\"\n\nDo it in one query. Bonus: make it readable for non-technical stakeholders.",
+    "code": null,
+    "link": { "url": "/sql/lessons/04-aggregation/", "label": "GROUP BY patterns in Lesson 4 \u2192" },
+    "poll": null,
+    "likes": 756,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "groupBy",
+        "content": "SELECT TO_CHAR(logged_in_at, 'Day') AS weekday, COUNT(DISTINCT user_id) AS unique_users FROM logins GROUP BY TO_CHAR(logged_in_at, 'Day') ORDER BY unique_users DESC;\n\nCOUNT(DISTINCT user_id) not COUNT(*) \u2014 one user logging in 5 times on Monday doesn't mean 5 users. The PM wants USERS not LOGINS. Read the requirement twice, write the query once.",
+        "likes": 345
+      },
+      {
+        "author": "windowFn",
+        "content": "Add RANK() OVER (ORDER BY COUNT(DISTINCT user_id) DESC) to answer \"which day has the most\" in the same query without a separate ORDER BY + LIMIT. Or just LIMIT 1. Sometimes the simple answer is the right answer. I said what I said.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "sql-039",
+    "track": "sql",
+    "type": "eli5",
+    "author": "nullHandler",
+    "time": "2d",
+    "content": "ELI5: NULL in SQL\n\nYou ask your friend what's in the box.\n\nEmpty string (''): \"Nothing, it's empty.\" The box exists. You opened it. It's empty.\n\nZero (0): \"There are zero things in it.\" The box exists. There IS a value. The value is zero.\n\nNULL: \"I don't know.\" Maybe there's something. Maybe there isn't. Maybe the box doesn't exist. We genuinely do not know.\n\nIs NULL = NULL? You have two mystery boxes. Are they the same? You don't know. You CAN'T know. The answer is NULL.\n\nNULL is not nothing. NULL is the unknown.",
+    "code": null,
+    "link": { "url": "/sql/lessons/01-sql-fundamentals/", "label": "NULL fundamentals in Lesson 1 \u2192" },
+    "poll": null,
+    "likes": 1987,
+    "reposts": 512,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "The box analogy is perfect. And here's the security angle: if you don't check for NULL, you might be making decisions based on the unknown. WHERE status != 'banned' doesn't exclude users with NULL status. They slip through. Unvalidated, unknown, unmonitored. The Paranoia Pact demands we handle NULLs explicitly.",
+        "likes": 456
+      },
+      {
+        "author": "innerJoin",
+        "content": "I'm introducing @null_handler to every junior developer I mentor from now on. Not the person \u2014 the concept. Although the person is also helpful. Have you two met? Oh right, you've been on the same feed for years.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "sql-040",
+    "track": "sql",
+    "type": "hotTake",
+    "author": "innerJoin",
+    "time": "10h",
+    "content": "hot take: NATURAL JOIN should never be used in production code. Ever.\n\nIt joins on ALL columns with matching names. Add a column called \"name\" to both tables? Surprise, your join condition just changed silently. Your query results are now wrong and there's no error message.\n\nExplicit ON clauses are self-documenting. NATURAL JOIN is a ticking time bomb.\n\nthere's a join for that \u2014 and it should always have an explicit ON clause.",
+    "code": "-- This is a trap:\nSELECT * FROM users NATURAL JOIN orders;\n-- Joins on ALL matching column names\n-- Today that's just 'id'... wait, both tables have 'id'?\n-- It joined user.id = orders.id, not user.id = orders.user_id\n-- Congrats, your data is nonsense\n\n-- This is clear:\nSELECT * FROM users u\nJOIN orders o ON u.id = o.user_id;",
+    "link": { "url": "/sql/lessons/03-joins/", "label": "join pitfalls in Lesson 3 \u2192" },
+    "poll": null,
+    "likes": 1678,
+    "reposts": 412,
+    "comments": [
+      {
+        "author": "windowFn",
+        "content": "NATURAL JOIN is the SQL equivalent of import *. Works great until it doesn't. And when it doesn't, you spend 2 hours figuring out which column name collision broke your query. Explicit is better than implicit. Even I \u2014 the person who window-functions everything \u2014 write explicit ON clauses.",
+        "likes": 345
+      },
+      {
+        "author": "bobbyTables",
+        "content": "NATURAL JOIN also means a schema change can silently alter query behavior without any code change. That's not just a bug vector, it's an auditability nightmare. If I can't tell what a query does by reading it, I can't tell if it's secure. Hard no.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "sql-041",
+    "track": "sql",
+    "type": "til",
+    "author": "groupBy",
+    "time": "4h",
+    "content": "TIL: You can put DISTINCT inside an aggregate function.\n\nCOUNT(DISTINCT column) counts unique values.\nSUM(DISTINCT column) sums unique values.\nARRAY_AGG(DISTINCT column) collects unique values into an array.\n\nI've been doing GROUP BY + subquery for this for an embarrassingly long time.",
+    "code": "-- How many unique categories do we sell?\nSELECT COUNT(DISTINCT category) FROM products;\n\n-- Per-customer: how many unique products did each buy?\nSELECT\n  customer_id,\n  COUNT(DISTINCT product_id) AS unique_products,\n  COUNT(*) AS total_orders\nFROM orders\nGROUP BY customer_id;",
+    "link": null,
+    "poll": null,
+    "likes": 423,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "Important: DISTINCT inside aggregates ignores NULLs. COUNT(DISTINCT category) won't count NULL categories. Which might be what you want, or might silently exclude data. As always, know thy NULLs.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "sql-042",
+    "track": "sql",
+    "type": "poll",
+    "author": "innerJoin",
+    "time": "1d",
+    "content": "You need all rows from table A that have NO matching row in table B.\n\nWhich pattern do you reach for?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        { "text": "LEFT JOIN WHERE b.id IS NULL", "pct": 42 },
+        { "text": "NOT EXISTS (subquery)", "pct": 31 },
+        { "text": "NOT IN (subquery)", "pct": 19 },
+        { "text": "EXCEPT", "pct": 8 }
+      ],
+      "totalVotes": 5678
+    },
+    "likes": 734,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "All four work, but they're not equal.\n\u2022 LEFT JOIN WHERE NULL: most readable, most common\n\u2022 NOT EXISTS: often fastest, short-circuits\n\u2022 NOT IN: dangerous if subquery returns NULLs (returns 0 rows!)\n\u2022 EXCEPT: clean but limited \u2014 requires matching column lists\n\nNOT EXISTS is the safest default. LEFT JOIN is the most intuitive. NOT IN is the trap card. there's a join for that.",
+        "likes": 345
+      },
+      {
+        "author": "nullHandler",
+        "content": "19% chose NOT IN. Those 19% will learn about the NULL trap the hard way. If table B has even ONE NULL in the join column, NOT IN returns zero rows. Always. Every time. It's the most devastating NULL gotcha in SQL and it's waiting in every codebase. NOT EXISTS doesn't have this problem. Choose wisely.",
+        "likes": 412
+      },
+      {
+        "author": "bobbyTables",
+        "content": "If you're building any of these with user-supplied table or column names... don't. Whitelist the allowed values. Dynamic SQL with user-controlled identifiers is a whole different category of injection. parameterize or perish.",
+        "likes": 198
+      }
+    ]
+  }
+]

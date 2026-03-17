@@ -1,0 +1,225 @@
+================================================================================
+SECTION 1: SOURCE DOCUMENT
+================================================================================
+
+TITLE: Indexes & Performance -- Making Queries Fast
+TRACK: SQL / PostgreSQL (Lesson 8 of 12)
+
+--------------------------------------------------------------------------------
+CONTEXT FOR HOSTS
+--------------------------------------------------------------------------------
+
+This is Lesson 8 of a 12-lesson SQL curriculum. In Lessons 01-07, Trevor learned to read, write, and design schemas. Now he learns to make queries fast. In a newsroom database with millions of rows, the difference between 30 seconds and 30 milliseconds is the difference between a useful tool and an unusable one.
+
+THE LEARNER: Trevor is an investigative journalist with 15+ years of experience who taught himself web development (React, Next.js, TypeScript, Tailwind). He has been using Prisma as his ORM. He is learning raw SQL/PostgreSQL for a potential role at Tenga, a chain of broadcast TV networks.
+
+WHAT TREVOR ALREADY KNOWS THAT CONNECTS:
+- Prisma's @@index and @unique: Trevor has used these in Prisma schemas. @@index([authorId]) generates CREATE INDEX under the hood. @unique generates a unique index.
+- JavaScript object lookups vs array scanning: Looking up user.name is O(1) because JavaScript objects are hash maps. Searching an array with array.find() is O(n). Indexes give databases the same O(1)-like speed for lookups.
+- Phone book analogy: A phone book is sorted by last name. You can quickly find "Martinez" by binary search. But finding everyone named "John" requires scanning the whole book because it is not sorted by first name.
+
+TREVOR'S GOAL: Making broadcast TV queries fast -- election dashboards need sub-second response times with millions of precinct results, weather maps need instant station lookups, ad revenue queries need to aggregate quickly.
+
+DATA JOURNALISM CONNECTION: Data journalism frequently involves querying tables with hundreds of thousands or millions of rows (FOIA datasets, census data, campaign finance records). Without indexes, even simple queries on these datasets can take minutes. With the right indexes, they take milliseconds. The difference is whether you can iterate on your analysis in real-time or have to wait between every query.
+
+MENTAL MODELS THAT MATTER MOST:
+1. Book index analogy: A database index is like the index at the back of a textbook. Instead of reading every page (sequential scan), you look up the term and go directly to the right pages (index scan).
+2. B-tree is like a phone book: Sorted data structure that finds any value in ~20 steps regardless of table size. Works for =, <, >, <=, >=, BETWEEN, IN, LIKE 'prefix%', ORDER BY.
+3. The tradeoff: Indexes speed up reads but slow down writes. Every INSERT, UPDATE, DELETE must update all indexes on the table. Extra storage space.
+4. Composite index column order matters: Like a phone book sorted by (last_name, first_name). You can look up by last_name alone, but not by first_name alone.
+
+--------------------------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+--------------------------------------------------------------------------------
+
+1. HOW B-TREE INDEXES WORK: The default index type. Sorted data structure that finds values by cutting possibilities in half at each step. 1 million rows = ~20 steps. Without an index, 1 million checks. B-trees work for equality (=), comparisons (<, >, etc.), BETWEEN, IN, LIKE 'prefix%', and ORDER BY. They do NOT help with LIKE '%suffix'.
+
+2. CREATING AND DROPPING INDEXES: CREATE INDEX idx_name ON table (column). Naming convention: idx_tablename_columnname. CREATE UNIQUE INDEX enforces uniqueness + speeds up lookups. DROP INDEX removes it. PostgreSQL auto-creates indexes on primary keys and unique constraints but NOT on foreign keys.
+
+3. COMPOSITE INDEXES: Cover multiple columns. Column order is critical (leftmost prefix rule). An index on (A, B, C) helps queries on (A), (A, B), (A, B, C) but NOT (B), (C), or (B, C). Put the most frequently filtered column first. Sort order (ASC/DESC) can be specified.
+
+4. EXPLAIN AND EXPLAIN ANALYZE: EXPLAIN shows the planned execution strategy without running the query. EXPLAIN ANALYZE actually runs it and shows real timing. Key scan types: Seq Scan (slow, reading every row), Index Scan (fast, using index), Index Only Scan (fastest, all data from index), Bitmap Index Scan (good for many matches).
+
+5. INDEX-ONLY SCANS AND COVERING INDEXES: When all requested columns are in the index, the database never reads the table rows. INCLUDE clause adds extra columns to the index for index-only scans without using them for sorting.
+
+6. WHEN NOT TO INDEX: Small tables, boolean columns (low cardinality), write-heavy tables with rare reads, columns never used in WHERE/ORDER BY, frequently updated columns. Start with no indexes beyond automatic ones, add when EXPLAIN shows problems.
+
+7. PARTIAL INDEXES: Only index rows matching a condition. CREATE INDEX ON articles (published_date DESC) WHERE published = true. Smaller and faster because they contain fewer rows.
+
+8. EXPRESSION INDEXES: Index the result of a function. CREATE INDEX ON users (LOWER(email)). The query must use the exact same expression.
+
+9. PRISMA VS RAW SQL: Prisma's @@index handles basics. Raw SQL is needed for partial indexes, expression indexes, INCLUDE columns, and custom sort orders.
+
+--------------------------------------------------------------------------------
+DATA JOURNALISM CONNECTION
+--------------------------------------------------------------------------------
+
+Performance is not an abstract concern for data journalists. When you are exploring a FOIA dataset with 500,000 rows, every query should return in under a second. If it takes 10 seconds, you lose your train of thought. If it takes a minute, you stop exploring altogether.
+
+Large Dataset Performance: "I just got 2 million rows of government contractor payments. Without indexes, SELECT * FROM payments WHERE contractor_name = 'Acme Corp' scans every row -- 8 seconds. With an index on contractor_name, it takes 2 milliseconds. That is a 4000x improvement."
+
+EXPLAIN as a Diagnostic Tool: "Your query is slow. Is it the JOIN? The WHERE clause? The ORDER BY? EXPLAIN ANALYZE tells you exactly where the bottleneck is. It is like a debugger for query performance."
+
+Election Night Performance: For Trevor at Tenga, election dashboards must be fast. "When 100,000 precinct results update simultaneously and 50 newsroom users are querying the dashboard, indexes are the difference between a working dashboard and one that crashes."
+
+Partial Indexes for Common Patterns: In journalism, you almost always query published content, not drafts. A partial index WHERE published = true indexes only the rows you actually query, making it smaller and faster than indexing everything.
+
+--------------------------------------------------------------------------------
+BROADCAST TV SCENARIOS
+--------------------------------------------------------------------------------
+
+ELECTION DATA:
+- "Fast lookup of results by county": CREATE INDEX idx_election_results_county ON election_results (county);
+- "Homepage: latest reported precincts": CREATE INDEX idx_election_results_reporting ON election_results (reporting_pct DESC, updated_at DESC) WHERE reporting_pct < 100;
+- EXPLAIN ANALYZE: Check if the election dashboard query uses the right index.
+
+WEATHER DATA:
+- "Fast station lookup by state": CREATE INDEX idx_weather_stations_state ON weather_stations (state);
+- "Extreme temperature alerts": CREATE INDEX idx_weather_extreme_temp ON weather_stations (temperature) WHERE temperature > 100 OR temperature < 32;
+
+AD REVENUE:
+- "Revenue by time slot query": CREATE INDEX idx_ad_revenue_timeslot_date ON ad_revenue (time_slot, air_date DESC);
+- "Top advertisers query": CREATE INDEX idx_ad_revenue_advertiser ON ad_revenue (advertiser);
+
+--------------------------------------------------------------------------------
+LESSON CONTENT
+--------------------------------------------------------------------------------
+
+THE MENTAL MODEL -- BOOK INDEX ANALOGY
+
+Imagine a 500-page textbook. You need to find every mention of "PostgreSQL." Two options:
+- Without an index: Read every page, start to finish. Sequential scan. Works, but slow.
+- With an index: Flip to the index at the back, look up "PostgreSQL," go directly to pages 12, 47, 189, 301. Done in seconds.
+
+A database index works exactly the same way. It is a separate data structure that maps values to row locations. The database jumps directly to what it needs instead of scanning every row.
+
+The tradeoff is the same: the index takes up extra space (storage) and needs updating when the data changes (write performance). But for lookups, it is dramatically faster.
+
+HOW B-TREE INDEXES WORK
+
+The default index type in PostgreSQL is a B-tree (balanced tree). Think of it like a phone book organized alphabetically. To find "Martinez": open to the middle, you are at "K," too early. Open to the middle of the second half, "P," too late. Middle of K-P, "M," close. A few more steps and you are there.
+
+Each step cuts remaining possibilities in half. For 1 million rows, about 20 steps. Without an index: 1 million checks.
+
+  Table Size        Without Index        With B-tree
+  1,000 rows        1,000 checks         ~10 steps
+  100,000 rows      100,000 checks       ~17 steps
+  1,000,000 rows    1,000,000 checks     ~20 steps
+  10,000,000 rows   10,000,000 checks    ~23 steps
+
+B-trees handle more than equality. Because values are sorted, they work for =, <, >, <=, >=, BETWEEN, IN, LIKE 'prefix%', and ORDER BY. They do NOT help with LIKE '%suffix%' (no fixed prefix).
+
+CREATING AND DROPPING INDEXES
+
+  CREATE INDEX idx_articles_author_id ON articles (author_id);
+  CREATE UNIQUE INDEX idx_users_email ON users (email);
+  DROP INDEX idx_articles_author_id;
+
+Naming convention: idx_tablename_columnname.
+
+PostgreSQL automatically creates indexes for primary keys and unique constraints. It does NOT auto-create indexes on foreign keys. This is a common performance trap -- JOINs on unindexed foreign keys are slow.
+
+Prisma's @@index([authorId]) generates CREATE INDEX. @unique generates CREATE UNIQUE INDEX.
+
+COMPOSITE INDEXES -- COLUMN ORDER MATTERS
+
+A composite index covers multiple columns. Column order is critical because B-trees sort left to right.
+
+Think of a phone book sorted by (last_name, first_name):
+- "Everyone named Smith" -- works (first column)
+- "Smith, John" -- works (both columns)
+- "Everyone named John" -- does NOT work (skips first column)
+
+  This index: (section, published_date)
+  HELPS: WHERE section = 'news'
+  HELPS: WHERE section = 'news' AND published_date > '2024-01-01'
+  DOES NOT HELP: WHERE published_date > '2024-01-01'
+
+The leftmost prefix rule: An index on (A, B, C) can be used for (A), (A, B), or (A, B, C). But NOT (B), (C), or (B, C) alone.
+
+EXPLAIN AND EXPLAIN ANALYZE
+
+  EXPLAIN SELECT * FROM articles WHERE author_id = 5;
+  -- Shows the plan without running the query
+
+  EXPLAIN ANALYZE SELECT * FROM articles WHERE author_id = 5;
+  -- Runs the query and shows real timing
+
+Key scan types:
+- Seq Scan: Reading every row. Slow on large tables.
+- Index Scan: Using an index. Fast.
+- Index Only Scan: Getting all data from the index itself. Fastest.
+- Bitmap Index Scan: Using index to build a map, then fetching. Good for many matches.
+
+EXPLAIN ANALYZE actually executes the query. For DELETE or UPDATE, wrap in BEGIN/ROLLBACK.
+
+PARTIAL AND EXPRESSION INDEXES
+
+Partial indexes only index rows matching a condition:
+  CREATE INDEX idx_articles_published_only ON articles (published_date DESC) WHERE published = true;
+
+Smaller and faster because they contain fewer rows.
+
+Expression indexes index the result of a function:
+  CREATE INDEX idx_users_email_lower ON users (LOWER(email));
+  -- Query must use LOWER(email) to match
+
+PRACTICAL: OPTIMIZING A SLOW QUERY
+
+From 1.8 seconds to 0.1 milliseconds on a 500,000-row table:
+1. No indexes: Seq Scan, 1847 ms
+2. Add index on WHERE columns: 245 ms (7x faster)
+3. Add sort column to index: 0.89 ms (2000x faster)
+4. Add foreign key index for JOIN: 0.34 ms
+5. Use partial index: 0.12 ms (14,000x faster than original)
+
+================================================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+================================================================================
+
+LESSON-SPECIFIC INSTRUCTIONS FOR NOTEBOOKLM PODCAST HOSTS:
+
+MENTAL MODELS TO FOCUS ON:
+- Book index analogy. This is the core analogy. A textbook index maps terms to page numbers. A database index maps column values to row locations. Both trade extra space for dramatically faster lookups.
+- Phone book for composite indexes. A phone book sorted by (last_name, first_name) -- you can look up by last name, but not by first name alone. This explains the leftmost prefix rule.
+- JavaScript object vs array. user.name is O(1) like an indexed lookup. array.find(x => x.name === "John") is O(n) like a sequential scan.
+- EXPLAIN is a performance debugger. Just as console.log helps debug logic, EXPLAIN helps debug performance.
+
+JS/PRISMA EQUIVALENTS TO HIGHLIGHT:
+- @@index([authorId]) = CREATE INDEX ON table (author_id)
+- @unique = CREATE UNIQUE INDEX
+- Prisma migrations generate CREATE INDEX SQL
+- Raw SQL needed for partial indexes, expression indexes, INCLUDE
+- Object property lookup O(1) = indexed query
+- Array.find() O(n) = sequential scan
+
+INVESTIGATIVE JOURNALISM ANGLE:
+Frame indexes as the difference between usable and unusable data exploration: "You just got a FOIA dataset with 2 million rows. Without indexes, every query takes 5-10 seconds. With the right indexes, every query takes milliseconds. The indexed version lets you iterate on your analysis in real-time. The unindexed version makes you wait and lose your train of thought."
+
+EXPLAIN ANALYZE as an investigation tool: "The query plan is like an investigation. Read it from the inside out. Where is the bottleneck? Is it the scan? The join? The sort? EXPLAIN tells you exactly where to focus your optimization."
+
+Election night performance: "When your dashboard serves 50 users and 100,000 results update simultaneously, indexes are not optional. They are the difference between a working election dashboard and one that crashes on air."
+
+CONNECTIONS TO PREVIOUS/NEXT LESSONS:
+- Connect back to Lesson 07: "You designed schemas with the right types and constraints. Now you make queries on those schemas fast."
+- Connect back to Lesson 03: "JOINs on unindexed foreign keys are slow. This is why you should index foreign key columns."
+- Tease Lesson 09 (PostgreSQL-Specific Features): "Next, we explore PostgreSQL's unique capabilities -- JSONB operators, arrays, full-text search, generate_series, and more."
+
+TONE:
+- One host should be the performance expert with dramatic numbers: "From 1.8 seconds to 0.1 milliseconds. That is 14,000 times faster. One CREATE INDEX statement."
+- The other host should connect to practical experience: "So that is why my Prisma queries were slow on that big table -- no index on the foreign key!"
+- The EXPLAIN section should feel like learning a diagnostic tool: "EXPLAIN is like running console.log for your query. It tells you exactly what the database is doing."
+
+MEMORIZATION TECHNIQUES:
+- "Index columns you filter, join, and sort on." WHERE, ON, ORDER BY columns need indexes.
+- Leftmost prefix rule: "A, AB, ABC -- not B, not C, not BC." Repeat with the phone book analogy.
+- Three scan types: Seq Scan (bad on big tables), Index Scan (good), Index Only Scan (best).
+- "Foreign keys need manual indexes." PostgreSQL does not auto-index them. Common trap.
+- "Start with no extra indexes, add when EXPLAIN shows problems." Do not index everything.
+
+BROADCAST TV DATA EXAMPLES:
+- Election dashboard: composite index on (county, reporting_pct) for county-level results
+- Weather map: index on state for fast station lookups
+- Ad revenue: composite index on (time_slot, air_date DESC) for revenue reports
+- Partial index: WHERE published = true for the homepage query
+- The 14,000x optimization story: from 1.8 seconds to 0.1 milliseconds

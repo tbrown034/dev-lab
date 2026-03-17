@@ -1,0 +1,139 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+LESSON TITLE: Lesson 03 - D3 Selections Deep Dive
+TRACK: D3.js (12-lesson curriculum)
+
+--- CONTEXT FOR HOSTS ---
+
+Curriculum Position: Lesson 3 of 12. Lessons 01-02 covered SVG and scales. Now Trevor learns the D3 API for manipulating DOM elements: selections. This is the "hands on the wheel" lesson -- how you actually tell D3 to create, modify, and remove SVG elements. Lesson 04 will add data binding (the real power), and Lesson 05 deepens scales.
+
+What came before: Lesson 01 (pure SVG elements), Lesson 02 (scales translate data to pixels, axes label them, margins convention).
+
+What's coming next: Lesson 04 covers data binding -- the selectAll-data-join pattern that connects arrays to DOM elements.
+
+What Trevor already knows: React (declarative DOM), jQuery-style DOM manipulation, CSS selectors, method chaining from array methods and Lodash.
+
+Learner's goal: Broadcast TV graphics require precise DOM manipulation -- D3 selections are how you control every shape on screen.
+
+Specific analogies for THIS lesson:
+- D3 selections are like jQuery for SVG. If he ever used $(".class").css("color", "red"), he already gets the concept.
+- Method chaining in D3 works like array .filter().map().reduce() -- each method returns something you can call the next method on.
+- D3 is the OPPOSITE of React: instead of declaring what the UI should look like, you directly tell the DOM what to do step by step (imperative vs. declarative).
+- .attr() is for SVG attributes (appears in markup), .style() is for CSS properties (appears in style=""). CSS wins when both are set.
+
+Key mental models:
+- A selection is a "handle" you grab onto DOM elements with
+- Every method returns the selection (enabling chaining) except inspection methods
+- .append() returns the NEW child, not the parent -- chain continues on the child
+
+--- LESSON CONTENT ---
+
+The Core Idea
+
+In React, you describe what the UI should look like and React figures out how to update the DOM. D3 is the opposite: you directly tell the DOM what to do, step by step. A selection is a wrapper around one or more DOM elements that gives you a chainable API for manipulating them.
+
+jQuery comparison:
+$("circle").css("fill", "orange").attr("r", 20);
+D3 equivalent:
+d3.selectAll("circle").style("fill", "orange").attr("r", 20);
+
+Every D3 method returns the selection itself. That is how method chaining works. .attr() sets the attribute AND returns the selection so you can call .style() next. Same pattern as jQuery, Lodash chains, or array methods.
+
+d3.select() vs d3.selectAll()
+
+select() picks the FIRST matching element. selectAll() picks ALL matching elements. Both use standard CSS selectors (like querySelector and querySelectorAll). Scoped selections work by chaining: d3.select("#chart").selectAll("circle") scopes to circles inside #chart.
+
+The Essential Methods
+
+.attr(name, value) -- the workhorse. SVG elements are controlled by attributes: x, y, width, height, fill, r, d, etc.
+
+.style(name, value) -- sets CSS inline styles. CSS styles override SVG attributes when both are set. Use .attr() for SVG-specific properties (x, width, r, d). Use .style() for CSS-only properties (cursor, opacity).
+
+.text(value) -- sets text content of elements.
+
+.html(value) -- sets inner HTML (works on HTML divs, not SVG elements).
+
+.property(name, value) -- for form element properties like value, checked.
+
+.classed(name, boolean) -- toggles CSS classes. Can take a function: .classed("highlighted", d => d.value > 50).
+
+.append(tag) -- creates a new child element and returns a selection of the NEW child (important: subsequent chained methods operate on the child, not the parent).
+
+.remove() -- removes elements from the DOM.
+
+.each(function(d, i) {...}) -- runs a function for each element in the selection. Inside the function, "this" is the raw DOM element.
+
+Inspection methods (these BREAK the chain because they return values, not selections):
+- .empty() -- true if no elements matched
+- .size() -- count of elements
+- .node() -- first raw DOM element
+- .nodes() -- array of all raw DOM elements
+
+Key distinction: .attr("fill") vs .style("fill") -- both work for properties like fill and stroke. .attr() sets the SVG attribute directly (appears in the markup). .style() sets an inline CSS style. CSS styles override SVG attributes. For SVG-specific properties like x, width, r, d, you MUST use .attr(). When in doubt, use .attr() for SVG.
+
+--- KEY CONCEPTS TO EMPHASIZE ---
+
+1. A selection is a wrapper/handle for DOM elements with a chainable API
+2. d3.select() = first match, d3.selectAll() = all matches (standard CSS selectors)
+3. .attr() for SVG attributes, .style() for CSS properties -- .attr() is the workhorse
+4. .append() returns the NEW child element, not the parent
+5. Method chaining works because every method returns the selection (except inspection methods)
+
+--- COMMON PITFALLS ---
+
+- Confusing .attr("fill") with .style("fill") -- CSS style overrides SVG attribute when both set
+- Forgetting that .append() changes what you're chaining on (it returns the child, not parent)
+- Using .html() inside SVG (it doesn't work -- SVG text needs <text> elements)
+- Using arrow functions with .each() when you need "this" to refer to the DOM element (arrow functions don't have their own "this")
+- Calling .empty() or .size() mid-chain and wondering why the chain broke
+
+--- BROADCAST TV CONNECTION ---
+
+- Building broadcast graphics requires precise control over every SVG element -- selections give you that control
+- Election night updates: select all state shapes, change their fill colors as results come in
+- Weather overlays: select temperature labels and update their text content as forecasts change
+- Breaking-news lower thirds: append new text elements for headlines, remove old ones
+- The chainable API lets you write compact, readable code for rapid iteration during live broadcasts
+
+
+========================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+========================================
+
+PODCAST CUSTOMIZATION FOR LESSON 03: D3 Selections
+
+TARGET MENTAL MODELS:
+- Selection as a "handle" or "grabber" for DOM elements
+- Method chaining as "each method passes the baton to the next"
+- D3 as imperative (step-by-step commands) vs. React as declarative (describe the outcome)
+- .append() as "creating a child and handing you the child to work with"
+
+SPECIFIC ANALOGIES TO USE:
+- "If you've used jQuery, you already know selections. d3.selectAll('circle') is the same idea as $('circle'). Same concept, modernized for SVG."
+- "Method chaining is like array methods you use every day: data.filter(x => x > 5).map(x => x * 2). Each call returns something the next call can work on."
+- "The D3 vs React mental shift: in React, you say 'here's what the page should look like.' In D3, you say 'grab this element, change this attribute, add this child.' It's like the difference between writing a headline (React) and hand-setting type one letter at a time (D3)."
+- "Think of .append() like sending a reporter to cover a story. You dispatch them, and now your walkie-talkie is connected to THEM, not the newsroom. If you chain .attr() after .append(), you're talking to the new element."
+
+CONNECTIONS TO OTHER LESSONS:
+- Connect to Lesson 01: "These selections manipulate the exact SVG elements you hand-coded -- rect, circle, text. Now D3 does the manipulation."
+- Connect to Lesson 02: "Remember scales? You'll use scale return values inside .attr() calls: .attr('x', d => xScale(d.value))"
+- Tease Lesson 04: "Right now we're manually placing elements. Next lesson, you'll learn data binding -- where D3 automatically creates one element per data point. That's when selections really shine."
+- Note: "Once you learn data binding in Lesson 04, you'll rarely use bare .append() for chart elements. But understanding selections is essential for knowing what's happening under the hood."
+
+TREVOR'S BACKGROUND TO REFERENCE:
+- React comparison: "You're used to React managing the DOM for you. D3 is the opposite -- you're the one telling the DOM what to do. It's more control but more responsibility."
+- jQuery days: "If you ever used jQuery back in the day, D3 selections will feel familiar. Same idea of grabbing elements and chaining methods."
+- TypeScript mindset: "The method return types matter here. .attr() returns Selection, .empty() returns boolean. That's why chaining breaks on inspection methods."
+
+MEMORIZATION TECHNIQUES:
+- "attr for Attributes, style for Styles" -- match the method to what it sets
+- ".append() returns the child" -- always remember you're now talking to the new element
+- "select = one, selectAll = all" -- singular vs plural
+- Inspection methods that break the chain: "empty, size, node, nodes" -- they return values, not selections
+
+TONE:
+- The React-dev host should push back: "Wait, so D3 has NO virtual DOM? I have to manually manage every element? Isn't that error-prone?" The expert reassures: "That's what data binding solves in the next lesson. Selections are the foundation; data binding is the automation."
+- Keep it practical: every concept should tie to "and this is how you'd update a chart element."
+- The expert should emphasize: "You'll use .attr() and .selectAll() a hundred times a day. .append() and .remove() are your create/destroy operations. That's 90% of D3 selection usage right there."

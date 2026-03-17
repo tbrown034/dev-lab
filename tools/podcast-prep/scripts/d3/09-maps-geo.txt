@@ -1,0 +1,194 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+LESSON TITLE: Lesson 09 - Arcs, Pies & Radial Charts
+TRACK: D3.js (12-lesson curriculum)
+
+--- CONTEXT FOR HOSTS ---
+
+Curriculum Position: Lesson 9 of 12. After learning line/area generators in Lesson 08, Trevor now learns the arc and pie generators. This lesson introduces D3's two-step pattern for radial charts: d3.pie() computes angles from data, d3.arc() draws SVG paths from those angles. This separation of computation from drawing is a core D3 design principle.
+
+What came before: Lesson 08 introduced path generators (d3.line(), d3.area()) and the .datum() pattern. Trevor understands that generators are function factories. Lessons 01-07 covered SVG, scales, selections, data binding, axes, margins, and enter/update/exit.
+
+What's coming next: Lesson 10 covers maps and geography (projections, geoPath, TopoJSON, choropleth maps).
+
+What Trevor already knows: React component composition (separating logic from rendering), function factories from Lesson 08, SVG paths, data binding with .data().join().
+
+Learner's goal: Broadcast TV uses pie and donut charts for budget breakdowns, vote share, demographic composition, and campaign finance. Donut charts with center statistics are a broadcast staple.
+
+Specific analogies for THIS lesson:
+- d3.pie() is the "angle calculator" -- it divides the circle proportionally but draws nothing
+- d3.arc() is the "slice drawer" -- it reads angles and produces SVG path strings
+- The two-step pattern is like separation of concerns in React: one component calculates, another renders
+- innerRadius = 0 makes a pie, innerRadius > 0 makes a donut
+- arc.centroid() is a GPS coordinate for the middle of each slice -- perfect for label placement
+
+Key mental models:
+- Two tools, two jobs: pie() computes angles, arc() draws slices
+- pie() transforms data into angle objects (startAngle, endAngle)
+- arc() reads angle objects and produces SVG path strings
+- Separating computation from drawing gives full control over layout and appearance independently
+- Donut chart = pie chart with a hole (innerRadius > 0)
+
+--- LESSON CONTENT ---
+
+The Two-Step Process
+
+Radial charts in D3 use two separate tools that work together:
+
+Step 1 -- d3.pie() computes angles:
+
+const pie = d3.pie()
+  .value(d => d.amount)    // which field determines slice size
+  .sort(null);             // keep original data order
+
+const arcsData = pie(data);
+// Each item now has: { startAngle, endAngle, data, value, index, padAngle }
+
+pie() does NOT draw anything. It takes your data array and returns a new array where each item has startAngle and endAngle (in radians) that sum to 2*pi (a full circle). The original data is preserved in the .data property of each angle object.
+
+Step 2 -- d3.arc() draws slices:
+
+const arc = d3.arc()
+  .innerRadius(0)          // 0 = pie chart
+  .outerRadius(150);       // radius of the chart
+
+arc() does NOT know about your data. It only reads angle objects (startAngle, endAngle) and produces SVG path strings. You pass pie-computed angle objects to the arc generator to get path strings.
+
+Step 3 -- Combine with data binding:
+
+svg.selectAll("path")
+  .data(arcsData)          // bind the pie-computed angles
+  .join("path")
+  .attr("d", arc)          // arc generator reads startAngle/endAngle
+  .attr("fill", (d, i) => colors[i]);
+
+Note that .data() is used here, not .datum(). Each slice is a separate <path> element, and each gets one angle object bound to it. This is the opposite of line charts (Lesson 08), where one path element used .datum() for the entire array.
+
+Donut vs Pie
+
+The only difference between a pie chart and a donut chart is innerRadius:
+
+Pie chart: d3.arc().innerRadius(0).outerRadius(150) -- solid slices from center to edge.
+
+Donut chart: d3.arc().innerRadius(70).outerRadius(150) -- hollow center, ring of slices.
+
+The donut's center space is valuable real estate for summary statistics. Broadcast graphics commonly put the total value, a percentage, or a label in the center of a donut chart.
+
+.sort(null): Preserving Data Order
+
+By default, d3.pie() sorts slices by descending value. This can be surprising. Calling .sort(null) tells it to keep the original data order. This matters when:
+- Your data has a meaningful sequence (chronological, matching a legend)
+- You want consistent slice positioning across updates
+- You're animating between different data states and need slices to stay put
+
+Centroid for Label Placement
+
+arc.centroid(d) returns an [x, y] coordinate for the geometric center of an arc slice. This is the ideal position for labels:
+
+const labelArc = d3.arc()
+  .innerRadius(outerRadius * 0.7)
+  .outerRadius(outerRadius * 0.7);
+
+svg.selectAll("text")
+  .data(arcsData)
+  .join("text")
+  .attr("transform", d => `translate(${labelArc.centroid(d)})`)
+  .text(d => d.data.label);
+
+Create a separate arc generator for label positioning. Setting both innerRadius and outerRadius to the same value places the centroid exactly at that radius -- useful for positioning labels at a consistent distance from the center.
+
+Polish: padAngle and cornerRadius
+
+.padAngle(0.02) adds a small gap between adjacent slices, making them visually distinct.
+
+.cornerRadius(4) rounds the corners of each slice for a modern, polished look.
+
+Together they give donut charts the clean, broadcast-quality appearance viewers expect.
+
+Animating Arcs
+
+Arcs animate using attrTween("d", ...) with a custom interpolator:
+
+1. Start each arc with endAngle equal to startAngle (zero-size slice)
+2. Interpolate from the starting angle to the final endAngle
+3. At each frame, call the arc generator with the interpolated angle to produce an intermediate path string
+
+This creates the effect of slices growing from nothing to their final size. Combined with staggered delays, each slice appears to grow one after another.
+
+The lesson demonstrates:
+- A campaign finance donut chart showing congressional funding sources, with percentage labels at centroids, a total in the center, and a legend
+- An animated budget breakdown donut with arcs that grow from zero using attrTween
+
+--- KEY CONCEPTS TO EMPHASIZE ---
+
+1. Two tools, two jobs: d3.pie() computes angles, d3.arc() draws paths -- they always work together
+2. pie() does NOT draw anything; arc() does NOT know about your data -- separation of computation and rendering
+3. innerRadius = 0 is a pie chart, innerRadius > 0 is a donut chart
+4. arc.centroid() gives the midpoint [x, y] of each slice -- use it for label positioning
+5. .padAngle() and .cornerRadius() add broadcast-quality polish
+6. attrTween enables smooth arc entrance and update animations
+
+--- COMMON PITFALLS ---
+
+- Forgetting .sort(null) and getting unexpectedly reordered slices
+- Confusing pie() output with arc() output -- pie() returns angle objects, arc() returns path strings
+- Trying to position labels manually instead of using arc.centroid()
+- Not understanding that the data you pass to .data() is the pie-computed array, not the original data
+- Accessing original data via d.data.fieldName (not d.fieldName) because pie() wraps the original in an angle object
+- Using .datum() instead of .data() for arcs -- each slice is a separate path element, so use .data()
+
+--- BROADCAST TV CONNECTION ---
+
+- Campaign finance: donut chart showing donation sources with total raised in the center
+- Election results: pie chart showing vote share by candidate with percentages
+- Budget breakdowns: city/state/federal spending by department as a donut chart
+- Demographic composition: population breakdown by age group, race, or education level
+- News poll results: "Is the country on the right track?" shown as a donut with Yes/No segments
+- The animated arc entrance is a classic broadcast transition -- slices grow outward during a segment reveal
+- Center statistics in donut charts are a broadcast staple: "Total: $6.6M" or "Turnout: 67%" displayed prominently
+
+
+========================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+========================================
+
+PODCAST CUSTOMIZATION FOR LESSON 09: Arcs, Pies & Radial Charts
+
+TARGET MENTAL MODELS:
+- "Two tools, two jobs" -- pie() is the calculator, arc() is the renderer
+- Separation of computation from drawing as a D3 design principle
+- Donut vs pie as a single parameter change (innerRadius)
+- arc.centroid() as "GPS coordinates for the middle of each slice"
+
+SPECIFIC ANALOGIES TO USE:
+- "This is like separation of concerns in React. You might have a useMemo that computes derived data, and a component that renders it. pie() is the computation step; arc() is the rendering step. Neither knows about the other's job."
+- "d3.pie() is like a pizza cutter that plans the cuts but doesn't actually slice. d3.arc() is the knife that makes the actual cuts. You need both: one to plan proportions, one to execute the shapes."
+- "The donut center is like a dashboard KPI widget. On broadcast TV, that center stat -- '67% turnout' or '$6.6M raised' -- is what the anchor reads. The slices provide context; the center is the headline."
+- "arc.centroid() solves the hardest problem in pie charts: where to put the labels. Instead of trigonometry, D3 gives you a method that returns the exact [x, y] center of any slice."
+
+CONNECTIONS TO OTHER LESSONS:
+- Connect to Lesson 08: "Same generator pattern. d3.line() generates line paths, d3.arc() generates arc paths. Both are function factories you configure with accessors. The difference is that arcs need angle data, which d3.pie() provides."
+- Connect to Lesson 04: "Notice that arcs use .data().join(), not .datum(). Each slice is a separate path element -- one per data item. This is the bars pattern from Lesson 04, not the line pattern from Lesson 08."
+- Connect to Lesson 07: "The animated donut uses the enter/update/exit pattern. New slices enter with attrTween, existing slices update, removed slices exit. Key functions (d => d.data.source) ensure smooth transitions."
+- Tease Lesson 10: "Next lesson introduces d3.geoPath() -- yet another path generator, but for geography. Same factory pattern: configure it with a projection, call it with geographic data, get path strings."
+- Connect to Lesson 05: "The color scales from Lesson 05 (scaleOrdinal) are perfect for assigning colors to pie slices. Each category gets a consistent color."
+
+TREVOR'S BACKGROUND TO REFERENCE:
+- React: "Think of this like a container/presenter pattern. pie() is the container that computes state. arc() is the presenter that renders visuals. The separation lets you change computation without changing rendering, and vice versa."
+- Journalism: "On a campaign finance story, the donut chart is how you show the breakdown at a glance. Small-dollar vs large-dollar donors, PAC money vs individual contributions. The center total gives the lede; the slices give the details."
+- Broadcast TV: "Every election night broadcast uses donut or pie charts for vote share. The animated entrance -- slices growing outward -- is a standard on-air transition that the control room triggers during a segment."
+
+MEMORIZATION TECHNIQUES:
+- "pie() plans, arc() draws" -- two words each, remember the division of labor
+- "innerRadius 0 = pie, innerRadius > 0 = donut" -- one parameter, one visual change
+- "d.data.fieldName" -- pie() wraps your original data, so go through .data to access it
+- ".sort(null) to keep order" -- or pie() will rearrange your slices by size
+- "centroid for labels" -- no manual trigonometry needed
+
+TONE:
+- This should feel like a natural extension of Lesson 08's generator pattern. The React-dev host: "So it's the same factory pattern? Configure once, call with data?"
+- D3-expert: "Exactly. But with a twist -- radial charts need two generators working together. pie() does the math, arc() does the drawing. It's a beautiful separation of concerns."
+- Emphasize the broadcast angle strongly: "Every election night, every budget story, every demographic breakdown on TV uses this chart type. The animated donut with a center statistic is arguably the most-used broadcast data graphic after the bar chart."
+- Make the .data property access point clear: "This trips people up. After pie() processes your data, the original datum lives inside d.data. So it's d.data.source, not d.source. The outer object has the angles; the inner .data has your original fields."

@@ -1,0 +1,316 @@
+================================================================================
+SECTION 1: SOURCE DOCUMENT
+================================================================================
+
+TITLE: JOINs & Relationships -- Connecting Tables
+TRACK: SQL / PostgreSQL (Lesson 3 of 12)
+
+--------------------------------------------------------------------------------
+CONTEXT FOR HOSTS
+--------------------------------------------------------------------------------
+
+This is Lesson 3 of a 12-lesson SQL curriculum. In Lessons 01-02, Trevor learned single-table queries: SELECT, WHERE, ORDER BY, LIMIT, pattern matching, CASE, NULL handling, DISTINCT. Now he learns to combine data from multiple tables -- the concept that makes relational databases relational.
+
+THE LEARNER: Trevor is an investigative journalist with 15+ years of experience who taught himself web development (React, Next.js, TypeScript, Tailwind). He has been using Prisma as his ORM. He is learning raw SQL/PostgreSQL for a potential role at Tenga, a chain of broadcast TV networks.
+
+WHAT TREVOR ALREADY KNOWS THAT CONNECTS:
+- Prisma's include: When Trevor writes prisma.article.findMany({ include: { author: true } }), Prisma generates a JOIN behind the scenes. He has been using JOINs without knowing it.
+- Prisma relations: model Article { author User @relation(fields: [authorId], references: [id]) } -- this is exactly the foreign key concept that JOINs work on.
+- JavaScript object spreading: Conceptually, a JOIN is like spreading two objects together based on a matching key -- { ...article, ...author } where article.authorId === author.id.
+- Prisma result nesting: Prisma gives you nested objects { article: { author: { name: "Sarah" } } }. SQL JOINs give you flat rows. Understanding the difference matters.
+
+TREVOR'S GOAL: Working with broadcast TV data across multiple tables -- election results linked to precincts linked to counties, weather stations linked to regions, ad revenue linked to stations and campaigns.
+
+DATA JOURNALISM CONNECTION: JOINs are the fundamental tool for connecting disparate datasets. When a data journalist gets campaign donation records and wants to see which donors are also government contractors, they JOIN the donation table with the contractor table on a matching name or ID. When they want to see which ZIP codes have both high pollution and low income, they JOIN environmental data with census data. Every investigative story that connects two data sources uses JOINs.
+
+MENTAL MODELS THAT MATTER MOST:
+1. The Venn Diagram: Two circles overlapping. INNER JOIN = only the overlap. LEFT JOIN = all of the left circle plus overlap. RIGHT JOIN = all of the right circle plus overlap. FULL OUTER JOIN = both entire circles.
+2. Prisma include is a LEFT JOIN: When Trevor uses include: { author: true }, the article still appears even if author is null. That is LEFT JOIN behavior.
+3. JOINs can multiply rows: If one article has 3 tags, a JOIN with the tags table creates 3 rows for that article. This is critical to understand for counting and aggregation.
+4. ON is the matching condition: ON articles.author_id = authors.id tells SQL which rows from each table belong together. It is the foreign key relationship.
+
+--------------------------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+--------------------------------------------------------------------------------
+
+1. WHY JOINS EXIST: Data is split across tables (normalization). An author's name is stored once in the authors table, not copied into every article. When you need articles with author names, you JOIN the tables on the foreign key. This prevents data duplication and inconsistency.
+
+2. INNER JOIN: Returns only rows that match in both tables. If an article has no author (NULL author_id), it is excluded. If an author has no articles, they are excluded too. It is the overlap in the Venn diagram. This is the strictest JOIN type.
+
+3. LEFT JOIN: Keeps every row from the left table (the FROM table), even if there is no match in the right table. Unmatched right-side columns become NULL. This is the most common JOIN type and matches Prisma's default include behavior. Use it when you want "all articles, and their author info if they have one."
+
+4. RIGHT JOIN AND FULL OUTER JOIN: RIGHT JOIN is the mirror of LEFT JOIN -- keeps all right-table rows. In practice, just swap the table order and use LEFT JOIN. FULL OUTER JOIN keeps everything from both tables, filling NULLs where there is no match. Use FULL OUTER JOIN when you need a complete picture of both sides.
+
+5. MULTI-TABLE JOINS: Real queries often join three or more tables. Each JOIN adds one table to the mix. The pattern is always JOIN table ON condition. Chain as many as you need.
+
+6. SELF JOINS: A table joining itself. Used for hierarchical data like employees/managers, categories/subcategories, or articles referencing other articles. Use different aliases (e for employee, m for manager) to treat the same table as two copies.
+
+7. WHERE VS ON IN LEFT JOINS: This is a common trap. If you LEFT JOIN and then filter on the right table in WHERE, you effectively turn it into an INNER JOIN because WHERE removes NULL rows. Put right-table filters in the ON clause to preserve LEFT JOIN behavior.
+
+8. JOINS CAN MULTIPLY ROWS: When one article has multiple tags, the JOIN creates one row per article-tag combination. This is critical to understand before doing aggregation (Lesson 04).
+
+--------------------------------------------------------------------------------
+DATA JOURNALISM CONNECTION
+--------------------------------------------------------------------------------
+
+JOINs are how investigative journalists connect the dots between datasets. The most powerful investigations combine data from multiple sources:
+
+Campaign Finance + Government Contracts: JOIN donation records with contractor databases on donor name to find which political donors also receive government contracts. This is how conflict-of-interest stories are found.
+
+Census + Environmental Data: JOIN census demographics with pollution monitoring data on ZIP code to identify environmental justice issues -- low-income communities exposed to higher pollution levels.
+
+Police Records + School Data: JOIN officer deployment records with school locations to analyze police presence near schools.
+
+Election Results + Demographics: This is directly relevant to Trevor's broadcast TV work. JOIN election_results with census_demographics on county to show how demographics correlate with voting patterns.
+
+For Trevor specifically: imagine building an election night dashboard. Your election_results table has vote counts by precinct. Your precinct_info table has the geographic details (county, district, coordinates for the map). Your census_demographics table has population data. To build the dashboard, you JOIN all three: election results + precinct geography + census demographics. That is three LEFT JOINs, and the result is one query that powers the entire on-screen display.
+
+Self joins matter for broadcast TV too: weather stations that are "linked" to a primary station can be modeled with a parent_station_id. A self join shows each station with its parent station's name.
+
+--------------------------------------------------------------------------------
+BROADCAST TV SCENARIOS
+--------------------------------------------------------------------------------
+
+ELECTION DATA (multi-table):
+- Tables: election_results (id, precinct_id, candidate, party, vote_count), precincts (id, name, county, state, district), census_demographics (county, state, population, median_income)
+- "Get election results with precinct names and county": SELECT er.candidate, er.vote_count, p.name AS precinct_name, p.county FROM election_results er INNER JOIN precincts p ON er.precinct_id = p.id;
+- "Get all precincts with their results (include precincts with no results yet)": SELECT p.name, COALESCE(er.candidate, 'No results') AS candidate, er.vote_count FROM precincts p LEFT JOIN election_results er ON p.id = er.precinct_id;
+
+WEATHER DATA (self join):
+- Table: weather_stations (id, station_name, city, state, parent_station_id, temperature)
+- "Get stations with their parent station's name": SELECT s.station_name, p.station_name AS parent_station FROM weather_stations s LEFT JOIN weather_stations p ON s.parent_station_id = p.id;
+
+AD REVENUE (multi-table):
+- Tables: ad_revenue (id, advertiser_id, amount, air_date, time_slot, station_id), advertisers (id, name, industry), stations (id, call_sign, market, state)
+- "Get ad revenue with advertiser name and station info": SELECT ar.amount, adv.name AS advertiser, s.call_sign AS station, ar.time_slot FROM ad_revenue ar INNER JOIN advertisers adv ON ar.advertiser_id = adv.id INNER JOIN stations s ON ar.station_id = s.id ORDER BY ar.amount DESC;
+
+--------------------------------------------------------------------------------
+LESSON CONTENT
+--------------------------------------------------------------------------------
+
+THE MENTAL MODEL -- WHY JOINS EXIST
+
+In a well-designed database, data is split across multiple tables. Articles live in one table, authors in another, categories in a third. This is called normalization -- it means you do not repeat data. An author's name is stored once, not copied into every article row.
+
+But that creates a problem: when you want "articles with their author names," the data lives in two places. A JOIN is the bridge. It stitches rows from two tables together based on a matching column.
+
+The Venn diagram mental model: Think of the two tables as two circles that overlap. The overlap is rows that match on the join condition. Different JOIN types control which parts of the circles you keep: just the overlap, the whole left circle, the whole right circle, or everything.
+
+Newsroom schema for this lesson:
+
+  -- authors table
+  | id | name           | beat       |
+  |----|----------------|------------|
+  |  1 | Sarah Chen      | politics   |
+  |  2 | Marcus Rivera   | sports     |
+  |  3 | Priya Patel     | technology |
+  |  4 | James Wilson    | culture    |
+
+  -- articles table
+  | id | title                    | author_id | category   | views |
+  |----|--------------------------|-----------|------------|-------|
+  |  1 | Election Results 2024    |         1 | politics   |  5200 |
+  |  2 | City Marathon Recap      |         2 | sports     |  3100 |
+  |  3 | AI in the Newsroom       |         3 | technology |  8900 |
+  |  4 | Budget Crisis Deepens    |         1 | politics   |  4100 |
+  |  5 | New Art Gallery Opens    |      NULL | culture    |  1200 |
+
+articles.author_id points to authors.id. This is a foreign key -- the same concept as a relation in a Prisma schema. Article #5 has NULL for author_id (maybe submitted anonymously). That NULL matters when comparing JOIN types.
+
+INNER JOIN -- ONLY MATCHING ROWS
+
+INNER JOIN returns only the rows where both tables have a match. If an article has no author (NULL author_id), it is excluded. If an author has no articles, they are excluded too.
+
+  Prisma: await prisma.article.findMany({ where: { author: { isNot: null } }, include: { author: true } });
+  SQL: SELECT articles.title, authors.name AS author_name FROM articles INNER JOIN authors ON articles.author_id = authors.id;
+
+Result:
+  | title                    | author_name     |
+  |--------------------------|-----------------|
+  | Election Results 2024    | Sarah Chen      |
+  | City Marathon Recap      | Marcus Rivera   |
+  | AI in the Newsroom       | Priya Patel     |
+  | Budget Crisis Deepens    | Sarah Chen      |
+
+"New Art Gallery Opens" is missing (NULL author_id). James Wilson is missing (no articles). INNER JOIN is strict.
+
+Syntax breakdown:
+- FROM articles -- start with the articles table (the "left" table)
+- INNER JOIN authors -- combine with authors (the "right" table)
+- ON articles.author_id = authors.id -- the matching condition
+
+Table prefixes matter. Since both tables have an id column, you prefix with the table name: articles.id vs authors.id.
+
+Table Aliases -- Less Typing:
+
+  SELECT a.title, au.name AS author_name
+  FROM articles AS a
+  INNER JOIN authors AS au
+    ON a.author_id = au.id;
+
+LEFT JOIN -- KEEP ALL LEFT ROWS
+
+LEFT JOIN keeps every row from the left table, even if there is no match in the right table. Where there is no match, the right table's columns are filled with NULL.
+
+  Prisma: await prisma.article.findMany({ include: { author: true } });
+  SQL: SELECT a.title, au.name AS author_name FROM articles a LEFT JOIN authors au ON a.author_id = au.id;
+
+Result:
+  | title                    | author_name     |
+  |--------------------------|-----------------|
+  | Election Results 2024    | Sarah Chen      |
+  | City Marathon Recap      | Marcus Rivera   |
+  | AI in the Newsroom       | Priya Patel     |
+  | Budget Crisis Deepens    | Sarah Chen      |
+  | New Art Gallery Opens    | NULL            |
+
+Now "New Art Gallery Opens" is included with a NULL author. LEFT JOIN is your default -- use it when you want all rows from your main table and optionally attach related data.
+
+RIGHT JOIN AND FULL OUTER JOIN
+
+RIGHT JOIN: Mirror of LEFT JOIN -- keeps all rows from the right table. In practice, just swap table order and use LEFT JOIN. A RIGHT JOIN B is identical to B LEFT JOIN A.
+
+FULL OUTER JOIN: Keeps everything from both tables. Unmatched rows on either side get NULLs. It is the complete Venn diagram.
+
+  SELECT a.title, au.name AS author_name
+  FROM articles a
+  FULL OUTER JOIN authors au
+    ON a.author_id = au.id;
+
+Result includes the anonymous article AND James Wilson (no articles).
+
+JOIN Type Summary:
+- INNER JOIN: Only matched rows from both tables. Use when you want rows with data in both.
+- LEFT JOIN: All left rows + matched right (or NULL). The most common type.
+- RIGHT JOIN: All right rows + matched left (or NULL). Rarely used -- just swap and use LEFT JOIN.
+- FULL OUTER JOIN: All rows from both tables. Use when you need the complete picture.
+
+MULTI-TABLE JOINS
+
+Real queries often join three or more tables. Each JOIN adds one table:
+
+  SELECT
+    a.title,
+    au.name AS author_name,
+    c.section
+  FROM articles a
+  LEFT JOIN authors au ON a.author_id = au.id
+  LEFT JOIN categories c ON a.category = c.name;
+
+Three-table join with tags:
+
+  SELECT a.title, au.name AS author_name, at.tag
+  FROM articles a
+  LEFT JOIN authors au ON a.author_id = au.id
+  LEFT JOIN article_tags at ON a.id = at.article_id
+  ORDER BY a.title;
+
+Important: JOINs can multiply rows. "AI in the Newsroom" appears twice -- once for each tag. "Election Results 2024" appears twice too. When one article has multiple tags, the JOIN creates one row per combination. You cannot just use COUNT(*) after a JOIN without accounting for this.
+
+SELF JOINS -- A TABLE JOINING ITSELF
+
+Sometimes a table has a relationship with itself. Employees where each has a manager who is also an employee. You join the table to itself using different aliases:
+
+  SELECT
+    e.name AS employee,
+    m.name AS manager
+  FROM employees e
+  LEFT JOIN employees m
+    ON e.manager_id = m.id;
+
+The trick is aliases: e for employee, m for manager. Same table, but SQL treats them as two separate copies.
+
+PRISMA INCLUDE VS SQL JOINS
+
+Key difference: Prisma's include gives nested objects. SQL JOINs give flat rows.
+
+  Prisma result: { id: 1, title: "Election Results 2024", author: { id: 1, name: "Sarah Chen", beat: "politics" } }
+  SQL result: | id | title | author_id | author_name | beat |
+
+Prisma actually runs multiple queries under the hood and stitches them together in JavaScript. Raw SQL does it in one query with a JOIN. For simple includes, Prisma is fine. For complex reporting with many joins, raw SQL is often faster and more flexible.
+
+ADVANCED JOIN CONDITIONS
+
+Joining on Multiple Columns:
+  SELECT e.name, t.team_name
+  FROM employees e
+  INNER JOIN teams t
+    ON e.department = t.department
+    AND e.role = t.required_role;
+
+WHERE vs ON in JOINs:
+For INNER JOIN, conditions in ON vs WHERE give the same result. For LEFT JOIN, they are different:
+
+  -- ON: filter during the join (keeps all left rows)
+  SELECT a.title, au.name
+  FROM articles a
+  LEFT JOIN authors au ON a.author_id = au.id AND au.beat = 'politics';
+  -- Returns ALL articles; author_name is NULL for non-politics authors
+
+  -- WHERE: filter after the join (removes rows)
+  SELECT a.title, au.name
+  FROM articles a
+  LEFT JOIN authors au ON a.author_id = au.id
+  WHERE au.beat = 'politics';
+  -- Returns ONLY articles by politics authors (defeats the LEFT JOIN)
+
+This is a common trap. If you LEFT JOIN and then filter on the right table in WHERE, you effectively turn it into an INNER JOIN.
+
+================================================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+================================================================================
+
+LESSON-SPECIFIC INSTRUCTIONS FOR NOTEBOOKLM PODCAST HOSTS:
+
+MENTAL MODELS TO FOCUS ON:
+- The Venn Diagram is the core visual. INNER JOIN = overlap only. LEFT JOIN = all left + overlap. FULL OUTER = both circles. Encourage Trevor to draw this. It is the single most useful mental model for JOINs.
+- Prisma include is a LEFT JOIN. Trevor has been using JOINs for months through Prisma's include. He already understands the concept -- now he is learning the SQL syntax behind it. Frame this as "pulling back the curtain" again.
+- JOINs multiply rows. This is a critical concept that catches many people off guard. Emphasize that if you JOIN articles with a tags table and an article has 3 tags, that article appears 3 rows. This matters for counting.
+- ON is the foreign key relationship. articles.author_id = authors.id is the same relationship defined in the Prisma schema with @relation.
+
+JS/PRISMA EQUIVALENTS TO HIGHLIGHT:
+- INNER JOIN = Prisma findMany with where: { author: { isNot: null } } and include
+- LEFT JOIN = Prisma findMany with include: { author: true } (author can be null)
+- ON clause = Prisma @relation(fields: [...], references: [...])
+- Table aliases (a, au) = variable names for tables, like destructuring
+- Multi-table JOINs = nested includes in Prisma
+- Flat JOIN result vs nested Prisma result = spreading objects vs nesting objects
+
+INVESTIGATIVE JOURNALISM ANGLE:
+Frame JOINs as the tool that connects datasets. "The most powerful investigative stories come from connecting two datasets no one thought to connect. Campaign donations JOINed with government contracts reveals corruption. Census data JOINed with pollution records reveals environmental injustice. Election results JOINed with demographic data reveals who is being underrepresented. JOINs are the bridge that makes these connections possible."
+
+For broadcast TV specifically: "On election night, the graphics you see on screen -- vote counts next to county names next to demographic data -- that is three tables JOINed together in one query. election_results JOIN precincts JOIN census_demographics. One query, one dashboard."
+
+The WHERE vs ON trap should be framed as a data integrity issue: "If you put your filter in WHERE instead of ON with a LEFT JOIN, you will silently drop rows from your results. In journalism, missing rows means missing the story."
+
+CONNECTIONS TO PREVIOUS/NEXT LESSONS:
+- Connect back to Lessons 01-02: "You have been working with one table at a time. JOINs are the leap from 'I can query a table' to 'I can query a database.' This is where SQL becomes relational."
+- Tease Lesson 04 (Aggregation): "Now that you can combine tables, the next step is summarizing the combined data. How many articles per author? Total ad revenue per station? That is GROUP BY and aggregation, and it builds directly on JOINs."
+- Connect the row-multiplication concept to why GROUP BY is needed in the next lesson.
+
+TREVOR'S BACKGROUND:
+- 15+ years investigative journalism
+- Self-taught web dev (React, Next.js, TypeScript, Tailwind)
+- Has been using Prisma ORM -- include: { author: true } is his current workflow
+- Learning SQL for a potential role at Tenga (broadcast TV networks)
+- Learning philosophy: "Mental models first, syntax second"
+
+TONE:
+- One host should be a database expert who emphasizes the Venn diagram model and the practical implications of each JOIN type.
+- The other host should be making Prisma connections -- "So LEFT JOIN is what Prisma does by default with include? I have been writing JOINs this whole time?"
+- The WHERE vs ON trap deserves a "war story" moment -- describe a scenario where someone lost data because they filtered in WHERE instead of ON.
+
+MEMORIZATION TECHNIQUES FOR THIS LESSON:
+- Venn diagram: Draw it. INNER = overlap. LEFT = left circle + overlap. RIGHT = right circle + overlap. FULL OUTER = everything.
+- LEFT JOIN is the default. When in doubt, use LEFT JOIN. You would rather have NULL values than missing rows.
+- WHERE vs ON: "ON filters during the join. WHERE filters after." If you remember nothing else about this distinction, remember that WHERE after a LEFT JOIN can silently turn it into an INNER JOIN.
+- Table alias convention: Use the first letter(s) of the table name. articles = a, authors = au, categories = c.
+- JOIN syntax template: FROM table_a a JOIN table_b b ON a.key = b.key
+
+BROADCAST TV DATA EXAMPLES:
+Use these throughout: election_results JOINed with precincts and census_demographics for election dashboards. weather_stations with self joins for parent/child station relationships. ad_revenue JOINed with advertisers and stations for revenue reporting.
+
+Example queries to weave in:
+- "Election results with precinct info": SELECT er.candidate, er.vote_count, p.name AS precinct, p.county FROM election_results er INNER JOIN precincts p ON er.precinct_id = p.id;
+- "All precincts, whether they have results or not": SELECT p.name, er.vote_count FROM precincts p LEFT JOIN election_results er ON p.id = er.precinct_id;
+- "Ad revenue with advertiser name and station call sign": Three-table JOIN across ad_revenue, advertisers, stations.

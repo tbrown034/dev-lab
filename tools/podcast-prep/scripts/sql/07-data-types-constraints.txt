@@ -1,0 +1,243 @@
+================================================================================
+SECTION 1: SOURCE DOCUMENT
+================================================================================
+
+TITLE: Data Types & Constraints -- Designing Bulletproof Schemas
+TRACK: SQL / PostgreSQL (Lesson 7 of 12)
+
+--------------------------------------------------------------------------------
+CONTEXT FOR HOSTS
+--------------------------------------------------------------------------------
+
+This is Lesson 7 of a 12-lesson SQL curriculum. In Lessons 01-06, Trevor learned to read and modify data. Now he learns to design the schema itself -- choosing the right data types and adding constraints that reject bad data at the database level.
+
+THE LEARNER: Trevor is an investigative journalist with 15+ years of experience who taught himself web development (React, Next.js, TypeScript, Tailwind). He has been using Prisma as his ORM. He is learning raw SQL/PostgreSQL for a potential role at Tenga, a chain of broadcast TV networks.
+
+WHAT TREVOR ALREADY KNOWS THAT CONNECTS:
+- TypeScript types: Data types in SQL serve the same purpose as TypeScript types -- they define what kind of value a column can hold. INTEGER is like number, VARCHAR is like string, BOOLEAN is like boolean.
+- Prisma schema: model User { id Int @id @default(autoincrement()) name String email String @unique } maps directly to CREATE TABLE with types and constraints.
+- Zod validation: CHECK constraints in SQL are like Zod schemas -- they define validation rules. But CHECK runs at the database level, which is the last line of defense.
+- TypeScript optional types: Prisma's String? (optional) maps to nullable columns. Prisma's String (required) maps to NOT NULL. But the defaults are opposite -- Prisma is required by default, SQL is nullable by default.
+
+TREVOR'S GOAL: Designing schemas for broadcast TV data that enforce data integrity -- election results with correct types, weather readings with range checks, ad revenue with exact decimal precision.
+
+MENTAL MODELS THAT MATTER MOST:
+1. Data types are TypeScript types for the database -- they define what KIND of data a column holds.
+2. Constraints are validation rules (like Zod) at the database level -- they define WHICH VALUES are valid.
+3. Together, they form a contract. Any data that violates the contract is rejected, regardless of what the application code does.
+4. SQL and Prisma have opposite defaults: Prisma fields are required by default (add ? for optional). SQL columns are nullable by default (add NOT NULL for required).
+
+--------------------------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+--------------------------------------------------------------------------------
+
+1. NUMERIC TYPES: JavaScript has one number type. PostgreSQL has several: SMALLINT (2 bytes), INTEGER (4 bytes, most common), BIGINT (8 bytes), SERIAL (auto-incrementing INTEGER), NUMERIC(p,s) for exact decimals (money), REAL/DOUBLE PRECISION for floating-point (imprecise, never use for money).
+
+2. TEXT TYPES: CHAR(n) for fixed-length strings (state codes), VARCHAR(n) for strings with a max length (titles, names), TEXT for unlimited strings (article bodies). In PostgreSQL, TEXT and VARCHAR perform identically -- VARCHAR just enforces a max length.
+
+3. DATE/TIME TYPES: DATE (date only), TIMESTAMP (date+time, no timezone), TIMESTAMPTZ (date+time+timezone -- always use this one), TIME, INTERVAL. Date arithmetic with INTERVAL and EXTRACT. DATE_TRUNC for grouping.
+
+4. UUID: 128-bit universal identifiers. Use when IDs are exposed in URLs (prevents enumeration), when generating IDs client-side, or in distributed systems. gen_random_uuid() generates them.
+
+5. JSONB: Binary JSON storage. Store flexible, schema-less data inside a relational column. Operators: -> (get JSON element), ->> (get as text), @> (contains), ? (key exists). Use for metadata, settings, tags -- not for data you frequently query.
+
+6. NOT NULL AND DEFAULT: NOT NULL makes a column required. DEFAULT provides a value when none is specified. SQL columns are nullable by default -- the opposite of Prisma. This is one of the biggest gotchas.
+
+7. UNIQUE AND CHECK: UNIQUE prevents duplicate values. CHECK defines arbitrary validation rules (word_count > 0, rating BETWEEN 0 AND 5, status IN ('draft', 'review', 'published')). CHECK is the database equivalent of Zod validation.
+
+8. FOREIGN KEYS: REFERENCES table(column) creates a foreign key relationship. Referential integrity prevents orphaned rows. ON DELETE CASCADE/SET NULL/RESTRICT controls what happens to child rows when the parent is deleted.
+
+--------------------------------------------------------------------------------
+DATA JOURNALISM CONNECTION
+--------------------------------------------------------------------------------
+
+Schema design is critical for data journalism because government datasets are messy and inconsistent. A well-designed schema catches errors before they corrupt your analysis.
+
+Precise Numeric Types: Campaign finance data needs exact decimal precision. Using FLOAT for dollar amounts introduces rounding errors (0.1 + 0.2 = 0.30000000000000004). NUMERIC(12,2) stores up to $9,999,999,999.99 with perfect precision. When your investigation says "this contractor received $1,234,567.89," that number must be exact.
+
+CHECK Constraints for Data Quality: When importing government data, CHECK constraints catch obviously wrong values. CHECK (vote_count >= 0) prevents negative vote counts. CHECK (reporting_pct BETWEEN 0 AND 100) prevents percentages over 100. These constraints act as automated data quality checks during import.
+
+TIMESTAMPTZ for Multi-Timezone Data: Broadcast TV networks span multiple time zones. Weather station readings from different states need timezone-aware timestamps. Using TIMESTAMP (without TZ) would introduce bugs when comparing readings from Texas vs California.
+
+JSONB for Flexible Metadata: Different election jurisdictions report different metadata. Some include demographic breakdowns, some include precinct boundaries as GeoJSON. JSONB lets you store this varying metadata alongside structured columns.
+
+For Trevor specifically: designing the election results schema at Tenga. The vote_count column must be INTEGER NOT NULL CHECK (vote_count >= 0). The reporting_pct must be NUMERIC(5,2) CHECK (reporting_pct BETWEEN 0 AND 100). The candidate column must be VARCHAR(255) NOT NULL. These constraints ensure that bad data from a feed never corrupts the election dashboard.
+
+--------------------------------------------------------------------------------
+BROADCAST TV SCENARIOS
+--------------------------------------------------------------------------------
+
+ELECTION DATA SCHEMA:
+  CREATE TABLE election_results (
+    id SERIAL PRIMARY KEY,
+    precinct_id INTEGER NOT NULL REFERENCES precincts(id),
+    candidate VARCHAR(255) NOT NULL,
+    party VARCHAR(50),
+    vote_count INTEGER NOT NULL DEFAULT 0 CHECK (vote_count >= 0),
+    reporting_pct NUMERIC(5,2) NOT NULL DEFAULT 0 CHECK (reporting_pct BETWEEN 0 AND 100),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    metadata JSONB DEFAULT '{}',
+    UNIQUE (precinct_id, candidate)
+  );
+
+WEATHER DATA SCHEMA:
+  CREATE TABLE weather_stations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    station_name VARCHAR(100) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    state CHAR(2) NOT NULL,
+    latitude NUMERIC(9,6),
+    longitude NUMERIC(9,6),
+    temperature NUMERIC(5,1) CHECK (temperature BETWEEN -100 AND 200),
+    humidity INTEGER CHECK (humidity BETWEEN 0 AND 100),
+    wind_speed NUMERIC(5,1) CHECK (wind_speed >= 0),
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
+AD REVENUE SCHEMA:
+  CREATE TABLE ad_revenue (
+    id SERIAL PRIMARY KEY,
+    advertiser VARCHAR(255) NOT NULL,
+    campaign VARCHAR(255),
+    amount NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+    time_slot VARCHAR(20) NOT NULL CHECK (time_slot IN ('morning', 'daytime', 'primetime', 'late_night', 'overnight')),
+    air_date DATE NOT NULL,
+    station VARCHAR(10) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  );
+
+--------------------------------------------------------------------------------
+LESSON CONTENT
+--------------------------------------------------------------------------------
+
+THE MENTAL MODEL
+
+Data types and constraints are two layers of defense:
+- Data types are like TypeScript types -- they define what kind of value a column can hold.
+- Constraints are like validation rules -- they define which values are valid.
+
+Together, they form a contract. Any data that violates the contract gets rejected at the database level, regardless of what the application code does. Even if the frontend validation has a bug, even if someone hits the API directly, the database is the last line of defense.
+
+NUMERIC TYPES
+
+JavaScript has one number type. PostgreSQL has several:
+- SMALLINT: -32,768 to 32,767 (2 bytes). Status codes, small counts.
+- INTEGER: -2.1B to 2.1B (4 bytes). Most IDs and counts.
+- BIGINT: -9.2 quintillion to 9.2 quintillion (8 bytes). Twitter-scale IDs.
+- SERIAL: Auto-incrementing INTEGER. Primary keys.
+- NUMERIC(p,s): Exact decimal with p total digits and s after the decimal. Money.
+- REAL/DOUBLE PRECISION: Floating-point, imprecise. Scientific data. NEVER for money.
+
+Never use FLOAT or REAL for money. 0.1 + 0.2 = 0.30000000000000004. Use NUMERIC(10,2).
+
+TEXT TYPES
+
+- CHAR(n): Fixed-length, padded with spaces. CHAR(2) for state abbreviations.
+- VARCHAR(n): Variable-length with max limit. Titles, names, URLs.
+- TEXT: Variable-length, no limit. Article bodies, descriptions.
+
+In PostgreSQL, TEXT and VARCHAR perform identically. VARCHAR(n) just enforces a max length.
+
+BOOLEAN, DATE, AND TIMESTAMP
+
+Always use TIMESTAMPTZ (TIMESTAMP WITH TIME ZONE). Without timezone info, you get bugs when servers, databases, and users are in different timezones. Prisma's DateTime maps to TIMESTAMPTZ by default.
+
+Date arithmetic:
+  WHERE published_at > NOW() - INTERVAL '7 days'
+  WHERE published_at >= DATE_TRUNC('year', NOW())
+  SELECT EXTRACT(DAY FROM NOW() - published_at) AS days_old
+
+UUID
+
+Universal unique identifiers: a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11. Can be generated anywhere without conflicts. Use when IDs are exposed in URLs (prevents enumeration), when generating IDs client-side, or in distributed systems.
+
+  CREATE TABLE articles (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+  Prisma: id String @id @default(uuid())
+
+JSONB
+
+Binary JSON storage inside a column. Like embedding NoSQL inside a relational table.
+
+Operators: -> (get JSON element), ->> (get as text), @> (contains check), ? (key exists).
+
+  SELECT metadata->>'word_count' AS word_count FROM articles;
+  SELECT * FROM articles WHERE metadata @> '{"featured": true}';
+
+Use JSONB for flexible, schema-less data (metadata, settings, tags). Use regular columns for data you frequently query.
+
+NOT NULL AND DEFAULT
+
+SQL and Prisma have opposite defaults. Prisma fields are required by default; add ? to make optional. SQL columns are nullable by default; add NOT NULL to make required. This is one of the biggest gotchas.
+
+UNIQUE AND CHECK
+
+UNIQUE prevents duplicate values. The database rejects any INSERT or UPDATE creating a duplicate.
+
+CHECK defines arbitrary validation rules:
+  CHECK (word_count > 0)
+  CHECK (rating >= 0 AND rating <= 5)
+  CHECK (status IN ('draft', 'review', 'published', 'archived'))
+
+CHECK is the database equivalent of Zod validation. Defense in depth.
+
+FOREIGN KEYS
+
+REFERENCES table(column) creates a foreign key. Guarantees referential integrity -- you cannot insert a row with a foreign key that does not exist in the referenced table.
+
+CASCADE, SET NULL, RESTRICT: ON DELETE CASCADE deletes child rows. ON DELETE SET NULL keeps children but clears the FK. ON DELETE RESTRICT prevents the delete. Be careful with CASCADE -- it can create chain reactions.
+
+================================================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+================================================================================
+
+LESSON-SPECIFIC INSTRUCTIONS FOR NOTEBOOKLM PODCAST HOSTS:
+
+MENTAL MODELS TO FOCUS ON:
+- TypeScript types analogy: Data types in SQL serve the same purpose as TypeScript types. INTEGER = number, VARCHAR = string, BOOLEAN = boolean. But SQL has MORE specific types (SMALLINT, BIGINT, NUMERIC) because the database needs to know how much storage to allocate.
+- Zod/validation analogy: CHECK constraints are like Zod schemas but at the database level. Even if your API validation has a bug, the database catches invalid data. Defense in depth.
+- Opposite defaults: Prisma fields are required by default (add ? for optional). SQL columns are nullable by default (add NOT NULL for required). Emphasize this heavily -- it is the number one gotcha.
+- The contract: Data types + constraints = a contract. The database enforces the contract on every INSERT and UPDATE, regardless of how the data arrives.
+
+JS/PRISMA EQUIVALENTS TO HIGHLIGHT:
+- Int = INTEGER/SERIAL
+- BigInt = BIGINT
+- Float = DOUBLE PRECISION (but never for money)
+- Decimal = NUMERIC(p,s)
+- String = TEXT or VARCHAR(n)
+- Boolean = BOOLEAN
+- DateTime = TIMESTAMPTZ
+- String @id @default(uuid()) = UUID PRIMARY KEY DEFAULT gen_random_uuid()
+- Json = JSONB
+- String? = nullable column (no NOT NULL)
+- String (no ?) = NOT NULL
+- @unique = UNIQUE constraint
+- @relation onDelete: Cascade = ON DELETE CASCADE
+
+INVESTIGATIVE JOURNALISM ANGLE:
+Frame data types as data quality tools: "When you import a FOIA dataset, the schema is your first line of defense. If someone enters a negative vote count, CHECK (vote_count >= 0) catches it. If someone enters a percentage of 250%, CHECK (reporting_pct BETWEEN 0 AND 100) rejects it. These are not theoretical -- government data feeds have bugs, and your schema catches them."
+
+NUMERIC precision matters for journalism: "When your story says a contractor received $1.2 million, that number must be exact. FLOAT introduces rounding errors. NUMERIC(12,2) does not. This is not a technical curiosity -- it is the difference between accurate reporting and a correction."
+
+CONNECTIONS TO PREVIOUS/NEXT LESSONS:
+- Connect back to Lesson 01: "You used CREATE TABLE in Lesson 01 with basic types. Now you are choosing types deliberately and adding constraints that protect your data."
+- Connect back to Lesson 06: "The cascade behaviors (ON DELETE CASCADE/SET NULL/RESTRICT) from this lesson interact with the DELETE operations you learned in Lesson 06."
+- Tease Lesson 08 (Indexes & Performance): "You have designed your schema with the right types and constraints. Next, you learn to make queries on that schema fast with indexes."
+
+TONE:
+- One host should be the schema design expert: "Every column choice has implications. VARCHAR(255) vs TEXT, NUMERIC vs FLOAT, TIMESTAMPTZ vs TIMESTAMP -- these choices prevent bugs."
+- The other host should connect to the Prisma/TypeScript world: "So NOT NULL in SQL is like removing the ? in Prisma? And CHECK is like Zod but at the database level?"
+- The JSONB section should feel practical: "When metadata varies between rows, JSONB is perfect. SEO settings, social media data, election precinct boundaries as GeoJSON -- all different shapes, all stored in one column."
+
+MEMORIZATION TECHNIQUES:
+- NUMERIC for money, never FLOAT. Say it once, remember forever.
+- TIMESTAMPTZ, not TIMESTAMP. The TZ at the end is for Time Zone. Always use it.
+- SQL defaults are opposite of Prisma: nullable by default. Add NOT NULL explicitly.
+- CHECK is database-level Zod. Defense in depth.
+- CASCADE chain reaction: "Deleting one row might delete thousands." Know your cascade paths.
+
+BROADCAST TV DATA EXAMPLES:
+- Election results schema with CHECK constraints on vote_count and reporting_pct
+- Weather stations with NUMERIC for lat/long and temperature ranges
+- Ad revenue with NUMERIC(10,2) for exact dollar amounts
+- JSONB metadata for varying election jurisdiction data
+- CHAR(2) for state abbreviations

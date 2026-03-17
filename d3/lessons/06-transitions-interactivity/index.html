@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 06 - Axes & The Margins Convention</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #f97316; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #f97316; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #f97316; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #f97316; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .demo h4 { color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .demo svg { background: #1a1a1a; border-radius: 4px; display: block; }
+    .quiz { background: #1a1500; border: 1px solid #f9731644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #f97316; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #f97316; text-decoration: none; }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #1a0a00; border-left: 3px solid #f97316; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #fdba74; }
+    .aha strong { color: #f97316; }
+    .step-num { display: inline-block; background: #f97316; color: #000; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 700; font-size: 0.85rem; margin-right: 0.5rem; }
+    .try-it { background: #0a0a1a; border: 1px solid #818cf844; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .try-it h4 { color: #818cf8; margin-bottom: 0.75rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>06</span> Axes &amp; The Margins Convention</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #f97316;">Mental Model:</strong> An axis is a "name tag" for your scale. It shows the viewer what the pixel positions mean. The margins convention is like the matting inside a picture frame &mdash; it creates space around the art for labels.</p>
+
+    <h2>The Problem</h2>
+
+    <p>You built a bar chart with scales, but the viewer sees unlabeled bars. They do not know that 300 pixels tall means 20 million people. An axis renders tick marks and labels that translate pixels back to human-readable data values.</p>
+
+    <h2>Axes Are Generated FROM Scales</h2>
+
+    <p>This is the key insight: you do not create axes from scratch. You create them from an existing scale. The axis reads the scale's domain and range to figure out where to put ticks and what to label them.</p>
+
+    <pre><code><span class="comment">// Step 1: Create a scale (you already know this)</span>
+const yScale = d3.scaleLinear()
+  .domain([0, 40_000_000])
+  .range([height, 0]);
+
+<span class="comment">// Step 2: Create an axis FROM the scale</span>
+const yAxis = d3.axisLeft(yScale);
+
+<span class="comment">// Step 3: Render it into a &lt;g&gt; group</span>
+svg.append("g").call(yAxis);</code></pre>
+
+    <h3>Four axis orientations</h3>
+    <ul>
+      <li><code>d3.axisBottom(scale)</code> &mdash; ticks below the line (for X-axis at bottom)</li>
+      <li><code>d3.axisTop(scale)</code> &mdash; ticks above the line</li>
+      <li><code>d3.axisLeft(scale)</code> &mdash; ticks to the left (for Y-axis)</li>
+      <li><code>d3.axisRight(scale)</code> &mdash; ticks to the right</li>
+    </ul>
+
+    <h3>What does .call() do?</h3>
+
+    <pre><code><span class="comment">// These are equivalent:</span>
+svg.append("g").call(yAxis);
+yAxis(svg.append("g"));
+
+<span class="comment">// .call() passes the selection to a function.</span>
+<span class="comment">// The axis function creates lines, ticks, and labels</span>
+<span class="comment">// inside that &lt;g&gt; group.</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Why use .call()?</strong> It keeps the chain going. Without <code>.call()</code>, you would need to save the group to a variable, pass it to the axis function, then continue. With <code>.call()</code>, it is one fluent chain: <code>svg.append("g").attr("transform", ...).call(yAxis)</code>.</p>
+    </div>
+
+    <h2>Customizing Axes</h2>
+
+    <pre><code>d3.axisLeft(yScale)
+  .ticks(5)                          <span class="comment">// suggest ~5 ticks</span>
+  .tickFormat(d => `$${d / 1000}k`)  <span class="comment">// custom labels</span>
+  .tickSize(-width)                  <span class="comment">// extend ticks = grid lines!</span>
+  .tickValues([0, 25, 50, 75, 100]) <span class="comment">// exact tick positions</span></code></pre>
+
+    <div class="aha">
+      <p><strong>Grid lines are just long ticks.</strong> Setting <code>.tickSize(-width)</code> extends each tick line across the full chart width. That is all grid lines are. No separate grid system needed.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE MARGINS CONVENTION                       -->
+    <!-- ============================================ -->
+
+    <h2>The Margins Convention</h2>
+
+    <p>Axes take up space. The chart area needs to be smaller than the SVG to leave room for labels. The margins convention is the standard pattern every professional D3 chart uses:</p>
+
+    <pre><code><span class="comment">// Step 1: Define margins</span>
+const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+
+<span class="comment">// Step 2: Calculate inner dimensions</span>
+const width = 700 - margin.left - margin.right;   <span class="comment">// 620</span>
+const height = 400 - margin.top - margin.bottom;  <span class="comment">// 340</span>
+
+<span class="comment">// Step 3: SVG at full size, group pushed inward</span>
+const svg = d3.select("#chart")
+  .append("svg")
+  .attr("viewBox", `0 0 700 400`)
+  .append("g")
+  .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+<span class="comment">// Now (0,0) in the group = top-left of chart area</span>
+<span class="comment">// Scales use width and height (inner dimensions)</span>
+<span class="comment">// Axes fit in the margin space</span></code></pre>
+
+    <div class="demo">
+      <h4>Live: Margins visualized</h4>
+      <p style="color: #888; font-size: 0.85rem; margin-bottom: 1rem;">Orange = chart area where data goes. Gray = margins where axes and labels live.</p>
+      <div id="margins-diagram"></div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Copy-paste this pattern into every chart.</strong> It is boilerplate. Every lesson from here on starts with it. margin &rarr; width/height &rarr; SVG &rarr; group. Once set up, everything you draw goes inside the group, and margins handle themselves.</p>
+    </div>
+
+    <div class="try-it">
+      <h4>Play with it: margins convention live</h4>
+      <p style="color: #a5b4fc; font-size: 0.85rem; margin-bottom: 0.75rem;">Drag the margin sliders to see how the chart area shrinks and grows. The outer SVG stays fixed at 450 x 250. The inner orange rect is where your data goes.</p>
+      <div id="playground-margins"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- COMPLETE BAR CHART                           -->
+    <!-- ============================================ -->
+
+    <h2>Complete Bar Chart: Everything Together</h2>
+
+    <p>Margins + scales + axes + data binding + bars. This is the template for every bar chart you will ever make:</p>
+
+    <div class="demo">
+      <h4>Live: Median household income by state (complete chart)</h4>
+      <div id="full-bar-chart"></div>
+    </div>
+
+    <pre><code><span class="comment">// The complete pattern:</span>
+<span class="comment">// 1. Margins</span>
+const margin = { top: 20, right: 20, bottom: 50, left: 60 };
+const width = 700 - margin.left - margin.right;
+const height = 380 - margin.top - margin.bottom;
+
+<span class="comment">// 2. SVG + group</span>
+const svg = d3.select("#chart")
+  .append("svg").attr("viewBox", "0 0 700 380")
+  .append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+<span class="comment">// 3. Scales</span>
+const x = d3.scaleBand().domain(data.map(d => d.state)).range([0, width]).padding(0.2);
+const y = d3.scaleLinear().domain([0, d3.max(data, d => d.income)]).nice().range([height, 0]);
+
+<span class="comment">// 4. Axes</span>
+svg.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
+svg.append("g").call(d3.axisLeft(y).tickFormat(d => `$${d/1000}k`));
+
+<span class="comment">// 5. Grid lines (just long ticks)</span>
+svg.append("g").call(d3.axisLeft(y).tickSize(-width).tickFormat(""))
+  .selectAll("line").attr("stroke", "#1a1a1a");
+
+<span class="comment">// 6. Bars</span>
+svg.selectAll("rect").data(data).join("rect")
+  .attr("x", d => x(d.state)).attr("y", d => y(d.income))
+  .attr("width", x.bandwidth()).attr("height", d => height - y(d.income))
+  .attr("fill", "#f97316");</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. Where does an axis get its tick positions and labels from?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">From the <strong>scale</strong> you pass to it. <code>d3.axisLeft(yScale)</code> reads the scale's domain and range to determine where ticks go and what values to display. This is why you create the scale first, then the axis from it.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What does <code>.call(axisGenerator)</code> actually do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It passes the current selection (a <code>&lt;g&gt;</code> group) to the axis generator function. The axis function then creates multiple child elements inside that group: a <code>&lt;path&gt;</code> for the axis line, <code>&lt;line&gt;</code> elements for ticks, and <code>&lt;text&gt;</code> elements for labels. It is equivalent to <code>axisGenerator(selection)</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>3. How do you create grid lines in D3?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Grid lines are just extended ticks. Create an axis with <code>.tickSize(-width)</code> (for horizontal grid lines on a left axis) or <code>.tickSize(-height)</code> (for vertical grid lines on a bottom axis). Use <code>.tickFormat("")</code> to hide the labels since you only want the lines. Then style them with a subtle color.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What does the margins convention give you?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Room for axes and labels around the chart area. The SVG is created at full size, then a <code>&lt;g&gt;</code> group is pushed inward by the margins using <code>translate()</code>. All drawing happens inside the group. Axes fit in the margin space. Scales use the inner width/height, not the full SVG dimensions.</div>
+      </div>
+
+      <div class="question">
+        <p>5. Why do we position the X-axis with <code>translate(0, height)</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because <code>d3.axisBottom()</code> draws ticks below the axis line, but the group starts at (0,0) which is the top-left of the chart area. We need to push the axis down to the bottom of the chart area, which is at y = <code>height</code>. Without the translate, the X-axis would appear at the top.</div>
+      </div>
+
+      <div class="question">
+        <p>6. How do you format Y-axis labels as currency (e.g., "$50k")?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use <code>.tickFormat()</code> on the axis generator: <code>d3.axisLeft(y).tickFormat(d => "$" + d/1000 + "k")</code>. Or use D3's built-in formatter: <code>.tickFormat(d3.format("$,.0f"))</code>. The <code>.tickFormat()</code> method receives each tick value and returns the string to display.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Fully Labeled Chart</h4>
+      <p>From scratch, build a complete vertical bar chart with these requirements:</p>
+      <ol>
+        <li>Set up the margins convention (top: 30, right: 20, bottom: 50, left: 60)</li>
+        <li>Create a <code>scaleBand</code> for X and <code>scaleLinear</code> for Y</li>
+        <li>Add <code>axisBottom</code> and <code>axisLeft</code> with formatted tick labels</li>
+        <li>Add grid lines using <code>.tickSize(-width)</code></li>
+        <li>Add axis titles ("State" for X, "Population (thousands)" for Y)</li>
+        <li>Add bars with <code>.data().join()</code></li>
+        <li>Add value labels above each bar</li>
+        <li>Use <code>viewBox</code> for responsive sizing</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">Use the 8-state population data from Lesson 04. This is the chart pattern you will use over and over.</p>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Axes are generated from scales</strong> &mdash; <code>d3.axisBottom(xScale)</code></li>
+      <li><strong>.call()</strong> renders the axis into a <code>&lt;g&gt;</code> group</li>
+      <li><strong>.ticks(), .tickFormat(), .tickValues()</strong> customize axes</li>
+      <li><strong>Grid lines = long ticks</strong> with <code>.tickSize(-width)</code></li>
+      <li><strong>Margins convention</strong> = the boilerplate every chart starts with</li>
+      <li><strong>Complete pattern:</strong> margin &rarr; dimensions &rarr; SVG+g &rarr; scales &rarr; axes &rarr; data</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/05-maps-geo/">&larr; Lesson 05: Scales - The Translator</a>
+      <a href="/d3/lessons/07-lines-areas/">Lesson 07: Enter/Update/Exit &rarr;</a>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+
+    // =============================================
+    // Margins Diagram
+    // =============================================
+    (() => {
+      const fullW = 600, fullH = 300;
+      const margin = { top: 20, right: 30, bottom: 50, left: 60 };
+      const w = fullW - margin.left - margin.right;
+      const h = fullH - margin.top - margin.bottom;
+
+      const svg = d3.select("#margins-diagram")
+        .append("svg").attr("viewBox", `0 0 ${fullW} ${fullH}`);
+
+      // Outer boundary
+      svg.append("rect").attr("x", 0).attr("y", 0).attr("width", fullW).attr("height", fullH)
+        .attr("fill", "none").attr("stroke", "#333").attr("stroke-dasharray", "4");
+
+      // Inner chart area
+      svg.append("rect").attr("x", margin.left).attr("y", margin.top)
+        .attr("width", w).attr("height", h)
+        .attr("fill", "#f9731611").attr("stroke", "#f97316");
+
+      // Labels
+      svg.append("text").attr("x", fullW / 2).attr("y", 12)
+        .attr("text-anchor", "middle").attr("fill", "#666").attr("font-size", "10")
+        .text(`margin-top: ${margin.top}px`);
+      svg.append("text").attr("x", fullW / 2).attr("y", fullH - 5)
+        .attr("text-anchor", "middle").attr("fill", "#666").attr("font-size", "10")
+        .text(`margin-bottom: ${margin.bottom}px (X axis goes here)`);
+      svg.append("text").attr("x", 8).attr("y", fullH / 2)
+        .attr("fill", "#666").attr("font-size", "10")
+        .attr("transform", `rotate(-90, 8, ${fullH / 2})`).text(`margin-left: ${margin.left}px (Y axis)`);
+      svg.append("text").attr("x", margin.left + w / 2).attr("y", margin.top + h / 2)
+        .attr("text-anchor", "middle").attr("fill", "#f97316").attr("font-size", "14")
+        .text(`Chart area: ${w} x ${h}px`);
+      svg.append("text").attr("x", margin.left + w / 2).attr("y", margin.top + h / 2 + 18)
+        .attr("text-anchor", "middle").attr("fill", "#f9731688").attr("font-size", "11")
+        .text("Scales use these dimensions");
+    })();
+
+    // =============================================
+    // Complete Bar Chart
+    // =============================================
+    (() => {
+      const data = [
+        { state: "MD", income: 90203 }, { state: "NJ", income: 89296 },
+        { state: "MA", income: 89645 }, { state: "HI", income: 84857 },
+        { state: "CA", income: 84097 }, { state: "WA", income: 82228 },
+        { state: "CO", income: 80184 }, { state: "VA", income: 80615 },
+        { state: "NH", income: 83449 }, { state: "CT", income: 83771 },
+      ].sort((a, b) => b.income - a.income);
+
+      const margin = { top: 20, right: 20, bottom: 50, left: 60 };
+      const fullW = 700, fullH = 380;
+      const width = fullW - margin.left - margin.right;
+      const height = fullH - margin.top - margin.bottom;
+
+      const svg = d3.select("#full-bar-chart")
+        .append("svg").attr("viewBox", `0 0 ${fullW} ${fullH}`)
+        .append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleBand().domain(data.map(d => d.state)).range([0, width]).padding(0.2);
+      const y = d3.scaleLinear().domain([0, d3.max(data, d => d.income)]).nice().range([height, 0]);
+
+      // Grid lines
+      svg.append("g")
+        .call(d3.axisLeft(y).ticks(5).tickSize(-width).tickFormat(""))
+        .selectAll("line").attr("stroke", "#1a1a1a");
+      svg.select(".domain").remove();
+
+      // X axis
+      const xAxisG = svg.append("g").attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x));
+      xAxisG.selectAll("text").attr("fill", "#888").attr("font-size", "11");
+      xAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+      // Y axis
+      const yAxisG = svg.append("g")
+        .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${d / 1000}k`));
+      yAxisG.selectAll("text").attr("fill", "#888");
+      yAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+      // Y axis label
+      svg.append("text").attr("transform", "rotate(-90)")
+        .attr("y", -48).attr("x", -height / 2).attr("text-anchor", "middle")
+        .attr("fill", "#666").attr("font-size", "11").text("Median Household Income");
+
+      // X axis label
+      svg.append("text").attr("x", width / 2).attr("y", height + 42)
+        .attr("text-anchor", "middle").attr("fill", "#666").attr("font-size", "11").text("State");
+
+      // Color scale
+      const colorScale = d3.scaleSequential(d3.interpolateYlOrRd)
+        .domain([d3.min(data, d => d.income), d3.max(data, d => d.income)]);
+
+      // Bars with animation
+      svg.selectAll("rect").data(data).join("rect")
+        .attr("x", d => x(d.state)).attr("y", height).attr("width", x.bandwidth()).attr("height", 0)
+        .attr("fill", d => colorScale(d.income)).attr("rx", 3)
+        .transition().duration(700).delay((d, i) => i * 60)
+        .attr("y", d => y(d.income)).attr("height", d => height - y(d.income));
+
+      // Value labels
+      svg.selectAll(".val").data(data).join("text")
+        .attr("class", "val")
+        .attr("x", d => x(d.state) + x.bandwidth() / 2)
+        .attr("y", d => y(d.income) - 5)
+        .attr("text-anchor", "middle").attr("fill", "#888").attr("font-size", "10")
+        .attr("opacity", 0).text(d => d3.format("$,.0f")(d.income))
+        .transition().delay((d, i) => i * 60 + 500).duration(300).attr("opacity", 1);
+
+      // Title
+      svg.append("text").attr("x", width / 2).attr("y", -5)
+        .attr("text-anchor", "middle").attr("fill", "#888").attr("font-size", "12")
+        .text("Top 10 States by Median Household Income");
+    })();
+  </script>
+
+  <script type="module">
+    import * as d3 from 'd3';
+    import { createPlayground } from '/components/interactive-playground.js';
+
+    createPlayground('playground-margins', {
+      width: 450,
+      height: 250,
+      controls: [
+        { name: 'top', min: 0, max: 80, value: 20, label: 'Margin top' },
+        { name: 'right', min: 0, max: 80, value: 30, label: 'Margin right' },
+        { name: 'bottom', min: 0, max: 80, value: 50, label: 'Margin bottom' },
+        { name: 'left', min: 0, max: 80, value: 60, label: 'Margin left' },
+      ],
+      render(svg, values) {
+        svg.selectAll('*').remove();
+        const fullW = 450, fullH = 250;
+        const m = { top: values.top, right: values.right, bottom: values.bottom, left: values.left };
+        const innerW = Math.max(0, fullW - m.left - m.right);
+        const innerH = Math.max(0, fullH - m.top - m.bottom);
+
+        // Outer SVG boundary (dashed)
+        svg.append('rect')
+          .attr('x', 1).attr('y', 1)
+          .attr('width', fullW - 2).attr('height', fullH - 2)
+          .attr('fill', 'none').attr('stroke', '#333').attr('stroke-dasharray', '4');
+
+        // Margin zones (shaded)
+        // Top
+        if (m.top > 0) {
+          svg.append('rect').attr('x', 0).attr('y', 0).attr('width', fullW).attr('height', m.top)
+            .attr('fill', '#818cf8').attr('opacity', 0.08);
+        }
+        // Bottom
+        if (m.bottom > 0) {
+          svg.append('rect').attr('x', 0).attr('y', fullH - m.bottom).attr('width', fullW).attr('height', m.bottom)
+            .attr('fill', '#818cf8').attr('opacity', 0.08);
+        }
+        // Left
+        if (m.left > 0) {
+          svg.append('rect').attr('x', 0).attr('y', m.top).attr('width', m.left).attr('height', innerH)
+            .attr('fill', '#818cf8').attr('opacity', 0.08);
+        }
+        // Right
+        if (m.right > 0) {
+          svg.append('rect').attr('x', fullW - m.right).attr('y', m.top).attr('width', m.right).attr('height', innerH)
+            .attr('fill', '#818cf8').attr('opacity', 0.08);
+        }
+
+        // Inner chart area
+        if (innerW > 0 && innerH > 0) {
+          svg.append('rect')
+            .attr('x', m.left).attr('y', m.top)
+            .attr('width', innerW).attr('height', innerH)
+            .attr('fill', '#f9731611').attr('stroke', '#f97316');
+
+          // Chart area label
+          svg.append('text')
+            .attr('x', m.left + innerW / 2).attr('y', m.top + innerH / 2 - 6)
+            .attr('text-anchor', 'middle').attr('fill', '#f97316').attr('font-size', '13').attr('font-weight', 'bold')
+            .text(`Chart area`);
+          svg.append('text')
+            .attr('x', m.left + innerW / 2).attr('y', m.top + innerH / 2 + 12)
+            .attr('text-anchor', 'middle').attr('fill', '#f9731688').attr('font-size', '11')
+            .text(`${innerW} \u00d7 ${innerH}px`);
+        }
+
+        // Margin labels
+        if (m.top > 12) {
+          svg.append('text').attr('x', fullW / 2).attr('y', m.top / 2 + 4)
+            .attr('text-anchor', 'middle').attr('fill', '#818cf8').attr('font-size', '9').text(`top: ${m.top}`);
+        }
+        if (m.bottom > 12) {
+          svg.append('text').attr('x', fullW / 2).attr('y', fullH - m.bottom / 2 + 4)
+            .attr('text-anchor', 'middle').attr('fill', '#818cf8').attr('font-size', '9').text(`bottom: ${m.bottom}`);
+        }
+        if (m.left > 16) {
+          svg.append('text').attr('x', m.left / 2).attr('y', fullH / 2)
+            .attr('text-anchor', 'middle').attr('fill', '#818cf8').attr('font-size', '9')
+            .attr('transform', `rotate(-90, ${m.left / 2}, ${fullH / 2})`).text(`left: ${m.left}`);
+        }
+        if (m.right > 16) {
+          svg.append('text').attr('x', fullW - m.right / 2).attr('y', fullH / 2)
+            .attr('text-anchor', 'middle').attr('fill', '#818cf8').attr('font-size', '9')
+            .attr('transform', `rotate(90, ${fullW - m.right / 2}, ${fullH / 2})`).text(`right: ${m.right}`);
+        }
+
+        // SVG dimensions label
+        svg.append('text').attr('x', fullW - 5).attr('y', 12)
+          .attr('text-anchor', 'end').attr('fill', '#444').attr('font-size', '9')
+          .text(`SVG: ${fullW} \u00d7 ${fullH}`);
+      }
+    });
+  </script>
+</body>
+</html>

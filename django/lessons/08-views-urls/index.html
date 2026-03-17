@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 08 - Views &amp; URLs Deep Dive</title>
+  <link rel="icon" type="image/svg+xml" href="/django/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #22c55e; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #22c55e; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #22c55e; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #22c55e; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
+    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #001a0a; border-left: 3px solid #22c55e; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #86efac; }
+    .aha strong { color: #22c55e; }
+    .warning { background: #1a1500; border-left: 3px solid #eab308; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .warning p { color: #fde68a; }
+    .warning strong { color: #eab308; }
+    .quiz { background: #001a0a; border: 1px solid #22c55e44; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #22c55e; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #22c55e; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #22c55e; text-decoration: none; }
+    .file-tree { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; margin: 1rem 0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.8; }
+    .file-tree .folder { color: #818cf8; }
+    .file-tree .file { color: #bbb; }
+    .file-tree .highlight { color: #22c55e; font-weight: 600; }
+    .file-tree .muted { color: #555; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th { text-align: left; color: #22c55e; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
+    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
+    td code { font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>08</span> Views &amp; URLs Deep Dive &mdash; API Routes to Django</h1>
+    <a href="/django/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #22c55e;">You already know route handlers and API routes.</strong> Django views are the same idea &mdash; a function that takes a request and returns a response. This lesson goes deep on both function-based and class-based views, URL configuration, and how it all maps to what you know from Next.js.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model &mdash; Views are Route Handlers</h2>
+
+    <p>In Next.js, you write <code>route.ts</code> files for API endpoints and <code>page.tsx</code> files for pages. Each exports functions like <code>GET</code>, <code>POST</code>, or a default component. Django combines both into one concept: <strong>views</strong>.</p>
+
+    <p>A Django view is a Python function (or class) that:</p>
+    <ol>
+      <li>Receives an HTTP <code>request</code> object</li>
+      <li>Does some work (query the database, process form data, check permissions)</li>
+      <li>Returns an HTTP <code>response</code> (HTML page, JSON data, a redirect, a 404)</li>
+    </ol>
+
+    <p>That is literally it. Request in, response out. If you can write a Next.js API route, you can write a Django view.</p>
+
+    <div class="aha">
+      <p><strong>The V in MTV:</strong> Django follows the <strong>Model-Template-View</strong> pattern. The Model is your database layer (Lesson 07). The Template is your HTML (Lesson 09). The View is the glue &mdash; it fetches data from models and passes it to templates. Think of views as the orchestrator sitting between your database and your UI, just like a Next.js Server Component or API route handler.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FUNCTION-BASED VIEWS                         -->
+    <!-- ============================================ -->
+
+    <h2>Function-Based Views (FBVs) &mdash; The Foundation</h2>
+
+    <p>The simplest Django view is a plain Python function. If you have written a Next.js <code>route.ts</code> handler, this will feel instantly familiar.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js Route Handler</h5>
+        <pre><code><span class="comment">// app/api/hello/route.ts</span>
+import { NextResponse } from 'next/server';
+
+export async function GET(request: Request) {
+  return NextResponse.json({
+    message: 'Hello from the API'
+  });
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django FBV</h5>
+        <pre><code><span class="comment"># newsroom/views.py</span>
+from django.http import JsonResponse
+
+def hello(request):
+    return JsonResponse({
+        'message': 'Hello from the API'
+    })</code></pre>
+      </div>
+    </div>
+
+    <p>The structure is identical: function receives request, returns response. Django just skips the <code>async</code> and the explicit <code>GET</code> export &mdash; we will handle HTTP methods differently in a moment.</p>
+
+    <h3>The Three Response Types You Will Use Constantly</h3>
+
+    <p>Django gives you three main ways to send responses, each mapping to something you already do in Next.js:</p>
+
+    <pre><code><span class="comment"># newsroom/views.py</span>
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
+
+<span class="comment"># 1. HttpResponse — raw text or HTML string</span>
+<span class="comment">#    Like: return new Response('Hello') in Next.js</span>
+def plain_text(request):
+    return HttpResponse('Hello, newsroom!')
+
+def raw_html(request):
+    return HttpResponse('&lt;h1&gt;Breaking News&lt;/h1&gt;&lt;p&gt;Story here.&lt;/p&gt;')
+
+<span class="comment"># 2. JsonResponse — JSON data (for APIs)</span>
+<span class="comment">#    Like: return NextResponse.json({...})</span>
+def api_articles(request):
+    data = {'articles': [], 'count': 0}
+    return JsonResponse(data)
+
+<span class="comment"># 3. render() — HTML template with data (most common!)</span>
+<span class="comment">#    Like: a Server Component returning JSX with props</span>
+def article_list(request):
+    articles = [
+        {'title': 'City Council Vote', 'author': 'Trevor'},
+        {'title': 'New Park Opens', 'author': 'Sarah'},
+    ]
+    return render(request, 'newsroom/article_list.html', {
+        'articles': articles,
+        'section': 'Local News',
+    })</code></pre>
+
+    <div class="callout">
+      <p><strong>Which one when?</strong> Use <code>HttpResponse</code> for simple text/HTML. Use <code>JsonResponse</code> for API endpoints. Use <code>render()</code> for full HTML pages &mdash; this is by far the most common in traditional Django. It is the equivalent of a Server Component that fetches data and returns JSX.</p>
+    </div>
+
+    <h3>Accessing the Request Object</h3>
+
+    <p>Django's <code>request</code> object gives you everything about the incoming HTTP request &mdash; just like the <code>Request</code> object in Next.js route handlers.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js</h5>
+        <pre><code><span class="comment">// app/api/search/route.ts</span>
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const q = searchParams.get('q');
+  const method = request.method; <span class="comment">// "GET"</span>
+
+  <span class="comment">// Headers</span>
+  const auth = request.headers.get('Authorization');
+
+  <span class="comment">// POST body</span>
+  const body = await request.json();
+
+  return NextResponse.json({ q });
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># newsroom/views.py</span>
+def search(request):
+    q = request.GET.get('q')  <span class="comment"># query params</span>
+    method = request.method   <span class="comment"># "GET"</span>
+
+    <span class="comment"># Headers</span>
+    auth = request.headers.get('Authorization')
+
+    <span class="comment"># POST body (form data)</span>
+    title = request.POST.get('title')
+
+    <span class="comment"># JSON body (API-style)</span>
+    import json
+    data = json.loads(request.body)
+
+    return JsonResponse({'q': q})</code></pre>
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong>GET vs POST data:</strong> Django separates query parameters (<code>request.GET</code>) from form body data (<code>request.POST</code>). These are both dict-like objects. For raw JSON bodies (like from a React frontend), use <code>json.loads(request.body)</code>. This is different from Next.js where you call <code>request.json()</code> for everything.</p>
+    </div>
+
+    <h3>Handling Different HTTP Methods</h3>
+
+    <p>In Next.js, you export separate functions for each method. In Django FBVs, you check the method inside the function:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js</h5>
+        <pre><code><span class="comment">// app/api/articles/route.ts</span>
+export async function GET(request: Request) {
+  <span class="comment">// List articles</span>
+  return NextResponse.json({ articles: [] });
+}
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  <span class="comment">// Create article</span>
+  return NextResponse.json(
+    { created: true },
+    { status: 201 }
+  );
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># newsroom/views.py</span>
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+
+@require_http_methods(["GET", "POST"])
+def articles(request):
+    if request.method == 'GET':
+        <span class="comment"># List articles</span>
+        return JsonResponse({'articles': []})
+
+    elif request.method == 'POST':
+        <span class="comment"># Create article</span>
+        return JsonResponse(
+            {'created': True}, status=201
+        )</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>The <code>@require_http_methods</code> decorator</strong> restricts which methods are allowed. Without it, your view accepts any method. Think of it as input validation at the door. Django also has <code>@require_GET</code> and <code>@require_POST</code> shortcuts.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- URL CONFIGURATION                            -->
+    <!-- ============================================ -->
+
+    <h2>URL Configuration &mdash; Wiring Views to URLs</h2>
+
+    <p>Writing a view is only half the job. You also need to tell Django <em>which URL</em> should trigger that view. In Next.js, the file path is the URL. In Django, you wire them up explicitly in <code>urls.py</code>.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js (File = URL)</h5>
+        <pre><code><span class="comment">File path determines the route:</span>
+
+app/page.tsx              &rarr; /
+app/about/page.tsx        &rarr; /about
+app/newsroom/page.tsx     &rarr; /newsroom
+app/newsroom/[slug]/page.tsx &rarr; /newsroom/:slug
+app/api/articles/route.ts &rarr; /api/articles</code></pre>
+      </div>
+      <div>
+        <h5>Django (Explicit wiring)</h5>
+        <pre><code><span class="comment"># mysite/urls.py (root)</span>
+from django.urls import path, include
+
+urlpatterns = [
+    path('', views.home),
+    path('about/', views.about),
+    path('newsroom/', include('newsroom.urls')),
+    path('api/', include('api.urls')),
+]</code></pre>
+      </div>
+    </div>
+
+    <h3>The Two-Level URL Pattern</h3>
+
+    <p>Django projects use a two-level routing system. The root <code>urls.py</code> delegates to each app's own <code>urls.py</code>, like a receptionist forwarding calls to departments.</p>
+
+    <pre><code><span class="comment"># LEVEL 1: mysite/urls.py (the root router)</span>
+<span class="comment"># Think of this as app/layout.tsx that sets up top-level route groups</span>
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),                  <span class="comment"># /admin/*</span>
+    path('newsroom/', include('newsroom.urls')),       <span class="comment"># /newsroom/*</span>
+    path('api/', include('api.urls')),                 <span class="comment"># /api/*</span>
+]</code></pre>
+
+    <pre><code><span class="comment"># LEVEL 2: newsroom/urls.py (the app router)</span>
+<span class="comment"># You create this file yourself. It handles everything under /newsroom/</span>
+from django.urls import path
+from . import views
+
+app_name = 'newsroom'  <span class="comment"># namespace for reverse lookups</span>
+
+urlpatterns = [
+    path('', views.article_list, name='article-list'),               <span class="comment"># /newsroom/</span>
+    path('&lt;slug:slug&gt;/', views.article_detail, name='article-detail'), <span class="comment"># /newsroom/city-council-vote/</span>
+    path('category/&lt;slug:category&gt;/', views.category, name='category'), <span class="comment"># /newsroom/category/politics/</span>
+    path('archive/&lt;int:year&gt;/', views.archive, name='archive'),       <span class="comment"># /newsroom/archive/2025/</span>
+]</code></pre>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>include()</code> is like a folder in the Next.js <code>app/</code> directory. When Django sees <code>path('newsroom/', include('newsroom.urls'))</code>, it strips <code>/newsroom/</code> from the URL and hands the rest to the app's <code>urls.py</code>. So <code>/newsroom/city-council-vote/</code> becomes <code>city-council-vote/</code> when the app router processes it. Same idea as nested route groups.</p>
+    </div>
+
+    <h3>path() &mdash; The Building Block</h3>
+
+    <p>Every URL pattern is built with <code>path(route, view, name)</code>:</p>
+
+    <pre><code><span class="comment"># path(route_string, view_function, keyword_name)</span>
+path('articles/', views.article_list, name='article-list')
+<span class="comment">#     ^^^^^^^^^    ^^^^^^^^^^^^^^^^^^   ^^^^^^^^^^^^^^^^^^</span>
+<span class="comment">#     URL pattern  What function runs   Name for reverse()</span></code></pre>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Argument</th>
+          <th>What It Does</th>
+          <th>Next.js Equivalent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>route</code></td>
+          <td>URL pattern to match</td>
+          <td>File path in <code>app/</code></td>
+        </tr>
+        <tr>
+          <td><code>view</code></td>
+          <td>Function or class to call</td>
+          <td>The exported function/component</td>
+        </tr>
+        <tr>
+          <td><code>name</code></td>
+          <td>Unique name for generating URLs</td>
+          <td>No direct equivalent (you hardcode paths)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>Named URLs are a Django superpower.</strong> Instead of hardcoding <code>"/newsroom/city-council-vote/"</code> everywhere, you reference URLs by name: <code>reverse('newsroom:article-detail', kwargs={'slug': 'city-council-vote'})</code>. In templates: <code>{% url 'newsroom:article-detail' slug='city-council-vote' %}</code>. If you ever change the URL structure, every reference updates automatically. Next.js has no equivalent &mdash; you hardcode paths or build helper functions.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- URL PARAMETERS AND CONVERTERS                -->
+    <!-- ============================================ -->
+
+    <h2>URL Parameters &amp; Converters</h2>
+
+    <p>Dynamic routes &mdash; URLs with variables like an article slug or a user ID &mdash; work differently in each framework but solve the same problem.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js Dynamic Routes</h5>
+        <pre><code><span class="comment">// Folder-based parameters:</span>
+app/articles/[id]/page.tsx
+app/articles/[slug]/page.tsx
+app/users/[userId]/posts/[postId]/page.tsx
+
+<span class="comment">// Access in component:</span>
+export default function Page({
+  params
+}: {
+  params: { slug: string }
+}) {
+  const { slug } = params;
+  <span class="comment">// slug is always a string</span>
+  <span class="comment">// you parse it yourself</span>
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django URL Converters</h5>
+        <pre><code><span class="comment"># Pattern-based parameters:</span>
+path('articles/&lt;int:id&gt;/', views.detail)
+path('articles/&lt;slug:slug&gt;/', views.detail)
+path('users/&lt;int:user_id&gt;/posts/&lt;int:post_id&gt;/',
+     views.user_post)
+
+<span class="comment"># Access in view:</span>
+def detail(request, slug):
+    <span class="comment"># slug arrives as a function argument</span>
+    <span class="comment"># already validated by the converter</span>
+    <span class="comment"># int:id gives you an actual int!</span>
+    pass</code></pre>
+      </div>
+    </div>
+
+    <h3>Built-in Path Converters</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Converter</th>
+          <th>Matches</th>
+          <th>Python Type</th>
+          <th>Example URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>&lt;str:name&gt;</code></td>
+          <td>Any non-empty string (no <code>/</code>)</td>
+          <td><code>str</code></td>
+          <td><code>/author/trevor/</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;int:pk&gt;</code></td>
+          <td>Zero or positive integer</td>
+          <td><code>int</code></td>
+          <td><code>/article/42/</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;slug:slug&gt;</code></td>
+          <td>Letters, numbers, hyphens, underscores</td>
+          <td><code>str</code></td>
+          <td><code>/article/city-council-vote/</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;uuid:id&gt;</code></td>
+          <td>Formatted UUID</td>
+          <td><code>uuid.UUID</code></td>
+          <td><code>/doc/075194d3-6885.../</code></td>
+        </tr>
+        <tr>
+          <td><code>&lt;path:rest&gt;</code></td>
+          <td>Any string including <code>/</code></td>
+          <td><code>str</code></td>
+          <td><code>/files/docs/report.pdf</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="aha">
+      <p><strong>Built-in validation:</strong> In Next.js, <code>params.id</code> is always a string &mdash; you have to <code>parseInt()</code> it yourself and handle NaN. In Django, <code>&lt;int:pk&gt;</code> guarantees <code>pk</code> is a real integer. If someone visits <code>/article/abc/</code>, Django returns a 404 automatically, before your view even runs. Free input validation at the URL level.</p>
+    </div>
+
+    <pre><code><span class="comment"># Real-world example: newsroom URL patterns</span>
+<span class="comment"># newsroom/urls.py</span>
+from django.urls import path
+from . import views
+
+app_name = 'newsroom'
+
+urlpatterns = [
+    <span class="comment"># /newsroom/</span>
+    path('', views.article_list, name='article-list'),
+
+    <span class="comment"># /newsroom/city-council-vote/</span>
+    path('&lt;slug:slug&gt;/', views.article_detail, name='article-detail'),
+
+    <span class="comment"># /newsroom/category/politics/</span>
+    path('category/&lt;slug:category&gt;/', views.by_category, name='by-category'),
+
+    <span class="comment"># /newsroom/archive/2025/</span>
+    path('archive/&lt;int:year&gt;/', views.archive, name='archive'),
+
+    <span class="comment"># /newsroom/archive/2025/3/</span>
+    path('archive/&lt;int:year&gt;/&lt;int:month&gt;/', views.archive_month, name='archive-month'),
+
+    <span class="comment"># /newsroom/reporter/trevor/</span>
+    path('reporter/&lt;str:username&gt;/', views.reporter_profile, name='reporter'),
+]</code></pre>
+
+    <!-- ============================================ -->
+    <!-- TEMPLATE RENDERING FROM VIEWS                -->
+    <!-- ============================================ -->
+
+    <h2>Template Rendering from Views</h2>
+
+    <p>The most common pattern in Django: your view queries data and hands it to a template. This is exactly what a Next.js Server Component does &mdash; fetch data on the server, render HTML, send it to the client.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js Server Component</h5>
+        <pre><code><span class="comment">// app/newsroom/page.tsx</span>
+import { prisma } from '@/lib/db';
+
+export default async function NewsroomPage() {
+  const articles = await prisma.article
+    .findMany({
+      where: { status: 'published' },
+      orderBy: { publishedAt: 'desc' },
+      take: 20,
+    });
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Newsroom&lt;/h1&gt;
+      {articles.map(a =&gt; (
+        &lt;article key={a.id}&gt;
+          &lt;h2&gt;{a.title}&lt;/h2&gt;
+          &lt;p&gt;{a.summary}&lt;/p&gt;
+        &lt;/article&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django View + Template</h5>
+        <pre><code><span class="comment"># newsroom/views.py</span>
+from django.shortcuts import render
+from .models import Article
+
+def article_list(request):
+    articles = Article.objects.filter(
+        status='published'
+    ).order_by('-published_at')[:20]
+
+    return render(request,
+        'newsroom/article_list.html', {
+            'articles': articles,
+        }
+    )
+
+<span class="comment"># The dict passed to render() is the</span>
+<span class="comment"># "context" — like props for the template.</span>
+<span class="comment"># Every key becomes a variable in the template.</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The context dict = template props.</strong> The third argument to <code>render()</code> is a dictionary. Each key becomes a variable available in the template. <code>{'articles': articles, 'section': 'News'}</code> means you can use <code>{{ articles }}</code> and <code>{{ section }}</code> in your HTML template. Same mental model as passing props to a React component.</p>
+    </div>
+
+    <h3>render() Under the Hood</h3>
+
+    <p><code>render()</code> is a shortcut that does three things for you:</p>
+
+    <pre><code><span class="comment"># What render() does behind the scenes:</span>
+from django.http import HttpResponse
+from django.template import loader
+
+def article_list(request):
+    articles = Article.objects.all()
+
+    <span class="comment"># 1. Load the template file</span>
+    template = loader.get_template('newsroom/article_list.html')
+
+    <span class="comment"># 2. Render it with context data</span>
+    html = template.render({'articles': articles}, request)
+
+    <span class="comment"># 3. Wrap it in an HttpResponse</span>
+    return HttpResponse(html)
+
+<span class="comment"># render() does all three in one line:</span>
+<span class="comment"># return render(request, 'newsroom/article_list.html', {'articles': articles})</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- REDIRECTS AND ERROR HANDLING                  -->
+    <!-- ============================================ -->
+
+    <h2>Redirects &amp; Error Handling</h2>
+
+    <p>Views do not always render pages. Sometimes you need to redirect the user or show an error. Django has shortcuts for all of these.</p>
+
+    <h3>Redirects</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js</h5>
+        <pre><code><span class="comment">// In a Server Component</span>
+import { redirect } from 'next/navigation';
+
+export default function OldPage() {
+  redirect('/newsroom');
+}
+
+<span class="comment">// In a route handler</span>
+export async function POST(request: Request) {
+  <span class="comment">// process form...</span>
+  return NextResponse.redirect(
+    new URL('/newsroom', request.url)
+  );
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># newsroom/views.py</span>
+from django.shortcuts import redirect
+
+def old_page(request):
+    return redirect('newsroom:article-list')
+    <span class="comment"># Uses the named URL!</span>
+
+def create_article(request):
+    if request.method == 'POST':
+        <span class="comment"># process form...</span>
+        return redirect('newsroom:article-detail',
+                        slug='new-article')
+    return render(request,
+        'newsroom/create.html')</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong><code>redirect()</code> accepts multiple formats:</strong> a named URL (<code>'newsroom:article-list'</code>), a hardcoded path (<code>'/newsroom/'</code>), or even a model instance (if the model has <code>get_absolute_url()</code>). Named URLs are preferred &mdash; they will not break if you change your URL structure later.</p>
+    </div>
+
+    <h3>404 and Other HTTP Errors</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js</h5>
+        <pre><code><span class="comment">// app/newsroom/[slug]/page.tsx</span>
+import { notFound } from 'next/navigation';
+
+export default async function ArticlePage({
+  params
+}: {
+  params: { slug: string }
+}) {
+  const article = await getArticle(params.slug);
+
+  if (!article) {
+    notFound(); <span class="comment">// shows not-found.tsx</span>
+  }
+
+  return &lt;Article data={article} /&gt;;
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># newsroom/views.py</span>
+from django.shortcuts import get_object_or_404
+
+def article_detail(request, slug):
+    article = get_object_or_404(
+        Article, slug=slug, status='published'
+    )
+    <span class="comment"># If not found, Django auto-returns 404</span>
+    <span class="comment"># No if/else needed!</span>
+
+    return render(request,
+        'newsroom/article_detail.html',
+        {'article': article}
+    )</code></pre>
+      </div>
+    </div>
+
+    <p><code>get_object_or_404()</code> is one of Django's best shortcuts. It tries to fetch one record from the database. If the record does not exist, it immediately raises a 404 error &mdash; no <code>if</code> statement needed. Compare that to Next.js where you manually check <code>if (!article) notFound()</code>.</p>
+
+    <pre><code><span class="comment"># Other ways to raise HTTP errors</span>
+from django.http import Http404, HttpResponseForbidden, HttpResponseBadRequest
+
+def article_detail(request, slug):
+    try:
+        article = Article.objects.get(slug=slug)
+    except Article.DoesNotExist:
+        raise Http404(f"No article with slug '{slug}'")  <span class="comment"># Manual 404</span>
+
+def admin_only(request):
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Staff only")       <span class="comment"># 403</span>
+
+def process_data(request):
+    if not request.POST.get('title'):
+        return HttpResponseBadRequest("Title required")  <span class="comment"># 400</span></code></pre>
+
+    <div class="aha">
+      <p><strong>The pattern:</strong> Use <code>get_object_or_404()</code> for 90% of detail views. It replaces the "fetch, check if null, return 404" boilerplate with a single line. For custom error pages, create <code>templates/404.html</code> and <code>templates/500.html</code> &mdash; Django renders them automatically in production (when <code>DEBUG = False</code>).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CLASS-BASED VIEWS                            -->
+    <!-- ============================================ -->
+
+    <h2>Class-Based Views (CBVs) &mdash; The Power Tools</h2>
+
+    <p>Function-based views are great for simple or custom logic. But for standard CRUD operations &mdash; list items, show detail, create, update, delete &mdash; Django has <strong>class-based views</strong> that handle the boilerplate for you.</p>
+
+    <p>Think of the difference like this:</p>
+    <ul>
+      <li><strong>FBV</strong> = writing a custom React hook from scratch</li>
+      <li><strong>CBV</strong> = using a pre-built hook that handles 80% of the work</li>
+    </ul>
+
+    <h3>ListView &mdash; Display a Collection</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Function-Based (Manual)</h5>
+        <pre><code><span class="comment"># You write everything yourself</span>
+def article_list(request):
+    articles = Article.objects.filter(
+        status='published'
+    ).order_by('-published_at')
+
+    paginator = Paginator(articles, 20)
+    page = request.GET.get('page')
+    articles = paginator.get_page(page)
+
+    return render(request,
+        'newsroom/article_list.html',
+        {'articles': articles}
+    )</code></pre>
+      </div>
+      <div>
+        <h5>Class-Based (Automatic)</h5>
+        <pre><code><span class="comment"># Django handles the boilerplate</span>
+from django.views.generic import ListView
+from .models import Article
+
+class ArticleListView(ListView):
+    model = Article
+    template_name = 'newsroom/article_list.html'
+    context_object_name = 'articles'
+    queryset = Article.objects.filter(
+        status='published'
+    ).order_by('-published_at')
+    paginate_by = 20</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>What just happened:</strong> The <code>ListView</code> automatically queries the database, paginates results, passes them to the template, and handles edge cases. Five lines of configuration replace ten lines of logic. It is like a pre-built React component that already handles loading, error, and empty states &mdash; you just configure it.</p>
+    </div>
+
+    <h3>DetailView &mdash; Display a Single Object</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Function-Based</h5>
+        <pre><code>def article_detail(request, slug):
+    article = get_object_or_404(
+        Article,
+        slug=slug,
+        status='published'
+    )
+    return render(request,
+        'newsroom/article_detail.html',
+        {'article': article}
+    )</code></pre>
+      </div>
+      <div>
+        <h5>Class-Based</h5>
+        <pre><code>from django.views.generic import DetailView
+
+class ArticleDetailView(DetailView):
+    model = Article
+    template_name = 'newsroom/article_detail.html'
+    context_object_name = 'article'
+    slug_field = 'slug'       <span class="comment"># default</span>
+    slug_url_kwarg = 'slug'   <span class="comment"># default</span></code></pre>
+      </div>
+    </div>
+
+    <h3>CreateView, UpdateView, DeleteView &mdash; Full CRUD</h3>
+
+    <pre><code><span class="comment"># newsroom/views.py</span>
+from django.views.generic import CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from .models import Article
+
+class ArticleCreateView(CreateView):
+    model = Article
+    fields = ['title', 'slug', 'content', 'category', 'status']
+    template_name = 'newsroom/article_form.html'
+    success_url = reverse_lazy('newsroom:article-list')  <span class="comment"># redirect after save</span>
+
+class ArticleUpdateView(UpdateView):
+    model = Article
+    fields = ['title', 'content', 'category', 'status']
+    template_name = 'newsroom/article_form.html'         <span class="comment"># reuses the same form!</span>
+    slug_field = 'slug'
+
+    def get_success_url(self):
+        return reverse_lazy('newsroom:article-detail',
+                           kwargs={'slug': self.object.slug})
+
+class ArticleDeleteView(DeleteView):
+    model = Article
+    template_name = 'newsroom/article_confirm_delete.html'
+    success_url = reverse_lazy('newsroom:article-list')</code></pre>
+
+    <div class="callout">
+      <p><strong>Why <code>reverse_lazy</code> instead of <code>reverse</code>?</strong> Class attributes are evaluated when the module loads, before URL patterns are ready. <code>reverse_lazy()</code> waits until the URL is actually needed. In function-based views, use regular <code>reverse()</code> since it runs at request time. This is a common gotcha.</p>
+    </div>
+
+    <h3>Wiring CBVs to URLs</h3>
+
+    <p>Class-based views need <code>.as_view()</code> to convert them into a callable that <code>path()</code> can use:</p>
+
+    <pre><code><span class="comment"># newsroom/urls.py</span>
+from django.urls import path
+from . import views
+
+app_name = 'newsroom'
+
+urlpatterns = [
+    <span class="comment"># FBVs are referenced directly</span>
+    path('', views.article_list, name='article-list'),
+
+    <span class="comment"># CBVs need .as_view()</span>
+    path('', views.ArticleListView.as_view(), name='article-list'),
+    path('&lt;slug:slug&gt;/', views.ArticleDetailView.as_view(), name='article-detail'),
+    path('create/', views.ArticleCreateView.as_view(), name='article-create'),
+    path('&lt;slug:slug&gt;/edit/', views.ArticleUpdateView.as_view(), name='article-update'),
+    path('&lt;slug:slug&gt;/delete/', views.ArticleDeleteView.as_view(), name='article-delete'),
+]</code></pre>
+
+    <div class="warning">
+      <p><strong>Don't forget <code>.as_view()</code>!</strong> A class-based view is a class, not a function. <code>path()</code> expects a callable. <code>.as_view()</code> returns a function that creates an instance and calls the right method (get, post, etc.) based on the request. Forgetting this is a common error that produces a confusing traceback.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- GENERIC VIEW REFERENCE TABLE                 -->
+    <!-- ============================================ -->
+
+    <h2>Generic Views Reference</h2>
+
+    <p>Here is every generic view mapped to its Next.js equivalent and the CRUD operation it handles:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Django CBV</th>
+          <th>CRUD</th>
+          <th>Next.js Equivalent</th>
+          <th>What It Does</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ListView</code></td>
+          <td>Read (many)</td>
+          <td>Server Component with <code>findMany</code></td>
+          <td>Fetch and display a list with pagination</td>
+        </tr>
+        <tr>
+          <td><code>DetailView</code></td>
+          <td>Read (one)</td>
+          <td><code>[slug]/page.tsx</code> with <code>findUnique</code></td>
+          <td>Fetch and display one object by pk/slug</td>
+        </tr>
+        <tr>
+          <td><code>CreateView</code></td>
+          <td>Create</td>
+          <td>Form page + POST route handler</td>
+          <td>Show form, validate, save new object</td>
+        </tr>
+        <tr>
+          <td><code>UpdateView</code></td>
+          <td>Update</td>
+          <td>Edit form + PUT/PATCH route handler</td>
+          <td>Pre-fill form, validate, save changes</td>
+        </tr>
+        <tr>
+          <td><code>DeleteView</code></td>
+          <td>Delete</td>
+          <td>Confirmation page + DELETE route handler</td>
+          <td>Show confirmation, delete on POST</td>
+        </tr>
+        <tr>
+          <td><code>TemplateView</code></td>
+          <td>&mdash;</td>
+          <td>Static <code>page.tsx</code></td>
+          <td>Render a template with no model</td>
+        </tr>
+        <tr>
+          <td><code>RedirectView</code></td>
+          <td>&mdash;</td>
+          <td><code>redirect()</code> in next.config.js</td>
+          <td>Redirect one URL to another</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- FBV VS CBV                                   -->
+    <!-- ============================================ -->
+
+    <h2>When to Use FBVs vs. CBVs</h2>
+
+    <p>This is one of the most debated topics in the Django community. Here is a practical guide:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Use FBVs When...</th>
+          <th>Use CBVs When...</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>The view has custom, unique logic</td>
+          <td>You are doing standard CRUD operations</td>
+        </tr>
+        <tr>
+          <td>You want the code to be explicit and readable</td>
+          <td>You want Django to handle boilerplate</td>
+        </tr>
+        <tr>
+          <td>The view is simple (API endpoint, webhook)</td>
+          <td>You need pagination, form handling, etc.</td>
+        </tr>
+        <tr>
+          <td>You are learning Django (start here!)</td>
+          <td>You want to reuse view logic across views</td>
+        </tr>
+        <tr>
+          <td>You need fine-grained control over every step</td>
+          <td>You prefer configuration over code</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="aha">
+      <p><strong>The practical rule:</strong> Start with FBVs for everything. When you notice you are writing the same "fetch list, paginate, render" pattern for the third time, switch those views to CBVs. FBVs are easier to understand and debug. CBVs save time on repetitive CRUD. Most Django projects use both.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CUSTOMIZING CLASS-BASED VIEWS                -->
+    <!-- ============================================ -->
+
+    <h2>Customizing CBVs &mdash; Override Methods</h2>
+
+    <p>Class-based views are configurable by overriding methods. This is where their real power shows up.</p>
+
+    <pre><code><span class="comment"># newsroom/views.py</span>
+from django.views.generic import ListView
+from .models import Article
+
+class ArticleListView(ListView):
+    model = Article
+    template_name = 'newsroom/article_list.html'
+    context_object_name = 'articles'
+    paginate_by = 20
+
+    def get_queryset(self):
+        <span class="comment"># Override the default queryset</span>
+        <span class="comment"># Like customizing the Prisma query in a Server Component</span>
+        qs = Article.objects.filter(status='published')
+
+        <span class="comment"># Filter by query parameter (?category=politics)</span>
+        category = self.request.GET.get('category')
+        if category:
+            qs = qs.filter(category__slug=category)
+
+        <span class="comment"># Search (?q=council)</span>
+        q = self.request.GET.get('q')
+        if q:
+            qs = qs.filter(title__icontains=q)
+
+        return qs.order_by('-published_at')
+
+    def get_context_data(self, **kwargs):
+        <span class="comment"># Add extra variables to the template context</span>
+        <span class="comment"># Like adding more props alongside the main data</span>
+        context = super().get_context_data(**kwargs)
+        context['categories'] = Category.objects.all()
+        context['current_category'] = self.request.GET.get('category', '')
+        return context</code></pre>
+
+    <div class="callout">
+      <p><strong>The two methods you will override most:</strong> <code>get_queryset()</code> controls <em>what data</em> to fetch (filtering, ordering, searching). <code>get_context_data()</code> controls <em>what extra variables</em> the template receives. Together, they let you customize a CBV without rewriting the whole view.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRACTICAL EXAMPLE: NEWSROOM                  -->
+    <!-- ============================================ -->
+
+    <h2>Practical Example &mdash; Newsroom App</h2>
+
+    <p>Let us build a complete set of views for a newsroom application. This is the same kind of article CMS you might build at a newspaper &mdash; article list, article detail, category filter, and archive pages.</p>
+
+    <h3>The Models (Quick Recap)</h3>
+
+    <pre><code><span class="comment"># newsroom/models.py</span>
+from django.db import models
+from django.urls import reverse
+
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True)
+
+    def __str__(self):
+        return self.name
+
+class Article(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('published', 'Published'),
+    ]
+
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
+    content = models.TextField()
+    summary = models.TextField(max_length=300, blank=True)
+    author = models.ForeignKey('auth.User', on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='draft')
+    published_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse('newsroom:article-detail', kwargs={'slug': self.slug})</code></pre>
+
+    <h3>The Views &mdash; FBV Versions</h3>
+
+    <pre><code><span class="comment"># newsroom/views.py — Function-Based Views</span>
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
+from .models import Article, Category
+
+def article_list(request):
+    """List published articles — like app/newsroom/page.tsx"""
+    articles = Article.objects.filter(
+        status='published'
+    ).select_related('author', 'category').order_by('-published_at')
+
+    return render(request, 'newsroom/article_list.html', {
+        'articles': articles,
+    })
+
+def article_detail(request, slug):
+    """Single article — like app/newsroom/[slug]/page.tsx"""
+    article = get_object_or_404(
+        Article, slug=slug, status='published'
+    )
+    return render(request, 'newsroom/article_detail.html', {
+        'article': article,
+    })
+
+def by_category(request, category):
+    """Filter by category — like app/newsroom/category/[slug]/page.tsx"""
+    cat = get_object_or_404(Category, slug=category)
+    articles = Article.objects.filter(
+        category=cat, status='published'
+    ).order_by('-published_at')
+
+    return render(request, 'newsroom/article_list.html', {
+        'articles': articles,
+        'current_category': cat,
+    })
+
+def archive(request, year):
+    """Articles by year — like app/newsroom/archive/[year]/page.tsx"""
+    articles = Article.objects.filter(
+        status='published',
+        published_at__year=year,
+    ).order_by('-published_at')
+
+    return render(request, 'newsroom/article_list.html', {
+        'articles': articles,
+        'archive_year': year,
+    })
+
+def api_articles(request):
+    """JSON API endpoint — like app/api/articles/route.ts"""
+    articles = Article.objects.filter(
+        status='published'
+    ).values('title', 'slug', 'summary', 'published_at')
+
+    return JsonResponse({
+        'articles': list(articles),
+        'count': articles.count(),
+    })</code></pre>
+
+    <h3>The Same Views &mdash; CBV Versions</h3>
+
+    <pre><code><span class="comment"># newsroom/views.py — Class-Based Views (same result, less code)</span>
+from django.views.generic import ListView, DetailView
+from .models import Article, Category
+
+class ArticleListView(ListView):
+    model = Article
+    template_name = 'newsroom/article_list.html'
+    context_object_name = 'articles'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return Article.objects.filter(
+            status='published'
+        ).select_related('author', 'category').order_by('-published_at')
+
+class ArticleDetailView(DetailView):
+    model = Article
+    template_name = 'newsroom/article_detail.html'
+    context_object_name = 'article'
+
+    def get_queryset(self):
+        return Article.objects.filter(status='published')
+
+class CategoryView(ListView):
+    model = Article
+    template_name = 'newsroom/article_list.html'
+    context_object_name = 'articles'
+
+    def get_queryset(self):
+        self.category = get_object_or_404(Category, slug=self.kwargs['category'])
+        return Article.objects.filter(
+            category=self.category, status='published'
+        ).order_by('-published_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_category'] = self.category
+        return context
+
+class ArchiveView(ListView):
+    model = Article
+    template_name = 'newsroom/article_list.html'
+    context_object_name = 'articles'
+
+    def get_queryset(self):
+        return Article.objects.filter(
+            status='published',
+            published_at__year=self.kwargs['year'],
+        ).order_by('-published_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['archive_year'] = self.kwargs['year']
+        return context</code></pre>
+
+    <div class="aha">
+      <p><strong>Notice the pattern:</strong> <code>self.kwargs</code> gives you URL parameters inside CBVs (like <code>params</code> in Next.js). <code>self.request</code> gives you the request object. These are the two main pieces of context you use to customize CBV behavior.</p>
+    </div>
+
+    <h3>The URL Configuration</h3>
+
+    <pre><code><span class="comment"># newsroom/urls.py</span>
+from django.urls import path
+from . import views
+
+app_name = 'newsroom'
+
+urlpatterns = [
+    <span class="comment"># Using FBVs:</span>
+    path('', views.article_list, name='article-list'),
+    path('&lt;slug:slug&gt;/', views.article_detail, name='article-detail'),
+    path('category/&lt;slug:category&gt;/', views.by_category, name='by-category'),
+    path('archive/&lt;int:year&gt;/', views.archive, name='archive'),
+
+    <span class="comment"># Or, using CBVs (pick one style, not both):</span>
+    <span class="comment"># path('', views.ArticleListView.as_view(), name='article-list'),</span>
+    <span class="comment"># path('&lt;slug:slug&gt;/', views.ArticleDetailView.as_view(), name='article-detail'),</span>
+    <span class="comment"># path('category/&lt;slug:category&gt;/', views.CategoryView.as_view(), name='by-category'),</span>
+    <span class="comment"># path('archive/&lt;int:year&gt;/', views.ArchiveView.as_view(), name='archive'),</span>
+]</code></pre>
+
+    <!-- ============================================ -->
+    <!-- SIDE-BY-SIDE: FULL ROUTE COMPARISON          -->
+    <!-- ============================================ -->
+
+    <h2>Full Route Comparison &mdash; Next.js App Router vs. Django</h2>
+
+    <p>Here is a complete newsroom application mapped between both frameworks. This is the Rosetta Stone for your transition:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>URL</th>
+          <th>Next.js File</th>
+          <th>Django URL Pattern</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>/</code></td>
+          <td><code>app/page.tsx</code></td>
+          <td><code>path('', views.home)</code></td>
+        </tr>
+        <tr>
+          <td><code>/newsroom/</code></td>
+          <td><code>app/newsroom/page.tsx</code></td>
+          <td><code>path('', views.article_list)</code></td>
+        </tr>
+        <tr>
+          <td><code>/newsroom/my-article/</code></td>
+          <td><code>app/newsroom/[slug]/page.tsx</code></td>
+          <td><code>path('&lt;slug:slug&gt;/', views.article_detail)</code></td>
+        </tr>
+        <tr>
+          <td><code>/newsroom/category/politics/</code></td>
+          <td><code>app/newsroom/category/[slug]/page.tsx</code></td>
+          <td><code>path('category/&lt;slug:cat&gt;/', views.by_category)</code></td>
+        </tr>
+        <tr>
+          <td><code>/newsroom/archive/2025/</code></td>
+          <td><code>app/newsroom/archive/[year]/page.tsx</code></td>
+          <td><code>path('archive/&lt;int:year&gt;/', views.archive)</code></td>
+        </tr>
+        <tr>
+          <td><code>/api/articles/</code></td>
+          <td><code>app/api/articles/route.ts</code></td>
+          <td><code>path('api/articles/', views.api_articles)</code></td>
+        </tr>
+        <tr>
+          <td><code>/newsroom/create/</code></td>
+          <td><code>app/newsroom/create/page.tsx</code> + Server Action</td>
+          <td><code>path('create/', views.ArticleCreateView.as_view())</code></td>
+        </tr>
+        <tr>
+          <td><code>/newsroom/my-article/edit/</code></td>
+          <td><code>app/newsroom/[slug]/edit/page.tsx</code></td>
+          <td><code>path('&lt;slug:slug&gt;/edit/', views.ArticleUpdateView.as_view())</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="aha">
+      <p><strong>The tradeoff:</strong> Next.js file-based routing is more automatic &mdash; create a file and you have a route. Django explicit routing is more flexible &mdash; you can map any URL pattern to any view, reorder routes, add regex patterns, and namespace them. Neither approach is better; they optimize for different things.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ADVANCED PATTERNS                            -->
+    <!-- ============================================ -->
+
+    <h2>Bonus Patterns</h2>
+
+    <h3>Returning Different Formats from One View</h3>
+
+    <pre><code><span class="comment"># A view that returns HTML or JSON based on the request</span>
+<span class="comment"># Similar to content negotiation in Next.js middleware</span>
+def article_detail(request, slug):
+    article = get_object_or_404(Article, slug=slug, status='published')
+
+    <span class="comment"># If the client wants JSON (API call from React frontend)</span>
+    if request.headers.get('Accept') == 'application/json':
+        return JsonResponse({
+            'title': article.title,
+            'content': article.content,
+            'author': article.author.username,
+        })
+
+    <span class="comment"># Otherwise return HTML (normal page visit)</span>
+    return render(request, 'newsroom/article_detail.html', {
+        'article': article,
+    })</code></pre>
+
+    <h3>Using Decorators for Auth &amp; Permissions</h3>
+
+    <pre><code><span class="comment"># Like middleware or auth checks in Next.js</span>
+from django.contrib.auth.decorators import login_required, permission_required
+
+@login_required                           <span class="comment"># Redirects to login if not authenticated</span>
+def create_article(request):
+    <span class="comment"># Only logged-in users reach this code</span>
+    pass
+
+@permission_required('newsroom.add_article')  <span class="comment"># Needs specific permission</span>
+def create_article(request):
+    <span class="comment"># Only users with the "add_article" permission</span>
+    pass
+
+<span class="comment"># For CBVs, use mixins instead:</span>
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+class ArticleCreateView(LoginRequiredMixin, CreateView):
+    model = Article
+    <span class="comment"># LoginRequiredMixin goes FIRST in the inheritance list!</span>
+    <span class="comment"># If not logged in, redirects to settings.LOGIN_URL</span></code></pre>
+
+    <div class="warning">
+      <p><strong>Mixin order matters!</strong> When using mixins with CBVs, put the mixin <em>before</em> the view class: <code>LoginRequiredMixin, CreateView</code> (not the other way around). Python processes parent classes left to right, and the mixin needs to intercept the request before the view processes it. Getting this backwards is a subtle bug that is hard to diagnose.</p>
+    </div>
+
+    <h3>Named URLs and <code>reverse()</code></h3>
+
+    <pre><code><span class="comment"># Generating URLs programmatically — no hardcoded strings!</span>
+from django.urls import reverse
+
+<span class="comment"># In a view:</span>
+url = reverse('newsroom:article-detail', kwargs={'slug': 'city-council-vote'})
+<span class="comment"># Returns: '/newsroom/city-council-vote/'</span>
+
+<span class="comment"># In a template:</span>
+<span class="comment"># &lt;a href="{% url 'newsroom:article-detail' slug=article.slug %}"&gt;</span>
+<span class="comment">#   {{ article.title }}</span>
+<span class="comment"># &lt;/a&gt;</span>
+
+<span class="comment"># On a model (get_absolute_url):</span>
+<span class="comment"># class Article(models.Model):</span>
+<span class="comment">#     def get_absolute_url(self):</span>
+<span class="comment">#         return reverse('newsroom:article-detail', kwargs={'slug': self.slug})</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Why named URLs matter for journalism:</strong> Imagine your editor says "change all article URLs from <code>/newsroom/slug/</code> to <code>/stories/slug/</code>." With named URLs, you change one line in <code>urls.py</code> and every link, redirect, and reference in your entire codebase updates automatically. With hardcoded paths, you are hunting through templates with find-and-replace. Named URLs are like CSS variables for your routing.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. What is the Django equivalent of a Next.js <code>route.ts</code> file that exports a <code>GET</code> function?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A view function in <code>views.py</code> that takes a <code>request</code> parameter and returns an <code>HttpResponse</code>, <code>JsonResponse</code>, or <code>render()</code> result. The view is then wired to a URL in <code>urls.py</code> via <code>path()</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What does <code>&lt;int:pk&gt;</code> in a URL pattern do that Next.js's <code>[id]</code> does not?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It validates the URL segment is an actual integer and converts it to a Python <code>int</code>. If someone visits <code>/article/abc/</code>, Django returns a 404 automatically. In Next.js, <code>params.id</code> is always a string and you must validate and parse it yourself.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What is the difference between <code>render()</code> and <code>HttpResponse()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>HttpResponse()</code> returns raw text or HTML as a string. <code>render()</code> loads an HTML template file, injects context data into it, and returns the result as an <code>HttpResponse</code>. Use <code>render()</code> for full pages, <code>HttpResponse()</code> for simple text responses.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What does <code>get_object_or_404(Article, slug=slug)</code> do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It tries to fetch a single <code>Article</code> matching the given slug. If found, it returns the object. If not found, it raises an <code>Http404</code> exception, which Django turns into a 404 error page. It replaces the "fetch, check if null, return error" pattern.</div>
+      </div>
+
+      <div class="question">
+        <p>5. When should you use a class-based view instead of a function-based view?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use CBVs for standard CRUD operations (list, detail, create, update, delete) where Django's generic views handle the boilerplate. Use FBVs for custom logic, simple API endpoints, or when you want maximum clarity. Most projects use both.</div>
+      </div>
+
+      <div class="question">
+        <p>6. Why do CBVs need <code>.as_view()</code> in <code>urls.py</code> but FBVs do not?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>path()</code> expects a callable (function). An FBV is already a function. A CBV is a class &mdash; <code>.as_view()</code> returns a function that instantiates the class and dispatches to the right method (<code>get()</code>, <code>post()</code>, etc.) based on the HTTP method.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/django/lessons/07-models-orm/">&larr; Prev: Models &amp; ORM</a>
+      <a href="/django/lessons/09-templates-forms/">Next: Templates &amp; Forms &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

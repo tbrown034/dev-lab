@@ -1,0 +1,243 @@
+============================================================
+SECTION 1: SOURCE DOCUMENT FOR NOTEBOOKLM
+============================================================
+
+LESSON: 02 - Python Collections & Control Flow
+TRACK: Django / Python (12-lesson curriculum)
+
+------------------------------------------------------------
+CONTEXT FOR HOSTS
+------------------------------------------------------------
+
+Where this lesson fits:
+Lesson 2 of 12. Lesson 1 covered the basics (variables, types, strings, operators). This lesson tackles data structures and loops — lists, tuples, dicts, sets, for/while loops, conditionals, and Python's secret weapon: comprehensions. Lesson 3 will cover functions and modules, and lesson 4 dives into OOP. Collections and loops are the bread and butter — you use them in literally every Django view, template, and model query.
+
+Who Trevor is:
+Trevor is a JS/React/Next.js/TypeScript developer and investigative journalist. He thinks in arrays, objects, .map(), .filter(), .reduce(), and for...of loops. He needs every Python collection and loop pattern mapped to the JavaScript equivalent he already uses daily.
+
+Key JS-to-Python translations the hosts should highlight:
+- Arrays -> Lists (same concept, same bracket syntax, slightly different method names)
+- .push() -> .append(), .includes() -> "in" operator, .length -> len(), .indexOf() -> .index()
+- Objects (as key-value stores) -> Dicts (bracket notation only, NO dot notation for dicts)
+- Object.entries() -> .items(), Object.keys() -> .keys()
+- ?? for defaults -> .get(key, default)
+- {...a, ...b} spread -> {**a, **b} or a | b
+- .map() -> list comprehension [expr for x in items]
+- .filter() -> list comprehension with if [x for x in items if condition]
+- .map() + .filter() chained -> single comprehension [expr for x in items if condition]
+- for...of -> for item in iterable:
+- .forEach with index -> for i, item in enumerate(items):
+- No built-in zip in JS -> zip() pairs up multiple lists elegantly
+- Ternary (condition ? a : b) -> (a if condition else b) — value comes FIRST in Python
+- .reduce() for sum -> built-in sum(). .every() -> all(). .some() -> any()
+- [...arr].sort() -> sorted(arr) (returns new list)
+
+Mental models that matter most:
+1. Comprehensions are Python's superpower — they replace .map(), .filter(), and often both, in a single readable line
+2. "in" is universal — it checks membership in lists, dicts, sets, and strings
+3. Everything is iterable — Python's for loop works on anything, not just arrays
+4. Tuples are frozen arrays — immutable lists, used for fixed data like coordinates
+
+------------------------------------------------------------
+LESSON CONTENT
+------------------------------------------------------------
+
+LISTS — Python's Arrays
+
+A Python list is JavaScript's Array. Same concept, same bracket syntax, slightly different method names.
+
+Creating: nums = [1, 2, 3, 4, 5] — identical to JS except no const/let.
+
+Method name translations:
+- .push(6) -> .append(6)
+- .pop() -> .pop() (same!)
+- .unshift(0) -> .insert(0, 0)
+- .splice(1, 1) -> del nums[1]
+- .concat([7, 8]) -> nums + [7, 8] or nums.extend([7, 8])
+- .indexOf(3) -> .index(3)
+- .includes(3) -> 3 in nums (operator, not method!)
+- .length -> len(nums) (function, not property!)
+- .reverse() -> .reverse() (same!)
+- .sort() -> .sort() (same! But key function instead of comparator)
+
+Slicing — Python's Supercharged .slice():
+Python's slice syntax [start:stop:step] is far more powerful than JS's .slice(). The step parameter is the superpower JS doesn't have.
+- arr[2:5] gives [2, 3, 4] — same as JS .slice(2, 5)
+- arr[:3] gives first 3 elements
+- arr[-2:] gives last 2 elements
+- arr[::2] gives every 2nd element — no JS equivalent without .filter()
+- arr[::-1] reverses the whole thing — the Python classic
+
+Mental model: [start:stop:step] mirrors range(start, stop, step). Same three-argument pattern, same "stop is exclusive" rule.
+
+Negative indices work natively: arr[-1] gives the last element (always worked in Python, JS only got .at() in ES2022).
+
+TUPLES — Frozen Arrays
+
+A tuple is an immutable list. Like Object.freeze([1, 2, 3]) in JavaScript. You can read it but never add, remove, or change elements.
+
+point = (10, 20) — parentheses, or even just: point = 10, 20
+
+Gotcha: Single-element tuples need a trailing comma. (42) is just the number 42. (42,) is a tuple. The comma makes it a tuple.
+
+When to use tuples vs lists: Use tuples for fixed data that shouldn't change — coordinates, RGB values, database rows, function return values. Lists when you need to add/remove items. Tuples are faster and can be used as dictionary keys.
+
+DICTS — Python's Objects (for data)
+
+Python dict is what you'd use when you reach for a JavaScript object as a key-value store. Almost identical syntax.
+
+JS: const user = { name: "Trevor", age: 38 }; user.name // "Trevor"
+Python: user = {"name": "Trevor", "age": 38}; user["name"] # "Trevor"
+
+CRITICAL DIFFERENCE: No dot notation for dicts! In JavaScript, obj.key and obj["key"] are interchangeable. In Python, dict.key does NOT work. You must use dict["key"] or dict.get("key"). Dot notation is reserved for object attributes and methods.
+
+Missing keys: JS returns undefined silently. Python raises KeyError! Use .get("key") for safe access — returns None if missing, or .get("key", "default") for a default value.
+
+Dict tricks:
+- ?? for defaults -> .get("key", "default")
+- {...a, ...b} -> {**a, **b} or a | b (Python 3.9+)
+- Object.entries() -> .items()
+- "key" in obj -> "key" in d (same!)
+
+SETS
+
+Sets work almost identically. Unique values, no duplicates.
+- new Set(arr) -> set(arr) or {val1, val2}
+- .has() -> "in" operator
+- .add() -> .add() (same!)
+- .delete() -> .discard()
+- .size -> len()
+
+Python has built-in set operators: & for intersection, | for union, - for difference. JS needs libraries for these.
+
+Gotcha: {} creates an empty dict, not a set. Use set() for an empty set.
+
+FOR LOOPS
+
+Python has ONE kind of for loop: for item in iterable. No C-style for (let i = 0; ...). Everything is iteration over a collection.
+
+for fruit in fruits: — like JS for...of
+for i, fruit in enumerate(fruits): — like .forEach with index
+for i in range(10): — like for (let i = 0; i < 10; i++)
+for key, val in obj.items(): — like for...of Object.entries()
+
+range(): Generates a sequence. range(5) gives 0-4. range(2, 7) gives 2-6. range(0, 10, 2) gives 0, 2, 4, 6, 8.
+
+enumerate(): Gives (index, value) pairs. Can start at a custom number: enumerate(colors, 1).
+
+zip(): No direct JS equivalent. Pairs up elements from multiple lists. Instead of syncing arrays with index-based access (scores[i]), use zip(names, scores). Creates a dict from two lists: dict(zip(keys, values)).
+
+While loops and break/continue work the same. Python bonus: for/else runs the else block only if no break was hit — niche but elegant for search patterns.
+
+Python has no ++ or --. Use count += 1 and count -= 1.
+
+CONDITIONALS
+
+if/elif/else instead of if/else if/else. Colons, indentation, no parentheses needed around the condition.
+
+Ternary order is different! JS: condition ? true_val : false_val. Python: true_val if condition else false_val. The VALUE comes first.
+
+match/case (Python 3.10+) is like switch/case but with pattern matching superpowers.
+
+COMPREHENSIONS — Python's Superpower
+
+List comprehensions replace .map(), .filter(), and often both in a single readable line.
+
+The pattern: [EXPRESSION for ITEM in ITERABLE if CONDITION]
+
+JS .map(): nums.map(n => n * 2) -> [n * 2 for n in nums]
+JS .filter(): nums.filter(n => n % 2 === 0) -> [n for n in nums if n % 2 == 0]
+JS .map() + .filter(): nums.filter(n => n % 2 === 0).map(n => n * 2) -> [n * 2 for n in nums if n % 2 == 0]
+
+Read it like English: "Give me [expression] for each [item] in [collection] if [condition]."
+
+Dict comprehensions: {key: val for x in items} — like Object.fromEntries(arr.map(...))
+Set comprehensions: {expr for x in items} — same pattern, curly braces
+Generator expressions: (expr for x in items) — lazy, memory efficient
+
+UNPACKING — Python's Destructuring
+
+Array destructuring: const [a, b, c] = [1, 2, 3] -> a, b, c = [1, 2, 3]
+Rest: const [head, ...tail] = arr -> head, *tail = arr (one star, not three dots)
+Skip elements: const [first, , third] = arr -> first, _, third = arr (underscore convention)
+
+No dict destructuring! Python has no equivalent of const { name, age } = obj. You access dict values individually.
+
+*rest in Python = ...rest in JS. Star can go anywhere: first, *middle, last = [1,2,3,4,5] gives middle = [2,3,4].
+
+USEFUL BUILT-IN FUNCTIONS
+
+.reduce() for sum -> sum(nums) (built-in!)
+Math.min() -> min(nums)
+Math.max() -> max(nums)
+.every() -> all(n > 0 for n in nums)
+.some() -> any(n > 0 for n in nums)
+[...arr].sort() -> sorted(arr) (returns new list)
+
+Python's sort key function: Instead of a comparison function returning -1/0/1, you provide a function that extracts the value to sort by. users.sort(key=lambda u: u["age"]) — Python figures out the ordering.
+
+------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+------------------------------------------------------------
+
+1. List comprehensions are THE Python idiom — once you internalize [expr for x in items if condition], you'll reach for it constantly. It replaces map + filter in one shot.
+2. "in" is your Swiss Army knife — checks membership in lists, dicts, sets, strings. Way cleaner than .includes() or .has().
+3. Dicts are NOT objects — no dot notation! Use bracket access or .get() for safety.
+4. enumerate() and zip() are your loop power tools — they replace index-based array access patterns.
+5. Tuples exist for a reason — fixed data, dictionary keys, function return values. Get comfortable with them now because Django returns tuples everywhere (e.g., choices fields).
+
+------------------------------------------------------------
+COMMON PITFALLS FOR JS DEVELOPERS
+------------------------------------------------------------
+
+- Using dot notation on dicts (user.name instead of user["name"]) — this will be a constant reflex for weeks
+- Forgetting that {} is an empty dict, not an empty set — use set() for empty sets
+- Getting the ternary order wrong — Python puts the value first: "yes" if True else "no"
+- Trying to use .push() instead of .append()
+- Using .includes() instead of the "in" operator
+- Expecting dict["missing_key"] to return undefined — it raises KeyError, use .get()
+- Writing (42) thinking it's a single-element tuple — need the trailing comma: (42,)
+- Trying .length instead of len()
+- Writing Object.entries(d) instead of d.items()
+
+------------------------------------------------------------
+REAL-WORLD CONNECTION
+------------------------------------------------------------
+
+At a broadcast TV network, collections and loops are everywhere. Imagine processing a list of TV show ratings: you'd filter for shows above a threshold (list comprehension), group them by network (dict comprehension), find unique genres (set), and pair show names with their time slots (zip). Django querysets return list-like objects you'll iterate with for loops. Django model choices use tuples. Django template context uses dicts. Every single concept in this lesson shows up in Django daily. The comprehension pattern especially will become second nature when you're processing database results in views.
+
+
+============================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS FOR NOTEBOOKLM
+============================================================
+
+This episode should feel like a rapid-fire translation guide with a "wow, that's cleaner" vibe. The Python host should highlight where Python's approach is genuinely more elegant (comprehensions, zip, enumerate, built-in sum/min/max), and the JS host should have genuine reactions: "Wait, I can replace a whole .filter().map() chain with one line?"
+
+Specific mental models for THIS lesson:
+- Comprehensions = "map and filter had a baby and it reads like English"
+- The "in" keyword = the universal membership test (lists, dicts, sets, strings — one operator for all)
+- Dicts != Objects: "You can look but you can't dot" — no dot notation on dicts
+
+JS/React equivalents to reference:
+- Array -> list, Object -> dict (for data), Set -> set (nearly identical)
+- .map() -> comprehension, .filter() -> comprehension with if
+- .forEach((item, i) => ...) -> for i, item in enumerate(...)
+- {...spread} -> {**spread}
+- arr.slice() -> arr[start:stop:step]
+- Object.entries() -> .items()
+- .reduce((a,b) => a+b, 0) -> sum()
+
+Connect back to lesson 1: "Remember how we said Python has one obvious way to do things? Comprehensions are THE obvious way to transform data. Once you learn this pattern, you'll never want to go back to .map().filter() chains."
+
+Tease lesson 3: "Next time we cover functions — and Python's keyword arguments solve that annoying problem where you have to pass undefined to skip a default parameter in JavaScript."
+
+Trevor's journalism background: Use broadcast/newsroom analogies. "Processing a list of source contacts is like filtering your list comprehension — give me all sources where source.verified is True."
+
+Memorization techniques for THIS lesson:
+- "Comprehension = expression, loop, filter — in that order, always"
+- "Append, not push" — picture appending a page to a notebook, not pushing a button
+- "Items, not entries" — dict.items() gives you key-value pairs
+- "Star is rest, double-star is spread" — *args for sequences, **kwargs for dicts
+- "zip = zipper" — picture a jacket zipper joining two sides together
+
+Tone: Enthusiastic about comprehensions. Both hosts should genuinely geek out about how clean [x * 2 for x in nums if x > 10] is compared to nums.filter(x => x > 10).map(x => x * 2). This is one of Python's genuine wins over JavaScript and it should land with impact.

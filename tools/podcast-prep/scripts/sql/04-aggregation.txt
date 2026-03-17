@@ -1,0 +1,319 @@
+================================================================================
+SECTION 1: SOURCE DOCUMENT
+================================================================================
+
+TITLE: Aggregation & GROUP BY -- Crunching Numbers
+TRACK: SQL / PostgreSQL (Lesson 4 of 12)
+
+--------------------------------------------------------------------------------
+CONTEXT FOR HOSTS
+--------------------------------------------------------------------------------
+
+This is Lesson 4 of a 12-lesson SQL curriculum. In Lessons 01-03, Trevor learned single-table queries (SELECT, WHERE, CASE, DISTINCT), pattern matching (LIKE/ILIKE), NULL handling (COALESCE), and connecting multiple tables with JOINs. Now he learns aggregation -- the tool that turns thousands of rows into meaningful summaries.
+
+THE LEARNER: Trevor is an investigative journalist with 15+ years of experience who taught himself web development (React, Next.js, TypeScript, Tailwind). He has been using Prisma as his ORM. He is learning raw SQL/PostgreSQL for a potential role at Tenga, a chain of broadcast TV networks.
+
+WHAT TREVOR ALREADY KNOWS THAT CONNECTS:
+- Array.reduce(): Aggregation is like .reduce() -- it takes many items and boils them down to one value. COUNT is array.length. SUM is array.reduce((s, x) => s + x.col, 0). AVG is sum / count.
+- Prisma's aggregate() and groupBy(): Trevor has used prisma.article.aggregate({ _count: true, _sum: { views: true } }) and prisma.article.groupBy({ by: ['category'] }). He is familiar with the concept of aggregation through Prisma's API.
+- JavaScript's Object.groupBy() or lodash groupBy: GROUP BY is the same concept -- put items into buckets by a key, then do something with each bucket.
+- CASE from Lesson 02: CASE inside aggregates creates conditional counts -- the data analysis power pattern.
+
+TREVOR'S GOAL: Building dashboards and reports for broadcast TV -- election result summaries by county, weather averages by region, ad revenue totals by station and time slot.
+
+DATA JOURNALISM CONNECTION: Aggregation is the heart of data journalism. Raw rows do not tell stories. Summaries do. "There were 50,000 use-of-force incidents" is just a number. "The top 10 officers accounted for 40% of all incidents" is a story. Aggregation transforms data into narrative. COUNT, SUM, AVG, MIN, MAX with GROUP BY and HAVING are how journalists turn FOIA datasets into front-page stories.
+
+MENTAL MODELS THAT MATTER MOST:
+1. Aggregation is .reduce(), not .map() -- it collapses many rows into summary values.
+2. GROUP BY is sorting laundry into piles by color, then counting each pile.
+3. WHERE filters rows before grouping. HAVING filters groups after aggregation.
+4. The GROUP BY rule: every column in SELECT must be in GROUP BY or inside an aggregate function.
+5. SQL execution order: FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY -> LIMIT.
+
+--------------------------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+--------------------------------------------------------------------------------
+
+1. THE FIVE AGGREGATE FUNCTIONS: COUNT(*) counts all rows. COUNT(column) counts non-NULL values. COUNT(DISTINCT column) counts unique values. SUM adds up values. AVG calculates the average (ignores NULLs). MIN finds the smallest. MAX finds the largest. SQL does in one line what takes multiple lines of JavaScript, and does it on the database server without pulling data into app memory.
+
+2. GROUP BY: Without GROUP BY, aggregates collapse the entire table into one row. GROUP BY splits the table into buckets first, then runs the aggregate on each bucket separately. Like sorting laundry into piles by color, then counting each pile.
+
+3. THE GROUP BY RULE: Every column in SELECT must either be (1) in the GROUP BY clause, or (2) inside an aggregate function. You cannot SELECT title when grouping by category because there are multiple titles per category. SQL would not know which one to show.
+
+4. HAVING: WHERE filters individual rows BEFORE grouping. HAVING filters groups AFTER aggregation. WHERE is a bouncer at the door (checks each person). HAVING is a bouncer for the VIP section (checks the whole group). Use WHERE for column values (WHERE views > 100), HAVING for aggregate results (HAVING COUNT(*) > 5).
+
+5. AGGREGATION WITH JOINS: Combining JOINs from Lesson 03 with aggregates answers questions across tables: "How many articles has each author written?" "What is the total ad revenue per station?" LEFT JOIN preserves authors with zero articles. INNER JOIN would exclude them.
+
+6. CONDITIONAL AGGREGATION: CASE inside aggregate functions counts or sums subsets in a single query. COUNT(CASE WHEN published = true THEN 1 END) counts only published articles. PostgreSQL's FILTER syntax is cleaner: COUNT(*) FILTER (WHERE published = true).
+
+7. SQL EXECUTION ORDER: The actual execution order is FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY -> LIMIT. This is why you cannot use column aliases in WHERE or HAVING (SELECT runs after them), but you can use aliases in ORDER BY.
+
+8. DATE_TRUNC: PostgreSQL function that rounds timestamps to a specified precision (month, week, year). Incredibly useful for time-series grouping. Turns 2024-03-15 14:30:00 into 2024-03-01 00:00:00.
+
+--------------------------------------------------------------------------------
+DATA JOURNALISM CONNECTION
+--------------------------------------------------------------------------------
+
+Aggregation is what turns data into journalism. Raw data is evidence. Aggregated data is the story.
+
+Campaign Finance Investigation: "SELECT candidate, COUNT(*) AS donor_count, SUM(amount) AS total_raised, AVG(amount) AS avg_donation FROM donations GROUP BY candidate ORDER BY total_raised DESC" -- this one query reveals which candidates have the most donors, who raised the most money, and whose donors give the biggest individual amounts. That is an entire story from one query.
+
+Police Accountability: "SELECT officer_name, COUNT(*) AS incidents, COUNT(CASE WHEN use_of_force = true THEN 1 END) AS force_incidents FROM complaints GROUP BY officer_name HAVING COUNT(*) > 10 ORDER BY force_incidents DESC" -- this finds officers with the most complaints who also have the most use-of-force incidents. The HAVING clause ensures you only see officers with enough complaints to form a pattern.
+
+Education Spending: GROUP BY school_district and then SUM(spending), AVG(test_scores) reveals whether spending correlates with outcomes. Add HAVING SUM(spending) > 1000000 to focus on districts above a spending threshold.
+
+For Trevor specifically: imagine building an election-night summary dashboard. "SELECT county, SUM(vote_count) AS total_votes, COUNT(DISTINCT precinct) AS precincts_reporting, ROUND(100.0 * COUNT(CASE WHEN reporting_pct = 100 THEN 1 END) / COUNT(*), 1) AS pct_complete FROM election_results GROUP BY county ORDER BY total_votes DESC" -- that query powers the county-by-county results graphic, showing total votes, how many precincts have reported, and what percentage is complete. One query, one dashboard panel.
+
+--------------------------------------------------------------------------------
+BROADCAST TV SCENARIOS
+--------------------------------------------------------------------------------
+
+ELECTION DATA:
+- "Total votes per county": SELECT county, SUM(vote_count) AS total_votes, COUNT(DISTINCT precinct) AS precincts FROM election_results GROUP BY county ORDER BY total_votes DESC;
+- "Counties where all precincts have reported": SELECT county FROM election_results GROUP BY county HAVING MIN(reporting_pct) = 100;
+- "Vote summary by party": SELECT party, SUM(vote_count) AS total, ROUND(100.0 * SUM(vote_count) / (SELECT SUM(vote_count) FROM election_results), 1) AS pct FROM election_results GROUP BY party ORDER BY total DESC;
+
+WEATHER DATA:
+- "Average temperature by state": SELECT state, ROUND(AVG(temperature), 1) AS avg_temp, MIN(temperature) AS coldest, MAX(temperature) AS hottest FROM weather_stations GROUP BY state ORDER BY avg_temp DESC;
+- "States with stations reporting extreme heat": SELECT state, COUNT(*) AS stations FROM weather_stations WHERE temperature > 100 GROUP BY state HAVING COUNT(*) >= 3;
+
+AD REVENUE:
+- "Total revenue by time slot": SELECT time_slot, SUM(amount) AS total_revenue, COUNT(*) AS ad_count, ROUND(AVG(amount), 2) AS avg_spend FROM ad_revenue GROUP BY time_slot ORDER BY total_revenue DESC;
+- "Monthly revenue trend": SELECT DATE_TRUNC('month', air_date) AS month, SUM(amount) AS revenue FROM ad_revenue GROUP BY DATE_TRUNC('month', air_date) ORDER BY month;
+- "Top 5 advertisers by total spend": SELECT advertiser, SUM(amount) AS total_spend, COUNT(*) AS ad_count FROM ad_revenue GROUP BY advertiser ORDER BY total_spend DESC LIMIT 5;
+
+CENSUS DATA:
+- "Average median income by state": SELECT state, ROUND(AVG(median_income)) AS avg_income, SUM(population) AS total_pop FROM census_demographics GROUP BY state ORDER BY avg_income DESC;
+
+--------------------------------------------------------------------------------
+LESSON CONTENT
+--------------------------------------------------------------------------------
+
+THE MENTAL MODEL -- REDUCE, NOT MAP
+
+You know Array.map() -- it transforms each item. Aggregation is more like Array.reduce() -- it takes many items and boils them down to one value. COUNT takes 1000 rows and gives you the number 1000. AVG takes all the salaries and gives you one average.
+
+  JavaScript:
+    articles.length;                                    // COUNT
+    articles.reduce((sum, a) => sum + a.views, 0);      // SUM
+    const total = articles.reduce((s, a) => s + a.views, 0);
+    const avg = total / articles.length;                // AVG
+
+  SQL:
+    SELECT COUNT(*) FROM articles;
+    SELECT SUM(views) FROM articles;
+    SELECT AVG(views) FROM articles;
+
+SQL does in one line what takes multiple lines of JavaScript. And it does it on the database server, where the data already lives -- no need to pull millions of rows into your app's memory.
+
+THE FIVE AGGREGATE FUNCTIONS
+
+  COUNT(*)        -- count all rows               -- array.length
+  COUNT(column)   -- count non-NULL values        -- array.filter(x => x.col != null).length
+  SUM(column)     -- add up all values            -- array.reduce((s, x) => s + x.col, 0)
+  AVG(column)     -- calculate the average        -- sum / count
+  MIN(column)     -- smallest value               -- Math.min(...array.map(x => x.col))
+  MAX(column)     -- largest value                -- Math.max(...array.map(x => x.col))
+
+All five in one query:
+  SELECT
+    COUNT(*) AS total_articles,
+    SUM(views) AS total_views,
+    AVG(views) AS avg_views,
+    MIN(views) AS min_views,
+    MAX(views) AS max_views
+  FROM articles
+  WHERE published = true;
+
+COUNT(*) vs COUNT(column): COUNT(*) counts all rows, including those with NULLs. COUNT(column) counts only rows where that column is not NULL. COUNT(DISTINCT column) counts unique non-NULL values. These are three different things.
+
+AVG ignores NULLs. If you have values [100, 200, NULL], AVG returns 150 (averages 100 and 200, ignores the NULL). If you want NULLs treated as 0, use AVG(COALESCE(column, 0)).
+
+Prisma Equivalent:
+  const result = await prisma.article.aggregate({
+    _count: { _all: true },
+    _sum: { views: true },
+    _avg: { views: true },
+    _min: { views: true },
+    _max: { views: true },
+    where: { published: true },
+  });
+
+GROUP BY -- AGGREGATING BY CATEGORY
+
+Without GROUP BY, aggregates collapse the entire table into one row. GROUP BY splits the table into buckets first, then runs the aggregate on each bucket separately. Like sorting laundry into piles by color, then counting each pile.
+
+  JavaScript (12 lines):
+    const grouped = {};
+    articles.forEach(a => {
+      if (!grouped[a.category]) grouped[a.category] = [];
+      grouped[a.category].push(a);
+    });
+    Object.entries(grouped).map(([cat, items]) => ({
+      category: cat, count: items.length
+    }));
+
+  SQL (3 lines):
+    SELECT category, COUNT(*) AS article_count
+    FROM articles
+    GROUP BY category;
+
+Multiple Aggregates per Group:
+  SELECT
+    category,
+    COUNT(*) AS article_count,
+    SUM(views) AS total_views,
+    ROUND(AVG(word_count)) AS avg_word_count,
+    MAX(views) AS top_article_views
+  FROM articles
+  WHERE published = true
+  GROUP BY category
+  ORDER BY total_views DESC;
+
+The GROUP BY Rule: Every column in SELECT must either be (1) in the GROUP BY clause, or (2) inside an aggregate function. You cannot SELECT title when grouping by category because there are multiple titles per category. SQL would not know which one to show.
+
+Prisma groupBy:
+  const result = await prisma.article.groupBy({
+    by: ['category'],
+    _count: { _all: true },
+    _avg: { word_count: true },
+    _sum: { views: true },
+    where: { published: true },
+    orderBy: { _sum: { views: 'desc' } },
+  });
+
+HAVING -- FILTERING GROUPS
+
+WHERE filters individual rows BEFORE grouping. HAVING filters groups AFTER aggregation. Think of it as: WHERE is a bouncer at the door (checks each person). HAVING is a bouncer for the VIP section (checks the whole group).
+
+  -- WHERE: filter rows before grouping
+  SELECT category, COUNT(*) AS article_count
+  FROM articles
+  WHERE published = true
+  GROUP BY category;
+
+  -- HAVING: filter groups after aggregation
+  SELECT category, COUNT(*) AS article_count
+  FROM articles
+  WHERE published = true
+  GROUP BY category
+  HAVING COUNT(*) > 1;
+
+WHERE vs HAVING: Use WHERE for conditions on individual columns (WHERE views > 100). Use HAVING for conditions on aggregated results (HAVING COUNT(*) > 5). You cannot use column aliases in HAVING -- repeat the aggregate function.
+
+AGGREGATION WITH JOINS
+
+Combine JOINs from Lesson 03 with aggregates to answer questions across tables: "How many articles has each author written?"
+
+  SELECT
+    au.name AS author,
+    COUNT(a.id) AS article_count,
+    COALESCE(SUM(a.views), 0) AS total_views
+  FROM authors au
+  LEFT JOIN articles a ON au.id = a.author_id
+  GROUP BY au.id, au.name
+  ORDER BY article_count DESC;
+
+Notice the LEFT JOIN. Starting from authors and LEFT JOINing articles, so authors with zero articles still show up. INNER JOIN would make those authors vanish.
+
+CONDITIONAL AGGREGATION -- CASE INSIDE AGGREGATES
+
+From Lesson 02, CASE expressions. Combined with aggregates, they let you count or sum subsets in a single query:
+
+  SELECT
+    au.name AS author,
+    COUNT(*) AS total_articles,
+    COUNT(CASE WHEN a.published = true THEN 1 END) AS published,
+    COUNT(CASE WHEN a.published = false THEN 1 END) AS drafts,
+    COALESCE(SUM(CASE WHEN a.published = true THEN a.views END), 0) AS published_views
+  FROM authors au
+  LEFT JOIN articles a ON au.id = a.author_id
+  GROUP BY au.id, au.name
+  ORDER BY published_views DESC;
+
+One query, four different metrics per author. Essential for dashboards and reports.
+
+PostgreSQL shortcut -- FILTER:
+  COUNT(*) FILTER (WHERE a.published = true) AS published
+  -- Equivalent to COUNT(CASE WHEN published = true THEN 1 END) but more readable.
+
+SQL EXECUTION ORDER
+
+SQL does not execute in the order you write it. Understanding the actual execution order makes GROUP BY and HAVING click:
+
+  Writing order:       Execution order:
+  SELECT   (5)         FROM     (1)  -- pick the table
+  FROM     (1)         WHERE    (2)  -- filter individual rows
+  WHERE    (2)         GROUP BY (3)  -- bucket into groups
+  GROUP BY (3)         HAVING   (4)  -- filter groups
+  HAVING   (4)         SELECT   (5)  -- pick columns and compute
+  ORDER BY (6)         ORDER BY (6)  -- sort results
+  LIMIT    (7)         LIMIT    (7)  -- cap the count
+
+This is why you cannot use aliases in WHERE or HAVING -- SELECT runs after them. You can use aliases in ORDER BY because it runs after SELECT.
+
+DATE_TRUNC FOR TIME-SERIES GROUPING
+
+  SELECT
+    DATE_TRUNC('month', published_at) AS month,
+    COUNT(*) AS articles_published,
+    SUM(views) AS monthly_views
+  FROM articles
+  WHERE published = true
+  GROUP BY DATE_TRUNC('month', published_at)
+  ORDER BY month DESC;
+
+DATE_TRUNC rounds a timestamp to the specified precision (month, week, year). It turns 2024-03-15 14:30:00 into 2024-03-01 00:00:00. Incredibly useful for grouping data by time period.
+
+================================================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+================================================================================
+
+LESSON-SPECIFIC INSTRUCTIONS FOR NOTEBOOKLM PODCAST HOSTS:
+
+MENTAL MODELS TO FOCUS ON:
+- Aggregation is .reduce(), not .map(). Trevor uses .reduce() in JavaScript. COUNT, SUM, AVG are just built-in reduce operations that run on the database server. Frame it as: "The database does the reduce for you, and it does it on millions of rows without ever sending them to your app."
+- GROUP BY is sorting laundry. Put articles into piles by category, then count each pile. This is a dead-simple mental model that makes GROUP BY click instantly.
+- WHERE is the door bouncer, HAVING is the VIP bouncer. WHERE checks each row individually before grouping. HAVING checks each group after aggregation. Two different filtering stages.
+- SQL execution order. The fact that SQL executes in a different order than you write it is a revelation. FROM -> WHERE -> GROUP BY -> HAVING -> SELECT -> ORDER BY -> LIMIT. This explains why you can't use aliases in WHERE.
+
+JS/PRISMA EQUIVALENTS TO HIGHLIGHT:
+- COUNT(*) = array.length
+- SUM = array.reduce((sum, x) => sum + x.col, 0)
+- AVG = sum / count
+- MIN/MAX = Math.min/Math.max
+- GROUP BY = Object.groupBy() or lodash.groupBy()
+- HAVING = filtering the grouped results
+- Prisma aggregate() and groupBy() map directly
+- FILTER (WHERE condition) = counting with a filter predicate
+
+INVESTIGATIVE JOURNALISM ANGLE:
+This is where SQL becomes a data journalism superpower. Frame it strongly: "Aggregation is not just a SQL feature -- it is THE tool that turns raw data into stories. Every investigative piece that quotes statistics -- 'the top 10 districts account for 60% of complaints' -- that came from a GROUP BY query."
+
+Campaign finance example: "SELECT candidate, SUM(amount) AS total, COUNT(*) AS donors, AVG(amount) AS avg_donation FROM donations GROUP BY candidate ORDER BY total DESC -- that one query tells you who raised the most money, who has the most donors, and whose donors give the biggest amounts. That is an entire story in three lines of SQL."
+
+The conditional aggregation pattern (CASE inside COUNT) is specifically powerful for journalism: "How many large donations vs small donations per candidate? How many use-of-force incidents vs verbal warnings per officer? How many contracts went to minority-owned vs non-minority-owned businesses? All of these are one query with conditional aggregation."
+
+CONNECTIONS TO PREVIOUS/NEXT LESSONS:
+- Connect back to Lesson 02: "CASE expressions from Lesson 02 become incredibly powerful inside aggregates. COUNT(CASE WHEN condition THEN 1 END) lets you count subgroups in a single query."
+- Connect back to Lesson 03: "Combining JOINs with aggregation is where SQL gets really powerful. How many articles per author? Join authors to articles, then GROUP BY author."
+- Tease Lesson 05 (Subqueries & CTEs): "What if you need the result of one aggregation to feed into another query? That is subqueries and CTEs -- building complex analyses step by step."
+
+TONE:
+- One host should be excited about the data analysis power -- "This is where SQL stops being a query language and becomes an analysis tool."
+- The other host should be making JavaScript connections -- ".reduce() in one line? And it runs on the server? I have been pulling millions of rows into my app for nothing."
+- The execution order revelation should feel like an "aha" moment. "Wait, SELECT runs fifth? That is why aliases do not work in WHERE!"
+
+MEMORIZATION TECHNIQUES FOR THIS LESSON:
+- The five aggregates: COUNT, SUM, AVG, MIN, MAX. Five fingers. That is it.
+- GROUP BY rule: "If it is in SELECT, it must be in GROUP BY or inside an aggregate." Repeat this.
+- WHERE vs HAVING: "WHERE = before grouping. HAVING = after grouping."
+- Execution order mnemonic: "FROM WHERE GROUP HAVING SELECT ORDER LIMIT" -- "Funny Whales Go Hiking, So Our Lunch" or any mnemonic that sticks.
+- DATE_TRUNC: "Truncate the date to the precision you want." Month, week, year, day, hour.
+
+BROADCAST TV DATA EXAMPLES:
+- "Total votes per county on election night": GROUP BY county with SUM(vote_count)
+- "Average temperature by state for the weather map": GROUP BY state with AVG(temperature)
+- "Monthly ad revenue trend": GROUP BY DATE_TRUNC('month', air_date) with SUM(amount)
+- "Top 5 advertisers by spend in primetime": WHERE time_slot = 'primetime' GROUP BY advertiser ORDER BY SUM(amount) DESC LIMIT 5
+- "Counties where all precincts have reported": GROUP BY county HAVING MIN(reporting_pct) = 100

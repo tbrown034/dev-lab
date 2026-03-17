@@ -1,0 +1,2136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D3 Games & Quizzes - Learn D3</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.25rem; font-weight: 600; }
+    .header h1 span { color: #f97316; }
+    .header .meta { color: #888; font-size: 0.8rem; }
+    .header .meta a { color: #818cf8; text-decoration: none; }
+
+    /* ── Tab Bar ── */
+    .tab-bar {
+      display: flex;
+      gap: 0.35rem;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-bottom: 1px solid #222;
+      scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex-shrink: 0;
+      padding: 0.55rem 0.85rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #aaa;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+    .tab-btn:hover { border-color: #555; color: #ddd; }
+    .tab-btn.active {
+      background: #f97316;
+      color: #000;
+      border-color: #f97316;
+      font-weight: 600;
+    }
+
+    /* ── Game Panels ── */
+    .game-panel {
+      display: none;
+      padding: 1.25rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .game-panel.active { display: block; }
+
+    .game-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .game-subtitle {
+      color: #888;
+      font-size: 0.82rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Score Bar ── */
+    .score-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .score-item {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 6px;
+      padding: 0.5rem 0.85rem;
+      font-size: 0.82rem;
+    }
+    .score-item .label { color: #888; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .score-item .value { color: #f97316; font-weight: 700; font-size: 1.1rem; }
+    .score-item .value.green { color: #4ade80; }
+    .score-item .value.purple { color: #818cf8; }
+    .score-item .value.pink { color: #f472b6; }
+
+    /* ── Question Card ── */
+    .question-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .question-card pre {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #ddd;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      margin: 0.75rem 0;
+    }
+    .question-card .shape-display {
+      display: flex;
+      justify-content: center;
+      padding: 1rem 0;
+    }
+    .question-card .shape-display svg {
+      background: #0d0d0d;
+      border-radius: 8px;
+      border: 1px solid #1a1a1a;
+    }
+
+    /* ── Choice Buttons ── */
+    .choices {
+      display: grid;
+      gap: 0.6rem;
+    }
+    .choices.two-col {
+      grid-template-columns: 1fr 1fr;
+    }
+    .choice-btn {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      color: #ddd;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+      min-height: 48px;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+    }
+    .choice-btn:hover { border-color: #555; background: #222; }
+    .choice-btn:active { transform: scale(0.98); }
+    .choice-btn.correct {
+      border-color: #4ade80;
+      background: #4ade8015;
+      color: #4ade80;
+    }
+    .choice-btn.wrong {
+      border-color: #ef4444;
+      background: #ef444415;
+      color: #ef4444;
+    }
+    .choice-btn.highlight {
+      border-color: #4ade80;
+      background: #4ade8010;
+    }
+    .choice-btn:disabled { cursor: default; opacity: 0.85; }
+    .choice-btn code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+    }
+
+    /* ── Explanation Box ── */
+    .explanation {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 0.75rem;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: #ccc;
+      display: none;
+    }
+    .explanation.show { display: block; }
+    .explanation strong { color: #4ade80; }
+
+    /* ── Next Button ── */
+    .next-btn {
+      display: none;
+      width: 100%;
+      padding: 0.85rem;
+      background: #f97316;
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.75rem;
+      min-height: 48px;
+      transition: background 0.15s;
+    }
+    .next-btn:hover { background: #fb923c; }
+    .next-btn.show { display: block; }
+
+    /* ── Memory Game Grid ── */
+    .memory-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .memory-card {
+      aspect-ratio: 1;
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      text-align: center;
+      padding: 0.3rem;
+      line-height: 1.3;
+      transition: all 0.2s;
+      color: transparent;
+      user-select: none;
+      min-height: 44px;
+    }
+    .memory-card.flipped {
+      background: #222;
+      border-color: #818cf8;
+      color: #ddd;
+    }
+    .memory-card.matched {
+      background: #4ade8015;
+      border-color: #4ade80;
+      color: #4ade80;
+      cursor: default;
+    }
+    .memory-card.unflipped {
+      background: #1a1a1a;
+      border-color: #333;
+      color: transparent;
+    }
+
+    /* ── Build Order ── */
+    .build-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .build-step {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+    }
+    .build-step:hover { border-color: #555; }
+    .build-step.selected {
+      border-color: #f97316;
+      background: #f9731610;
+      color: #f97316;
+    }
+    .build-step.correct-order {
+      border-color: #4ade80;
+      background: #4ade8010;
+      color: #4ade80;
+      cursor: default;
+    }
+    .build-step.wrong-order {
+      border-color: #ef4444;
+      background: #ef444410;
+      color: #ef4444;
+    }
+    .step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      margin-right: 0.75rem;
+      flex-shrink: 0;
+    }
+    .build-step.correct-order .step-number {
+      background: #4ade80;
+      color: #000;
+    }
+
+    /* ── Flashcard ── */
+    .flashcard-container {
+      perspective: 800px;
+      margin: 1rem 0;
+    }
+    .flashcard {
+      background: #141414;
+      border: 2px solid #333;
+      border-radius: 12px;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+    .flashcard:hover { border-color: #555; }
+    .flashcard .front { display: block; }
+    .flashcard .back { display: none; color: #4ade80; }
+    .flashcard.flipped .front { display: none; }
+    .flashcard.flipped .back { display: block; }
+    .flashcard.flipped { border-color: #4ade80; }
+    .flashcard-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      margin-top: 0.75rem;
+    }
+    .fc-btn {
+      padding: 0.85rem;
+      border-radius: 8px;
+      border: 2px solid;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 48px;
+      transition: all 0.15s;
+    }
+    .fc-btn.got-it {
+      background: #4ade8015;
+      border-color: #4ade80;
+      color: #4ade80;
+    }
+    .fc-btn.review {
+      background: #f9731615;
+      border-color: #f97316;
+      color: #f97316;
+    }
+    .fc-btn:hover { opacity: 0.85; }
+    .fc-mode-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .fc-mode-btn {
+      padding: 0.5rem 0.85rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #aaa;
+      font-size: 0.78rem;
+      cursor: pointer;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+    .fc-mode-btn.active {
+      background: #818cf8;
+      color: #000;
+      border-color: #818cf8;
+    }
+
+    /* ── Speed Round ── */
+    .speed-timer {
+      font-size: 2rem;
+      font-weight: 700;
+      text-align: center;
+      color: #f97316;
+      margin: 0.5rem 0;
+    }
+    .speed-timer.danger { color: #ef4444; }
+    .tf-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .tf-btn {
+      padding: 1.25rem;
+      border-radius: 10px;
+      border: 2px solid;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      min-height: 60px;
+      transition: all 0.1s;
+    }
+    .tf-btn.true-btn {
+      background: #4ade8015;
+      border-color: #4ade80;
+      color: #4ade80;
+    }
+    .tf-btn.false-btn {
+      background: #ef444415;
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+    .tf-btn:active { transform: scale(0.96); }
+
+    /* ── Start / Reset Button ── */
+    .start-btn {
+      width: 100%;
+      padding: 1rem;
+      background: #f97316;
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 48px;
+      margin: 1rem 0;
+    }
+    .start-btn:hover { background: #fb923c; }
+    .start-btn.secondary {
+      background: #1a1a1a;
+      border: 2px solid #f97316;
+      color: #f97316;
+    }
+
+    /* ── Results List ── */
+    .results-list {
+      margin-top: 1rem;
+    }
+    .result-item {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 0.4rem;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .result-item .icon { flex-shrink: 0; font-size: 1rem; }
+    .result-item.wrong { border-color: #ef444444; }
+    .result-item.right { border-color: #4ade8044; }
+
+    /* ── Chart Display ── */
+    .chart-display {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+    .chart-display svg {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 8px;
+    }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      height: 4px;
+      background: #222;
+      border-radius: 2px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: #f97316;
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .header { padding: 0.75rem 1rem; }
+      .game-panel { padding: 1rem; }
+      .memory-grid { grid-template-columns: repeat(4, 1fr); gap: 0.35rem; }
+      .memory-card { font-size: 0.55rem; padding: 0.2rem; }
+      .question-card pre { font-size: 0.72rem; padding: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>D3 <span>Games</span></h1>
+    <div class="meta"><a href="/d3/">Home</a></div>
+  </div>
+
+  <div class="tab-bar" id="tabBar"></div>
+
+  <!-- All 10 game panels -->
+  <div class="game-panel" id="panel-shapes">
+    <div class="game-title">Shape Quiz</div>
+    <div class="game-subtitle">Which SVG element makes this shape?</div>
+    <div class="score-bar" id="shapes-score"></div>
+    <div class="question-card" id="shapes-question"></div>
+    <div class="choices" id="shapes-choices"></div>
+    <div class="explanation" id="shapes-explanation"></div>
+    <button class="next-btn" id="shapes-next">Next Shape</button>
+  </div>
+
+  <div class="game-panel" id="panel-code">
+    <div class="game-title">What Does This Code Do?</div>
+    <div class="game-subtitle">Read the D3 code and pick what it produces</div>
+    <div class="score-bar" id="code-score"></div>
+    <div class="progress-bar"><div class="fill" id="code-progress"></div></div>
+    <div class="question-card" id="code-question"></div>
+    <div class="choices" id="code-choices"></div>
+    <div class="explanation" id="code-explanation"></div>
+    <button class="next-btn" id="code-next">Next Question</button>
+  </div>
+
+  <div class="game-panel" id="panel-scales">
+    <div class="game-title">Scale Calculator</div>
+    <div class="game-subtitle">What output does this scale produce?</div>
+    <div class="score-bar" id="scales-score"></div>
+    <div class="question-card" id="scales-question"></div>
+    <div class="choices" id="scales-choices"></div>
+    <div class="explanation" id="scales-explanation"></div>
+    <button class="next-btn" id="scales-next">Next Problem</button>
+  </div>
+
+  <div class="game-panel" id="panel-match">
+    <div class="game-title">Match the Chart</div>
+    <div class="game-subtitle">Which code made this visualization?</div>
+    <div class="score-bar" id="match-score"></div>
+    <div class="progress-bar"><div class="fill" id="match-progress"></div></div>
+    <div class="chart-display" id="match-chart"></div>
+    <div class="choices" id="match-choices"></div>
+    <div class="explanation" id="match-explanation"></div>
+    <button class="next-btn" id="match-next">Next Chart</button>
+  </div>
+
+  <div class="game-panel" id="panel-bugs">
+    <div class="game-title">Spot the Bug</div>
+    <div class="game-subtitle">Find the mistake in this D3 code</div>
+    <div class="score-bar" id="bugs-score"></div>
+    <div class="progress-bar"><div class="fill" id="bugs-progress"></div></div>
+    <div class="question-card" id="bugs-question"></div>
+    <div class="choices" id="bugs-choices"></div>
+    <div class="explanation" id="bugs-explanation"></div>
+    <button class="next-btn" id="bugs-next">Next Bug</button>
+  </div>
+
+  <div class="game-panel" id="panel-memory">
+    <div class="game-title">Vocabulary Memory</div>
+    <div class="game-subtitle">Match D3 terms to their definitions</div>
+    <div class="score-bar" id="memory-score"></div>
+    <div class="memory-grid" id="memory-grid"></div>
+    <button class="start-btn" id="memory-restart" style="display:none;">Play Again</button>
+  </div>
+
+  <div class="game-panel" id="panel-charttype">
+    <div class="game-title">Chart Type Identifier</div>
+    <div class="game-subtitle">Which chart type fits this scenario?</div>
+    <div class="score-bar" id="charttype-score"></div>
+    <div class="progress-bar"><div class="fill" id="charttype-progress"></div></div>
+    <div class="question-card" id="charttype-question"></div>
+    <div class="choices" id="charttype-choices"></div>
+    <div class="explanation" id="charttype-explanation"></div>
+    <button class="next-btn" id="charttype-next">Next Scenario</button>
+  </div>
+
+  <div class="game-panel" id="panel-speed">
+    <div class="game-title">Speed Round</div>
+    <div class="game-subtitle">60 seconds. True or False. Go!</div>
+    <div class="score-bar" id="speed-score"></div>
+    <div id="speed-area"></div>
+  </div>
+
+  <div class="game-panel" id="panel-build">
+    <div class="game-title">Build Order</div>
+    <div class="game-subtitle">Tap the steps in the correct order to build this chart</div>
+    <div class="score-bar" id="build-score"></div>
+    <div class="question-card" id="build-question"></div>
+    <div class="build-steps" id="build-steps"></div>
+    <div class="explanation" id="build-explanation"></div>
+    <button class="next-btn" id="build-next">Next Chart</button>
+  </div>
+
+  <div class="game-panel" id="panel-flash">
+    <div class="game-title">Flashcards</div>
+    <div class="game-subtitle">Tap to flip. Learn D3 concepts.</div>
+    <div class="fc-mode-bar" id="flash-modes"></div>
+    <div class="score-bar" id="flash-score"></div>
+    <div class="flashcard-container">
+      <div class="flashcard" id="flashcard">
+        <div class="front" id="flash-front"></div>
+        <div class="back" id="flash-back"></div>
+      </div>
+    </div>
+    <div class="flashcard-actions" id="flash-actions" style="display:none;">
+      <button class="fc-btn review" id="flash-review">Review Again</button>
+      <button class="fc-btn got-it" id="flash-gotit">Got It</button>
+    </div>
+    <button class="next-btn show" id="flash-next" style="display:none;">Next Card</button>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+
+    // ═══════════════════════════════════════
+    //  TAB SYSTEM
+    // ═══════════════════════════════════════
+    const tabs = [
+      { id: 'shapes', label: 'Shapes' },
+      { id: 'code', label: 'Code Quiz' },
+      { id: 'scales', label: 'Scales' },
+      { id: 'match', label: 'Match Chart' },
+      { id: 'bugs', label: 'Spot Bug' },
+      { id: 'memory', label: 'Memory' },
+      { id: 'charttype', label: 'Chart ID' },
+      { id: 'speed', label: 'Speed' },
+      { id: 'build', label: 'Build Order' },
+      { id: 'flash', label: 'Flashcards' },
+    ];
+
+    const tabBar = document.getElementById('tabBar');
+    let activeTab = localStorage.getItem('d3games-tab') || 'shapes';
+
+    tabs.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'tab-btn' + (t.id === activeTab ? ' active' : '');
+      btn.textContent = t.label;
+      btn.dataset.tab = t.id;
+      btn.addEventListener('click', () => switchTab(t.id));
+      tabBar.appendChild(btn);
+    });
+
+    function switchTab(id) {
+      activeTab = id;
+      localStorage.setItem('d3games-tab', id);
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+      document.querySelectorAll('.game-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
+      // initialize game if not yet started
+      if (id === 'shapes' && !shapesStarted) initShapes();
+      if (id === 'code' && !codeStarted) initCode();
+      if (id === 'scales' && !scalesStarted) initScales();
+      if (id === 'match' && !matchStarted) initMatch();
+      if (id === 'bugs' && !bugsStarted) initBugs();
+      if (id === 'memory' && !memoryStarted) initMemory();
+      if (id === 'charttype' && !charttypeStarted) initChartType();
+      if (id === 'speed' && !speedStarted) initSpeed();
+      if (id === 'build' && !buildStarted) initBuild();
+      if (id === 'flash' && !flashStarted) initFlash();
+    }
+
+    // ── Helpers ──
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function renderScore(containerId, items) {
+      const c = document.getElementById(containerId);
+      c.innerHTML = items.map(it =>
+        `<div class="score-item"><div class="label">${it.label}</div><div class="value ${it.cls || ''}">${it.value}</div></div>`
+      ).join('');
+    }
+    function saveHigh(key, val) {
+      const prev = parseInt(localStorage.getItem(key) || '0');
+      if (val > prev) localStorage.setItem(key, val);
+      return Math.max(prev, val);
+    }
+    function getHigh(key) { return parseInt(localStorage.getItem(key) || '0'); }
+
+    // ═══════════════════════════════════════
+    //  1. SHAPE QUIZ
+    // ═══════════════════════════════════════
+    let shapesStarted = false;
+    let shapeScore = 0, shapeStreak = 0, shapeBest = getHigh('d3g-shape-best');
+
+    const shapeDefinitions = [
+      {
+        name: 'rect',
+        draw: (svg) => svg.append('rect').attr('x',30).attr('y',20).attr('width',120).attr('height',80).attr('fill','#f97316').attr('rx',4),
+        desc: 'A rectangle with rounded corners'
+      },
+      {
+        name: 'circle',
+        draw: (svg) => svg.append('circle').attr('cx',90).attr('cy',60).attr('r',45).attr('fill','#818cf8'),
+        desc: 'A filled circle'
+      },
+      {
+        name: 'line',
+        draw: (svg) => svg.append('line').attr('x1',20).attr('y1',90).attr('x2',160).attr('y2',20).attr('stroke','#4ade80').attr('stroke-width',3),
+        desc: 'A straight line from bottom-left to top-right'
+      },
+      {
+        name: 'ellipse',
+        draw: (svg) => svg.append('ellipse').attr('cx',90).attr('cy',60).attr('rx',70).attr('ry',35).attr('fill','#f472b6'),
+        desc: 'An oval shape (wider than tall)'
+      },
+      {
+        name: 'text',
+        draw: (svg) => svg.append('text').attr('x',90).attr('y',65).attr('text-anchor','middle').attr('fill','#e5e5e5').attr('font-size','24px').text('D3.js'),
+        desc: 'Text rendered in SVG'
+      },
+      {
+        name: 'path',
+        draw: (svg) => svg.append('path').attr('d','M20,90 Q90,10 160,90').attr('fill','none').attr('stroke','#f97316').attr('stroke-width',3),
+        desc: 'A curved line (quadratic bezier)'
+      },
+      {
+        name: 'rect',
+        draw: (svg) => svg.append('rect').attr('x',60).attr('y',10).attr('width',60).attr('height',100).attr('fill','#4ade80'),
+        desc: 'A tall green rectangle'
+      },
+      {
+        name: 'path',
+        draw: (svg) => {
+          const area = d3.area().x((d,i) => 20 + i*35).y0(100).y1(d => d).curve(d3.curveBasis);
+          svg.append('path').attr('d', area([80,30,60,20,50])).attr('fill','#818cf844').attr('stroke','#818cf8').attr('stroke-width',2);
+        },
+        desc: 'An area shape (filled path)'
+      },
+      {
+        name: 'circle',
+        draw: (svg) => {
+          [30,60,90,120,150].forEach((cx,i) => {
+            svg.append('circle').attr('cx',cx).attr('cy',50+i*5).attr('r',8+i*3).attr('fill','#f97316').attr('opacity',0.7);
+          });
+        },
+        desc: 'Multiple circles (scatter plot dots)'
+      },
+      {
+        name: 'line',
+        draw: (svg) => {
+          svg.append('line').attr('x1',20).attr('y1',60).attr('x2',160).attr('y2',60).attr('stroke','#888').attr('stroke-width',2).attr('stroke-dasharray','5,5');
+        },
+        desc: 'A dashed horizontal line'
+      },
+    ];
+
+    function initShapes() {
+      shapesStarted = true;
+      nextShape();
+    }
+
+    function nextShape() {
+      const shape = shapeDefinitions[randInt(0, shapeDefinitions.length - 1)];
+      const container = document.getElementById('shapes-question');
+      container.innerHTML = '<div class="shape-display"><svg width="180" height="120"></svg></div>';
+      const svg = d3.select(container).select('svg');
+      shape.draw(svg);
+
+      // choices: correct + 3 wrong
+      const allNames = ['rect', 'circle', 'line', 'path', 'text', 'ellipse'];
+      const wrong = shuffle(allNames.filter(n => n !== shape.name)).slice(0, 3);
+      const options = shuffle([shape.name, ...wrong]);
+
+      const choicesEl = document.getElementById('shapes-choices');
+      choicesEl.innerHTML = '';
+      document.getElementById('shapes-explanation').classList.remove('show');
+      document.getElementById('shapes-next').classList.remove('show');
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.innerHTML = `<code>&lt;${opt}&gt;</code>`;
+        btn.addEventListener('click', () => handleShapeAnswer(opt, shape, choicesEl));
+        choicesEl.appendChild(btn);
+      });
+
+      renderScore('shapes-score', [
+        { label: 'Score', value: shapeScore },
+        { label: 'Streak', value: shapeStreak, cls: 'green' },
+        { label: 'Best', value: shapeBest, cls: 'purple' },
+      ]);
+    }
+
+    function handleShapeAnswer(picked, shape, container) {
+      const btns = container.querySelectorAll('.choice-btn');
+      btns.forEach(b => {
+        b.disabled = true;
+        const val = b.textContent.replace(/[<>]/g, '');
+        if (val === shape.name) b.classList.add('correct');
+        if (val === picked && picked !== shape.name) b.classList.add('wrong');
+      });
+      if (picked === shape.name) {
+        shapeScore++;
+        shapeStreak++;
+        shapeBest = saveHigh('d3g-shape-best', shapeStreak);
+      } else {
+        shapeStreak = 0;
+      }
+      const exp = document.getElementById('shapes-explanation');
+      exp.innerHTML = `<strong>&lt;${shape.name}&gt;</strong> - ${shape.desc}`;
+      exp.classList.add('show');
+      document.getElementById('shapes-next').classList.add('show');
+      renderScore('shapes-score', [
+        { label: 'Score', value: shapeScore },
+        { label: 'Streak', value: shapeStreak, cls: 'green' },
+        { label: 'Best', value: shapeBest, cls: 'purple' },
+      ]);
+    }
+    document.getElementById('shapes-next').addEventListener('click', nextShape);
+
+    // ═══════════════════════════════════════
+    //  2. WHAT DOES THIS CODE DO?
+    // ═══════════════════════════════════════
+    let codeStarted = false, codeIdx = 0, codeCorrect = 0;
+
+    const codeQuestions = [
+      {
+        code: `d3.select("body")\n  .append("svg")\n  .attr("width", 400)\n  .attr("height", 200);`,
+        answer: 'Creates an empty 400x200 SVG element in the body',
+        wrong: ['Selects all SVG elements and resizes them', 'Draws a 400x200 rectangle'],
+        explain: 'd3.select picks the body, .append creates a new SVG child, and .attr sets its dimensions.'
+      },
+      {
+        code: `d3.selectAll("rect")\n  .data([10, 20, 30])\n  .join("rect")\n  .attr("height", d => d);`,
+        answer: 'Binds 3 data values to rects and sets each height from the data',
+        wrong: ['Creates one rect with height 10+20+30', 'Selects 3 existing rects and deletes them'],
+        explain: '.data() binds the array, .join() creates/updates rects, and the accessor d => d maps each value to height.'
+      },
+      {
+        code: `const x = d3.scaleLinear()\n  .domain([0, 100])\n  .range([0, 500]);`,
+        answer: 'Creates a linear scale mapping 0-100 to 0-500 pixels',
+        wrong: ['Draws a line from (0,100) to (0,500)', 'Creates an axis with ticks from 0 to 100'],
+        explain: 'scaleLinear creates a continuous mapping. domain is input, range is output.'
+      },
+      {
+        code: `svg.selectAll("circle")\n  .data(dataset)\n  .join("circle")\n  .attr("cx", d => xScale(d.x))\n  .attr("cy", d => yScale(d.y))\n  .attr("r", 5);`,
+        answer: 'Creates a scatter plot with circles positioned by x and y scales',
+        wrong: ['Draws one circle at position (5, 5)', 'Creates a pie chart from the dataset'],
+        explain: 'Each data point gets a circle. cx/cy position it using scales, r sets a fixed radius of 5.'
+      },
+      {
+        code: `const line = d3.line()\n  .x(d => xScale(d.date))\n  .y(d => yScale(d.value));`,
+        answer: 'Creates a line generator that maps date to x and value to y',
+        wrong: ['Draws a straight line between two points', 'Creates a linear regression trendline'],
+        explain: 'd3.line() returns a function that converts data arrays into SVG path "d" strings.'
+      },
+      {
+        code: `svg.append("g")\n  .attr("transform", \`translate(0,\${height})\`)\n  .call(d3.axisBottom(xScale));`,
+        answer: 'Adds a bottom x-axis at the bottom of the chart',
+        wrong: ['Moves the entire SVG down by height pixels', 'Creates a horizontal scrollbar'],
+        explain: 'A <g> is translated to the bottom, then .call() invokes axisBottom to render ticks and labels.'
+      },
+      {
+        code: `d3.selectAll("rect")\n  .transition()\n  .duration(750)\n  .attr("fill", "steelblue");`,
+        answer: 'Animates all rectangles to change color to steelblue over 750ms',
+        wrong: ['Instantly changes rect color and waits 750ms', 'Creates 750 new blue rectangles'],
+        explain: '.transition() makes subsequent .attr() calls animate smoothly over the specified duration.'
+      },
+      {
+        code: `const color = d3.scaleOrdinal()\n  .domain(["A","B","C"])\n  .range(["red","green","blue"]);`,
+        answer: 'Maps categories A, B, C to specific colors',
+        wrong: ['Creates a rainbow gradient from A to C', 'Sorts elements by color value'],
+        explain: 'scaleOrdinal maps discrete inputs to discrete outputs, perfect for category colors.'
+      },
+      {
+        code: `const projection = d3.geoAlbersUsa();\nconst path = d3.geoPath(projection);`,
+        answer: 'Sets up a US map projection and path generator for drawing state shapes',
+        wrong: ['Creates a walking path animation across the US', 'Draws a straight line across a map'],
+        explain: 'geoAlbersUsa is optimized for US maps. geoPath converts GeoJSON to SVG path strings using that projection.'
+      },
+      {
+        code: `svg.selectAll("path")\n  .data(topojson.feature(us, us.objects.states).features)\n  .join("path")\n  .attr("d", path)\n  .attr("fill", d => colorScale(dataMap.get(d.id)));`,
+        answer: 'Draws a choropleth map, coloring each state by its data value',
+        wrong: ['Creates animated line paths between states', 'Draws the US outline with no fill'],
+        explain: 'TopoJSON features become paths. Each state is filled using a color scale looked up by state ID.'
+      },
+      {
+        code: `const y = d3.scaleLinear()\n  .domain([0, d3.max(data, d => d.value)])\n  .range([height, 0]);`,
+        answer: 'Creates a y-scale that flips coordinates (0 at bottom, max at top)',
+        wrong: ['Creates a scale that goes from top to bottom normally', 'Calculates the maximum data value'],
+        explain: 'SVG y=0 is at top. range([height, 0]) flips it so small values are at the bottom, matching chart conventions.'
+      },
+      {
+        code: `const xBand = d3.scaleBand()\n  .domain(data.map(d => d.name))\n  .range([0, width])\n  .padding(0.2);`,
+        answer: 'Creates evenly-spaced bands for a bar chart with 20% padding',
+        wrong: ['Creates a continuous scale for line charts', 'Adds 20px margin to each side of the chart'],
+        explain: 'scaleBand divides the range into equal bands for categorical data (like bar chart categories). padding adds gaps.'
+      },
+      {
+        code: `svg.selectAll("text")\n  .data(data)\n  .join("text")\n  .attr("x", d => x(d.name) + x.bandwidth()/2)\n  .attr("y", d => y(d.value) - 5)\n  .text(d => d.value);`,
+        answer: 'Adds data labels centered above each bar in a bar chart',
+        wrong: ['Creates a text-only chart with no shapes', 'Adds a title to the SVG element'],
+        explain: 'Text elements are positioned at band center (x + bandwidth/2) and just above each bar (y - 5).'
+      },
+      {
+        code: `d3.select(this)\n  .transition()\n  .attr("opacity", 0.7)\n  .attr("stroke", "white")\n  .attr("stroke-width", 2);`,
+        answer: 'Adds a hover highlight effect: semi-transparent with white border',
+        wrong: ['Hides the element completely', 'Makes the element flash white'],
+        explain: 'Typically inside a mouseover handler. "this" refers to the hovered element, which gets styled with transition.'
+      },
+      {
+        code: `const tooltip = d3.select("body")\n  .append("div")\n  .attr("class", "tooltip")\n  .style("opacity", 0);`,
+        answer: 'Creates a hidden tooltip div that can be shown on hover',
+        wrong: ['Adds a visible dialog box to the page', 'Creates a tooltip using SVG text'],
+        explain: 'A div with opacity 0 is appended to body. On hover events, opacity is set to 1 and position is updated.'
+      },
+      {
+        code: `const pie = d3.pie()\n  .value(d => d.count);\nconst arcs = pie(data);`,
+        answer: 'Computes pie/donut chart angles from data count values',
+        wrong: ['Draws a complete pie chart SVG', 'Calculates the sum of all count values'],
+        explain: 'd3.pie() is a layout generator. It takes data and returns objects with startAngle/endAngle for each slice.'
+      },
+      {
+        code: `const arc = d3.arc()\n  .innerRadius(50)\n  .outerRadius(100);`,
+        answer: 'Creates a donut arc generator with a 50px hole in the center',
+        wrong: ['Draws a full circle with radius 100', 'Creates a semicircle from 50 to 100 degrees'],
+        explain: 'innerRadius > 0 creates a donut shape. This generator converts pie layout data into SVG path strings.'
+      },
+      {
+        code: `svg.select(".domain").remove();\nsvg.selectAll(".tick line")\n  .attr("stroke", "#ddd")\n  .attr("stroke-dasharray", "2,2");`,
+        answer: 'Removes the axis line and styles tick marks as light dashed lines',
+        wrong: ['Removes all axes from the chart', 'Adds a border around the chart area'],
+        explain: '.domain is the axis baseline. This removes it and styles the grid lines for a cleaner look.'
+      },
+      {
+        code: `svg.attr("viewBox", \`0 0 \${width} \${height}\`)\n  .attr("preserveAspectRatio", "xMidYMid meet");`,
+        answer: 'Makes the SVG responsive - it scales to fit its container while maintaining aspect ratio',
+        wrong: ['Sets a fixed size that never changes', 'Crops the SVG to the specified dimensions'],
+        explain: 'viewBox defines the coordinate system. Without fixed width/height, the SVG scales responsively.'
+      },
+      {
+        code: `d3.csv("data.csv", d => ({\n  name: d.Name,\n  value: +d.Value\n})).then(data => {\n  console.log(data);\n});`,
+        answer: 'Loads a CSV file and converts the Value column from string to number',
+        wrong: ['Creates a CSV file from JavaScript data', 'Displays raw CSV text in the console'],
+        explain: 'd3.csv fetches and parses CSV. The row accessor renames columns and uses + to coerce strings to numbers.'
+      },
+    ];
+
+    function initCode() {
+      codeStarted = true;
+      codeIdx = 0;
+      codeCorrect = 0;
+      nextCode();
+    }
+
+    function nextCode() {
+      if (codeIdx >= codeQuestions.length) {
+        codeIdx = 0; // wrap around
+      }
+      const q = codeQuestions[codeIdx];
+      document.getElementById('code-question').innerHTML = `<pre>${escHtml(q.code)}</pre>`;
+      document.getElementById('code-progress').style.width = `${(codeIdx / codeQuestions.length) * 100}%`;
+
+      const options = shuffle([q.answer, ...q.wrong]);
+      const choicesEl = document.getElementById('code-choices');
+      choicesEl.innerHTML = '';
+      document.getElementById('code-explanation').classList.remove('show');
+      document.getElementById('code-next').classList.remove('show');
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => handleCodeAnswer(opt, q, choicesEl));
+        choicesEl.appendChild(btn);
+      });
+
+      renderScore('code-score', [
+        { label: 'Correct', value: codeCorrect, cls: 'green' },
+        { label: 'Question', value: `${codeIdx + 1}/${codeQuestions.length}` },
+      ]);
+    }
+
+    function handleCodeAnswer(picked, q, container) {
+      const btns = container.querySelectorAll('.choice-btn');
+      btns.forEach(b => {
+        b.disabled = true;
+        if (b.textContent === q.answer) b.classList.add('correct');
+        if (b.textContent === picked && picked !== q.answer) b.classList.add('wrong');
+      });
+      if (picked === q.answer) codeCorrect++;
+      const exp = document.getElementById('code-explanation');
+      exp.innerHTML = `<strong>${picked === q.answer ? 'Correct!' : 'Not quite.'}</strong> ${q.explain}`;
+      exp.classList.add('show');
+      document.getElementById('code-next').classList.add('show');
+      codeIdx++;
+      renderScore('code-score', [
+        { label: 'Correct', value: codeCorrect, cls: 'green' },
+        { label: 'Question', value: `${Math.min(codeIdx, codeQuestions.length)}/${codeQuestions.length}` },
+      ]);
+    }
+    document.getElementById('code-next').addEventListener('click', nextCode);
+
+    function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // ═══════════════════════════════════════
+    //  3. SCALE CALCULATOR
+    // ═══════════════════════════════════════
+    let scalesStarted = false, scaleScore = 0, scaleTotal = 0;
+
+    function initScales() {
+      scalesStarted = true;
+      nextScale();
+    }
+
+    function nextScale() {
+      // Generate random scale problem
+      const types = ['linear', 'linear', 'linear', 'sqrt', 'log'];
+      const type = types[randInt(0, types.length - 1)];
+      let domMin, domMax, ranMin, ranMax, input, answer;
+
+      if (type === 'linear') {
+        domMin = randInt(0, 2) * 50; // 0, 50, or 100
+        domMax = domMin + [100, 200, 500, 1000][randInt(0, 3)];
+        ranMin = 0;
+        ranMax = [300, 400, 500, 600, 800][randInt(0, 4)];
+        // pick an input that gives a nice number
+        const fraction = [0.1, 0.2, 0.25, 0.4, 0.5, 0.6, 0.75, 0.8][randInt(0, 7)];
+        input = domMin + (domMax - domMin) * fraction;
+        answer = ranMin + (ranMax - ranMin) * fraction;
+      } else if (type === 'sqrt') {
+        domMin = 0;
+        domMax = [100, 400, 900][randInt(0, 2)];
+        ranMin = 0;
+        ranMax = [10, 20, 30][randInt(0, 2)];
+        const vals = [0.25, 0.5, 1.0];
+        const frac = vals[randInt(0, 2)];
+        input = domMax * frac;
+        answer = Math.round(ranMax * Math.sqrt(frac) * 100) / 100;
+      } else { // log
+        domMin = 1;
+        domMax = 1000;
+        ranMin = 0;
+        ranMax = 300;
+        input = [10, 100][randInt(0, 1)];
+        answer = Math.round(ranMax * Math.log(input) / Math.log(domMax) * 100) / 100;
+      }
+
+      answer = Math.round(answer);
+
+      const qEl = document.getElementById('scales-question');
+      qEl.innerHTML = `
+        <div style="font-size:0.85rem;color:#aaa;margin-bottom:0.5rem;">Scale type: <strong style="color:#f97316;">${type === 'linear' ? 'scaleLinear' : type === 'sqrt' ? 'scaleSqrt' : 'scaleLog'}</strong></div>
+        <pre>domain: [${domMin}, ${domMax}]\nrange:  [${ranMin}, ${ranMax}]\ninput:  ${input}</pre>
+        <div style="font-size:0.9rem;margin-top:0.5rem;">What is the <strong style="color:#818cf8;">output</strong>?</div>
+      `;
+
+      // Generate wrong answers
+      const wrongs = new Set();
+      while (wrongs.size < 3) {
+        let w = answer + [- 50, -25, -10, 10, 25, 50, 75, 100, -75, -100][randInt(0, 9)];
+        if (w < 0) w = Math.abs(w);
+        if (w !== answer && w >= 0) wrongs.add(Math.round(w));
+      }
+      const options = shuffle([answer, ...wrongs]);
+
+      const choicesEl = document.getElementById('scales-choices');
+      choicesEl.className = 'choices two-col';
+      choicesEl.innerHTML = '';
+      document.getElementById('scales-explanation').classList.remove('show');
+      document.getElementById('scales-next').classList.remove('show');
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = opt;
+        btn.style.textAlign = 'center';
+        btn.style.justifyContent = 'center';
+        btn.style.fontSize = '1.1rem';
+        btn.style.fontWeight = '600';
+        btn.addEventListener('click', () => handleScaleAnswer(opt, answer, choicesEl, type));
+        choicesEl.appendChild(btn);
+      });
+
+      renderScore('scales-score', [
+        { label: 'Correct', value: scaleScore, cls: 'green' },
+        { label: 'Total', value: scaleTotal },
+        { label: 'Best', value: getHigh('d3g-scale-best'), cls: 'purple' },
+      ]);
+    }
+
+    function handleScaleAnswer(picked, answer, container, type) {
+      scaleTotal++;
+      const btns = container.querySelectorAll('.choice-btn');
+      btns.forEach(b => {
+        b.disabled = true;
+        if (parseInt(b.textContent) === answer) b.classList.add('correct');
+        if (parseInt(b.textContent) === picked && picked !== answer) b.classList.add('wrong');
+      });
+      if (picked === answer) {
+        scaleScore++;
+        saveHigh('d3g-scale-best', scaleScore);
+      }
+      const exp = document.getElementById('scales-explanation');
+      const typeExplain = type === 'linear' ? 'Linear scales map proportionally: (input - domainMin) / (domainMax - domainMin) * (rangeMax - rangeMin).'
+        : type === 'sqrt' ? 'Sqrt scales take the square root of the normalized input before mapping to range.'
+        : 'Log scales use logarithmic mapping, useful for data spanning many orders of magnitude.';
+      exp.innerHTML = `<strong>Answer: ${answer}</strong>. ${typeExplain}`;
+      exp.classList.add('show');
+      document.getElementById('scales-next').classList.add('show');
+      renderScore('scales-score', [
+        { label: 'Correct', value: scaleScore, cls: 'green' },
+        { label: 'Total', value: scaleTotal },
+        { label: 'Best', value: getHigh('d3g-scale-best'), cls: 'purple' },
+      ]);
+    }
+    document.getElementById('scales-next').addEventListener('click', nextScale);
+
+    // ═══════════════════════════════════════
+    //  4. MATCH THE CHART
+    // ═══════════════════════════════════════
+    let matchStarted = false, matchIdx = 0, matchCorrect = 0;
+
+    const matchQuestions = [
+      {
+        type: 'bar',
+        draw: (svg) => {
+          const data = [40, 80, 60, 90, 50];
+          const w = 200, h = 120;
+          svg.attr('width', w).attr('height', h);
+          const x = d3.scaleBand().domain(d3.range(data.length)).range([20, w-10]).padding(0.2);
+          const y = d3.scaleLinear().domain([0, 100]).range([h-10, 10]);
+          svg.selectAll('rect').data(data).join('rect')
+            .attr('x', (d,i) => x(i)).attr('y', d => y(d))
+            .attr('width', x.bandwidth()).attr('height', d => h - 10 - y(d))
+            .attr('fill', '#f97316').attr('rx', 2);
+        },
+        answer: `.selectAll("rect")\n  .data(data).join("rect")\n  .attr("width", x.bandwidth())\n  .attr("height", d => h - y(d))`,
+        wrong: [
+          `.append("path")\n  .attr("d", d3.line()\n    .x(d => x(d.name))\n    .y(d => y(d.value)))`,
+          `.selectAll("circle")\n  .data(data).join("circle")\n  .attr("cx", d => x(d.x))\n  .attr("cy", d => y(d.y))`,
+        ],
+        explain: 'Bar charts use rect elements with scaleBand for x positioning and height derived from data values.'
+      },
+      {
+        type: 'scatter',
+        draw: (svg) => {
+          const data = [[20,80],[50,30],[80,60],[120,20],[150,70],[40,50],[100,40]];
+          svg.attr('width', 200).attr('height', 120);
+          svg.selectAll('circle').data(data).join('circle')
+            .attr('cx', d => d[0] + 10).attr('cy', d => (120 - d[1]))
+            .attr('r', 5).attr('fill', '#818cf8');
+        },
+        answer: `.selectAll("circle")\n  .data(data).join("circle")\n  .attr("cx", d => x(d.x))\n  .attr("cy", d => y(d.y))\n  .attr("r", 5)`,
+        wrong: [
+          `.append("path")\n  .datum(data)\n  .attr("d", d3.line()\n    .x(d => x(d.x))\n    .y(d => y(d.y)))`,
+          `.selectAll("rect")\n  .data(data).join("rect")\n  .attr("x", d => x(d.name))\n  .attr("width", x.bandwidth())`,
+        ],
+        explain: 'Scatter plots use circle elements positioned by cx/cy with a fixed radius.'
+      },
+      {
+        type: 'line',
+        draw: (svg) => {
+          const pts = [[10,80],[50,30],[90,60],[130,20],[170,50]];
+          svg.attr('width', 200).attr('height', 120);
+          svg.append('path')
+            .attr('d', d3.line().x(d=>d[0]+10).y(d=>120-d[1]).curve(d3.curveMonotoneX)(pts))
+            .attr('fill','none').attr('stroke','#4ade80').attr('stroke-width',2);
+        },
+        answer: `.append("path")\n  .datum(data)\n  .attr("d", d3.line()\n    .x(d => x(d.date))\n    .y(d => y(d.value)))`,
+        wrong: [
+          `.selectAll("rect")\n  .data(data).join("rect")\n  .attr("height", d => h - y(d))`,
+          `.selectAll("circle")\n  .data(data).join("circle")\n  .attr("r", d => size(d.pop))`,
+        ],
+        explain: 'Line charts use a single path element with d3.line() generator. .datum() binds one array to one path.'
+      },
+      {
+        type: 'horizontal-bar',
+        draw: (svg) => {
+          const data = [60, 120, 90, 40, 150];
+          svg.attr('width', 200).attr('height', 120);
+          const y = d3.scaleBand().domain(d3.range(5)).range([5, 115]).padding(0.2);
+          svg.selectAll('rect').data(data).join('rect')
+            .attr('x', 30).attr('y', (d,i) => y(i))
+            .attr('width', d => d).attr('height', y.bandwidth())
+            .attr('fill', '#f472b6').attr('rx', 2);
+        },
+        answer: `.selectAll("rect")\n  .data(data).join("rect")\n  .attr("x", margin.left)\n  .attr("width", d => x(d.value))\n  .attr("height", y.bandwidth())`,
+        wrong: [
+          `.append("path")\n  .attr("d", d3.line()\n    .x(d => x(d.val))\n    .y(d => y(d.cat)))`,
+          `.selectAll("circle")\n  .data(data).join("circle")\n  .attr("cx", d => x(d.value))\n  .attr("r", 8)`,
+        ],
+        explain: 'Horizontal bar charts swap x/y: width comes from data, height from scaleBand bandwidth.'
+      },
+      {
+        type: 'area',
+        draw: (svg) => {
+          const pts = [[10,80],[50,30],[90,50],[130,20],[170,60]];
+          svg.attr('width', 200).attr('height', 120);
+          const area = d3.area().x(d=>d[0]+10).y0(110).y1(d=>120-d[1]).curve(d3.curveMonotoneX);
+          svg.append('path').attr('d', area(pts)).attr('fill','#818cf844').attr('stroke','#818cf8').attr('stroke-width',2);
+        },
+        answer: `.append("path")\n  .datum(data)\n  .attr("d", d3.area()\n    .x(d => x(d.date))\n    .y0(height)\n    .y1(d => y(d.value)))`,
+        wrong: [
+          `.selectAll("rect")\n  .data(data).join("rect")\n  .attr("fill", "steelblue")`,
+          `.append("path")\n  .datum(data)\n  .attr("d", d3.line()\n    .x(d => x(d.x))\n    .y(d => y(d.y)))`,
+        ],
+        explain: 'Area charts use d3.area() with y0 (baseline) and y1 (data line). The filled region between them creates the area.'
+      },
+      {
+        type: 'donut',
+        draw: (svg) => {
+          svg.attr('width', 160).attr('height', 160);
+          const g = svg.append('g').attr('transform','translate(80,80)');
+          const pie = d3.pie()([30,50,20,40]);
+          const arc = d3.arc().innerRadius(30).outerRadius(65);
+          const colors = ['#f97316','#818cf8','#4ade80','#f472b6'];
+          g.selectAll('path').data(pie).join('path').attr('d',arc).attr('fill',(d,i)=>colors[i]);
+        },
+        answer: `const arc = d3.arc()\n  .innerRadius(30)\n  .outerRadius(65);\npaths.attr("d", arc)`,
+        wrong: [
+          `.selectAll("circle")\n  .data(data).join("circle")\n  .attr("r", d => d.value)`,
+          `.selectAll("rect")\n  .data(data).join("rect")\n  .attr("transform", "rotate(45)")`,
+        ],
+        explain: 'Donut charts use d3.arc() with innerRadius > 0. d3.pie() computes the angles from data.'
+      },
+      {
+        type: 'grouped-dots',
+        draw: (svg) => {
+          svg.attr('width', 200).attr('height', 120);
+          const groups = [
+            { x: 40, dots: [30, 50, 70] },
+            { x: 100, dots: [40, 60, 80] },
+            { x: 160, dots: [20, 55, 75] },
+          ];
+          groups.forEach(g => {
+            g.dots.forEach(dy => {
+              svg.append('circle').attr('cx', g.x).attr('cy', 120-dy).attr('r', 4).attr('fill','#f97316').attr('opacity', 0.7);
+            });
+          });
+        },
+        answer: `.selectAll("circle")\n  .data(data).join("circle")\n  .attr("cx", d => x(d.group))\n  .attr("cy", d => y(d.value))\n  .attr("r", 4)`,
+        wrong: [
+          `.selectAll("rect")\n  .data(data).join("rect")\n  .attr("x", d => x(d.group))`,
+          `.append("path")\n  .datum(data)\n  .attr("d", d3.line())`,
+        ],
+        explain: 'Beeswarm/grouped dot plots place circles using categorical x and continuous y scales.'
+      },
+      {
+        type: 'stacked-bars',
+        draw: (svg) => {
+          svg.attr('width', 200).attr('height', 120);
+          const data = [[20,30],[40,25],[30,35],[50,20]];
+          const colors = ['#f97316','#818cf8'];
+          const bw = 30;
+          data.forEach(([a,b], i) => {
+            svg.append('rect').attr('x', 20+i*45).attr('y', 120-a-b).attr('width', bw).attr('height', b).attr('fill', colors[1]).attr('rx',2);
+            svg.append('rect').attr('x', 20+i*45).attr('y', 120-a).attr('width', bw).attr('height', a).attr('fill', colors[0]).attr('rx',2);
+          });
+        },
+        answer: `const stack = d3.stack()\n  .keys(["a","b"]);\ngroups.selectAll("rect")\n  .data(d => d).join("rect")`,
+        wrong: [
+          `.selectAll("rect")\n  .data(data).join("rect")\n  .attr("x", d => x(d.name))`,
+          `.selectAll("circle")\n  .data(data).join("circle")\n  .attr("fill", colorScale)`,
+        ],
+        explain: 'd3.stack() computes stacked positions. Each layer is a series of [y0, y1] pairs.'
+      },
+      {
+        type: 'pie',
+        draw: (svg) => {
+          svg.attr('width', 160).attr('height', 160);
+          const g = svg.append('g').attr('transform','translate(80,80)');
+          const pie = d3.pie()([40,30,20,10]);
+          const arc = d3.arc().innerRadius(0).outerRadius(65);
+          const colors = ['#f97316','#818cf8','#4ade80','#f472b6'];
+          g.selectAll('path').data(pie).join('path').attr('d',arc).attr('fill',(d,i)=>colors[i]);
+        },
+        answer: `const arc = d3.arc()\n  .innerRadius(0)\n  .outerRadius(radius);\npaths.attr("d", arc)`,
+        wrong: [
+          `.selectAll("circle")\n  .data(pie(data)).join("circle")`,
+          `.append("path")\n  .attr("d", d3.line().curve(d3.curveBasis))`,
+        ],
+        explain: 'Pie charts use d3.arc() with innerRadius(0). Each slice is a path generated from pie layout angles.'
+      },
+      {
+        type: 'multi-line',
+        draw: (svg) => {
+          svg.attr('width', 200).attr('height', 120);
+          const lines = [
+            [[10,80],[50,50],[90,60],[130,30],[170,40]],
+            [[10,60],[50,70],[90,40],[130,50],[170,20]],
+          ];
+          const colors = ['#f97316','#818cf8'];
+          lines.forEach((pts,i) => {
+            svg.append('path')
+              .attr('d', d3.line().x(d=>d[0]+10).y(d=>120-d[1]).curve(d3.curveMonotoneX)(pts))
+              .attr('fill','none').attr('stroke',colors[i]).attr('stroke-width',2);
+          });
+        },
+        answer: `series.append("path")\n  .attr("d", d => d3.line()\n    .x(d => x(d.date))\n    .y(d => y(d.value))(d.values))`,
+        wrong: [
+          `.selectAll("circle")\n  .data(data).join("circle")\n  .attr("stroke", colorScale)`,
+          `.selectAll("rect")\n  .data(data).join("rect")\n  .attr("fill", d => color(d.key))`,
+        ],
+        explain: 'Multi-line charts nest data by series. Each series gets its own path element with a unique color.'
+      },
+    ];
+
+    function initMatch() {
+      matchStarted = true;
+      matchIdx = 0;
+      matchCorrect = 0;
+      nextMatch();
+    }
+
+    function nextMatch() {
+      if (matchIdx >= matchQuestions.length) matchIdx = 0;
+      const q = matchQuestions[matchIdx];
+      const chartEl = document.getElementById('match-chart');
+      chartEl.innerHTML = '<svg></svg>';
+      const svg = d3.select(chartEl).select('svg');
+      q.draw(svg);
+
+      document.getElementById('match-progress').style.width = `${(matchIdx / matchQuestions.length) * 100}%`;
+
+      const options = shuffle([q.answer, ...q.wrong]);
+      const choicesEl = document.getElementById('match-choices');
+      choicesEl.innerHTML = '';
+      document.getElementById('match-explanation').classList.remove('show');
+      document.getElementById('match-next').classList.remove('show');
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.innerHTML = `<code>${escHtml(opt)}</code>`;
+        btn.addEventListener('click', () => handleMatchAnswer(opt, q, choicesEl));
+        choicesEl.appendChild(btn);
+      });
+
+      renderScore('match-score', [
+        { label: 'Correct', value: matchCorrect, cls: 'green' },
+        { label: 'Round', value: `${matchIdx + 1}/${matchQuestions.length}` },
+      ]);
+    }
+
+    function handleMatchAnswer(picked, q, container) {
+      const btns = container.querySelectorAll('.choice-btn');
+      btns.forEach(b => {
+        b.disabled = true;
+        if (b.querySelector('code').textContent === q.answer) b.classList.add('correct');
+        if (b.querySelector('code').textContent === picked && picked !== q.answer) b.classList.add('wrong');
+      });
+      if (picked === q.answer) matchCorrect++;
+      const exp = document.getElementById('match-explanation');
+      exp.innerHTML = `<strong>${picked === q.answer ? 'Correct!' : 'Not quite.'}</strong> ${q.explain}`;
+      exp.classList.add('show');
+      document.getElementById('match-next').classList.add('show');
+      matchIdx++;
+      renderScore('match-score', [
+        { label: 'Correct', value: matchCorrect, cls: 'green' },
+        { label: 'Round', value: `${Math.min(matchIdx, matchQuestions.length)}/${matchQuestions.length}` },
+      ]);
+    }
+    document.getElementById('match-next').addEventListener('click', nextMatch);
+
+    // ═══════════════════════════════════════
+    //  5. SPOT THE BUG
+    // ═══════════════════════════════════════
+    let bugsStarted = false, bugsIdx = 0, bugsCorrect = 0;
+
+    const bugQuestions = [
+      {
+        code: `svg.selectAll("circle")\n  .data(data)\n  .join("circle")\n  .attr("x", d => xScale(d.x))\n  .attr("y", d => yScale(d.y))\n  .attr("r", 5);`,
+        answer: 'Circles use cx/cy, not x/y',
+        wrong: ['Missing .data() call', 'r should be "radius"', 'join should be append'],
+        fix: 'Change .attr("x", ...) to .attr("cx", ...) and .attr("y", ...) to .attr("cy", ...)'
+      },
+      {
+        code: `svg.append("path")\n  .datum(data)\n  .attr("d", d3.line()\n    .x(d => xScale(d.date))\n    .y(d => yScale(d.value)))\n  .attr("fill", "steelblue");`,
+        answer: 'Lines should use stroke, not fill (and fill should be "none")',
+        wrong: ['datum should be data', 'Missing .join() call', 'line() needs .curve()'],
+        fix: 'Change .attr("fill", "steelblue") to .attr("fill", "none").attr("stroke", "steelblue")'
+      },
+      {
+        code: `const y = d3.scaleLinear()\n  .domain([0, d3.max(data, d => d.value)])\n  .range([0, height]);`,
+        answer: 'Y range should be [height, 0] to flip coordinates (SVG y=0 is top)',
+        wrong: ['domain should start at 1', 'Should use scaleLog instead', 'max should be min'],
+        fix: 'Change .range([0, height]) to .range([height, 0])'
+      },
+      {
+        code: `svg.selectAll("rect")\n  .data(data)\n  .attr("x", d => xScale(d.name))\n  .attr("width", xScale.bandwidth());`,
+        answer: 'Missing .join("rect") between .data() and .attr()',
+        wrong: ['bandwidth() is not a function', 'x should be cx for rects', 'Should use selectAll("bar")'],
+        fix: 'Add .join("rect") after .data(data)'
+      },
+      {
+        code: `const x = d3.scaleLinear()\n  .domain(["A", "B", "C", "D"])\n  .range([0, width])\n  .padding(0.1);`,
+        answer: 'Categories need scaleBand, not scaleLinear',
+        wrong: ['padding is not needed', 'range should use height', 'domain should be numbers'],
+        fix: 'Change d3.scaleLinear() to d3.scaleBand()'
+      },
+      {
+        code: `svg.append("g")\n  .attr("transform", \`translate(\${margin.left},0)\`)\n  .call(d3.axisBottom(xScale));`,
+        answer: 'Bottom axis should be translated to the bottom: translate(0, height), not translate(margin.left, 0)',
+        wrong: ['axisBottom should be axisLeft', 'Missing .selectAll("text")', 'call() is wrong, use append()'],
+        fix: 'Change transform to `translate(0, ${height})`'
+      },
+      {
+        code: `d3.selectAll("rect")\n  .data([10, 20, 30])\n  .enter()\n  .attr("height", d => d);`,
+        answer: 'After .enter(), need .append("rect") before setting attributes',
+        wrong: ['data should be datum', 'selectAll is wrong', 'height should be width'],
+        fix: 'Add .append("rect") after .enter() - or better, use .join("rect") instead of .enter()'
+      },
+      {
+        code: `const colorScale = d3.scaleLinear()\n  .domain([0, 50, 100])\n  .range(["blue", "white", "red"]);`,
+        answer: 'Multi-stop color scales should use scaleSequential or scaleDiverging, not scaleLinear',
+        wrong: ['Colors cannot be used in range', 'Domain needs only 2 values', 'Should use scaleOrdinal'],
+        fix: 'Actually, scaleLinear CAN interpolate colors with matching domain/range lengths, but scaleDiverging is more idiomatic for 3-stop diverging palettes.'
+      },
+      {
+        code: `svg.selectAll("line")\n  .data(data)\n  .join("line")\n  .attr("x1", d => x(d.start))\n  .attr("x2", d => x(d.end))\n  .attr("y1", 50)\n  .attr("y2", 50)\n  .attr("fill", "orange");`,
+        answer: 'Lines need stroke, not fill - fill does nothing on line elements',
+        wrong: ['line elements do not exist in SVG', 'x1/x2 should be cx1/cx2', 'Should use path instead'],
+        fix: 'Change .attr("fill", "orange") to .attr("stroke", "orange").attr("stroke-width", 2)'
+      },
+      {
+        code: `const projection = d3.geoMercator();\nconst path = d3.geoPath();\nsvg.selectAll("path")\n  .data(features)\n  .join("path")\n  .attr("d", path);`,
+        answer: 'geoPath() needs the projection passed in: d3.geoPath(projection)',
+        wrong: ['Should use geoAlbers instead', 'features should be a single datum', 'path should be called as path()'],
+        fix: 'Change d3.geoPath() to d3.geoPath(projection)'
+      },
+      {
+        code: `svg.selectAll("rect")\n  .data(data)\n  .join("rect")\n  .attr("x", d => x(d.name))\n  .attr("y", d => y(d.value))\n  .attr("width", x.bandwidth())\n  .attr("height", d => d.value);`,
+        answer: 'Height should be height - y(d.value), not raw d.value',
+        wrong: ['bandwidth() returns wrong value', 'x should be scaleBand', 'Missing fill attribute'],
+        fix: 'Change .attr("height", d => d.value) to .attr("height", d => height - y(d.value))'
+      },
+      {
+        code: `d3.csv("data.csv").then(data => {\n  const max = d3.max(data, d => d.value);\n  console.log(max); // logs "95" as a string!\n});`,
+        answer: 'CSV values are strings - need +d.value or Number(d.value) to convert to numbers',
+        wrong: ['d3.csv returns an array, not a promise', 'max() does not work with objects', 'Should use d3.json instead'],
+        fix: 'Use a row accessor: d3.csv("data.csv", d => ({value: +d.value})) or +d.value in the max call'
+      },
+      {
+        code: `svg.selectAll("text")\n  .data(data)\n  .join("text")\n  .attr("cx", d => x(d.name))\n  .attr("cy", d => y(d.value))\n  .text(d => d.value);`,
+        answer: 'Text elements use x/y, not cx/cy (those are for circles)',
+        wrong: ['text elements cannot have data bound', 'Should use tspan instead', '.text() should be .html()'],
+        fix: 'Change .attr("cx",...) to .attr("x",...) and .attr("cy",...) to .attr("y",...)'
+      },
+      {
+        code: `const svg = d3.select("#chart")\n  .append("svg")\n  .attr("width", width + margin.left + margin.right)\n  .attr("height", height + margin.top + margin.bottom)\n  .append("g");`,
+        answer: 'The inner g element is missing its transform to offset by margins',
+        wrong: ['SVG width should not include margins', 'Should not append g inside svg', 'select should be selectAll'],
+        fix: 'Add .attr("transform", `translate(${margin.left},${margin.top})`) to the appended g'
+      },
+      {
+        code: `svg.selectAll("rect")\n  .data(data)\n  .join("rect")\n  .attr("y", d => y(d.value))\n  .attr("height", d => height - y(d.value))\n  .attr("width", x.bandwidth())\n  .transition()\n  .duration(500)\n  .attr("fill", "steelblue");`,
+        answer: 'Static attributes like x position are missing - bars have no x position set',
+        wrong: ['transition cannot change fill', 'duration is too short', 'join should be enter'],
+        fix: 'Add .attr("x", d => x(d.name)) before or after other attributes'
+      },
+    ];
+
+    function initBugs() {
+      bugsStarted = true;
+      bugsIdx = 0;
+      bugsCorrect = 0;
+      nextBug();
+    }
+
+    function nextBug() {
+      if (bugsIdx >= bugQuestions.length) bugsIdx = 0;
+      const q = bugQuestions[bugsIdx];
+      document.getElementById('bugs-question').innerHTML = `<pre>${escHtml(q.code)}</pre>`;
+      document.getElementById('bugs-progress').style.width = `${(bugsIdx / bugQuestions.length) * 100}%`;
+
+      const options = shuffle([q.answer, ...q.wrong]);
+      const choicesEl = document.getElementById('bugs-choices');
+      choicesEl.innerHTML = '';
+      document.getElementById('bugs-explanation').classList.remove('show');
+      document.getElementById('bugs-next').classList.remove('show');
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => handleBugAnswer(opt, q, choicesEl));
+        choicesEl.appendChild(btn);
+      });
+
+      renderScore('bugs-score', [
+        { label: 'Found', value: bugsCorrect, cls: 'green' },
+        { label: 'Bug', value: `${bugsIdx + 1}/${bugQuestions.length}` },
+      ]);
+    }
+
+    function handleBugAnswer(picked, q, container) {
+      const btns = container.querySelectorAll('.choice-btn');
+      btns.forEach(b => {
+        b.disabled = true;
+        if (b.textContent === q.answer) b.classList.add('correct');
+        if (b.textContent === picked && picked !== q.answer) b.classList.add('wrong');
+      });
+      if (picked === q.answer) bugsCorrect++;
+      const exp = document.getElementById('bugs-explanation');
+      exp.innerHTML = `<strong>The bug:</strong> ${q.answer}<br><br><strong>The fix:</strong> ${q.fix}`;
+      exp.classList.add('show');
+      document.getElementById('bugs-next').classList.add('show');
+      bugsIdx++;
+      renderScore('bugs-score', [
+        { label: 'Found', value: bugsCorrect, cls: 'green' },
+        { label: 'Bug', value: `${Math.min(bugsIdx, bugQuestions.length)}/${bugQuestions.length}` },
+      ]);
+    }
+    document.getElementById('bugs-next').addEventListener('click', nextBug);
+
+    // ═══════════════════════════════════════
+    //  6. VOCABULARY MEMORY GAME
+    // ═══════════════════════════════════════
+    let memoryStarted = false;
+    const vocabPairs = [
+      { term: '.domain()', def: 'Input data range for a scale' },
+      { term: '.range()', def: 'Output pixel range for a scale' },
+      { term: '.join()', def: 'Enter+update+exit in one call' },
+      { term: '.data()', def: 'Binds an array to elements' },
+      { term: '.enter()', def: 'Placeholder for missing elements' },
+      { term: '.exit()', def: 'Elements with no matching data' },
+      { term: 'selectAll', def: 'Select all matching elements' },
+      { term: 'scaleBand', def: 'Scale for categorical/ordinal data' },
+      { term: 'scaleLinear', def: 'Continuous proportional mapping' },
+      { term: 'axisBottom', def: 'Horizontal axis at chart bottom' },
+      { term: '.call()', def: 'Invoke a function on selection' },
+      { term: '.transition()', def: 'Animate attribute changes' },
+      { term: '.attr()', def: 'Set SVG attribute on element' },
+      { term: 'viewBox', def: 'SVG coordinate system for responsive sizing' },
+      { term: '.datum()', def: 'Bind single value (not array)' },
+      { term: '.nice()', def: 'Round scale domain to nice values' },
+      { term: '.bandwidth()', def: 'Width of one band in scaleBand' },
+      { term: 'geoPath', def: 'Converts GeoJSON to SVG paths' },
+      { term: 'projection', def: 'Maps lat/lon to x/y pixels' },
+      { term: '.interpolator()', def: 'Color function for sequential scales' },
+    ];
+
+    let memoryCards = [], memoryFlipped = [], memoryMatched = 0, memoryMoves = 0, memoryTimer = 0, memoryInterval = null, memoryLocked = false;
+
+    function initMemory() {
+      memoryStarted = true;
+      startMemory();
+    }
+
+    function startMemory() {
+      // Pick 8 random pairs for a 4x4 grid
+      const pairs = shuffle(vocabPairs).slice(0, 8);
+      memoryCards = [];
+      pairs.forEach((p, i) => {
+        memoryCards.push({ id: i, type: 'term', text: p.term, pairId: i });
+        memoryCards.push({ id: i, type: 'def', text: p.def, pairId: i });
+      });
+      memoryCards = shuffle(memoryCards);
+      memoryFlipped = [];
+      memoryMatched = 0;
+      memoryMoves = 0;
+      memoryTimer = 0;
+      memoryLocked = false;
+      if (memoryInterval) clearInterval(memoryInterval);
+      memoryInterval = setInterval(() => {
+        memoryTimer++;
+        updateMemoryScore();
+      }, 1000);
+      document.getElementById('memory-restart').style.display = 'none';
+      renderMemoryGrid();
+      updateMemoryScore();
+    }
+
+    function renderMemoryGrid() {
+      const grid = document.getElementById('memory-grid');
+      grid.innerHTML = '';
+      memoryCards.forEach((card, idx) => {
+        const el = document.createElement('div');
+        el.className = 'memory-card';
+        el.textContent = card.text;
+        el.dataset.idx = idx;
+        el.addEventListener('click', () => flipMemoryCard(idx));
+        grid.appendChild(el);
+      });
+    }
+
+    function flipMemoryCard(idx) {
+      if (memoryLocked) return;
+      const cards = document.querySelectorAll('.memory-card');
+      const card = cards[idx];
+      if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+      card.classList.add('flipped');
+      memoryFlipped.push(idx);
+
+      if (memoryFlipped.length === 2) {
+        memoryMoves++;
+        memoryLocked = true;
+        const [a, b] = memoryFlipped;
+        const cardA = memoryCards[a], cardB = memoryCards[b];
+
+        if (cardA.pairId === cardB.pairId && cardA.type !== cardB.type) {
+          // Match!
+          setTimeout(() => {
+            cards[a].classList.add('matched');
+            cards[b].classList.add('matched');
+            memoryMatched++;
+            memoryFlipped = [];
+            memoryLocked = false;
+            updateMemoryScore();
+            if (memoryMatched === 8) {
+              clearInterval(memoryInterval);
+              document.getElementById('memory-restart').style.display = 'block';
+              saveHigh('d3g-memory-best', 1000 - memoryMoves); // lower moves = better
+            }
+          }, 400);
+        } else {
+          setTimeout(() => {
+            cards[a].classList.remove('flipped');
+            cards[b].classList.remove('flipped');
+            memoryFlipped = [];
+            memoryLocked = false;
+          }, 700);
+        }
+        updateMemoryScore();
+      }
+    }
+
+    function updateMemoryScore() {
+      const mins = Math.floor(memoryTimer / 60);
+      const secs = memoryTimer % 60;
+      renderScore('memory-score', [
+        { label: 'Matched', value: `${memoryMatched}/8`, cls: 'green' },
+        { label: 'Moves', value: memoryMoves },
+        { label: 'Time', value: `${mins}:${secs.toString().padStart(2, '0')}`, cls: 'purple' },
+      ]);
+    }
+    document.getElementById('memory-restart').addEventListener('click', startMemory);
+
+    // ═══════════════════════════════════════
+    //  7. CHART TYPE IDENTIFIER
+    // ═══════════════════════════════════════
+    let charttypeStarted = false, ctIdx = 0, ctCorrect = 0;
+
+    const chartTypeQuestions = [
+      { scenario: 'Show 5 states\u2019 populations side by side for comparison', answer: 'Bar chart (rect)', wrong: ['Scatter plot (circle)', 'Line chart (path)', 'Pie chart (arc)'] },
+      { scenario: 'Display how temperature changed every hour over 24 hours', answer: 'Line chart (path)', wrong: ['Bar chart (rect)', 'Scatter plot (circle)', 'Pie chart (arc)'] },
+      { scenario: 'Show the relationship between height and weight for 100 students', answer: 'Scatter plot (circle)', wrong: ['Bar chart (rect)', 'Line chart (path)', 'Pie chart (arc)'] },
+      { scenario: 'Show what percentage each department is of total company budget', answer: 'Pie chart (arc)', wrong: ['Bar chart (rect)', 'Scatter plot (circle)', 'Line chart (path)'] },
+      { scenario: 'Compare sales figures for Q1 through Q4 across 3 products', answer: 'Bar chart (rect)', wrong: ['Scatter plot (circle)', 'Pie chart (arc)', 'Line chart (path)'] },
+      { scenario: 'Track daily stock price over 1 year', answer: 'Line chart (path)', wrong: ['Bar chart (rect)', 'Scatter plot (circle)', 'Pie chart (arc)'] },
+      { scenario: 'Plot correlation between study hours and test scores', answer: 'Scatter plot (circle)', wrong: ['Bar chart (rect)', 'Line chart (path)', 'Pie chart (arc)'] },
+      { scenario: 'Show market share split between 4 competitors', answer: 'Pie chart (arc)', wrong: ['Bar chart (rect)', 'Scatter plot (circle)', 'Line chart (path)'] },
+      { scenario: 'Rank the top 10 movies by box office revenue', answer: 'Bar chart (rect)', wrong: ['Line chart (path)', 'Scatter plot (circle)', 'Pie chart (arc)'] },
+      { scenario: 'Show how COVID cases rose and fell over 2 years', answer: 'Line chart (path)', wrong: ['Bar chart (rect)', 'Pie chart (arc)', 'Scatter plot (circle)'] },
+      { scenario: 'Explore if there\u2019s a pattern between city population and average income', answer: 'Scatter plot (circle)', wrong: ['Bar chart (rect)', 'Line chart (path)', 'Pie chart (arc)'] },
+      { scenario: 'Show the breakdown of energy sources: solar 20%, wind 15%, gas 40%, nuclear 25%', answer: 'Pie chart (arc)', wrong: ['Bar chart (rect)', 'Line chart (path)', 'Scatter plot (circle)'] },
+    ];
+
+    function initChartType() {
+      charttypeStarted = true;
+      ctIdx = 0;
+      ctCorrect = 0;
+      nextChartType();
+    }
+
+    function nextChartType() {
+      if (ctIdx >= chartTypeQuestions.length) ctIdx = 0;
+      const q = chartTypeQuestions[ctIdx];
+      document.getElementById('charttype-question').innerHTML = `<p style="font-size:1rem;line-height:1.6;">"${q.scenario}"</p>`;
+      document.getElementById('charttype-progress').style.width = `${(ctIdx / chartTypeQuestions.length) * 100}%`;
+
+      const options = shuffle([q.answer, ...q.wrong]);
+      const choicesEl = document.getElementById('charttype-choices');
+      choicesEl.innerHTML = '';
+      document.getElementById('charttype-explanation').classList.remove('show');
+      document.getElementById('charttype-next').classList.remove('show');
+
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = opt;
+        btn.addEventListener('click', () => handleChartType(opt, q, choicesEl));
+        choicesEl.appendChild(btn);
+      });
+
+      renderScore('charttype-score', [
+        { label: 'Correct', value: ctCorrect, cls: 'green' },
+        { label: 'Question', value: `${ctIdx + 1}/${chartTypeQuestions.length}` },
+      ]);
+    }
+
+    function handleChartType(picked, q, container) {
+      const btns = container.querySelectorAll('.choice-btn');
+      btns.forEach(b => {
+        b.disabled = true;
+        if (b.textContent === q.answer) b.classList.add('correct');
+        if (b.textContent === picked && picked !== q.answer) b.classList.add('wrong');
+      });
+      if (picked === q.answer) ctCorrect++;
+      const exp = document.getElementById('charttype-explanation');
+      const tips = {
+        'Bar chart (rect)': 'Bar charts are best for comparing discrete categories.',
+        'Line chart (path)': 'Line charts show trends over continuous/time data.',
+        'Scatter plot (circle)': 'Scatter plots reveal relationships between two numeric variables.',
+        'Pie chart (arc)': 'Pie charts show parts of a whole (percentages).',
+      };
+      exp.innerHTML = `<strong>${picked === q.answer ? 'Correct!' : 'Not quite.'}</strong> ${tips[q.answer]}`;
+      exp.classList.add('show');
+      document.getElementById('charttype-next').classList.add('show');
+      ctIdx++;
+      renderScore('charttype-score', [
+        { label: 'Correct', value: ctCorrect, cls: 'green' },
+        { label: 'Question', value: `${Math.min(ctIdx, chartTypeQuestions.length)}/${chartTypeQuestions.length}` },
+      ]);
+    }
+    document.getElementById('charttype-next').addEventListener('click', nextChartType);
+
+    // ═══════════════════════════════════════
+    //  8. SPEED ROUND
+    // ═══════════════════════════════════════
+    let speedStarted = false, speedTimer = null, speedTime = 60, speedIdx = 0, speedCorrect = 0, speedAnswers = [];
+
+    const speedQuestions = [
+      { q: 'scaleLinear is for categories', a: false },
+      { q: 'Y range should be [height, 0] for charts', a: true },
+      { q: 'selectAll returns a single element', a: false },
+      { q: '.join() combines enter, update, and exit', a: true },
+      { q: 'SVG y=0 is at the bottom of the screen', a: false },
+      { q: 'scaleBand is used for bar chart x-axes', a: true },
+      { q: '.attr() sets CSS styles on elements', a: false },
+      { q: 'd3.max() finds the largest value in data', a: true },
+      { q: 'Circles use x and y attributes for position', a: false },
+      { q: '.transition() animates changes smoothly', a: true },
+      { q: 'geoPath converts GeoJSON to SVG paths', a: true },
+      { q: 'd3.csv() returns data synchronously', a: false },
+      { q: '.domain() sets the input range of a scale', a: true },
+      { q: 'fill colors the inside of SVG shapes', a: true },
+      { q: '.append() selects an existing element', a: false },
+      { q: 'viewBox makes SVG responsive', a: true },
+      { q: '.datum() binds an array to multiple elements', a: false },
+      { q: '.nice() rounds scale domain to clean numbers', a: true },
+      { q: 'stroke colors the outline of shapes', a: true },
+      { q: 'd3.line() returns an SVG element', a: false },
+      { q: 'Rects use x, y, width, height attributes', a: true },
+      { q: '.bandwidth() returns the width of a linear scale step', a: false },
+      { q: 'd3.pie() computes angles for pie charts', a: true },
+      { q: 'scaleOrdinal maps continuous data to colors', a: false },
+      { q: '.call() invokes a function passing the selection', a: true },
+      { q: 'axisLeft creates a vertical axis on the left side', a: true },
+      { q: 'You need jQuery to use D3', a: false },
+      { q: '.range() sets the data domain of a scale', a: false },
+      { q: 'd3.arc() creates arc shapes for donut charts', a: true },
+      { q: 'SVG <g> elements are visible shapes', a: false },
+      { q: 'Method chaining is a core D3 pattern', a: true },
+      { q: '.enter() handles elements that already exist', a: false },
+      { q: '.exit() selects elements with no data match', a: true },
+      { q: 'd3.geoMercator() is a map projection', a: true },
+      { q: '.style() sets SVG attributes like width', a: false },
+    ];
+
+    function initSpeed() {
+      speedStarted = true;
+      const area = document.getElementById('speed-area');
+      area.innerHTML = `
+        <div style="text-align:center;padding:2rem 0;">
+          <p style="color:#aaa;margin-bottom:1rem;">Answer as many True/False questions as you can in 60 seconds!</p>
+          <button class="start-btn" id="speed-start">Start Speed Round</button>
+        </div>
+      `;
+      document.getElementById('speed-start').addEventListener('click', startSpeedRound);
+      renderScore('speed-score', [
+        { label: 'Best', value: getHigh('d3g-speed-best'), cls: 'purple' },
+      ]);
+    }
+
+    function startSpeedRound() {
+      speedTime = 60;
+      speedIdx = 0;
+      speedCorrect = 0;
+      speedAnswers = [];
+      const shuffled = shuffle(speedQuestions);
+      // replace array contents
+      speedQuestions.length = 0;
+      shuffled.forEach(q => speedQuestions.push(q));
+
+      showSpeedQuestion();
+      speedTimer = setInterval(() => {
+        speedTime--;
+        document.getElementById('speed-clock').textContent = speedTime;
+        if (speedTime <= 10) document.getElementById('speed-clock').classList.add('danger');
+        if (speedTime <= 0) endSpeedRound();
+      }, 1000);
+    }
+
+    function showSpeedQuestion() {
+      if (speedIdx >= speedQuestions.length) {
+        endSpeedRound();
+        return;
+      }
+      const q = speedQuestions[speedIdx];
+      const area = document.getElementById('speed-area');
+      area.innerHTML = `
+        <div class="speed-timer" id="speed-clock">${speedTime}</div>
+        <div class="question-card" style="text-align:center;font-size:1rem;line-height:1.5;padding:1.5rem;">
+          ${escHtml(q.q)}
+        </div>
+        <div class="tf-buttons">
+          <button class="tf-btn true-btn" id="tf-true">TRUE</button>
+          <button class="tf-btn false-btn" id="tf-false">FALSE</button>
+        </div>
+      `;
+      document.getElementById('tf-true').addEventListener('click', () => answerSpeed(true));
+      document.getElementById('tf-false').addEventListener('click', () => answerSpeed(false));
+      renderScore('speed-score', [
+        { label: 'Correct', value: speedCorrect, cls: 'green' },
+        { label: 'Answered', value: speedIdx },
+        { label: 'Best', value: getHigh('d3g-speed-best'), cls: 'purple' },
+      ]);
+    }
+
+    function answerSpeed(ans) {
+      const q = speedQuestions[speedIdx];
+      const correct = ans === q.a;
+      if (correct) speedCorrect++;
+      speedAnswers.push({ q: q.q, correct, rightAnswer: q.a });
+      speedIdx++;
+      showSpeedQuestion();
+    }
+
+    function endSpeedRound() {
+      clearInterval(speedTimer);
+      const best = saveHigh('d3g-speed-best', speedCorrect);
+      const area = document.getElementById('speed-area');
+      let wrongHtml = '';
+      speedAnswers.filter(a => !a.correct).forEach(a => {
+        wrongHtml += `<div class="result-item wrong"><span class="icon" style="color:#ef4444;">X</span><span>"${escHtml(a.q)}" - Answer: <strong>${a.rightAnswer ? 'TRUE' : 'FALSE'}</strong></span></div>`;
+      });
+
+      area.innerHTML = `
+        <div style="text-align:center;padding:1rem 0;">
+          <div style="font-size:2rem;font-weight:700;color:#f97316;">${speedCorrect} / ${speedIdx}</div>
+          <div style="color:#888;margin:0.5rem 0;">Questions answered correctly</div>
+          <div style="color:#818cf8;font-size:0.85rem;">Best: ${best}</div>
+        </div>
+        ${wrongHtml ? `<div style="margin-top:1rem;"><div style="color:#aaa;font-size:0.82rem;margin-bottom:0.5rem;">Missed questions:</div>${wrongHtml}</div>` : '<div style="color:#4ade80;text-align:center;">Perfect round!</div>'}
+        <button class="start-btn" id="speed-restart" style="margin-top:1rem;">Play Again</button>
+      `;
+      document.getElementById('speed-restart').addEventListener('click', startSpeedRound);
+      renderScore('speed-score', [
+        { label: 'Score', value: speedCorrect, cls: 'green' },
+        { label: 'Total', value: speedIdx },
+        { label: 'Best', value: best, cls: 'purple' },
+      ]);
+    }
+
+    // ═══════════════════════════════════════
+    //  9. BUILD ORDER
+    // ═══════════════════════════════════════
+    let buildStarted = false, buildIdx = 0, buildCorrect = 0;
+
+    const buildSequences = [
+      {
+        title: 'Bar Chart',
+        steps: ['Define margins (top, right, bottom, left)', 'Create SVG with viewBox or width/height', 'Create x scale (scaleBand) and y scale (scaleLinear)', 'Add x-axis (axisBottom) and y-axis (axisLeft)', 'Binddata to rects with .data().join("rect")', 'Set rect attributes: x, y, width, height, fill'],
+      },
+      {
+        title: 'Choropleth Map',
+        steps: ['Load TopoJSON data with d3.json()', 'Create projection (e.g., geoAlbersUsa)', 'Create path generator with d3.geoPath(projection)', 'Create color scale for data values', 'Bindfeature data to paths with .data().join("path")', 'Set fill color based on data values'],
+      },
+      {
+        title: 'Line Chart',
+        steps: ['Set up margins and SVG container', 'Parse dates and convert values to numbers', 'Create x scale (scaleTime) and y scale (scaleLinear)', 'Create line generator with d3.line()', 'Add axes to the SVG', 'Binddata with .datum() and set path d attribute'],
+      },
+      {
+        title: 'Scatter Plot',
+        steps: ['Define dimensions and margins', 'Create SVG and inner g element', 'Create x scale and y scale (both scaleLinear)', 'Add axes with axisBottom and axisLeft', 'Binddata to circles with .data().join("circle")', 'Set cx, cy, and r attributes from data'],
+      },
+      {
+        title: 'Pie / Donut Chart',
+        steps: ['Create SVG and center a g element', 'Create d3.pie() layout from data', 'Create d3.arc() generator with inner/outer radius', 'Create color scale for slices', 'Bindpie data to paths with .data().join("path")', 'Set d attribute using arc generator and fill with colors'],
+      },
+      {
+        title: 'Responsive Dashboard',
+        steps: ['Set up SVG with viewBox (no fixed width/height)', 'Load data with d3.csv() or d3.json()', 'Process/clean data (parse dates, coerce numbers)', 'Create scales from processed data domains', 'Draw visual elements (binddata, set attributes)', 'Add interactivity (tooltips, transitions, hover)'],
+      },
+    ];
+
+    let buildCurrentStep = 0;
+
+    function initBuild() {
+      buildStarted = true;
+      buildIdx = 0;
+      buildCorrect = 0;
+      nextBuild();
+    }
+
+    function nextBuild() {
+      if (buildIdx >= buildSequences.length) buildIdx = 0;
+      const seq = buildSequences[buildIdx];
+      buildCurrentStep = 0;
+      document.getElementById('build-question').innerHTML = `<p style="font-size:1rem;">Build a <strong style="color:#f97316;">${seq.title}</strong></p><p style="color:#888;font-size:0.82rem;margin-top:0.25rem;">Tap steps in the correct order (1 to ${seq.steps.length})</p>`;
+
+      const shuffled = shuffle(seq.steps.map((s, i) => ({ text: s, order: i })));
+      const stepsEl = document.getElementById('build-steps');
+      stepsEl.innerHTML = '';
+      document.getElementById('build-explanation').classList.remove('show');
+      document.getElementById('build-next').classList.remove('show');
+
+      shuffled.forEach((step, idx) => {
+        const el = document.createElement('div');
+        el.className = 'build-step';
+        el.innerHTML = `<div class="step-number">?</div><span>${step.text}</span>`;
+        el.dataset.order = step.order;
+        el.addEventListener('click', () => handleBuildStep(el, step.order, seq));
+        stepsEl.appendChild(el);
+      });
+
+      renderScore('build-score', [
+        { label: 'Completed', value: buildCorrect, cls: 'green' },
+        { label: 'Sequence', value: `${buildIdx + 1}/${buildSequences.length}` },
+      ]);
+    }
+
+    function handleBuildStep(el, order, seq) {
+      if (el.classList.contains('correct-order') || el.classList.contains('wrong-order')) return;
+
+      if (order === buildCurrentStep) {
+        el.classList.add('correct-order');
+        el.querySelector('.step-number').textContent = buildCurrentStep + 1;
+        buildCurrentStep++;
+
+        if (buildCurrentStep === seq.steps.length) {
+          buildCorrect++;
+          const exp = document.getElementById('build-explanation');
+          exp.innerHTML = `<strong>Nice!</strong> You got the ${seq.title} build order correct.`;
+          exp.classList.add('show');
+          document.getElementById('build-next').classList.add('show');
+          buildIdx++;
+          renderScore('build-score', [
+            { label: 'Completed', value: buildCorrect, cls: 'green' },
+            { label: 'Sequence', value: `${Math.min(buildIdx, buildSequences.length)}/${buildSequences.length}` },
+          ]);
+        }
+      } else {
+        el.classList.add('wrong-order');
+        setTimeout(() => el.classList.remove('wrong-order'), 600);
+      }
+    }
+    document.getElementById('build-next').addEventListener('click', nextBuild);
+
+    // ═══════════════════════════════════════
+    //  10. FLASHCARDS
+    // ═══════════════════════════════════════
+    let flashStarted = false;
+
+    const flashcardData = [
+      { front: 'What does .select() do?', back: 'Selects the first matching element in the DOM' },
+      { front: 'What does .selectAll() do?', back: 'Selects all matching elements, returns a selection' },
+      { front: 'What is .data() for?', back: 'Binds an array of data to a selection of elements' },
+      { front: 'What does .join() do?', back: 'Handles enter, update, and exit in one call - creates/removes elements to match data' },
+      { front: 'What is .enter()?', back: 'Returns placeholder nodes for each data point without a matching element' },
+      { front: 'What is .exit()?', back: 'Returns existing elements that no longer have matching data' },
+      { front: 'What is .domain()?', back: 'Sets the input data range for a scale (min/max of your data)' },
+      { front: 'What is .range()?', back: 'Sets the output range for a scale (pixel positions on screen)' },
+      { front: 'What does d3.scaleLinear() create?', back: 'A continuous scale that maps numbers proportionally (like a ruler)' },
+      { front: 'What does d3.scaleBand() create?', back: 'A scale for categorical data that divides range into equal bands with optional padding' },
+      { front: 'What does d3.scaleOrdinal() do?', back: 'Maps discrete values to discrete outputs (like category names to colors)' },
+      { front: 'Why is y range [height, 0]?', back: 'SVG y=0 is at the top. Flipping the range makes small values at bottom, large at top.' },
+      { front: 'What does .attr() do?', back: 'Gets or sets an attribute on SVG/HTML elements (like width, fill, cx)' },
+      { front: 'What does .style() do?', back: 'Gets or sets a CSS style property (like color, font-size, opacity)' },
+      { front: 'What does .append() do?', back: 'Creates and appends a new child element to each element in the selection' },
+      { front: 'What is .transition()?', back: 'Starts an animated transition - subsequent .attr()/.style() calls animate smoothly' },
+      { front: 'What does .duration() do?', back: 'Sets how long a transition takes in milliseconds' },
+      { front: 'What does .call() do?', back: 'Invokes a function once, passing the current selection. Used for axes: .call(d3.axisBottom(x))' },
+      { front: 'What is d3.axisBottom()?', back: 'Creates an axis generator for the bottom of a chart (ticks pointing down)' },
+      { front: 'What is d3.axisLeft()?', back: 'Creates an axis generator for the left side of a chart (ticks pointing left)' },
+      { front: 'What is viewBox?', back: 'SVG attribute that defines the coordinate system. Enables responsive scaling without fixed dimensions.' },
+      { front: 'What is the margin convention?', back: 'Define margin object, subtract from width/height, translate inner g by margin.left/top' },
+      { front: 'What does d3.max() do?', back: 'Returns the maximum value from an array, with optional accessor function' },
+      { front: 'What does d3.extent() do?', back: 'Returns [min, max] of an array - useful for setting scale domains' },
+      { front: 'What is d3.line()?', back: 'A generator that converts data arrays into SVG path "d" strings for line charts' },
+      { front: 'What is d3.area()?', back: 'Like d3.line() but fills the area between a baseline (y0) and the data line (y1)' },
+      { front: 'What is d3.pie()?', back: 'A layout that computes start/end angles from data values for pie/donut charts' },
+      { front: 'What is d3.arc()?', back: 'Generates SVG path strings for arc shapes (pie slices, donuts)' },
+      { front: 'What does .datum() do?', back: 'Binds a single value to a selection (vs .data() which binds an array)' },
+      { front: 'What does .nice() do?', back: 'Extends the scale domain to nice round values (e.g., [0, 97] becomes [0, 100])' },
+      { front: 'What is .bandwidth()?', back: 'Returns the width of each band in a scaleBand (used for bar width)' },
+      { front: 'What is d3.geoPath()?', back: 'Converts GeoJSON geometry to SVG path "d" strings for maps' },
+      { front: 'What is a projection?', back: 'A function that maps latitude/longitude to x/y pixel coordinates on a flat screen' },
+      { front: 'What does .interpolator() do?', back: 'Sets or gets the color interpolation function for sequential/diverging scales' },
+      { front: 'What does d3.csv() return?', back: 'A Promise that resolves to an array of objects (one per row, columns as keys)' },
+      { front: 'Why use + before d.value?', back: 'CSV values are strings. The + operator coerces them to numbers.' },
+      { front: 'What is <g> in SVG?', back: 'A group element - invisible container used for transforms and organizing elements' },
+      { front: 'What is the difference between fill and stroke?', back: 'fill colors the inside of a shape. stroke colors the outline/border.' },
+      { front: 'Difference between cx/cy and x/y?', back: 'cx/cy position circles/ellipses (center). x/y position rects/text (top-left corner).' },
+      { front: 'What does d3.format() do?', back: 'Creates a number formatter (e.g., d3.format(",.0f") for comma-separated integers)' },
+      { front: 'What is method chaining?', back: 'Calling methods one after another on the return value: d3.select().attr().style()' },
+      { front: 'What does .on("mouseover", fn) do?', back: 'Adds an event listener. The callback receives the event and bound datum.' },
+      { front: 'What is TopoJSON?', back: 'A compressed format for geographic data. Smaller than GeoJSON. Needs conversion for D3.' },
+      { front: 'What does d3.scaleTime() do?', back: 'A continuous scale for date/time values on axes (handles months, years, etc.)' },
+    ];
+
+    let flashDeck = [], flashIdx = 0, flashGotIt = new Set(), flashReview = new Set(), flashMode = 'all';
+
+    function initFlash() {
+      flashStarted = true;
+      // load saved state
+      try {
+        const saved = JSON.parse(localStorage.getItem('d3g-flash-gotit') || '[]');
+        flashGotIt = new Set(saved);
+      } catch(e) { flashGotIt = new Set(); }
+      try {
+        const saved = JSON.parse(localStorage.getItem('d3g-flash-review') || '[]');
+        flashReview = new Set(saved);
+      } catch(e) { flashReview = new Set(); }
+
+      setupFlashModes();
+      buildFlashDeck();
+      showFlashcard();
+    }
+
+    function setupFlashModes() {
+      const modesEl = document.getElementById('flash-modes');
+      modesEl.innerHTML = '';
+      const modes = [
+        { id: 'all', label: `All (${flashcardData.length})` },
+        { id: 'weak', label: `Review (${flashReview.size})` },
+        { id: 'new', label: `Unseen (${flashcardData.length - flashGotIt.size - flashReview.size})` },
+      ];
+      modes.forEach(m => {
+        const btn = document.createElement('button');
+        btn.className = 'fc-mode-btn' + (flashMode === m.id ? ' active' : '');
+        btn.textContent = m.label;
+        btn.addEventListener('click', () => {
+          flashMode = m.id;
+          buildFlashDeck();
+          showFlashcard();
+          setupFlashModes();
+        });
+        modesEl.appendChild(btn);
+      });
+    }
+
+    function buildFlashDeck() {
+      if (flashMode === 'weak') {
+        flashDeck = flashcardData.filter((_, i) => flashReview.has(i));
+      } else if (flashMode === 'new') {
+        flashDeck = flashcardData.filter((_, i) => !flashGotIt.has(i) && !flashReview.has(i));
+      } else {
+        flashDeck = [...flashcardData];
+      }
+      flashDeck = shuffle(flashDeck);
+      flashIdx = 0;
+    }
+
+    function showFlashcard() {
+      const card = document.getElementById('flashcard');
+      const actions = document.getElementById('flash-actions');
+      const nextBtn = document.getElementById('flash-next');
+      card.classList.remove('flipped');
+
+      if (flashDeck.length === 0) {
+        document.getElementById('flash-front').textContent = flashMode === 'weak' ? 'No cards to review! Try "All" mode.' : 'No cards in this category.';
+        document.getElementById('flash-back').textContent = '';
+        actions.style.display = 'none';
+        nextBtn.style.display = 'none';
+        updateFlashScore();
+        return;
+      }
+
+      if (flashIdx >= flashDeck.length) flashIdx = 0;
+      const fc = flashDeck[flashIdx];
+      document.getElementById('flash-front').textContent = fc.front;
+      document.getElementById('flash-back').textContent = fc.back;
+      actions.style.display = 'none';
+      nextBtn.style.display = 'none';
+
+      updateFlashScore();
+    }
+
+    function updateFlashScore() {
+      renderScore('flash-score', [
+        { label: 'Mastered', value: flashGotIt.size, cls: 'green' },
+        { label: 'Review', value: flashReview.size, cls: 'pink' },
+        { label: 'Remaining', value: Math.max(0, flashDeck.length - flashIdx), cls: 'purple' },
+      ]);
+    }
+
+    document.getElementById('flashcard').addEventListener('click', () => {
+      const card = document.getElementById('flashcard');
+      if (!card.classList.contains('flipped')) {
+        card.classList.add('flipped');
+        document.getElementById('flash-actions').style.display = 'grid';
+      }
+    });
+
+    document.getElementById('flash-gotit').addEventListener('click', () => {
+      const fc = flashDeck[flashIdx];
+      const origIdx = flashcardData.indexOf(fc);
+      if (origIdx >= 0) {
+        flashGotIt.add(origIdx);
+        flashReview.delete(origIdx);
+      }
+      localStorage.setItem('d3g-flash-gotit', JSON.stringify([...flashGotIt]));
+      localStorage.setItem('d3g-flash-review', JSON.stringify([...flashReview]));
+      flashIdx++;
+      showFlashcard();
+      setupFlashModes();
+    });
+
+    document.getElementById('flash-review').addEventListener('click', () => {
+      const fc = flashDeck[flashIdx];
+      const origIdx = flashcardData.indexOf(fc);
+      if (origIdx >= 0) {
+        flashReview.add(origIdx);
+        flashGotIt.delete(origIdx);
+      }
+      localStorage.setItem('d3g-flash-gotit', JSON.stringify([...flashGotIt]));
+      localStorage.setItem('d3g-flash-review', JSON.stringify([...flashReview]));
+      flashIdx++;
+      showFlashcard();
+      setupFlashModes();
+    });
+
+    // ═══════════════════════════════════════
+    //  INIT: activate the saved/default tab
+    // ═══════════════════════════════════════
+    switchTab(activeTab);
+  </script>
+</body>
+</html>

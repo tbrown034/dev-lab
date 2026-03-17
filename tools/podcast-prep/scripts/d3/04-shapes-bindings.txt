@@ -1,0 +1,132 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+LESSON TITLE: Lesson 04 - Data Binding: The ONE Concept
+TRACK: D3.js (12-lesson curriculum)
+
+--- CONTEXT FOR HOSTS ---
+
+Curriculum Position: Lesson 4 of 12. This is the PIVOTAL lesson. Lessons 01-03 covered SVG, scales, and selections. Data binding is the concept that makes D3 fundamentally different from manual DOM manipulation. It connects data arrays to DOM elements, creating a permanent link. Everything after this lesson -- enter/update/exit (Lesson 07), transitions, interactive charts -- depends on data binding.
+
+What came before: Lesson 01 (SVG shapes), Lesson 02 (scales as translators), Lesson 03 (selections as DOM handles).
+
+What's coming next: Lesson 05 deepens scales, Lesson 06 covers axes and margins in full, Lesson 07 reveals the enter/update/exit pattern behind .join().
+
+What Trevor already knows: React's key prop for list rendering, forEach loops, array mapping, the concept of declarative UI (React) vs imperative DOM manipulation (D3 selections from Lesson 03).
+
+Learner's goal: Broadcast TV dashboards that update dynamically as data changes -- election results flowing in, weather data updating, census numbers shifting.
+
+Specific analogies for THIS lesson:
+- Data binding is "attaching a sticky note to each DOM element" -- the element carries its data around
+- The selectAll-data-join pattern is like React's {items.map(item => <Component key={item.id} />)} -- declaring what the DOM should look like based on data
+- The empty selectAll is a "declaration of intent" -- "I want rects to represent my data"
+- Accessor functions (d, i) => ... are like callback functions in .map() -- you get the item and its index
+- Key functions in .data(data, d => d.id) are exactly like React's key prop
+
+Key mental models:
+- .data() physically attaches each data item to a DOM element via __data__
+- selectAll -> data -> join is THE pattern -- memorize it
+- .join() handles creation, updating, and removal automatically
+- Re-running with new data updates the chart -- no manual DOM management
+
+--- LESSON CONTENT ---
+
+The Problem Data Binding Solves
+
+Say you have population data for 5 states and want a bar for each. Without data binding, you'd use forEach to append rects manually. This works but has a problem: there is no link between the data and the elements. If the data changes, you have to manually find, update, or remove bars. D3's data binding creates that permanent link.
+
+What .data() Actually Does
+
+When you call .data(array), D3 takes each item in the array and physically attaches it to a DOM element using a hidden property called __data__. After data binding, each rect literally carries its data: rect.__data__ returns { state: "CA", pop: 39538 }. You can verify this in DevTools by selecting an element and typing $0.__data__.
+
+This is the "sticky note." Each DOM element carries its data around. When you write .attr("width", d => d.pop), that d parameter is the sticky note glued to that specific element.
+
+The Pattern: selectAll -> data -> join
+
+svg.selectAll("rect")   // 1. Select all existing rects (probably 0)
+  .data(data)            // 2. Bind the data array
+  .join("rect")          // 3. Create/update/remove rects to match data
+  .attr("x", (d, i) => i * 100)  // 4. Use bound data to set attributes
+
+Step 1 - selectAll("rect"): This usually selects ZERO elements on first run. That is fine. You're telling D3: "I want rects to represent my data." It's a declaration of intent, not a selection of existing elements. This is like React's return <div>{items.map(...)}</div> -- declaring what the DOM SHOULD look like.
+
+Step 2 - .data(data): D3 compares the data array to existing elements by index. 5 data items, 0 rects = 5 new rects needed.
+
+Step 3 - .join("rect"): Creates missing elements, keeps existing ones, removes extras. After .join("rect"), you have exactly one rect per data item, each with __data__ attached.
+
+Step 4 - Accessor functions: Any method that takes a value can also take a function. D3 calls it once per element: d = the bound data (the sticky note), i = the index.
+
+Side by Side: forEach vs D3
+
+forEach approach: data.forEach((d, i) => { svg.append("rect").attr(...)}) -- no data link, can't update.
+
+D3 approach: svg.selectAll("rect").data(data).join("rect").attr(...) -- data glued to elements, re-run with new data = auto-update.
+
+The superpower: If you call the D3 version again with different data, it automatically updates existing bars, creates new ones, and removes old ones. The forEach version would just keep appending duplicates.
+
+--- KEY CONCEPTS TO EMPHASIZE ---
+
+1. .data() attaches each data item to a DOM element via the hidden __data__ property
+2. selectAll -> data -> join is the ONE pattern to memorize
+3. Empty selectAll is a "declaration of intent" -- it's fine and expected to match 0 elements
+4. Accessor functions (d, i) => ... make each element data-driven
+5. Re-running with new data automatically updates the chart -- this is the superpower
+
+--- COMMON PITFALLS ---
+
+- Being confused by selectAll("rect") matching zero elements -- it's a declaration of intent, not a bug
+- Confusing .data() (one element per array item) with .datum() (one element for the entire array) -- .datum() comes later for line/area charts
+- Forgetting that accessor functions receive (d, i) where d is __data__ and i is the index
+- Using forEach to create elements instead of the data binding pattern -- leads to duplicates on re-render
+- Not understanding that .join() replaces the old .enter().append() pattern from older D3 tutorials
+
+--- BROADCAST TV CONNECTION ---
+
+- Election night: as results pour in, re-call the data binding pattern with updated vote counts and bars automatically resize
+- Weather dashboards: temperature data updates every few minutes; data binding keeps the chart in sync without rebuilding from scratch
+- Census visualizations: filter by state, region, or demographic and the chart automatically adjusts to show the filtered data
+- Breaking-news tickers: new data items appear (enter), old items update, stale items disappear (exit) -- all handled by .join()
+- The key insight for broadcast: you write the chart code ONCE, then feed it different data. The data binding pattern handles the rest.
+
+
+========================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+========================================
+
+PODCAST CUSTOMIZATION FOR LESSON 04: Data Binding
+
+TARGET MENTAL MODELS:
+- Data binding as "gluing a sticky note to each DOM element"
+- selectAll-data-join as "the ONE pattern" you use in every D3 chart
+- Empty selectAll as a "declaration of intent" (like React's render method)
+- The __data__ property as a debuggable, inspectable link between data and DOM
+
+SPECIFIC ANALOGIES TO USE:
+- "Think of it like name tags at a conference. Each person (DOM element) gets a badge (data). When you look at the badge, you know who they are and what talk they're giving. That's __data__."
+- "The empty selectAll is like React's initial render. When your component first mounts, there are no DOM elements yet -- React creates them from your JSX. Same thing: D3 sees 0 rects and 5 data items, so it creates 5 rects."
+- "Accessor functions are just .map() callbacks. In React you write data.map(d => <div>{d.name}</div>). In D3 you write .attr('width', d => d.pop). Same idea: transform each data point into a visual property."
+- "For a journalist: imagine you have a spreadsheet of election results. Data binding is like assigning each row to a bar on your chart. When a new row comes in (updated precinct), the bar updates. When a row is removed (recount invalidated), the bar disappears."
+
+CONNECTIONS TO OTHER LESSONS:
+- Connect to Lesson 03: "You learned selections can grab and modify elements. Data binding adds the DATA layer -- now each element knows what data it represents."
+- Connect to Lesson 02: "Remember scales? Now your accessor functions call those scales: .attr('width', d => xScale(d.pop)). Scales + data binding = the complete chart."
+- Tease Lesson 07: ".join('rect') is actually shorthand. Under the hood, it handles three groups: enter (new data), update (existing data), and exit (removed data). In Lesson 07, you'll get full control over each group for animations."
+- Tease: "The DevTools trick -- $0.__data__ -- is something you'll use every time you debug a D3 chart. It's like React DevTools but simpler."
+
+TREVOR'S BACKGROUND TO REFERENCE:
+- React's key prop: "You know how React uses key to track list items? D3's key function in .data(data, d => d.id) does the same thing -- helps track identity through re-renders."
+- Declarative thinking: "In React, you declare what the UI should look like and React reconciles. D3's selectAll-data-join is its version of reconciliation -- match data to elements."
+- Debugging: "Just like you'd inspect props in React DevTools, you can inspect __data__ in regular DevTools. Select an element, type $0.__data__, and you see exactly what data D3 bound to it."
+
+MEMORIZATION TECHNIQUES:
+- "selectAll, data, join -- three words, in that order, every time"
+- "d is for data, i is for index" -- the accessor function parameters
+- "The sticky note analogy: __data__ is the note, d in your function is you reading the note"
+- Practice: "Say it out loud: selectAll rect, data myData, join rect, attr x d goes to xScale of d.state. That's literally every bar chart."
+
+TONE:
+- This is the "aha" episode. The React-dev host should have the big revelation: "Oh! So selectAll-data-join is like React's reconciliation? D3 figures out what to add, update, and remove?"
+- The D3-expert host confirms: "Exactly. And once you internalize this pattern, you've learned 60% of D3. Everything else is just different shapes and scale types."
+- Make the empty selectAll confusion explicit: "I know it looks weird. You're selecting rects that don't exist. But it's the same as writing JSX for components that haven't mounted yet. You're describing WHAT you want, and D3 makes it happen."
+- End with the power demo: "Call the same function with different data, and the chart updates. No teardown, no rebuild. That's what makes this pattern worth learning."

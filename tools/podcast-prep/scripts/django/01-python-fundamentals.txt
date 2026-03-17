@@ -1,0 +1,198 @@
+============================================================
+SECTION 1: SOURCE DOCUMENT FOR NOTEBOOKLM
+============================================================
+
+LESSON: 01 - Python Fundamentals — Variables, Types, Strings & Operators
+TRACK: Django / Python (12-lesson curriculum)
+
+------------------------------------------------------------
+CONTEXT FOR HOSTS
+------------------------------------------------------------
+
+Where this lesson fits:
+This is the very first lesson in a 12-lesson Django curriculum. It covers the absolute basics of Python syntax — variables, types, strings, and operators — all translated from JavaScript. Lessons 2-5 continue building Python fluency (collections, functions, OOP, file handling), and lessons 6-12 teach Django itself. This lesson is foundation ground zero.
+
+Who Trevor is:
+Trevor Brown is an investigative journalist with 15+ years of experience who taught himself web development. He is strong in JavaScript, React, Next.js, TypeScript, and Tailwind CSS. He is learning Python and Django for a potential role at Tenga, a chain of broadcast TV networks, where he would work on backend data pipelines. His learning philosophy is "mental models first, syntax second." He learns by building and by mapping new concepts to things he already knows.
+
+Key JS-to-Python translations the hosts should highlight:
+- console.log() maps to print() — simpler syntax, auto-adds spaces between arguments
+- Template literals (`Hello ${name}`) map to f-strings (f"Hello {name}") — same mental model, just different punctuation: f prefix + curly braces instead of backtick + dollar sign
+- let/const/var are gone — Python has no declaration keywords, you just assign: name = "Trevor"
+- true/false (lowercase) becomes True/False (capitalized) — and null becomes None
+- === (strict equality) is unnecessary because Python's == already doesn't do type coercion
+- && || ! become the English words: and, or, not
+- .length property becomes len() function
+- No semicolons, ever. No curly braces for blocks. Indentation IS the syntax.
+- No ++ or -- operators. Use x += 1 instead.
+- Python separates integers from floats (JS lumps everything into "number")
+
+Trevor's goal: Building backend skills for broadcast TV data pipelines at Tenga.
+
+Mental models that matter most:
+1. Python is "readable JavaScript" — less punctuation, more whitespace, one obvious way to do things
+2. Python refuses to guess on types — no implicit coercion like JS's infamous "5" + 3 = "53"
+3. Indentation replaces curly braces — this is a syntax rule, not a style choice
+4. Everything is an object in Python — even integers and functions. No primitives.
+
+------------------------------------------------------------
+LESSON CONTENT
+------------------------------------------------------------
+
+WHY PYTHON?
+
+Python and JavaScript are both high-level, dynamically-typed, interpreted languages. If JavaScript is the language of the browser, Python is the language of everything else: data science, machine learning, automation, backend web development, scripting.
+
+Django (the web framework we're learning) is built on Python, just like Next.js is built on JavaScript/TypeScript. So step one is getting fluent in Python's syntax.
+
+The mental model: Python is what JavaScript would look like if someone redesigned it to be as readable as possible. Less punctuation, more whitespace, one obvious way to do things. The "Zen of Python" literally says: "There should be one — and preferably only one — obvious way to do it."
+
+Running Python:
+Just like you run "node script.js" or open the browser console, you run Python with "python script.py" or open an interactive REPL with just "python". On macOS you might need python3 instead of python.
+
+VARIABLES & TYPES
+
+In JavaScript you declare variables with let, const, or var. In Python, you just assign. There's no declaration keyword.
+
+JavaScript: let name = "Trevor"; const age = 38; let isJournalist = true;
+Python: name = "Trevor"  age = 38  is_journalist = True
+
+Key differences: Python uses True/False (capitalized), None instead of null, and has no undefined. Variable names use snake_case by convention, not camelCase.
+
+No const in Python: Python has no const keyword. By convention, ALL_CAPS names signal "don't change this," but nothing enforces it. Python's philosophy is "we're all consenting adults here."
+
+PYTHON'S TYPE SYSTEM
+
+JavaScript has 7 primitive types. Python has a simpler set, but Python separates integers from floats (JavaScript lumps them all into "number").
+
+Type checking: JavaScript uses typeof, Python uses type(). Python also has type hints similar to TypeScript annotations (name: str = "Trevor") but they are optional and not enforced at runtime.
+
+Type conversion: Python refuses to silently coerce types. Where JavaScript guesses (and often guesses wrong — "5" + 3 = "53"), Python throws a TypeError. You explicitly convert with int(), str(), float(), bool().
+
+Python has two number types: int (whole numbers) and float (decimals). Python integers have unlimited precision — no BigInt needed. 2 ** 1000 just works.
+
+STRINGS DEEP DIVE
+
+Strings work almost identically in both languages:
+- Single or double quotes work the same in both
+- Template literals (backtick + ${}) become f-strings (f"" + {})
+- Multi-line strings use triple quotes (""") instead of backticks
+
+String method translations:
+- .toLowerCase() becomes .lower()
+- .toUpperCase() becomes .upper()
+- .trim() becomes .strip()
+- .includes("x") becomes "x" in string (an operator, not a method)
+- .length becomes len() (a function, not a property)
+- .slice(1, 3) becomes [1:3] (bracket slicing)
+- .join() is called on the separator in Python: "-".join(list) — this feels backwards at first
+
+Watch out: Python's replace() replaces ALL occurrences by default (JS only replaces the first).
+
+String Slicing: Python's slicing is [start:stop:step]. The step parameter is the superpower JS doesn't have. [::-1] reverses any sequence — no need for .split('').reverse().join('').
+
+OPERATORS
+
+Arithmetic is nearly identical. Key differences:
+- Python has floor division: // divides and rounds down (JS needs Math.floor())
+- Python's / ALWAYS returns a float, even 6 / 3 gives 2.0
+- No ++ or -- in Python. Use x += 1 and x -= 1.
+
+Comparison & Equality: Python's == doesn't do crazy type coercion. 1 == "1" is False in Python (sensible!). You never need ===. Use "is" only for identity checks, mainly "x is None".
+
+Logical operators use English words: and, or, not (instead of &&, ||, !).
+
+PRINTING & INPUT
+
+print() is simpler than console.log() — it auto-adds spaces between arguments and a newline at the end. input() is built-in and simple for getting user input (always returns a string).
+
+THE TOP 5 GOTCHAS
+
+1. Indentation IS Syntax — In JavaScript, {} defines blocks. In Python, indentation defines blocks. Mixing tabs and spaces causes bugs. Use 4 spaces.
+2. No Semicolons — ever.
+3. No Curly Braces for Blocks — colons start blocks, indentation defines them.
+4. Comments Use # — no block comments, just use multiple # lines.
+5. Everything is an Object — even integers and functions. type(42) returns <class 'int'>.
+
+QUICK REFERENCE TABLE
+
+Print: console.log() -> print()
+String format: `Hello ${name}` -> f"Hello {name}"
+Null: null/undefined -> None
+Boolean: true/false -> True/False
+And/Or/Not: && / || / ! -> and / or / not
+Length: .length -> len()
+Equality: === -> == (already strict)
+Floor division: Math.floor(a/b) -> a // b
+Increment: x++ -> x += 1
+Comment: // or /* */ -> # (no block comments)
+Run script: node file.js -> python file.py
+
+------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+------------------------------------------------------------
+
+1. Python's philosophy is readability — less punctuation, explicit over implicit. This is the single biggest culture shift from JavaScript.
+2. No type coercion — Python throws errors instead of guessing. "5" + 3 is a TypeError, not "53". This catches bugs early.
+3. Indentation is syntax — not a style preference. This will trip you up in the first hour. Configure your editor for 4 spaces.
+4. f-strings are template literals — same mental model (f"Hello {name}" = `Hello ${name}`), just different punctuation.
+5. snake_case everywhere — variables, functions, file names. camelCase is only for classes.
+
+------------------------------------------------------------
+COMMON PITFALLS FOR JS DEVELOPERS
+------------------------------------------------------------
+
+- Typing console.log() out of muscle memory instead of print()
+- Forgetting to capitalize True, False, and None
+- Adding semicolons at the end of lines (harmless but unnecessary)
+- Using === instead of == (Python's == already works correctly)
+- Typing && or || instead of "and" or "or"
+- Expecting .length to work (use len() instead)
+- Using let or const before variable names
+- Trying to use ++ or -- (use += 1 or -= 1)
+- Adding curly braces after if statements instead of a colon and indentation
+
+------------------------------------------------------------
+REAL-WORLD CONNECTION
+------------------------------------------------------------
+
+At a broadcast TV network like Tenga, Python scripts handle data processing that JavaScript can't easily do — parsing Nielsen ratings CSVs, cleaning broadcast schedules, automating FCC filing reports. The fundamentals in this lesson are the building blocks for every automation script, data pipeline, and Django backend you'll write. Getting comfortable with Python syntax now means you'll be writing Django views and ORM queries fluently by lesson 7. Think of this lesson like learning the alphabet of a new language you'll use to build the data systems that power a TV network's newsroom.
+
+
+============================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS FOR NOTEBOOKLM
+============================================================
+
+Focus this episode on the "Rosetta Stone" experience — rapid-fire translation from JavaScript to Python. The listener (Trevor) already knows how to program. He does NOT need concepts explained from scratch. He needs the TRANSLATION: "In JS you do X, in Python you do Y."
+
+Specific mental models for THIS lesson:
+- "Python is readable JavaScript" — frame everything through this lens
+- The "no punctuation" philosophy: no semicolons, no curly braces, no let/const — Python trusts indentation and simplicity
+- Type coercion comparison: JavaScript guesses (dangerously), Python refuses (safely)
+
+JS/React equivalents to reference constantly:
+- console.log() -> print()
+- `template ${literals}` -> f"string {interpolation}"
+- let/const -> just assign
+- true/false -> True/False
+- null/undefined -> None (just one, not two!)
+- === -> == (already safe)
+- && || ! -> and or not
+- .length -> len()
+
+Tone: Two experienced devs chatting. One host knows Python deeply, the other is a strong JS/TypeScript developer learning Python — this mirrors Trevor's exact position. The JS-dev host should have "oh, that's just like X" moments. The Python host should validate those connections and point out subtle differences.
+
+Connect to Trevor's background: He's a journalist. Use analogies like "Python's philosophy is like AP Style — there's one correct way to write it" and "f-strings are like writing a lede with placeholders for the who/what/where."
+
+Tease what's next: Mention that lesson 2 covers collections (lists, dicts, sets) and control flow, which is where Python's list comprehensions become a superpower that JS developers wish they had.
+
+This is lesson 1 of 12, so set the tone: "If you know JavaScript, you already know 80% of this. We're just learning the accent."
+
+Memorization techniques for THIS lesson:
+- "f for format" — f-strings start with f, just remember "f for format"
+- "Capital letters for constants" — True, False, None are all capitalized because Python treats them as named constants
+- "len is a function, not a property" — say it out loud: "len is a FUNCTION"
+- "Colons start blocks" — whenever you see a colon at the end of a line, the next line must be indented
+- "Snake case, not camel case" — picture a snake slithering between_words
+
+Keep it conversational. Include moments like: "Oh wait, so Python's == actually works correctly? Why did JavaScript ever add ===?" and "No semicolons? My muscle memory is going to fight me on that for a week."

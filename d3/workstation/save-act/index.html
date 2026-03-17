@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The SAVE America Act — Data Workstation — Learn D3</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    /* ── Reset & Base ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #f97316; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+
+    /* ── Nav ── */
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover {
+      background: #f97316;
+      color: #000;
+      border-color: #f97316;
+    }
+    .nav a.active {
+      background: #f472b6;
+      color: #000;
+      border-color: #f472b6;
+    }
+
+    /* ── Hero ── */
+    .page-hero {
+      padding: 3rem 3rem 1.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .page-hero .kicker {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #f472b6;
+      margin-bottom: 0.75rem;
+    }
+    .page-hero h2 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+      line-height: 1.15;
+    }
+    .page-hero .subtitle {
+      color: #999;
+      font-size: 1.05rem;
+      max-width: 720px;
+      line-height: 1.7;
+    }
+    .page-hero .byline {
+      margin-top: 1rem;
+      color: #666;
+      font-size: 0.85rem;
+    }
+    .page-hero .byline strong { color: #aaa; font-weight: 600; }
+
+    /* ── Content Container ── */
+    .content {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 3rem 6rem;
+    }
+
+    /* ── Section Divider ── */
+    .section-divider {
+      border: none;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #333, transparent);
+      margin: 4rem 0;
+    }
+
+    /* ── Viz Section ── */
+    .viz-section {
+      margin-bottom: 1rem;
+    }
+    .viz-section .section-num {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #f97316;
+      margin-bottom: 0.5rem;
+    }
+    .viz-section h3 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+    .viz-section .viz-subtitle {
+      color: #888;
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+      max-width: 680px;
+    }
+
+    /* ── Chart Container ── */
+    .chart-container {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .chart-container svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ── Toggle Buttons ── */
+    .toggle-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .toggle-btn {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .toggle-btn:hover { border-color: #555; color: #fff; }
+    .toggle-btn.active { border-color: #f97316; color: #f97316; }
+    .toggle-btn.code-btn.active { border-color: #818cf8; color: #818cf8; }
+    .toggle-btn.learning-btn.active { border-color: #f97316; color: #f97316; }
+    .toggle-btn.brief-btn.active { border-color: #4ade80; color: #4ade80; }
+
+    /* ── Code Block ── */
+    .code-panel {
+      display: none;
+      background: #0d1117;
+      border: 1px solid #222;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .code-panel.open { display: block; }
+    .code-panel .code-header {
+      padding: 0.6rem 1rem;
+      background: #161b22;
+      border-bottom: 1px solid #222;
+      font-size: 0.75rem;
+      color: #8b949e;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .code-panel pre {
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: #e6edf3;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      tab-size: 2;
+    }
+
+    /* ── Explanation Panels ── */
+    .explanation-panel {
+      display: none;
+      border: 1px solid #222;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .explanation-panel.open { display: block; }
+    .explanation-panel.learning {
+      border-color: #f9731633;
+    }
+    .explanation-panel.brief {
+      border-color: #4ade8033;
+    }
+    .explanation-panel .panel-header {
+      padding: 0.75rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-bottom: 1px solid #222;
+    }
+    .explanation-panel.learning .panel-header {
+      background: #f9731610;
+      color: #f97316;
+    }
+    .explanation-panel.brief .panel-header {
+      background: #4ade8010;
+      color: #4ade80;
+    }
+    .explanation-panel .panel-body {
+      padding: 1rem 1.25rem;
+      color: #bbb;
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+    .explanation-panel .panel-body strong { color: #e5e5e5; }
+    .explanation-panel .panel-body code {
+      background: #1a1a1a;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.82rem;
+      color: #f97316;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .explanation-panel .panel-body ul {
+      margin: 0.5rem 0;
+      padding-left: 1.25rem;
+    }
+    .explanation-panel .panel-body li {
+      margin-bottom: 0.4rem;
+    }
+    .explanation-panel .panel-body p {
+      margin-bottom: 0.6rem;
+    }
+
+    /* ── Annotation / Key Stat ── */
+    .key-stat {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+    .key-stat .stat {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      min-width: 140px;
+      flex: 1;
+    }
+    .key-stat .stat .number {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .key-stat .stat .label {
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 0.25rem;
+    }
+
+    /* ── Tooltip ── */
+    .tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      color: #e5e5e5;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 1000;
+      max-width: 280px;
+      line-height: 1.4;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .tooltip.visible { opacity: 1; }
+    .tooltip .tip-label { font-weight: 600; margin-bottom: 0.15rem; }
+    .tooltip .tip-value { color: #aaa; }
+
+    /* ── Data Sources ── */
+    .sources-section {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-top: 3rem;
+    }
+    .sources-section h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: #ccc;
+    }
+    .sources-section ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sources-section li {
+      padding: 0.4rem 0;
+      color: #888;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .sources-section li:last-child { border-bottom: none; }
+    .sources-section li strong { color: #bbb; font-weight: 600; }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+      padding: 0.75rem 0;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      color: #aaa;
+    }
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header, .nav, .page-hero, .content { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .page-hero h2 { font-size: 1.6rem; }
+      .chart-container { padding: 1rem; }
+      .key-stat { flex-direction: column; }
+    }
+
+    /* ── Syntax highlight colors ── */
+    .code-panel .kw { color: #ff7b72; }
+    .code-panel .fn { color: #d2a8ff; }
+    .code-panel .str { color: #a5d6ff; }
+    .code-panel .num { color: #79c0ff; }
+    .code-panel .cm { color: #8b949e; }
+    .code-panel .op { color: #c9d1d9; }
+  </style>
+</head>
+<body>
+
+  <!-- Shared tooltip -->
+  <div class="tooltip" id="tooltip"></div>
+
+  <!-- ── Header ── -->
+  <div class="header">
+    <h1>Learn <span>D3</span>.js</h1>
+    <div class="meta">Data Journalism Workstation</div>
+  </div>
+
+  <!-- ── Nav ── -->
+  <nav class="nav">
+    <a href="/d3/">Home</a>
+    <a href="/d3/projects/">Portfolio</a>
+    <a href="/d3/workstation/save-act/" class="active" style="color: #f472b6;">Workstation</a>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <div class="page-hero">
+    <div class="kicker">Data Investigation</div>
+    <h2>The SAVE America Act: What the Data Actually Shows</h2>
+    <p class="subtitle">
+      A data-driven investigation into the Safeguard American Voter Eligibility Act.
+      Five visualizations built with D3.js, exploring who this legislation affects and the
+      scale of the problem it claims to solve.
+    </p>
+    <p class="byline">By <strong>Trevor Brown</strong> &middot; Data Visualization Workstation &middot; 2026</p>
+  </div>
+
+  <!-- ── Main Content ── -->
+  <div class="content">
+
+    <!-- ================================================================ -->
+    <!-- VIZ 1: The Documentation Gap -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz1-section">
+      <div class="section-num">Visualization 01</div>
+      <h3>The Documentation Gap</h3>
+      <p class="viz-subtitle">21.3 million voting-age Americans lack ready access to citizenship documents that the SAVE Act would require.</p>
+
+      <div class="key-stat">
+        <div class="stat">
+          <div class="number" style="color: #f97316;" id="counter-total">0</div>
+          <div class="label">Americans lack ready access to docs</div>
+        </div>
+        <div class="stat">
+          <div class="number" style="color: #dc2626;" id="counter-none">0</div>
+          <div class="label">Lack docs entirely</div>
+        </div>
+        <div class="stat">
+          <div class="number" style="color: #818cf8;" id="counter-passport">0</div>
+          <div class="label">No valid passport</div>
+        </div>
+      </div>
+
+      <div class="chart-container" id="viz1-waffle"></div>
+
+      <div class="chart-container" id="viz1-bars"></div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code1">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn1">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief1">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code1">
+        <div class="code-header"><span>viz1-documentation-gap.js</span><span>D3.js v7</span></div>
+        <pre id="code1-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn1">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><code>d3.interpolateNumber(a, b)</code> &mdash; returns a function that interpolates between two numbers. Used inside <code>transition().tween()</code> to animate the counter from 0 to 21.3M.</li>
+            <li><strong>IntersectionObserver</strong> &mdash; not D3, but the standard way to trigger animations on scroll. We observe each viz section and fire the animation when it enters the viewport.</li>
+            <li><strong>Waffle chart pattern:</strong> Use <code>d3.range(100)</code> to generate 100 indices, then lay them out as a 10x10 grid using <code>i % cols</code> for x and <code>Math.floor(i / cols)</code> for y. Color 9 of them differently to represent 9%.</li>
+            <li><code>d3.scaleLinear()</code> for the horizontal bar chart. Domain is [0, max value], range is [0, chart width].</li>
+            <li><code>d3.scaleBand()</code> for the bar positions on the y-axis. Each category gets an equal slice.</li>
+            <li><strong>Staggered transitions:</strong> <code>.delay((d, i) => i * 100)</code> makes bars animate sequentially rather than all at once.</li>
+          </ul>
+          <p><strong>Mental model:</strong> The waffle chart is just a grid of squares where some are highlighted. Think of it like a 10x10 Excel grid with conditional formatting. The animated counter is a "number tween" &mdash; D3 can interpolate anything, not just positions.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief1">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers & Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> Brennan Center for Justice, "Citizens Without Proof" (updated 2024). Survey-based estimate of citizenship document access among voting-age Americans.</p>
+          <p><strong>Methodology:</strong> The 21.3 million figure represents US citizens who report lacking ready access to documents that could prove citizenship (birth certificate, passport, naturalization certificate). The 9% proportion is visualized via a unit chart (waffle) where each square = 1% of voting-age citizens.</p>
+          <p><strong>Why this approach:</strong> The animated counter creates emotional impact (journalism convention for large numbers). The waffle chart makes the proportion tangible &mdash; 9 out of 100 is easier to grasp than "21.3 million out of 240 million." The horizontal bars show sub-categories for deeper understanding.</p>
+          <p><strong>Limitations:</strong> Survey-based estimates have margins of error. "Ready access" is self-reported. The 69M women with name mismatch may overlap with other categories.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- VIZ 2: Voter ID Requirements by State (Choropleth) -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz2-section">
+      <div class="section-num">Visualization 02</div>
+      <h3>Voter ID Requirements by State</h3>
+      <p class="viz-subtitle">Current voter identification laws range from strict photo ID to no requirement at all. The SAVE Act would impose a uniform documentary proof-of-citizenship requirement nationwide.</p>
+
+      <div class="chart-container" id="viz2-map"></div>
+
+      <div class="legend" id="viz2-legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#dc2626;"></div> Strict Photo ID</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#f97316;"></div> Non-strict Photo ID</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#eab308;"></div> Strict Non-photo ID</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#818cf8;"></div> Non-strict Non-photo ID</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#4ade80;"></div> No ID Required</div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code2">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn2">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief2">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code2">
+        <div class="code-header"><span>viz2-voter-id-map.js</span><span>D3.js v7 + TopoJSON</span></div>
+        <pre id="code2-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn2">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><code>d3.geoAlbersUsa()</code> &mdash; the projection built specifically for US maps. It repositions Alaska and Hawaii into insets. No need to set center/rotate; it just works for US state data.</li>
+            <li><code>d3.geoPath(projection)</code> &mdash; the path generator. Takes a GeoJSON feature and returns an SVG path string. Think of it as a "translator" from latitude/longitude coordinates to SVG <code>d</code> attribute values.</li>
+            <li><strong>TopoJSON vs GeoJSON:</strong> TopoJSON is compressed (shared borders stored once). We use <code>topojson.feature()</code> to convert back to GeoJSON for D3. The CDN file is ~200KB vs ~2MB for GeoJSON.</li>
+            <li><strong>Choropleth pattern:</strong> Create a lookup object mapping state names to categories, then use it in the fill: <code>.attr("fill", d => colorMap[stateCategory[d.properties.name]])</code>.</li>
+            <li><strong>Tooltip on geographic shapes:</strong> Use <code>mousemove</code> with <code>event.clientX/Y</code> for positioning. For maps, the tooltip needs to follow the cursor because states have irregular shapes.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A D3 map is just SVG paths that happen to look like geography. Each state is a <code>&lt;path&gt;</code> element. The projection is the "lens" that converts 3D globe coordinates to 2D screen coordinates. <code>geoPath</code> takes those 2D coordinates and turns them into SVG path commands.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief2">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers & Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> National Conference of State Legislatures (NCSL), "Voter Identification Requirements by State" (2025 update).</p>
+          <p><strong>Methodology:</strong> States are classified into 5 tiers by the NCSL's established taxonomy: Strict Photo ID, Non-strict Photo ID, Strict Non-photo ID, Non-strict Non-photo ID, and No ID Required. "Strict" means voters without acceptable ID must cast a provisional ballot that is not counted unless they return with ID.</p>
+          <p><strong>Technical implementation:</strong> US Atlas TopoJSON (10m resolution) for state boundaries. Albers USA projection for standard journalistic US map layout. Sequential color scale from green (no requirement) to red (strict photo ID) chosen for intuitive severity mapping.</p>
+          <p><strong>Editorial note:</strong> The SAVE Act would effectively move all states to a requirement stricter than any current "Strict Photo ID" state, since it requires documentary proof of citizenship (passport, birth certificate) rather than just a state-issued photo ID.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- VIZ 3: Needle in a Haystack -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz3-section">
+      <div class="section-num">Visualization 03</div>
+      <h3>Needle in a Haystack</h3>
+      <p class="viz-subtitle">Total votes cast in 2024 vs. confirmed noncitizen voter incidents across all state audits. The scale difference makes the "problem" nearly invisible.</p>
+
+      <div class="chart-container" id="viz3-scale"></div>
+
+      <div class="chart-container" id="viz3-inset">
+        <p style="color:#888; font-size: 0.8rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Magnified View &mdash; State Audit Findings</p>
+        <div id="viz3-inset-chart"></div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code3">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn3">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief3">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code3">
+        <div class="code-header"><span>viz3-needle-haystack.js</span><span>D3.js v7</span></div>
+        <pre id="code3-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn3">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><strong>Unit chart pattern:</strong> <code>d3.range(n)</code> generates an array of indices. Lay them out in a grid. Each unit represents a fixed number (here, 153,000 votes per dot). This is the "one dot = X" convention from data journalism.</li>
+            <li><code>d3.scaleLinear()</code> for the magnified inset bar chart. Important concept: using <strong>two different scales</strong> for the same data to show both the big picture and the detail.</li>
+            <li><strong>Text annotations:</strong> <code>svg.append("text")</code> is used heavily here. In data journalism, annotations ARE the story. D3 makes it easy to position text at exact data-driven coordinates.</li>
+            <li><code>d3.format(",")</code> and <code>d3.format(".4%")</code> &mdash; D3's number formatting is incredibly useful for journalism. Commas for large numbers, percentage formatting, SI prefixes, etc.</li>
+          </ul>
+          <p><strong>Mental model:</strong> This is a "scale comparison" viz. The whole point is that when you put 153 million and 9,824 on the same scale, you literally can't see the smaller number. The magnified inset is the classic journalism trick &mdash; "let's zoom in on that tiny sliver."</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief3">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers & Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Sources:</strong> Total votes from Federal Election Commission 2024 general election results. State audit data from Texas Secretary of State (2,724), Virginia Department of Elections (6,303), Ohio Secretary of State (499), Iowa Secretary of State (277), Michigan Secretary of State (16), North Carolina State Board of Elections (5).</p>
+          <p><strong>Methodology:</strong> Direct comparison of total legitimate votes cast against all documented noncitizen voter findings from the states that have conducted audits. Combined total of all findings: 9,824 out of 153,000,000 votes = 0.0064%. The unit chart uses 1,000 dots where each dot = 153,000 votes; the combined noncitizen total wouldn't fill 7% of a single dot.</p>
+          <p><strong>Why this approach:</strong> Log scales would compress the difference. The unit chart with a magnified inset preserves the visceral sense of proportion while still making the smaller numbers readable. This is a standard technique in investigative data journalism (used by ProPublica, NYT Upshot).</p>
+          <p><strong>Caveat:</strong> These are confirmed findings from states that chose to audit. Not all states have conducted audits. However, every audit conducted has found rates well below 0.1%.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- VIZ 4: Who Lacks Documents? -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz4-section">
+      <div class="section-num">Visualization 04</div>
+      <h3>Who Lacks Documents?</h3>
+      <p class="viz-subtitle">Documentary proof requirements do not affect all demographics equally. Lower-income Americans, younger voters, and people of color are disproportionately impacted.</p>
+
+      <div class="chart-container" id="viz4-bars"></div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code4">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn4">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief4">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code4">
+        <div class="code-header"><span>viz4-demographics.js</span><span>D3.js v7</span></div>
+        <pre id="code4-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn4">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><code>d3.scaleBand()</code> &mdash; perfect for categorical axes. The <code>.padding()</code> method controls spacing between bands. For grouped bars, we nest a second <code>scaleBand</code> within each category band.</li>
+            <li><strong>Grouped bar pattern:</strong> Each category gets a group <code>&lt;g&gt;</code> element positioned with the outer scaleBand. Within each group, bars are positioned using an inner scaleBand for the sub-categories ("Lack access" vs "Lack entirely").</li>
+            <li><code>d3.axisLeft()</code> on a band scale automatically creates labels for each category. Use <code>.tickSize(0)</code> to remove the tick marks, keeping just the labels.</li>
+            <li><strong>Grid lines:</strong> Create a second axis call with <code>.tickSize(-width)</code> and <code>.tickFormat("")</code>. This draws lines across the chart without labels. Style them with low opacity.</li>
+            <li><code>.attr("fill", (d, i) => colors[i])</code> &mdash; the index parameter <code>i</code> tells us which sub-bar we're drawing within the group.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A grouped bar chart is really a "chart within a chart." The outer chart positions groups, the inner chart positions bars within each group. Two levels of scaleBand, nested.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief4">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers & Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> Brennan Center for Justice survey data, supplemented by NPR/Marist poll on document access by demographic group.</p>
+          <p><strong>Methodology:</strong> Survey respondents were asked whether they could readily produce documents proving U.S. citizenship. Results are broken down by race/ethnicity, household income, and age group. Two metrics are shown: "Lack ready access" (cannot quickly produce a document) and "Lack entirely" (do not possess one at all).</p>
+          <p><strong>Why grouped bars:</strong> The two-bar grouping allows direct comparison between "lack access" and "lack entirely" within each demographic, while the horizontal layout makes category labels readable and enables easy comparison across demographics.</p>
+          <p><strong>Editorial context:</strong> The disparate impact across demographics raises civil rights concerns. The 15% rate among 18-29 year olds is nearly double the rate for those 50+, suggesting age-related barriers to document access (e.g., born in hospitals that have since closed, reliance on parents for vital records).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- VIZ 5: State Audit Results -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz5-section">
+      <div class="section-num">Visualization 05</div>
+      <h3>State Audit Results</h3>
+      <p class="viz-subtitle">Every state that has audited its rolls for noncitizen registrations has found rates far below even one-tenth of one percent.</p>
+
+      <div class="chart-container" id="viz5-lollipop"></div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code5">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn5">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief5">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code5">
+        <div class="code-header"><span>viz5-audit-lollipop.js</span><span>D3.js v7</span></div>
+        <pre id="code5-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn5">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><strong>Lollipop chart pattern:</strong> Combine a <code>line</code> (the stick) and a <code>circle</code> (the dot) for each data point. It's cleaner than a bar chart for very small values because the dot draws the eye to the actual data point.</li>
+            <li><code>d3.scaleLinear()</code> for the x-axis (percentage). Setting the domain to [0, 1] gives us a reference line at 1% for context.</li>
+            <li><code>d3.scaleBand()</code> for the y-axis (state names). Using <code>.padding(0.4)</code> gives comfortable spacing between lollipops.</li>
+            <li><strong>Reference lines:</strong> <code>svg.append("line")</code> at a specific x-scale value. Add a text label next to it. This is a core data journalism technique &mdash; "here's a benchmark for comparison."</li>
+            <li><strong>Annotations with <code>text</code> elements:</strong> Placing the percentage value at the end of each lollipop stick. Use <code>text-anchor: "start"</code> and offset by a few pixels from the dot.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A lollipop chart is a bar chart that went on a diet. The "lollipop" (dot + stick) communicates the same data as a bar but with less visual weight. It's perfect when your values are all very small and you want the dots to be the focus, not heavy bars.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief5">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers & Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Sources:</strong> Official audit reports from each state's Secretary of State or Board of Elections. Texas (2024 audit), Virginia (2022-2024 cumulative), Ohio (2024), Iowa (2024), Michigan (2024), North Carolina (2024).</p>
+          <p><strong>Methodology:</strong> Each state's noncitizen findings are expressed as a percentage of total registered voters in that state. The 1% reference line provides scale context &mdash; all findings are at least an order of magnitude below 1%.</p>
+          <p><strong>Why lollipop over bar:</strong> With percentages this small (max 0.103%), bars would be nearly invisible. The lollipop's dot provides a visible anchor point, and the stick connects it to the axis for readability. The explicit percentage labels ensure precision.</p>
+          <p><strong>Key finding:</strong> Virginia shows the highest rate (0.103%), yet this represents removals over a 2-year period, not a single election. The median rate across all audited states is 0.013%. North Carolina's rate is so low (0.00007%) it's barely distinguishable from zero.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- Data Sources Section -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="sources-section">
+      <h3>Data Sources &amp; Methodology</h3>
+      <ul>
+        <li><strong>Brennan Center for Justice</strong> &mdash; "Citizens Without Proof" study. Estimate that 21.3 million voting-age Americans lack ready access to citizenship documentation.</li>
+        <li><strong>National Conference of State Legislatures (NCSL)</strong> &mdash; "Voter Identification Requirements" database, updated 2025. Classification of state voter ID laws by strictness.</li>
+        <li><strong>Texas Secretary of State</strong> &mdash; 2024 voter roll audit identifying 2,724 potential noncitizen registrations out of 18M+ registered voters.</li>
+        <li><strong>Virginia Department of Elections</strong> &mdash; 2022-2024 cumulative report of 6,303 noncitizen registrations removed from rolls.</li>
+        <li><strong>Ohio Secretary of State</strong> &mdash; 2024 audit finding 499 potential noncitizen registrations out of ~8 million registered voters.</li>
+        <li><strong>Iowa Secretary of State</strong> &mdash; 2024 audit confirming 277 noncitizen registrations out of ~2.2 million registered voters.</li>
+        <li><strong>Michigan Secretary of State</strong> &mdash; 2024 investigation confirming 16 noncitizen votes out of 8.4 million registered voters.</li>
+        <li><strong>North Carolina State Board of Elections</strong> &mdash; 2024 review identifying 5 noncitizen registrations out of 7.4 million registered voters.</li>
+        <li><strong>US Census Bureau</strong> &mdash; Current Population Survey for voting-age citizen population estimates (~240 million).</li>
+        <li><strong>Election Assistance Commission (EAC)</strong> &mdash; 2024 Election Administration and Voting Survey (EAVS) Report for total votes cast.</li>
+        <li><strong>Federal Election Commission</strong> &mdash; 2024 general election certified results (153 million total votes cast).</li>
+      </ul>
+    </div>
+
+  </div><!-- end .content -->
+
+  <!-- ── Scripts ── -->
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+    import * as topojson from "topojson-client";
+
+    (async () => {
+    // ────────────────────────────────────────────────────────
+    // SHARED: Tooltip helper
+    // ────────────────────────────────────────────────────────
+    const tooltip = d3.select("#tooltip");
+
+    function showTooltip(event, html) {
+      tooltip
+        .html(html)
+        .classed("visible", true)
+        .style("left", (event.clientX + 14) + "px")
+        .style("top", (event.clientY - 14) + "px");
+    }
+    function moveTooltip(event) {
+      tooltip
+        .style("left", (event.clientX + 14) + "px")
+        .style("top", (event.clientY - 14) + "px");
+    }
+    function hideTooltip() {
+      tooltip.classed("visible", false);
+    }
+
+    // ────────────────────────────────────────────────────────
+    // SHARED: Toggle buttons
+    // ────────────────────────────────────────────────────────
+    document.querySelectorAll(".toggle-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.dataset.target;
+        const panel = document.getElementById(targetId);
+        if (!panel) return;
+        const isOpen = panel.classList.contains("open");
+        panel.classList.toggle("open");
+        btn.classList.toggle("active");
+      });
+    });
+
+    // ────────────────────────────────────────────────────────
+    // SHARED: IntersectionObserver for scroll animations
+    // ────────────────────────────────────────────────────────
+    const observed = new Set();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && !observed.has(entry.target.id)) {
+          observed.add(entry.target.id);
+          const fn = animationCallbacks[entry.target.id];
+          if (fn) fn();
+        }
+      });
+    }, { threshold: 0.3 });
+
+    const animationCallbacks = {};
+
+    // ────────────────────────────────────────────────────────
+    // VIZ 1: The Documentation Gap
+    // ────────────────────────────────────────────────────────
+
+    // -- Animated counters --
+    function animateCounter(selector, targetValue, suffix = "") {
+      const el = document.querySelector(selector);
+      const fmt = d3.format(",.1f");
+      const fmtInt = d3.format(",");
+      d3.select(el)
+        .transition()
+        .duration(2000)
+        .ease(d3.easeCubicOut)
+        .tween("text", function() {
+          const interp = d3.interpolateNumber(0, targetValue);
+          return function(t) {
+            const val = interp(t);
+            if (targetValue >= 1000000) {
+              el.textContent = fmt(val / 1000000) + "M" + suffix;
+            } else {
+              el.textContent = fmtInt(Math.round(val)) + suffix;
+            }
+          };
+        });
+    }
+
+    // -- Waffle chart (9 out of 100) --
+    (function buildWaffle() {
+      const container = d3.select("#viz1-waffle");
+      container.append("p")
+        .style("color", "#888")
+        .style("font-size", "0.8rem")
+        .style("margin-bottom", "0.75rem")
+        .style("text-transform", "uppercase")
+        .style("letter-spacing", "0.08em")
+        .style("font-weight", "600")
+        .text("9 out of every 100 voting-age citizens lack ready access to documents");
+
+      const size = 36;
+      const gap = 4;
+      const cols = 10;
+      const rows = 10;
+      const svgW = cols * (size + gap) - gap;
+      const svgH = rows * (size + gap) - gap;
+
+      const svg = container.append("svg")
+        .attr("viewBox", `0 0 ${svgW} ${svgH}`)
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .style("max-width", "420px")
+        .style("display", "block")
+        .style("margin", "0 auto");
+
+      const data = d3.range(100);
+
+      svg.selectAll("rect")
+        .data(data)
+        .join("rect")
+        .attr("x", (d, i) => (i % cols) * (size + gap))
+        .attr("y", (d, i) => Math.floor(i / cols) * (size + gap))
+        .attr("width", size)
+        .attr("height", size)
+        .attr("rx", 4)
+        .attr("fill", "#1a1a1a")
+        .attr("stroke", "#333")
+        .attr("stroke-width", 0.5);
+
+      // Store ref for animation
+      window._waffleRects = svg.selectAll("rect");
+    })();
+
+    // -- Horizontal bars for sub-breakdowns --
+    (function buildSubBars() {
+      const data = [
+        { label: "Women w/ name mismatch on birth cert.", value: 69000000, color: "#f472b6" },
+        { label: "No valid passport", value: 146000000, color: "#818cf8" },
+        { label: "Lack documents entirely", value: 3800000, color: "#dc2626" },
+      ];
+
+      const container = d3.select("#viz1-bars");
+      container.append("p")
+        .style("color", "#888")
+        .style("font-size", "0.8rem")
+        .style("margin-bottom", "0.75rem")
+        .style("text-transform", "uppercase")
+        .style("letter-spacing", "0.08em")
+        .style("font-weight", "600")
+        .text("Breakdown of Documentation Barriers");
+
+      const margin = { top: 10, right: 80, bottom: 20, left: 260 };
+      const width = 860 - margin.left - margin.right;
+      const height = data.length * 50;
+
+      const svg = container.append("svg")
+        .attr("viewBox", `0 0 ${860} ${height + margin.top + margin.bottom}`)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.value)])
+        .range([0, width]);
+
+      const y = d3.scaleBand()
+        .domain(data.map(d => d.label))
+        .range([0, height])
+        .padding(0.35);
+
+      // Labels
+      svg.selectAll(".bar-label")
+        .data(data)
+        .join("text")
+        .attr("class", "bar-label")
+        .attr("x", -10)
+        .attr("y", d => y(d.label) + y.bandwidth() / 2)
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .attr("fill", "#aaa")
+        .attr("font-size", "13px")
+        .text(d => d.label);
+
+      // Bars (start at 0 width for animation)
+      svg.selectAll(".bar")
+        .data(data)
+        .join("rect")
+        .attr("class", "bar viz1-bar")
+        .attr("x", 0)
+        .attr("y", d => y(d.label))
+        .attr("width", 0)
+        .attr("height", y.bandwidth())
+        .attr("rx", 4)
+        .attr("fill", d => d.color);
+
+      // Value labels
+      svg.selectAll(".val-label")
+        .data(data)
+        .join("text")
+        .attr("class", "val-label viz1-val")
+        .attr("x", 0)
+        .attr("y", d => y(d.label) + y.bandwidth() / 2)
+        .attr("dy", "0.35em")
+        .attr("fill", "#ccc")
+        .attr("font-size", "13px")
+        .attr("font-weight", "600")
+        .attr("opacity", 0)
+        .text(d => {
+          if (d.value >= 1000000) return d3.format(".0f")(d.value / 1000000) + "M";
+          return d3.format(",")(d.value);
+        });
+
+      // Store refs for animation
+      window._viz1Bars = { svg, x, y, data };
+    })();
+
+    // Animation trigger for Viz 1
+    animationCallbacks["viz1-section"] = () => {
+      animateCounter("#counter-total", 21300000);
+      animateCounter("#counter-none", 3800000);
+      animateCounter("#counter-passport", 146000000);
+
+      // Waffle animation
+      window._waffleRects
+        .transition()
+        .duration(600)
+        .delay((d, i) => i * 15)
+        .attr("fill", (d, i) => i < 9 ? "#f97316" : "#1a1a1a")
+        .attr("stroke", (d, i) => i < 9 ? "#f97316" : "#333");
+
+      // Bar animation
+      const { svg, x, y, data } = window._viz1Bars;
+      svg.selectAll(".viz1-bar")
+        .transition()
+        .duration(1000)
+        .delay((d, i) => i * 200)
+        .ease(d3.easeCubicOut)
+        .attr("width", d => x(d.value));
+
+      svg.selectAll(".viz1-val")
+        .transition()
+        .duration(1000)
+        .delay((d, i) => i * 200 + 500)
+        .attr("x", d => x(d.value) + 8)
+        .attr("opacity", 1);
+    };
+
+    observer.observe(document.getElementById("viz1-section"));
+
+    // ────────────────────────────────────────────────────────
+    // VIZ 2: Voter ID Choropleth Map
+    // ────────────────────────────────────────────────────────
+
+    (async function buildMap() {
+      const stateCategories = {
+        "Arkansas": "strict-photo", "Georgia": "strict-photo", "Indiana": "strict-photo",
+        "Kansas": "strict-photo", "Mississippi": "strict-photo", "North Carolina": "strict-photo",
+        "Ohio": "strict-photo", "Tennessee": "strict-photo", "Wisconsin": "strict-photo",
+        "Alabama": "non-strict-photo", "Florida": "non-strict-photo", "Idaho": "non-strict-photo",
+        "Louisiana": "non-strict-photo", "Michigan": "non-strict-photo", "Missouri": "non-strict-photo",
+        "Montana": "non-strict-photo", "Nebraska": "non-strict-photo", "Rhode Island": "non-strict-photo",
+        "South Carolina": "non-strict-photo", "South Dakota": "non-strict-photo", "Texas": "non-strict-photo",
+        "Arizona": "strict-non-photo", "North Dakota": "strict-non-photo", "Wyoming": "strict-non-photo",
+        "Alaska": "non-strict-non-photo", "Colorado": "non-strict-non-photo", "Connecticut": "non-strict-non-photo",
+        "Delaware": "non-strict-non-photo", "Iowa": "non-strict-non-photo", "Kentucky": "non-strict-non-photo",
+        "New Hampshire": "non-strict-non-photo", "Oklahoma": "non-strict-non-photo", "Utah": "non-strict-non-photo",
+        "Virginia": "non-strict-non-photo", "Washington": "non-strict-non-photo", "West Virginia": "non-strict-non-photo",
+        "California": "no-id", "Hawaii": "no-id", "Illinois": "no-id", "Maine": "no-id",
+        "Maryland": "no-id", "Massachusetts": "no-id", "Minnesota": "no-id", "Nevada": "no-id",
+        "New Jersey": "no-id", "New Mexico": "no-id", "New York": "no-id", "Oregon": "no-id",
+        "Pennsylvania": "no-id", "Vermont": "no-id", "District of Columbia": "no-id",
+      };
+
+      const colorMap = {
+        "strict-photo": "#dc2626",
+        "non-strict-photo": "#f97316",
+        "strict-non-photo": "#eab308",
+        "non-strict-non-photo": "#818cf8",
+        "no-id": "#4ade80",
+      };
+
+      const categoryLabels = {
+        "strict-photo": "Strict Photo ID",
+        "non-strict-photo": "Non-strict Photo ID",
+        "strict-non-photo": "Strict Non-photo ID",
+        "non-strict-non-photo": "Non-strict Non-photo ID",
+        "no-id": "No ID Required",
+      };
+
+      try {
+        const us = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json");
+        const states = topojson.feature(us, us.objects.states);
+
+        const width = 960;
+        const height = 600;
+
+        const projection = d3.geoAlbersUsa()
+          .fitSize([width, height], states);
+
+        const path = d3.geoPath().projection(projection);
+
+        const svg = d3.select("#viz2-map")
+          .append("svg")
+          .attr("viewBox", `0 0 ${width} ${height}`)
+          .attr("preserveAspectRatio", "xMidYMid meet");
+
+        // Draw states
+        svg.selectAll("path")
+          .data(states.features)
+          .join("path")
+          .attr("d", path)
+          .attr("fill", d => {
+            const cat = stateCategories[d.properties.name];
+            return cat ? colorMap[cat] : "#333";
+          })
+          .attr("stroke", "#0a0a0a")
+          .attr("stroke-width", 1)
+          .style("cursor", "pointer")
+          .on("mouseenter", function(event, d) {
+            d3.select(this).attr("stroke", "#fff").attr("stroke-width", 2).raise();
+            const cat = stateCategories[d.properties.name];
+            const label = cat ? categoryLabels[cat] : "Unknown";
+            showTooltip(event,
+              `<div class="tip-label">${d.properties.name}</div>` +
+              `<div class="tip-value">${label}</div>`
+            );
+          })
+          .on("mousemove", moveTooltip)
+          .on("mouseleave", function() {
+            d3.select(this).attr("stroke", "#0a0a0a").attr("stroke-width", 1);
+            hideTooltip();
+          });
+
+        // State borders (mesh for cleaner lines)
+        svg.append("path")
+          .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
+          .attr("fill", "none")
+          .attr("stroke", "#0a0a0a")
+          .attr("stroke-width", 1)
+          .attr("d", path)
+          .style("pointer-events", "none");
+
+      } catch (err) {
+        d3.select("#viz2-map")
+          .append("p")
+          .style("color", "#dc2626")
+          .style("padding", "2rem")
+          .text("Error loading map data. Please check your connection. " + err.message);
+      }
+    })();
+
+    // ────────────────────────────────────────────────────────
+    // VIZ 3: Needle in a Haystack
+    // ────────────────────────────────────────────────────────
+
+    (function buildHaystack() {
+      // Unit chart: 1000 dots, each = 153,000 votes
+      const totalVotes = 153000000;
+      const totalFindings = 9824; // sum of all state findings
+      const dotsTotal = 1000;
+      const votesPerDot = totalVotes / dotsTotal;
+
+      const cols = 40;
+      const rows = 25;
+      const dotSize = 7;
+      const dotGap = 3;
+      const svgW = cols * (dotSize + dotGap);
+      const svgH = rows * (dotSize + dotGap) + 80;
+
+      const svg = d3.select("#viz3-scale")
+        .append("svg")
+        .attr("viewBox", `0 0 ${svgW} ${svgH}`)
+        .attr("preserveAspectRatio", "xMidYMid meet");
+
+      // Title
+      svg.append("text")
+        .attr("x", svgW / 2)
+        .attr("y", 18)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#888")
+        .attr("font-size", "12px")
+        .attr("font-weight", "600")
+        .attr("letter-spacing", "0.08em")
+        .text("153 MILLION VOTES CAST IN 2024");
+
+      svg.append("text")
+        .attr("x", svgW / 2)
+        .attr("y", 34)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#666")
+        .attr("font-size", "10px")
+        .text("Each dot = 153,000 votes");
+
+      const gridOffsetY = 48;
+
+      // Draw dots
+      const dotsData = d3.range(dotsTotal);
+      svg.selectAll(".vote-dot")
+        .data(dotsData)
+        .join("rect")
+        .attr("class", "vote-dot")
+        .attr("x", (d, i) => (i % cols) * (dotSize + dotGap))
+        .attr("y", (d, i) => Math.floor(i / cols) * (dotSize + dotGap) + gridOffsetY)
+        .attr("width", dotSize)
+        .attr("height", dotSize)
+        .attr("rx", 1.5)
+        .attr("fill", "#1e3a2a")
+        .attr("stroke", "#2a5a3a")
+        .attr("stroke-width", 0.3);
+
+      // Annotation: how many dots would noncitizen votes fill?
+      const findingsDots = totalFindings / votesPerDot; // ~0.064 dots
+      svg.append("text")
+        .attr("x", svgW / 2)
+        .attr("y", svgH - 20)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#f97316")
+        .attr("font-size", "12px")
+        .attr("font-weight", "600")
+        .text(`Total noncitizen findings across all states: ${d3.format(",")(totalFindings)}`);
+
+      svg.append("text")
+        .attr("x", svgW / 2)
+        .attr("y", svgH - 4)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#888")
+        .attr("font-size", "11px")
+        .text(`That's ${d3.format(".1%")(totalFindings / totalVotes)} of all votes — less than ${d3.format(".1f")(findingsDots * 100)}% of a single dot above.`);
+
+      // Highlight first dot with a tiny orange sliver to show proportion
+      const firstDotX = 0;
+      const firstDotY = gridOffsetY;
+      svg.append("rect")
+        .attr("x", firstDotX)
+        .attr("y", firstDotY)
+        .attr("width", dotSize * findingsDots)
+        .attr("height", dotSize)
+        .attr("rx", 1)
+        .attr("fill", "#f97316")
+        .attr("opacity", 0.9);
+
+      // Arrow pointing to the orange sliver
+      svg.append("line")
+        .attr("x1", dotSize * findingsDots + 2)
+        .attr("y1", firstDotY + dotSize / 2)
+        .attr("x2", 50)
+        .attr("y2", firstDotY + dotSize / 2 - 10)
+        .attr("stroke", "#f97316")
+        .attr("stroke-width", 1)
+        .attr("stroke-dasharray", "3,2");
+
+      svg.append("text")
+        .attr("x", 53)
+        .attr("y", firstDotY + dotSize / 2 - 13)
+        .attr("fill", "#f97316")
+        .attr("font-size", "9px")
+        .text("All noncitizen findings (barely visible)");
+    })();
+
+    // -- Magnified inset bar chart --
+    (function buildInset() {
+      const data = [
+        { state: "Virginia", found: 6303 },
+        { state: "Texas", found: 2724 },
+        { state: "Ohio", found: 499 },
+        { state: "Iowa", found: 277 },
+        { state: "Michigan", found: 16 },
+        { state: "N. Carolina", found: 5 },
+      ];
+
+      const margin = { top: 10, right: 90, bottom: 30, left: 100 };
+      const width = 860 - margin.left - margin.right;
+      const height = data.length * 44;
+
+      const svg = d3.select("#viz3-inset-chart")
+        .append("svg")
+        .attr("viewBox", `0 0 ${860} ${height + margin.top + margin.bottom}`)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.found)])
+        .nice()
+        .range([0, width]);
+
+      const y = d3.scaleBand()
+        .domain(data.map(d => d.state))
+        .range([0, height])
+        .padding(0.3);
+
+      // Grid lines
+      svg.selectAll(".grid-line")
+        .data(x.ticks(5))
+        .join("line")
+        .attr("class", "grid-line")
+        .attr("x1", d => x(d))
+        .attr("x2", d => x(d))
+        .attr("y1", 0)
+        .attr("y2", height)
+        .attr("stroke", "#222")
+        .attr("stroke-dasharray", "2,3");
+
+      // X axis
+      svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x).ticks(5).tickFormat(d3.format(",")))
+        .selectAll("text").attr("fill", "#888").attr("font-size", "11px");
+      svg.selectAll(".domain").attr("stroke", "#333");
+      svg.selectAll(".tick line").attr("stroke", "#333");
+
+      // Y labels
+      svg.selectAll(".state-label")
+        .data(data)
+        .join("text")
+        .attr("x", -10)
+        .attr("y", d => y(d.state) + y.bandwidth() / 2)
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .attr("fill", "#aaa")
+        .attr("font-size", "12px")
+        .text(d => d.state);
+
+      // Bars
+      svg.selectAll(".inset-bar")
+        .data(data)
+        .join("rect")
+        .attr("x", 0)
+        .attr("y", d => y(d.state))
+        .attr("width", d => x(d.found))
+        .attr("height", y.bandwidth())
+        .attr("rx", 3)
+        .attr("fill", "#f97316");
+
+      // Value labels
+      svg.selectAll(".inset-val")
+        .data(data)
+        .join("text")
+        .attr("x", d => x(d.found) + 6)
+        .attr("y", d => y(d.state) + y.bandwidth() / 2)
+        .attr("dy", "0.35em")
+        .attr("fill", "#ccc")
+        .attr("font-size", "11px")
+        .attr("font-weight", "600")
+        .text(d => d3.format(",")(d.found));
+
+      // X axis label
+      svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + 28)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#666")
+        .attr("font-size", "10px")
+        .text("Noncitizen registrations found");
+    })();
+
+    // ────────────────────────────────────────────────────────
+    // VIZ 4: Who Lacks Documents? (Grouped Bar Chart)
+    // ────────────────────────────────────────────────────────
+
+    (function buildDemoBars() {
+      const data = [
+        { group: "Race / Ethnicity", items: [
+          { label: "People of color", access: 11, entirely: 3 },
+          { label: "White non-Hispanic", access: 8, entirely: 1 },
+        ]},
+        { group: "Household Income", items: [
+          { label: "Under $25k", access: 12, entirely: null },
+          { label: "$25k - $50k", access: 10, entirely: null },
+          { label: "Over $50k", access: 7, entirely: null },
+        ]},
+        { group: "Age Group", items: [
+          { label: "18 - 29", access: 15, entirely: null },
+          { label: "30 - 49", access: 9, entirely: null },
+          { label: "50 - 64", access: 7, entirely: null },
+          { label: "65+", access: 8, entirely: null },
+        ]},
+      ];
+
+      // Flatten for charting
+      const flatData = [];
+      data.forEach(group => {
+        flatData.push({ label: group.group, isHeader: true });
+        group.items.forEach(item => {
+          flatData.push({ ...item, isHeader: false });
+        });
+      });
+
+      const rows = flatData.filter(d => !d.isHeader);
+      const allLabels = flatData.map(d => d.label);
+
+      const margin = { top: 10, right: 60, bottom: 30, left: 180 };
+      const rowHeight = 38;
+      const headerHeight = 32;
+      const totalHeight = flatData.reduce((sum, d) => sum + (d.isHeader ? headerHeight : rowHeight), 0);
+      const width = 860 - margin.left - margin.right;
+
+      const svg = d3.select("#viz4-bars")
+        .append("svg")
+        .attr("viewBox", `0 0 ${860} ${totalHeight + margin.top + margin.bottom}`)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleLinear()
+        .domain([0, 18])
+        .range([0, width]);
+
+      // Grid lines
+      svg.selectAll(".grid")
+        .data(x.ticks(6))
+        .join("line")
+        .attr("x1", d => x(d))
+        .attr("x2", d => x(d))
+        .attr("y1", 0)
+        .attr("y2", totalHeight)
+        .attr("stroke", "#1a1a1a")
+        .attr("stroke-dasharray", "2,3");
+
+      // X axis
+      svg.append("g")
+        .attr("transform", `translate(0,${totalHeight})`)
+        .call(d3.axisBottom(x).ticks(6).tickFormat(d => d + "%"))
+        .selectAll("text").attr("fill", "#888").attr("font-size", "11px");
+      svg.selectAll(".domain").attr("stroke", "#333");
+      svg.selectAll(".tick line").attr("stroke", "#333");
+
+      // Render rows
+      let yPos = 0;
+      const barH = 14;
+
+      flatData.forEach(d => {
+        if (d.isHeader) {
+          svg.append("text")
+            .attr("x", -margin.left + 10)
+            .attr("y", yPos + headerHeight / 2 + 4)
+            .attr("fill", "#666")
+            .attr("font-size", "10px")
+            .attr("font-weight", "700")
+            .attr("text-transform", "uppercase")
+            .attr("letter-spacing", "0.08em")
+            .text(d.label.toUpperCase());
+          yPos += headerHeight;
+        } else {
+          // Label
+          svg.append("text")
+            .attr("x", -10)
+            .attr("y", yPos + rowHeight / 2)
+            .attr("dy", "0.35em")
+            .attr("text-anchor", "end")
+            .attr("fill", "#bbb")
+            .attr("font-size", "12px")
+            .text(d.label);
+
+          // "Lack access" bar
+          svg.append("rect")
+            .attr("x", 0)
+            .attr("y", yPos + rowHeight / 2 - barH - 1)
+            .attr("width", x(d.access))
+            .attr("height", barH)
+            .attr("rx", 3)
+            .attr("fill", "#f97316");
+
+          // Value label for access
+          svg.append("text")
+            .attr("x", x(d.access) + 6)
+            .attr("y", yPos + rowHeight / 2 - barH / 2 - 1)
+            .attr("dy", "0.35em")
+            .attr("fill", "#f97316")
+            .attr("font-size", "11px")
+            .attr("font-weight", "600")
+            .text(d.access + "%");
+
+          // "Lack entirely" bar (only if data exists)
+          if (d.entirely !== null) {
+            svg.append("rect")
+              .attr("x", 0)
+              .attr("y", yPos + rowHeight / 2 + 1)
+              .attr("width", x(d.entirely))
+              .attr("height", barH)
+              .attr("rx", 3)
+              .attr("fill", "#dc2626");
+
+            svg.append("text")
+              .attr("x", x(d.entirely) + 6)
+              .attr("y", yPos + rowHeight / 2 + barH / 2 + 1)
+              .attr("dy", "0.35em")
+              .attr("fill", "#dc2626")
+              .attr("font-size", "11px")
+              .attr("font-weight", "600")
+              .text(d.entirely + "%");
+          }
+
+          yPos += rowHeight;
+        }
+      });
+
+      // Legend
+      const legendY = -2;
+      const legendItems = [
+        { label: "Lack ready access", color: "#f97316" },
+        { label: "Lack entirely", color: "#dc2626" },
+      ];
+      const legendG = svg.append("g").attr("transform", `translate(${width - 200}, ${legendY})`);
+      legendItems.forEach((item, i) => {
+        const g = legendG.append("g").attr("transform", `translate(${i * 130}, 0)`);
+        g.append("rect").attr("width", 12).attr("height", 12).attr("rx", 2).attr("fill", item.color);
+        g.append("text")
+          .attr("x", 16).attr("y", 10)
+          .attr("fill", "#aaa").attr("font-size", "10px")
+          .text(item.label);
+      });
+    })();
+
+    // ────────────────────────────────────────────────────────
+    // VIZ 5: State Audit Results — Lollipop Chart
+    // ────────────────────────────────────────────────────────
+
+    (function buildLollipop() {
+      const data = [
+        { state: "Virginia", found: 6303, registered: 6100000 },
+        { state: "Texas", found: 2724, registered: 18000000 },
+        { state: "Iowa", found: 277, registered: 2200000 },
+        { state: "Ohio", found: 499, registered: 8000000 },
+        { state: "Michigan", found: 16, registered: 8400000 },
+        { state: "N. Carolina", found: 5, registered: 7400000 },
+      ].map(d => ({ ...d, pct: (d.found / d.registered) * 100 }))
+       .sort((a, b) => b.pct - a.pct);
+
+      const margin = { top: 30, right: 120, bottom: 40, left: 110 };
+      const width = 860 - margin.left - margin.right;
+      const height = data.length * 52;
+
+      const svg = d3.select("#viz5-lollipop")
+        .append("svg")
+        .attr("viewBox", `0 0 ${860} ${height + margin.top + margin.bottom}`)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const x = d3.scaleLinear()
+        .domain([0, 1])
+        .range([0, width]);
+
+      const y = d3.scaleBand()
+        .domain(data.map(d => d.state))
+        .range([0, height])
+        .padding(0.4);
+
+      // Grid lines
+      svg.selectAll(".grid")
+        .data([0.1, 0.2, 0.5, 1.0])
+        .join("line")
+        .attr("x1", d => x(d))
+        .attr("x2", d => x(d))
+        .attr("y1", -10)
+        .attr("y2", height + 10)
+        .attr("stroke", "#1a1a1a")
+        .attr("stroke-dasharray", "2,3");
+
+      // 1% reference line
+      svg.append("line")
+        .attr("x1", x(1))
+        .attr("x2", x(1))
+        .attr("y1", -10)
+        .attr("y2", height + 10)
+        .attr("stroke", "#dc2626")
+        .attr("stroke-width", 2)
+        .attr("stroke-dasharray", "6,4")
+        .attr("opacity", 0.6);
+
+      svg.append("text")
+        .attr("x", x(1) + 6)
+        .attr("y", -2)
+        .attr("fill", "#dc2626")
+        .attr("font-size", "11px")
+        .attr("font-weight", "600")
+        .text("1% reference line");
+
+      // X axis
+      svg.append("g")
+        .attr("transform", `translate(0,${height + 5})`)
+        .call(d3.axisBottom(x).tickValues([0, 0.1, 0.2, 0.5, 1.0]).tickFormat(d => d + "%"))
+        .selectAll("text").attr("fill", "#888").attr("font-size", "11px");
+      svg.selectAll(".domain").attr("stroke", "#333");
+      svg.selectAll(".tick line").attr("stroke", "#333");
+
+      // X axis label
+      svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", height + 36)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#666")
+        .attr("font-size", "10px")
+        .text("Noncitizen registrations as % of total registered voters");
+
+      // Lollipop sticks
+      svg.selectAll(".stick")
+        .data(data)
+        .join("line")
+        .attr("class", "stick")
+        .attr("x1", 0)
+        .attr("x2", d => x(d.pct))
+        .attr("y1", d => y(d.state) + y.bandwidth() / 2)
+        .attr("y2", d => y(d.state) + y.bandwidth() / 2)
+        .attr("stroke", "#f97316")
+        .attr("stroke-width", 2)
+        .attr("opacity", 0.6);
+
+      // Lollipop dots
+      svg.selectAll(".dot")
+        .data(data)
+        .join("circle")
+        .attr("class", "dot")
+        .attr("cx", d => x(d.pct))
+        .attr("cy", d => y(d.state) + y.bandwidth() / 2)
+        .attr("r", 6)
+        .attr("fill", "#f97316")
+        .attr("stroke", "#0a0a0a")
+        .attr("stroke-width", 2)
+        .on("mouseenter", function(event, d) {
+          d3.select(this).attr("r", 9).attr("fill", "#fb923c");
+          showTooltip(event,
+            `<div class="tip-label">${d.state}</div>` +
+            `<div class="tip-value">${d3.format(",")(d.found)} found out of ${d3.format(",")(d.registered)} registered</div>`
+          );
+        })
+        .on("mousemove", moveTooltip)
+        .on("mouseleave", function() {
+          d3.select(this).attr("r", 6).attr("fill", "#f97316");
+          hideTooltip();
+        });
+
+      // State labels
+      svg.selectAll(".state-label")
+        .data(data)
+        .join("text")
+        .attr("x", -10)
+        .attr("y", d => y(d.state) + y.bandwidth() / 2)
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .attr("fill", "#bbb")
+        .attr("font-size", "12px")
+        .text(d => d.state);
+
+      // Percentage labels at end
+      svg.selectAll(".pct-label")
+        .data(data)
+        .join("text")
+        .attr("x", d => x(d.pct) + 14)
+        .attr("y", d => y(d.state) + y.bandwidth() / 2)
+        .attr("dy", "0.35em")
+        .attr("fill", "#aaa")
+        .attr("font-size", "11px")
+        .attr("font-weight", "600")
+        .text(d => {
+          if (d.pct < 0.001) return d.pct.toFixed(5) + "%";
+          if (d.pct < 0.01) return d.pct.toFixed(4) + "%";
+          return d.pct.toFixed(3) + "%";
+        });
+
+      // Annotation for how far below 1%
+      svg.append("text")
+        .attr("x", width)
+        .attr("y", height + 36)
+        .attr("text-anchor", "end")
+        .attr("fill", "#666")
+        .attr("font-size", "10px")
+        .attr("font-style", "italic")
+        .text("All states are at least 10x below the 1% line");
+    })();
+
+    // ────────────────────────────────────────────────────────
+    // CODE DISPLAY: Inject real source code into code panels
+    // ────────────────────────────────────────────────────────
+
+    // Viz 1 code
+    document.getElementById("code1-content").textContent = `// VIZ 1: The Documentation Gap — Animated Counter + Waffle Chart
+
+// Animated counter using d3.interpolateNumber
+function animateCounter(selector, targetValue, suffix = "") {
+  const el = document.querySelector(selector);
+  const fmt = d3.format(",.1f");
+  d3.select(el)
+    .transition()
+    .duration(2000)
+    .ease(d3.easeCubicOut)
+    .tween("text", function() {
+      const interp = d3.interpolateNumber(0, targetValue);
+      return function(t) {
+        const val = interp(t);
+        el.textContent = fmt(val / 1000000) + "M" + suffix;
+      };
+    });
+}
+
+// Waffle chart: 10x10 grid, 9 squares highlighted
+const cols = 10, size = 36, gap = 4;
+const svg = container.append("svg")
+  .attr("viewBox", \`0 0 \${cols * (size + gap)} \${10 * (size + gap)}\`);
+
+svg.selectAll("rect")
+  .data(d3.range(100))
+  .join("rect")
+  .attr("x", (d, i) => (i % cols) * (size + gap))
+  .attr("y", (d, i) => Math.floor(i / cols) * (size + gap))
+  .attr("width", size)
+  .attr("height", size)
+  .attr("rx", 4)
+  .attr("fill", "#1a1a1a");
+
+// Animate: highlight first 9 squares
+rects.transition()
+  .duration(600)
+  .delay((d, i) => i * 15)
+  .attr("fill", (d, i) => i < 9 ? "#f97316" : "#1a1a1a");
+
+// Horizontal bar chart for sub-breakdowns
+const data = [
+  { label: "Women w/ name mismatch", value: 69000000 },
+  { label: "No valid passport", value: 146000000 },
+  { label: "Lack documents entirely", value: 3800000 },
+];
+
+const x = d3.scaleLinear()
+  .domain([0, d3.max(data, d => d.value)])
+  .range([0, width]);
+
+const y = d3.scaleBand()
+  .domain(data.map(d => d.label))
+  .range([0, height])
+  .padding(0.35);
+
+svg.selectAll("rect")
+  .data(data)
+  .join("rect")
+  .attr("x", 0)
+  .attr("y", d => y(d.label))
+  .attr("width", 0) // animate from 0
+  .attr("height", y.bandwidth())
+  .attr("fill", d => d.color)
+  .transition()
+  .duration(1000)
+  .delay((d, i) => i * 200)
+  .attr("width", d => x(d.value));`;
+
+    // Viz 2 code
+    document.getElementById("code2-content").textContent = `// VIZ 2: Voter ID Requirements — US Choropleth Map
+
+import * as topojson from "topojson-client";
+
+// State-to-category mapping
+const stateCategories = {
+  "Arkansas": "strict-photo", "Georgia": "strict-photo",
+  "Indiana": "strict-photo", "Kansas": "strict-photo",
+  // ... (all 50 states + DC mapped)
+  "California": "no-id", "Hawaii": "no-id",
+};
+
+const colorMap = {
+  "strict-photo": "#dc2626",     // red
+  "non-strict-photo": "#f97316", // orange
+  "strict-non-photo": "#eab308", // yellow
+  "non-strict-non-photo": "#818cf8", // purple
+  "no-id": "#4ade80",           // green
+};
+
+// Fetch TopoJSON from CDN
+const us = await d3.json(
+  "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json"
+);
+const states = topojson.feature(us, us.objects.states);
+
+// Projection: AlbersUSA handles AK/HI insets automatically
+const projection = d3.geoAlbersUsa()
+  .fitSize([width, height], states);
+
+const path = d3.geoPath().projection(projection);
+
+// Draw each state as a <path> element
+svg.selectAll("path")
+  .data(states.features)
+  .join("path")
+  .attr("d", path)
+  .attr("fill", d => {
+    const cat = stateCategories[d.properties.name];
+    return colorMap[cat] || "#333";
+  })
+  .attr("stroke", "#0a0a0a")
+  .on("mouseenter", function(event, d) {
+    d3.select(this).attr("stroke", "#fff").raise();
+    showTooltip(event, d.properties.name);
+  })
+  .on("mouseleave", function() {
+    d3.select(this).attr("stroke", "#0a0a0a");
+    hideTooltip();
+  });`;
+
+    // Viz 3 code
+    document.getElementById("code3-content").textContent = `// VIZ 3: Needle in a Haystack — Unit Chart + Magnified Inset
+
+const totalVotes = 153_000_000;
+const totalFindings = 9_824;
+const dotsTotal = 1000;
+const votesPerDot = totalVotes / dotsTotal; // 153,000
+
+// Unit chart: 40x25 grid of dots
+const cols = 40;
+svg.selectAll(".vote-dot")
+  .data(d3.range(dotsTotal))
+  .join("rect")
+  .attr("x", (d, i) => (i % cols) * (dotSize + dotGap))
+  .attr("y", (d, i) => Math.floor(i / cols) * (dotSize + dotGap))
+  .attr("width", dotSize)
+  .attr("height", dotSize)
+  .attr("fill", "#1e3a2a");
+
+// How many dots would the findings fill?
+const findingsDots = totalFindings / votesPerDot; // ~0.064 dots
+
+// Highlight a tiny orange sliver on the first dot
+svg.append("rect")
+  .attr("x", 0).attr("y", gridOffsetY)
+  .attr("width", dotSize * findingsDots) // barely visible
+  .attr("height", dotSize)
+  .attr("fill", "#f97316");
+
+// Magnified inset: horizontal bar chart for state findings
+const insetData = [
+  { state: "Virginia", found: 6303 },
+  { state: "Texas", found: 2724 },
+  { state: "Ohio", found: 499 },
+  { state: "Iowa", found: 277 },
+  { state: "Michigan", found: 16 },
+  { state: "N. Carolina", found: 5 },
+];
+
+const x = d3.scaleLinear()
+  .domain([0, d3.max(insetData, d => d.found)])
+  .range([0, width]);
+
+const y = d3.scaleBand()
+  .domain(insetData.map(d => d.state))
+  .range([0, height])
+  .padding(0.3);
+
+svg.selectAll(".bar")
+  .data(insetData).join("rect")
+  .attr("x", 0)
+  .attr("y", d => y(d.state))
+  .attr("width", d => x(d.found))
+  .attr("height", y.bandwidth())
+  .attr("fill", "#f97316");`;
+
+    // Viz 4 code
+    document.getElementById("code4-content").textContent = `// VIZ 4: Who Lacks Documents? — Grouped Horizontal Bars
+
+const data = [
+  { group: "Race / Ethnicity", items: [
+    { label: "People of color", access: 11, entirely: 3 },
+    { label: "White non-Hispanic", access: 8, entirely: 1 },
+  ]},
+  { group: "Household Income", items: [
+    { label: "Under $25k", access: 12 },
+    { label: "$25k - $50k", access: 10 },
+    { label: "Over $50k", access: 7 },
+  ]},
+  { group: "Age Group", items: [
+    { label: "18 - 29", access: 15 },
+    { label: "30 - 49", access: 9 },
+    { label: "50 - 64", access: 7 },
+    { label: "65+", access: 8 },
+  ]},
+];
+
+const x = d3.scaleLinear()
+  .domain([0, 18])
+  .range([0, width]);
+
+// For each row, draw two bars: "Lack access" (orange)
+// and "Lack entirely" (red) if data exists
+flatData.forEach(d => {
+  if (d.isHeader) {
+    svg.append("text")
+      .attr("x", -margin.left + 10)
+      .attr("y", yPos + headerHeight / 2 + 4)
+      .attr("fill", "#666")
+      .text(d.label.toUpperCase());
+    yPos += headerHeight;
+  } else {
+    // "Lack access" bar
+    svg.append("rect")
+      .attr("x", 0)
+      .attr("y", yPos + rowHeight / 2 - barH - 1)
+      .attr("width", x(d.access))
+      .attr("height", barH)
+      .attr("fill", "#f97316");
+
+    // "Lack entirely" bar (conditional)
+    if (d.entirely !== null) {
+      svg.append("rect")
+        .attr("x", 0)
+        .attr("y", yPos + rowHeight / 2 + 1)
+        .attr("width", x(d.entirely))
+        .attr("height", barH)
+        .attr("fill", "#dc2626");
+    }
+    yPos += rowHeight;
+  }
+});`;
+
+    // Viz 5 code
+    document.getElementById("code5-content").textContent = `// VIZ 5: State Audit Results — Lollipop Chart
+
+const data = [
+  { state: "Virginia", found: 6303, registered: 6100000 },
+  { state: "Texas", found: 2724, registered: 18000000 },
+  { state: "Iowa", found: 277, registered: 2200000 },
+  { state: "Ohio", found: 499, registered: 8000000 },
+  { state: "Michigan", found: 16, registered: 8400000 },
+  { state: "N. Carolina", found: 5, registered: 7400000 },
+].map(d => ({ ...d, pct: (d.found / d.registered) * 100 }))
+ .sort((a, b) => b.pct - a.pct);
+
+const x = d3.scaleLinear()
+  .domain([0, 1])    // 0% to 1% range
+  .range([0, width]);
+
+const y = d3.scaleBand()
+  .domain(data.map(d => d.state))
+  .range([0, height])
+  .padding(0.4);
+
+// 1% reference line (for scale context)
+svg.append("line")
+  .attr("x1", x(1)).attr("x2", x(1))
+  .attr("y1", -10).attr("y2", height + 10)
+  .attr("stroke", "#dc2626")
+  .attr("stroke-dasharray", "6,4");
+
+// Lollipop sticks (lines from 0 to value)
+svg.selectAll(".stick")
+  .data(data).join("line")
+  .attr("x1", 0)
+  .attr("x2", d => x(d.pct))
+  .attr("y1", d => y(d.state) + y.bandwidth() / 2)
+  .attr("y2", d => y(d.state) + y.bandwidth() / 2)
+  .attr("stroke", "#f97316")
+  .attr("stroke-width", 2);
+
+// Lollipop dots (circles at end of sticks)
+svg.selectAll(".dot")
+  .data(data).join("circle")
+  .attr("cx", d => x(d.pct))
+  .attr("cy", d => y(d.state) + y.bandwidth() / 2)
+  .attr("r", 6)
+  .attr("fill", "#f97316")
+  .on("mouseenter", function(event, d) {
+    showTooltip(event,
+      d.state + ": " + d3.format(",")(d.found) +
+      " / " + d3.format(",")(d.registered)
+    );
+  });
+
+// Percentage labels
+svg.selectAll(".pct-label")
+  .data(data).join("text")
+  .attr("x", d => x(d.pct) + 14)
+  .attr("y", d => y(d.state) + y.bandwidth() / 2)
+  .text(d => d.pct.toFixed(4) + "%");`;
+
+    })();
+  </script>
+</body>
+</html>

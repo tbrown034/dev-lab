@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 11 - Interactivity & Polish</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #f97316; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #f97316; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #f97316; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #f97316; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .demo h4 { color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .demo svg { background: #1a1a1a; border-radius: 4px; display: block; }
+    .demo button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 0.25rem; font-weight: 600; }
+    .demo button:hover { background: #fb923c; }
+    .demo button.secondary { background: #818cf8; color: #000; }
+    .demo button.green { background: #4ade80; color: #000; }
+    .demo .controls { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .quiz { background: #1a1500; border: 1px solid #f9731644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #f97316; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #f97316; text-decoration: none; }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #1a0a00; border-left: 3px solid #f97316; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #fdba74; }
+    .aha strong { color: #f97316; }
+    #bar-tooltip {
+      position: fixed; background: #1a1a1a; border: 1px solid #f97316;
+      padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 0.8rem;
+      color: #e5e5e5; pointer-events: none; display: none; z-index: 100;
+    }
+    #bar-tooltip .tt-label { color: #f97316; font-weight: 600; }
+    #bar-tooltip .tt-value { color: #4ade80; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>11</span> Interactivity &amp; Polish</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div id="bar-tooltip">
+    <span class="tt-label"></span><br>
+    <span class="tt-value"></span>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #f97316;">Mental Model:</strong> D3 events are just callbacks, same as React's <code>onClick</code>. Instead of <code>&lt;div onClick={handleClick}&gt;</code>, it is <code>.on("click", handleClick)</code>. Same concept, different syntax.</p>
+
+    <h2>Mouse Events in D3 v7</h2>
+
+    <pre><code><span class="comment">// D3 v7 pattern: event is the FIRST argument</span>
+selection.on("mouseenter", function(event, d) {
+  console.log(event);   <span class="comment">// native DOM event (has pageX, pageY, etc.)</span>
+  console.log(d);        <span class="comment">// bound data (the __data__ sticky note)</span>
+  console.log(this);     <span class="comment">// the DOM element (use d3.select(this))</span>
+});
+
+<span class="comment">// Common events:</span>
+.on("mouseenter", (event, d) => { })   <span class="comment">// hover start</span>
+.on("mousemove",  (event, d) => { })   <span class="comment">// cursor tracking</span>
+.on("mouseleave", (event, d) => { })   <span class="comment">// hover end</span>
+.on("click",      (event, d) => { })   <span class="comment">// click</span></code></pre>
+
+    <div class="callout">
+      <p><strong>D3 v7 breaking change:</strong> In older D3 (v5 and earlier), events were accessed via the global <code>d3.event</code>. In v7, the event is passed as the first argument to the handler. If you see <code>d3.event</code> in old code on the web, know it will not work in v7. This comes up in interviews.</p>
+    </div>
+
+    <h2>Building Tooltips</h2>
+
+    <p>Tooltips are HTML divs positioned near the cursor. Use an HTML div (not SVG text) because divs support rich formatting, word wrap, and are easier to style.</p>
+
+    <pre><code><span class="comment">// Create tooltip div outside the SVG</span>
+const tooltip = d3.select("body").append("div")
+  .style("position", "fixed")
+  .style("display", "none")
+  .style("background", "#1a1a1a")
+  .style("border", "1px solid #f97316")
+  .style("padding", "0.5rem 0.75rem")
+  .style("border-radius", "4px")
+  .style("pointer-events", "none");
+
+<span class="comment">// Attach to chart elements</span>
+bars
+  .on("mouseenter", function(event, d) {
+    d3.select(this).attr("opacity", 0.8);
+    tooltip.style("display", "block")
+      .html(`&lt;strong&gt;${d.name}&lt;/strong&gt;&lt;br&gt;${d.value}`);
+  })
+  .on("mousemove", (event) => {
+    tooltip
+      .style("left", (event.clientX + 12) + "px")
+      .style("top", (event.clientY - 28) + "px");
+  })
+  .on("mouseleave", function() {
+    d3.select(this).attr("opacity", 1);
+    tooltip.style("display", "none");
+  });</code></pre>
+
+    <h2>Transitions</h2>
+
+    <pre><code><span class="comment">// Insert .transition() to animate any attribute change</span>
+selection
+  .transition()
+  .duration(800)               <span class="comment">// animation length in ms</span>
+  .delay((d, i) => i * 50)    <span class="comment">// stagger by index</span>
+  .ease(d3.easeCubicInOut)     <span class="comment">// easing curve</span>
+  .attr("height", d => yScale(d.value))
+  .attr("fill", "#f97316");
+
+<span class="comment">// Chain transitions (second waits for first)</span>
+selection
+  .transition().duration(500).attr("height", h)
+  .transition().duration(300).attr("fill", "green");</code></pre>
+
+    <h3>Easing Functions</h3>
+    <ul>
+      <li><code>d3.easeCubicInOut</code> &mdash; natural, smooth acceleration/deceleration (default-ish feel)</li>
+      <li><code>d3.easeLinear</code> &mdash; constant speed (use for progress bars)</li>
+      <li><code>d3.easeBounce</code> &mdash; bouncy ending (use sparingly)</li>
+      <li><code>d3.easeElastic</code> &mdash; springy overshoot (playful UIs only)</li>
+      <li><code>d3.easeCubicOut</code> &mdash; fast start, slow end (good for entrance animations)</li>
+    </ul>
+
+    <h2>Responsive Charts with viewBox</h2>
+
+    <pre><code><span class="comment">// The key insight: viewBox makes SVG responsive like an image</span>
+const svg = d3.select("#chart")
+  .append("svg")
+  .attr("viewBox", `0 0 700 400`)  <span class="comment">// virtual 700x400 canvas</span>
+  <span class="comment">// Do NOT set width/height attrs - let CSS handle it</span>
+  .style("width", "100%")
+  .style("max-width", "800px");
+
+<span class="comment">// The SVG scales to fill its container while maintaining</span>
+<span class="comment">// the 700:400 aspect ratio. All coordinates stay the same.</span></code></pre>
+
+    <div class="aha">
+      <p><strong>viewBox is almost always sufficient.</strong> It handles 90% of responsive needs. Only reach for <code>ResizeObserver</code> when you need layout changes at different sizes (e.g., switching bar chart orientation on mobile).</p>
+    </div>
+
+    <h2>Accessibility Basics</h2>
+    <ul>
+      <li>Add <code>role="img"</code> and <code>aria-label="Description"</code> to the SVG</li>
+      <li>Add <code>&lt;title&gt;</code> and <code>&lt;desc&gt;</code> elements inside the SVG</li>
+      <li>Make interactive elements focusable with <code>tabindex="0"</code></li>
+      <li>Add keyboard event handlers (<code>keydown</code>) alongside mouse events</li>
+      <li>Never rely on color alone &mdash; add patterns, labels, or tooltips</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- DEMO 1: BAR CHART WITH TOOLTIPS              -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Bar Chart with Hover Tooltips</h2>
+
+    <div class="demo">
+      <h4>Live: City population with interactive tooltips</h4>
+      <div id="tooltip-chart"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 2: ANIMATED DATA CHANGE                 -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Animated Transitions on Data Change</h2>
+
+    <div class="demo">
+      <h4>Live: Budget data with smooth transitions</h4>
+      <div class="controls">
+        <button id="btn-fy22">FY 2022</button>
+        <button id="btn-fy23" class="secondary">FY 2023</button>
+        <button id="btn-fy24" class="green">FY 2024</button>
+      </div>
+      <svg id="transition-chart" viewBox="0 0 700 350"></svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. In D3 v7, how do you access the mouse event in an event handler?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The event is the <strong>first argument</strong> to the handler: <code>.on("click", (event, d) => { ... })</code>. In older versions (v5 and earlier), the global <code>d3.event</code> was used instead. This is one of the most common breaking changes between D3 versions.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why use an HTML <code>&lt;div&gt;</code> for tooltips instead of SVG <code>&lt;text&gt;</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">HTML divs support rich formatting (bold, line breaks, HTML), automatic word wrapping, easy CSS styling, and <code>position: fixed</code> for cursor-following. SVG text does not wrap, cannot contain HTML, and gets clipped by the SVG viewport. Always place the tooltip div outside the SVG.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What does <code>.delay((d, i) => i * 50)</code> do in a transition?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It creates a staggered animation. Each element waits <code>i * 50</code> milliseconds before starting its transition, where <code>i</code> is its index. So the first element starts immediately, the second after 50ms, the third after 100ms, etc. This creates a cascading "wave" effect.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What does the <code>viewBox</code> attribute do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>viewBox</code> defines a virtual coordinate system. <code>viewBox="0 0 700 400"</code> means you draw as if the canvas is 700x400, regardless of the actual rendered size. The browser scales everything to fit the element's CSS dimensions while maintaining the aspect ratio. This is the simplest way to make D3 charts responsive.</div>
+      </div>
+
+      <div class="question">
+        <p>5. How do you chain two transitions sequentially?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Call <code>.transition()</code> twice in the chain: <code>selection.transition().duration(500).attr("height", h).transition().duration(300).attr("fill", "green")</code>. The second transition automatically starts after the first completes. You can also use <code>.on("end", fn)</code> for more complex sequencing.</div>
+      </div>
+
+      <div class="question">
+        <p>6. Name two accessibility improvements you should add to every D3 chart.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">1. Add <code>role="img"</code> and <code>aria-label</code> to the SVG for screen readers. 2. Never rely on color alone: add text labels, patterns, or tooltips so the data is accessible without color perception. Other good practices: <code>&lt;title&gt;</code>/<code>&lt;desc&gt;</code> inside SVG, <code>tabindex="0"</code> on interactive elements, keyboard event handlers.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Add Tooltips and Transitions to a Chart</h4>
+      <ol>
+        <li>Start with a basic bar chart (margins, scales, axes, bars)</li>
+        <li>Add hover tooltips: show city name, population, and density on hover</li>
+        <li>Add a highlight effect: hovered bar gets brighter fill and a border</li>
+        <li>Add entrance animation: bars grow up from the bottom with staggered delay</li>
+        <li>Add a "Sort" button that reorders bars with smooth transitions</li>
+        <li>Add <code>role="img"</code> and <code>aria-label</code> to the SVG</li>
+        <li>Make it responsive with <code>viewBox</code></li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>D3 v7 events:</strong> <code>.on("click", (event, d) => {})</code></li>
+      <li><strong>Tooltips:</strong> HTML div positioned with <code>event.clientX/Y</code></li>
+      <li><strong>Transitions:</strong> <code>.transition().duration().delay().ease()</code></li>
+      <li><strong>Responsive:</strong> <code>viewBox</code> on the SVG element</li>
+      <li><strong>Accessibility:</strong> <code>role="img"</code>, <code>aria-label</code>, keyboard support</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/10-interactivity/">&larr; Lesson 10: Maps &amp; Geography</a>
+      <a href="/d3/lessons/12-capstone/">Lesson 12: Capstone Dashboard &rarr;</a>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+
+    // =============================================
+    // Demo 1: Bar chart with tooltips
+    // =============================================
+    (() => {
+      const data = [
+        { city: "New York", pop: 8336817, state: "NY", density: 29302 },
+        { city: "Los Angeles", pop: 3979576, state: "CA", density: 8304 },
+        { city: "Chicago", pop: 2693976, state: "IL", density: 11841 },
+        { city: "Houston", pop: 2304580, state: "TX", density: 3613 },
+        { city: "Phoenix", pop: 1608139, state: "AZ", density: 3120 },
+        { city: "Philadelphia", pop: 1603797, state: "PA", density: 11683 },
+        { city: "San Antonio", pop: 1547253, state: "TX", density: 3235 },
+        { city: "San Diego", pop: 1386932, state: "CA", density: 4325 },
+      ];
+
+      const m = { top: 20, right: 20, bottom: 70, left: 70 };
+      const w = 700 - m.left - m.right, h = 380 - m.top - m.bottom;
+
+      const svg = d3.select("#tooltip-chart").append("svg")
+        .attr("viewBox", `0 0 ${w + m.left + m.right} ${h + m.top + m.bottom}`)
+        .attr("role", "img").attr("aria-label", "Bar chart of top US cities by population")
+        .append("g").attr("transform", `translate(${m.left},${m.top})`);
+
+      const x = d3.scaleBand().domain(data.map(d => d.city)).range([0, w]).padding(0.2);
+      const y = d3.scaleLinear().domain([0, d3.max(data, d => d.pop)]).nice().range([h, 0]);
+
+      // Grid
+      svg.append("g").call(d3.axisLeft(y).ticks(5).tickSize(-w).tickFormat(""))
+        .selectAll("line").attr("stroke", "#1a1a1a");
+      svg.select(".domain").remove();
+
+      // Axes
+      const xAx = svg.append("g").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x));
+      xAx.selectAll("text").attr("fill", "#888").attr("font-size", "10")
+        .attr("transform", "rotate(-30)").attr("text-anchor", "end");
+      xAx.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+      const yAx = svg.append("g")
+        .call(d3.axisLeft(y).ticks(5).tickFormat(d => `${(d/1_000_000).toFixed(1)}M`));
+      yAx.selectAll("text").attr("fill", "#888");
+      yAx.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+      svg.append("text").attr("x", w / 2).attr("y", -5).attr("text-anchor", "middle")
+        .attr("fill", "#666").attr("font-size", "12").text("Top US Cities by Population (2020 Census)");
+
+      const tooltip = d3.select("#bar-tooltip");
+
+      // Bars with entrance animation and tooltips
+      svg.selectAll("rect").data(data).join("rect")
+        .attr("x", d => x(d.city)).attr("y", h).attr("width", x.bandwidth()).attr("height", 0)
+        .attr("fill", "#f97316").attr("rx", 3)
+        .on("mouseenter", function(event, d) {
+          d3.select(this).transition().duration(150)
+            .attr("fill", "#fb923c").attr("stroke", "#f97316").attr("stroke-width", 2);
+          tooltip.style("display", "block");
+          tooltip.select(".tt-label").text(`${d.city}, ${d.state}`);
+          tooltip.select(".tt-value").html(
+            `Population: ${d3.format(",")(d.pop)}<br>Density: ${d3.format(",")(d.density)}/sq mi`
+          );
+        })
+        .on("mousemove", function(event) {
+          tooltip.style("left", (event.clientX + 14) + "px").style("top", (event.clientY - 40) + "px");
+        })
+        .on("mouseleave", function() {
+          d3.select(this).transition().duration(150)
+            .attr("fill", "#f97316").attr("stroke", "none");
+          tooltip.style("display", "none");
+        })
+        .transition().duration(800).delay((d, i) => i * 60).ease(d3.easeCubicOut)
+        .attr("y", d => y(d.pop)).attr("height", d => h - y(d.pop));
+    })();
+
+    // =============================================
+    // Demo 2: Animated transitions
+    // =============================================
+    (() => {
+      const datasets = {
+        fy22: [
+          { dept: "Safety", val: 45.2 }, { dept: "Education", val: 38.5 },
+          { dept: "Infra", val: 22.1 }, { dept: "Health", val: 18.7 },
+          { dept: "Parks", val: 12.3 }, { dept: "Housing", val: 15.8 },
+          { dept: "Transit", val: 20.4 },
+        ],
+        fy23: [
+          { dept: "Safety", val: 47.8 }, { dept: "Education", val: 41.2 },
+          { dept: "Infra", val: 28.5 }, { dept: "Health", val: 21.3 },
+          { dept: "Parks", val: 11.1 }, { dept: "Housing", val: 19.2 },
+          { dept: "Transit", val: 25.7 },
+        ],
+        fy24: [
+          { dept: "Safety", val: 44.1 }, { dept: "Education", val: 43.8 },
+          { dept: "Infra", val: 31.2 }, { dept: "Health", val: 24.5 },
+          { dept: "Parks", val: 13.6 }, { dept: "Housing", val: 22.8 },
+          { dept: "Transit", val: 28.9 },
+        ],
+      };
+
+      const m = { top: 30, right: 20, bottom: 60, left: 50 };
+      const w = 700 - m.left - m.right, h = 350 - m.top - m.bottom;
+
+      const g = d3.select("#transition-chart")
+        .append("g").attr("transform", `translate(${m.left},${m.top})`);
+
+      d3.select("#transition-chart").insert("rect", ":first-child")
+        .attr("width", 700).attr("height", 350).attr("fill", "#1a1a1a").attr("rx", 4);
+
+      const x = d3.scaleBand().range([0, w]).padding(0.2);
+      const y = d3.scaleLinear().range([h, 0]);
+      const color = d3.scaleSequential(d3.interpolateWarm).domain([0, 50]);
+
+      const xAxisG = g.append("g").attr("transform", `translate(0,${h})`);
+      const yAxisG = g.append("g");
+      const title = g.append("text").attr("x", w / 2).attr("y", -8)
+        .attr("text-anchor", "middle").attr("fill", "#666").attr("font-size", "12");
+
+      function update(data, label) {
+        x.domain(data.map(d => d.dept));
+        y.domain([0, d3.max(data, d => d.val) * 1.15]).nice();
+        title.text(`City Budget - ${label} ($M)`);
+
+        xAxisG.transition().duration(600).call(d3.axisBottom(x));
+        xAxisG.selectAll("text").attr("fill", "#888").attr("font-size", "10")
+          .attr("transform", "rotate(-25)").attr("text-anchor", "end");
+        xAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+        yAxisG.transition().duration(600)
+          .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${d}M`));
+        yAxisG.selectAll("text").attr("fill", "#888");
+        yAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+        g.selectAll(".bar").data(data, d => d.dept)
+          .join(
+            enter => enter.append("rect").attr("class", "bar")
+              .attr("x", d => x(d.dept)).attr("width", x.bandwidth())
+              .attr("y", h).attr("height", 0).attr("rx", 3)
+              .attr("fill", d => color(d.val))
+              .call(e => e.transition().duration(700).delay((d,i) => i * 60)
+                .ease(d3.easeCubicOut)
+                .attr("y", d => y(d.val)).attr("height", d => h - y(d.val))),
+            update => update.call(u => u.transition().duration(600).delay((d,i) => i * 30)
+              .ease(d3.easeCubicInOut)
+              .attr("x", d => x(d.dept)).attr("width", x.bandwidth())
+              .attr("y", d => y(d.val)).attr("height", d => h - y(d.val))
+              .attr("fill", d => color(d.val)))
+          );
+
+        g.selectAll(".val").data(data, d => d.dept)
+          .join(
+            enter => enter.append("text").attr("class", "val")
+              .attr("x", d => x(d.dept) + x.bandwidth() / 2)
+              .attr("text-anchor", "middle").attr("fill", "#888").attr("font-size", "10")
+              .attr("y", h)
+              .call(e => e.transition().duration(700).delay((d,i) => i * 60)
+                .attr("y", d => y(d.val) - 5)),
+            update => update.call(u => u.transition().duration(600).delay((d,i) => i * 30)
+              .attr("x", d => x(d.dept) + x.bandwidth() / 2)
+              .attr("y", d => y(d.val) - 5))
+          )
+          .text(d => `$${d.val}M`);
+      }
+
+      update(datasets.fy22, "FY 2022");
+
+      d3.select("#btn-fy22").on("click", () => update(datasets.fy22, "FY 2022"));
+      d3.select("#btn-fy23").on("click", () => update(datasets.fy23, "FY 2023"));
+      d3.select("#btn-fy24").on("click", () => update(datasets.fy24, "FY 2024"));
+    })();
+  </script>
+</body>
+</html>

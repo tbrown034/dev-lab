@@ -1,0 +1,881 @@
+[
+  {
+    "id": "django-010",
+    "track": "django",
+    "type": "interview",
+    "author": "managePy",
+    "time": "2h",
+    "content": "INTERVIEW Q: You're reviewing a PR from a JS developer who just joined your Django team. They wrote this Python. What feedback do you give?\n\nHint: three things are \"technically valid\" but not Pythonic. A senior Python dev would rewrite all three lines differently.",
+    "code": "# Their code:\nif len(users) > 0:\n    filtered = list(filter(lambda u: u.active == True, users))\n    msg = \"Found \" + str(len(filtered)) + \" active users\"\n\n# Pythonic version:\nif users:\n    filtered = [u for u in users if u.active]\n    msg = f\"Found {len(filtered)} active users\"",
+    "link": {
+      "url": "/django/lessons/01-python-fundamentals/",
+      "label": "Python fundamentals in Lesson 1 →"
+    },
+    "poll": null,
+    "likes": 892,
+    "reposts": 187,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "The list comprehension isn't just style—it's faster too. filter() + lambda creates two function call overheads per element. The comprehension compiles to a tighter loop. Measured it once: 35% faster on 10k items.",
+        "likes": 301
+      },
+      {
+        "author": "templateTag",
+        "content": "f-strings are the one thing in Python that make me feel like the language designers actually use their own language. Unlike certain JS template literal decisions I could name. [days since JS broke something: 2]",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "django-011",
+    "track": "django",
+    "type": "hotTake",
+    "author": "templateTag",
+    "time": "5h",
+    "content": "hot take: Python's indentation-as-syntax is actually BETTER than curly braces.\n\nIn JS, your code can lie. It can look properly indented while the braces tell a different story. In Python, what you see IS what the interpreter sees.\n\nJS devs complain about significant whitespace for exactly one week. Then they realize they were already indenting their code correctly—Python just made it mandatory.\n\nno build step. no transpiler. no prettier config debates. just... indent correctly.\n\n[days since JS broke something: 0. Prettier 4.0 dropped and half the ecosystem's formatting changed overnight.]",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/01-python-fundamentals/",
+      "label": "Python syntax in Lesson 1 →"
+    },
+    "poll": null,
+    "likes": 1347,
+    "reposts": 289,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Back in Django 1.4, we had a production outage because someone mixed tabs and spaces. Python 3 made that a hard error. The language learned from its mistakes—unlike some ecosystems that just add another config file.",
+        "likes": 423
+      },
+      {
+        "author": "middlewareStack",
+        "content": "whitespace defines form\nlike silence shapes a melody\nstructure IS the code",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "django-012",
+    "track": "django",
+    "type": "tip",
+    "author": "managePy",
+    "time": "3h",
+    "content": "PRO TIP: Python f-strings vs JS template literals—same idea, different superpower.\n\nPython f-strings can do inline expressions, formatting, and even debugging with the = sign. Most JS devs don't know about that last one.",
+    "code": "# Python f-strings\nname = \"Django\"\nversion = 4.2\nprint(f\"Using {name} v{version}\")        # Using Django v4.2\nprint(f\"Pi is {3.14159:.2f}\")             # Pi is 3.14\nprint(f\"{name.upper()!r}\")                # 'DJANGO'\nprint(f\"{version = }\")                    # version = 4.2  (debug!)\nprint(f\"{'yes' if version > 4 else 'no'}\") # yes\n\n// JavaScript template literals\nconst name = \"Express\";\nconst version = 4.18;\nconsole.log(`Using ${name} v${version}`);  // same basic idea\nconsole.log(`Pi is ${(3.14159).toFixed(2)}`); // method call needed\n// No debug shorthand. No format specs. No !r repr.",
+    "link": {
+      "url": "/django/lessons/01-python-fundamentals/",
+      "label": "f-strings deep dive in Lesson 1 →"
+    },
+    "poll": null,
+    "likes": 634,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "The f\"{variable = }\" trick is incredible for debugging ORM queries. f\"{qs.query = }\" prints the actual SQL. Saved me hours. (Query count for this tip: 0. A personal best.)",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "django-013",
+    "track": "django",
+    "type": "spotBug",
+    "author": "queryset",
+    "time": "8h",
+    "content": "SPOT THE BUG: A JS developer wrote their first Python function. It \"works\" but has a classic Python gotcha that will cause nightmares in production.\n\nHint: call the function twice without arguments.",
+    "code": "def add_item(item, items=[]):\n    items.append(item)\n    return items\n\nresult1 = add_item(\"django\")\nprint(result1)  # ['django']\n\nresult2 = add_item(\"flask\")\nprint(result2)  # Expected: ['flask']\n                # Actual:   ['django', 'flask']  !!!\n\n# Fix: use None as default, create list inside\ndef add_item(item, items=None):\n    if items is None:\n        items = []\n    items.append(item)\n    return items",
+    "link": {
+      "url": "/django/lessons/03-python-functions/",
+      "label": "function defaults in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 445,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "This one bites EVERYONE exactly once. The default list is created when the function is DEFINED, not when it's called. It's the same list object every time. In JS, default params are evaluated per call. In Python, they're evaluated once. Respect the difference.",
+        "likes": 212
+      },
+      {
+        "author": "migrationRunner",
+        "content": "Migration Horror Stories, Appendix B: someone used a mutable default in a data migration's RunPython function. It accumulated state across 40,000 rows. The migration took 6 hours and produced wrong data for every row after the first. I still have nightmares.",
+        "likes": 167
+      }
+    ]
+  },
+  {
+    "id": "django-014",
+    "track": "django",
+    "type": "mentalModel",
+    "author": "middlewareStack",
+    "time": "4h",
+    "content": "MENTAL MODEL: Python's truthiness vs JavaScript's truthiness\n\nIn JS, truthiness is a minefield of WAT moments. In Python, the rules are almost... elegant.\n\nFalsy in Python: False, None, 0, 0.0, \"\", [], {}, set(), ()\nEverything else: truthy.\n\nThat's it. No \"0\" being truthy while 0 is falsy. No [] being truthy (it's falsy in Python!). No NaN because Python uses None as its \"absence of value.\"\n\nThe philosophy: empty collections are falsy. Populated ones are truthy. Absence is falsy. Presence is truthy.\n\nrequest in, boolean out. The universe is middleware.",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/01-python-fundamentals/",
+      "label": "truthiness rules in Lesson 1 →"
+    },
+    "poll": null,
+    "likes": 678,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "templateTag",
+        "content": "In JS, [] == false is true but [] is truthy in an if statement. I have that burned into my memory alongside my therapist's phone number. Python just... makes sense.",
+        "likes": 289
+      },
+      {
+        "author": "queryset",
+        "content": "This is why `if queryset:` works in Django. An empty QuerySet is falsy. A populated one is truthy. But careful—`if queryset` evaluates the ENTIRE query. Use `if queryset.exists()` for efficiency. (1 query vs loading all rows.)",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-015",
+    "track": "django",
+    "type": "interview",
+    "author": "queryset",
+    "time": "1d",
+    "content": "INTERVIEW Q: Explain the difference between a list comprehension and using map/filter in Python. When would you choose one over the other?\n\nThis is a culture question. The answer reveals whether you think in Python or just write Python-shaped code.",
+    "code": "# JS developer instinct:\nnums = [1, 2, 3, 4, 5]\nevens_doubled = list(map(lambda x: x * 2, filter(lambda x: x % 2 == 0, nums)))\n# [4, 8]\n\n# Pythonic:\nevens_doubled = [x * 2 for x in nums if x % 2 == 0]\n# [4, 8]\n\n# When map() wins: applying an existing named function\nnames = [\"django\", \"flask\", \"fastapi\"]\nupper_names = list(map(str.upper, names))\n# cleaner than [n.upper() for n in names]? debatable.",
+    "link": {
+      "url": "/django/lessons/01-python-fundamentals/",
+      "label": "comprehensions in Lesson 1 →"
+    },
+    "poll": null,
+    "likes": 567,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "The right answer: comprehensions for 90% of cases. map() when you already have a named function and the comprehension would just be `[f(x) for x in items]`. If you're writing a lambda inside map(), stop. Use a comprehension. There's a battery for that.",
+        "likes": 245
+      },
+      {
+        "author": "middlewareStack",
+        "content": "A comprehension transforms input to output in one breath. map and filter are two steps pretending to be one. Simplicity is its own middleware.",
+        "likes": 156
+      }
+    ]
+  },
+  {
+    "id": "django-016",
+    "track": "django",
+    "type": "tip",
+    "author": "queryset",
+    "time": "7h",
+    "content": "PRO TIP: Python dict comprehensions are the secret weapon JS devs don't know they're missing.\n\nIn JS you'd use Object.fromEntries() with map(). In Python, it's one clean expression.",
+    "code": "# Python: dict comprehension\nusers = [{\"id\": 1, \"name\": \"Manny\"}, {\"id\": 2, \"name\": \"Tanya\"}]\nby_id = {u[\"id\"]: u[\"name\"] for u in users}\n# {1: 'Manny', 2: 'Tanya'}\n\n# With filtering:\nactive = {u[\"id\"]: u for u in users if u.get(\"active\")}\n\n// JS equivalent:\nconst users = [{id: 1, name: \"Manny\"}, {id: 2, name: \"Tanya\"}];\nconst byId = Object.fromEntries(users.map(u => [u.id, u.name]));\n// {1: 'Manny', 2: 'Tanya'}\n// With filtering? Good luck reading that chain.",
+    "link": null,
+    "poll": null,
+    "likes": 423,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "templateTag",
+        "content": "Object.fromEntries(users.map(u => [u.id, u.name])) is the JS equivalent. I had to google it. Again. Python's version I can actually remember. No build step, no problems, no googling.",
+        "likes": 134
+      }
+    ]
+  },
+  {
+    "id": "django-017",
+    "track": "django",
+    "type": "interview",
+    "author": "managePy",
+    "time": "12h",
+    "content": "INTERVIEW Q: What's the difference between *args and **kwargs in Python? Give a real-world example where you'd use both.\n\nBack in Django 1.4, we passed everything as positional arguments and just hoped for the best. kwargs was a revelation. Like going from \"pass me that thing\" to \"pass me the salt.\"",
+    "code": "# *args = rest parameters (...args in JS)\n# **kwargs = destructured options object ({ ...options } in JS)\n\ndef log_event(event_type, *args, **kwargs):\n    print(f\"Event: {event_type}\")\n    print(f\"Extra args: {args}\")      # tuple of positional extras\n    print(f\"Options: {kwargs}\")        # dict of keyword extras\n\nlog_event(\"click\", \"btn-1\", \"nav\", user=\"manny\", page=\"/home\")\n# Event: click\n# Extra args: ('btn-1', 'nav')\n# Options: {'user': 'manny', 'page': '/home'}\n\n// JS equivalent:\nfunction logEvent(eventType, ...args) {\n  // JS has no built-in **kwargs equivalent\n  // You'd pass an options object manually:\n  // logEvent('click', 'btn-1', { user: 'manny' })\n}",
+    "link": {
+      "url": "/django/lessons/03-python-functions/",
+      "label": "args and kwargs in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 712,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "Real-world Django use: almost every class-based view method signature is `def get(self, request, *args, **kwargs)`. If you don't understand *args/**kwargs, you can't read Django source code. And if you can't read Django source code, how many unnecessary queries are you writing? (Rhetorical. It's a lot.)",
+        "likes": 278
+      }
+    ]
+  },
+  {
+    "id": "django-018",
+    "track": "django",
+    "type": "hotTake",
+    "author": "managePy",
+    "time": "6h",
+    "content": "hot take: Python's `None` is better designed than JavaScript's null/undefined split.\n\nJS has TWO ways to say \"nothing\": null (intentional absence) and undefined (accidental absence). This creates an entire category of bugs that don't exist in Python.\n\nPython has `None`. One value. One way to check it (`is None`). No \"is it null or undefined or void 0 or NaN\" guessing game.\n\nEvery time I see `value == null` in JS (which catches both null AND undefined), I think: you just proved my point. You need a special operator to paper over a design mistake.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1523,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "templateTag",
+        "content": "JS optional chaining: obj?.prop ?? 'default'\nPython: getattr(obj, 'prop', 'default')\n\nOne language needed new syntax. The other had a built-in function since the beginning. [days since JS broke something: 1]",
+        "likes": 367
+      },
+      {
+        "author": "middlewareStack",
+        "content": "None is the silence between notes. null and undefined are two different silences that somehow make different sounds. One path through the middleware. One way to express nothing.",
+        "likes": 201
+      }
+    ]
+  },
+  {
+    "id": "django-019",
+    "track": "django",
+    "type": "tip",
+    "author": "templateTag",
+    "time": "2h",
+    "content": "PRO TIP: Python's ternary is backwards from JS and that trips up EVERYONE.\n\nOnce you read it as English—\"give me X if condition, else Y\"—it actually reads more naturally. But the first week is rough.",
+    "code": "# Python ternary (conditional expression)\nstatus = \"active\" if user.is_logged_in else \"guest\"\n# Read it as English: \"active\" IF logged in ELSE \"guest\"\n\n// JavaScript ternary\nconst status = user.isLoggedIn ? \"active\" : \"guest\";\n// condition ? true : false\n\n# Python nesting (don't do this):\nrole = \"admin\" if is_admin else \"mod\" if is_mod else \"user\"\n# Please just use if/elif/else at this point\n\n// JS equivalent nesting (also don't do this):\n// const role = isAdmin ? \"admin\" : isMod ? \"mod\" : \"user\";",
+    "link": {
+      "url": "/django/lessons/01-python-fundamentals/",
+      "label": "Python syntax in Lesson 1 →"
+    },
+    "poll": null,
+    "likes": 389,
+    "reposts": 56,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Guido van Rossum resisted adding a ternary for YEARS. When Python finally got it, he made it read like English on purpose. That's the Python philosophy—code is read more often than it's written. There's a battery for readability.",
+        "likes": 145
+      }
+    ]
+  },
+  {
+    "id": "django-020",
+    "track": "django",
+    "type": "spotBug",
+    "author": "managePy",
+    "time": "1d",
+    "content": "SPOT THE BUG: A JS dev wrote this Python and says \"it works but sometimes gives wrong answers.\" What's the issue?",
+    "code": "def check_permissions(user, role):\n    if role == \"admin\" or \"superuser\":\n        return True\n    if role == \"viewer\" and not user.is_banned:\n        return True\n    return False\n\n# This ALWAYS returns True! Why?\n# \"superuser\" is a non-empty string = truthy\n# So the condition is: (role == \"admin\") or (\"superuser\")\n# which is: (role == \"admin\") or True\n# which is: always True\n\n# Fix:\nif role == \"admin\" or role == \"superuser\":\n# Or better:\nif role in (\"admin\", \"superuser\"):",
+    "link": null,
+    "poll": null,
+    "likes": 534,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "Setting aside the logic bug—you're checking permissions with string comparison? Where's the role coming from? If it's user input, someone is sending role=\"admin\" in their request body right now. Parameterize or perish.",
+        "likes": 312
+      },
+      {
+        "author": "queryset",
+        "content": "The `in` operator is the right call here. It's also faster—one lookup instead of chained comparisons. Not that it matters at this scale, but good habits start with small decisions. (Query count: 0, but security count: also 0. Listen to Bobby.)",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "django-021",
+    "track": "django",
+    "type": "til",
+    "author": "queryset",
+    "time": "3h",
+    "content": "TIL: Python type hints have ZERO runtime performance cost. They're completely ignored by the interpreter. They exist for mypy, IDE autocomplete, and your future self reading the code 6 months later.\n\nComing from TypeScript where types are compiled away, this feels familiar. But Python went further—type hints are optional forever. No tsconfig. No strict mode. Add them where they help, skip them where they don't.",
+    "code": "from typing import Optional\n\n# Without type hints (valid Python, but harder to maintain)\ndef get_user(user_id, include_profile=False):\n    ...\n\n# With type hints (self-documenting, tooling-friendly)\ndef get_user(user_id: int, include_profile: bool = False) -> Optional[User]:\n    ...\n\n# Type hints are IGNORED at runtime. Zero performance cost.\n# They're for: mypy, IDE autocomplete, documentation, your future self.\n\n// JS equivalent: TypeScript\n// function getUser(userId: number, includeProfile: boolean = false): User | null",
+    "link": {
+      "url": "/django/lessons/01-python-fundamentals/",
+      "label": "type hints in Lesson 1 →"
+    },
+    "poll": null,
+    "likes": 623,
+    "reposts": 108,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Django 4.1+ has full type stub support. django-stubs makes your IDE understand QuerySet types, model fields, everything. Type hints went from \"nice to have\" to \"how did we live without this.\" There's a battery for that now.",
+        "likes": 234
+      },
+      {
+        "author": "migrationRunner",
+        "content": "Type hints caught a bug in our data migration last month. A RunPython function was receiving a string ID where it expected an int. mypy flagged it. Without types, that would have been a Migration Horror Story, season 3.",
+        "likes": 156
+      }
+    ]
+  },
+  {
+    "id": "django-022",
+    "track": "django",
+    "type": "mentalModel",
+    "author": "managePy",
+    "time": "9h",
+    "content": "MENTAL MODEL: Python dicts are NOT JavaScript objects. They're better.\n\nIn JS, object keys are always strings (or Symbols). In Python, dict keys can be any immutable type: strings, numbers, tuples, even frozensets.\n\nJS objects mix data storage with behavior (methods, prototypes, __proto__). Python dicts are pure data. No prototype chain. No hidden properties. No `hasOwnProperty()` dance.\n\nThink of a Python dict as a JSON object that grew up and got a computer science degree.",
+    "code": "# Python dict: any hashable key\ncoords = {(0, 0): \"origin\", (1, 2): \"point A\"}\ncache = {42: \"answer\", True: \"yes\", \"name\": \"Manny\"}\n\n# JS object: keys are always strings\n// const obj = { 42: \"answer\" };\n// Object.keys(obj) -> [\"42\"]  <- it's a string now!\n\n# Python dict methods are explicit and powerful\nuser = {\"name\": \"Manny\", \"role\": \"admin\"}\nuser.get(\"email\", \"no email\")  # safe access with default\nuser | {\"email\": \"m@py.dev\"}   # merge (Python 3.9+)\nuser.setdefault(\"theme\", \"dark\")  # set only if missing",
+    "link": {
+      "url": "/django/lessons/02-python-collections/",
+      "label": "Python dicts in Lesson 2 →"
+    },
+    "poll": null,
+    "likes": 756,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "A Python dict is basically a hash table JOIN between keys and values. The hash function is the join condition. I'll show myself out.",
+        "likes": 234
+      },
+      {
+        "author": "templateTag",
+        "content": "In Django templates, you access dict values with dot notation: {{ user.name }}. It looks like JS object access but it's actually calling __getitem__ under the hood. No build step needed to understand that.",
+        "likes": 145
+      }
+    ]
+  },
+  {
+    "id": "django-023",
+    "track": "django",
+    "type": "til",
+    "author": "migrationRunner",
+    "time": "5h",
+    "content": "TIL: Python has a walrus operator `:=` that assigns AND returns a value in one expression. It's like doing `const x = value` inside an if condition in JS.\n\nFound this while debugging a migration that needed to check AND use a queryset result without evaluating it twice.",
+    "code": "# Without walrus: evaluate twice\ndata = get_data()\nif data:\n    process(data)\n\n# With walrus: evaluate once\nif data := get_data():\n    process(data)\n\n# Great for while loops\nwhile chunk := file.read(8192):\n    process(chunk)\n\n# And comprehension filtering\nresults = [clean for item in items if (clean := transform(item)) is not None]",
+    "link": {
+      "url": "/django/lessons/01-python-fundamentals/",
+      "label": "walrus operator in Lesson 1 →"
+    },
+    "poll": null,
+    "likes": 345,
+    "reposts": 54,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "I use this with QuerySets constantly. `if qs := Model.objects.filter(...).first():` saves a query vs checking .exists() then .first(). One query instead of two. Lifetime N+1 fixes: 2,848.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "django-024",
+    "track": "django",
+    "type": "hotTake",
+    "author": "queryset",
+    "time": "2d",
+    "content": "hot take: if you're coming from JavaScript and you reach for a for loop in Python, you're probably doing it wrong.\n\nPython has a comprehension, a generator expression, a built-in, or a standard library function for almost everything you'd write a loop for.\n\nThe loop isn't wrong. It's just... not how we do things here.\n\nhow many queries though? zero. this is a philosophy post.",
+    "code": "# JS instinct: loop and accumulate\n# total = 0\n# for item in items:\n#     total += item.price\n\n# Python: just use sum()\ntotal = sum(item.price for item in items)\n\n# JS instinct: loop and check\n# found = False\n# for item in items:\n#     if item.active:\n#         found = True\n#         break\n\n# Python: just use any()\nfound = any(item.active for item in items)\n\n# Also: all(), min(), max(), sorted(), enumerate(), zip()",
+    "link": null,
+    "poll": null,
+    "likes": 934,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "There's a battery for that. There's literally always a battery for that. sum(), any(), all(), min(), max()—these aren't clever tricks, they're the standard library doing its job. Read the docs like scripture and ye shall be rewarded.",
+        "likes": 345
+      },
+      {
+        "author": "bindData",
+        "content": "This is the same philosophy as D3's data joins—declare WHAT you want, not HOW to loop through it. data in, meaning out. Python comprehensions and D3 selections are spiritual cousins. (Draft blog post now at 14,200 words.)",
+        "likes": 123
+      }
+    ]
+  },
+  {
+    "id": "django-025",
+    "track": "django",
+    "type": "tip",
+    "author": "migrationRunner",
+    "time": "14h",
+    "content": "PRO TIP: Python tuple unpacking is destructuring on steroids. If you're from JS, this will feel familiar—then surprise you.\n\nEvery time you see a tuple return in Django (like get_or_create), you need this.",
+    "code": "# Basic unpacking (like JS destructuring)\nfirst, second, third = [1, 2, 3]\nx, y = y, x  # swap! no temp variable needed\n\n# Star unpacking (like ...rest)\nfirst, *middle, last = [1, 2, 3, 4, 5]\n# first=1, middle=[2, 3, 4], last=5\n\n// JS equivalent:\n// const [first, ...middle] = [1, 2, 3, 4, 5];\n// But JS can't capture the last item with rest!\n// You'd need: const last = arr.at(-1);\n\n# Nested unpacking (Python only)\n(a, b), (c, d) = (1, 2), (3, 4)\n\n# Ignore with underscore\nuser, _ = User.objects.get_or_create(name=\"Manny\")\n_, extension = filename.rsplit(\".\", 1)",
+    "link": {
+      "url": "/django/lessons/02-python-collections/",
+      "label": "unpacking in Lesson 2 →"
+    },
+    "poll": null,
+    "likes": 478,
+    "reposts": 73,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "The `first, *middle, last` pattern is underrated. Parsing CSV headers? `header, *data_rows, footer = rows`. Clean, readable, zero extra queries... wait, this isn't even a database thing. I need a hobby.",
+        "likes": 167
+      }
+    ]
+  },
+  {
+    "id": "django-026",
+    "track": "django",
+    "type": "poll",
+    "author": "middlewareStack",
+    "time": "10h",
+    "content": "POLL: What does this Python expression evaluate to?\n\n`result = [x**2 for x in range(5) if x % 2]`",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "[0, 1, 4, 9, 16]",
+          "votes": 18
+        },
+        {
+          "text": "[1, 9]",
+          "votes": 62
+        },
+        {
+          "text": "[0, 4, 16]",
+          "votes": 15
+        },
+        {
+          "text": "[1, 4, 9, 16]",
+          "votes": 5
+        }
+      ],
+      "totalVotes": 100
+    },
+    "likes": 312,
+    "reposts": 34,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "It's [1, 9]. range(5) gives 0,1,2,3,4. The `if x % 2` filters to odd numbers (1, 3) because 0 is falsy. Then squares them: 1, 9. The filter runs BEFORE the transform. Read it left to right: generate, filter, transform.",
+        "likes": 234
+      },
+      {
+        "author": "middlewareStack",
+        "content": "A comprehension is middleware for data. The iterable is the request. The condition is the filter layer. The expression is the response transformation. request in, list out.",
+        "likes": 145
+      }
+    ]
+  },
+  {
+    "id": "django-027",
+    "track": "django",
+    "type": "interview",
+    "author": "managePy",
+    "time": "1d",
+    "content": "INTERVIEW Q: Explain Python decorators to someone who knows JavaScript higher-order functions.\n\nBack in Django 1.4, we used decorators for everything. @login_required, @csrf_exempt, @cache_page. They haven't changed because they didn't need to. Good design ages well.",
+    "code": "# A decorator is a function that wraps another function.\n# JS devs: it's a higher-order function with @ syntax sugar.\n\n# Python decorator:\ndef log_calls(func):\n    def wrapper(*args, **kwargs):\n        print(f\"Calling {func.__name__}\")\n        result = func(*args, **kwargs)\n        print(f\"{func.__name__} returned {result}\")\n        return result\n    return wrapper\n\n@log_calls\ndef add(a, b):\n    return a + b\n\nadd(2, 3)  # prints: Calling add, add returned 5\n\n// JS equivalent:\nfunction logCalls(fn) {\n  return function(...args) {\n    console.log(`Calling ${fn.name}`);\n    const result = fn(...args);\n    console.log(`${fn.name} returned ${result}`);\n    return result;\n  };\n}\n// const add = logCalls((a, b) => a + b);",
+    "link": {
+      "url": "/django/lessons/03-python-functions/",
+      "label": "decorators in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 845,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "middlewareStack",
+        "content": "functions wrapped in care\ndecorators fold like dough\nmiddleware of code",
+        "likes": 312
+      },
+      {
+        "author": "queryset",
+        "content": "Django's @cached_property is the decorator that saves the most queries in my experience. It computes an attribute once and caches it on the instance. Instead of hitting the DB every time you access a property, it's one query per object lifetime. Beautiful.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "django-028",
+    "track": "django",
+    "type": "hotTake",
+    "author": "middlewareStack",
+    "time": "8h",
+    "content": "hot take: Python generators are the most underappreciated feature for web developers.\n\nYou have 10 million rows. You don't need them all in memory. You need them one at a time. A generator gives you a pipeline—each item flows through only when asked for.\n\nIt's middleware for data. Each yield is a response. Each next() is a request.\n\nrequest in, response out, memory stays flat.",
+    "code": "# Generator: lazy evaluation\ndef read_huge_file(path):\n    with open(path) as f:\n        for line in f:\n            if line.strip():\n                yield line.strip()\n\n# Processes one line at a time. 10GB file? 1 line in memory.\nfor line in read_huge_file(\"huge.csv\"):\n    process(line)\n\n# Generator expression (like list comp but lazy)\nsum_of_squares = sum(x**2 for x in range(1_000_000))\n# No list created! Computes and sums one value at a time.\n\n// JS equivalent: function* generators exist but\n// nobody uses them. Python generators are idiomatic.",
+    "link": {
+      "url": "/django/lessons/03-python-functions/",
+      "label": "generators in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 723,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "Django's QuerySet.iterator() IS a generator under the hood. Instead of loading 10k objects into memory, it streams them from the database. I've seen this single method drop memory usage from 2GB to 50MB. Generators aren't academic—they're production survival.",
+        "likes": 278
+      }
+    ]
+  },
+  {
+    "id": "django-029",
+    "track": "django",
+    "type": "spotBug",
+    "author": "templateTag",
+    "time": "11h",
+    "content": "SPOT THE BUG: A JS developer is trying to build a string in Python. This runs without errors but the senior dev is NOT happy. What's wrong and why?",
+    "code": "# Building a URL with query params\nbase = \"https://api.example.com/users\"\nparams = {\"page\": 2, \"sort\": \"name\", \"active\": True}\n\nurl = base + \"?\"\nfor key in params:\n    url = url + key + \"=\" + str(params[key]) + \"&\"\nurl = url[:-1]  # remove trailing &\n\n# Result: https://api.example.com/users?page=2&sort=name&active=True\n\n# Problems:\n# 1. String concatenation in a loop creates a new string each time (O(n^2))\n# 2. No URL encoding! What if a value has spaces or special chars?\n# 3. Python has urllib.parse.urlencode() for this exact thing\n\n# Fix:\nfrom urllib.parse import urlencode\nurl = f\"{base}?{urlencode(params)}\"\n# https://api.example.com/users?page=2&sort=name&active=True",
+    "link": null,
+    "poll": null,
+    "likes": 367,
+    "reposts": 52,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "There's a battery for that. There is ALWAYS a battery for that. urllib.parse, json, csv, pathlib, datetime—before you write a utility function, check the standard library. Python's stdlib is its greatest superpower.",
+        "likes": 234
+      },
+      {
+        "author": "bobbyTables",
+        "content": "The missing URL encoding is a security issue too. If any of those params come from user input, you're one step away from an injection vector. urlencode() handles escaping. Your hand-rolled loop doesn't. Parameterize or perish.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "django-030",
+    "track": "django",
+    "type": "interview",
+    "author": "queryset",
+    "time": "6h",
+    "content": "INTERVIEW Q: What's the difference between a Python set and a list? When would you use each?\n\nI ask this in every interview. The candidates who mention O(1) lookup get a follow-up. The ones who mention frozenset get an offer.",
+    "code": "# List: ordered, duplicates OK, O(n) lookup\nusers = [\"manny\", \"tanya\", \"miggy\", \"manny\"]\n\"manny\" in users  # True, but checks EVERY element\n\n# Set: unordered, no duplicates, O(1) lookup\nactive_ids = {101, 202, 303, 404}\n202 in active_ids  # True, instant hash lookup\n\n# Real-world: checking membership\n# Bad: O(n) per check, O(n*m) total\nbanned = [\"spam@bot.com\", \"hack@evil.com\"]\nfor user in all_users:\n    if user.email in banned:  # scans entire list each time\n        block(user)\n\n# Good: O(1) per check, O(n) total\nbanned = {\"spam@bot.com\", \"hack@evil.com\"}\nfor user in all_users:\n    if user.email in banned:  # hash lookup\n        block(user)",
+    "link": {
+      "url": "/django/lessons/02-python-collections/",
+      "label": "sets and performance in Lesson 2 →"
+    },
+    "poll": null,
+    "likes": 578,
+    "reposts": 94,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "The frozenset follow-up: it's an immutable set, so it's hashable, so you can use it as a dict key or put it inside another set. When someone knows that, they understand Python's \"hashable = immutable\" contract. That's deep language knowledge.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "django-031",
+    "track": "django",
+    "type": "eli5",
+    "author": "middlewareStack",
+    "time": "4h",
+    "content": "ELI5: Python decorators\n\nYou have a gift (your function). You want to wrap it in pretty paper (add logging). Then put it in a box (add authentication). Then tie a bow on it (add caching).\n\nEach layer is a decorator. The gift inside doesn't change. But what the recipient sees is the fully wrapped version.\n\n@bow\n@box\n@wrapping_paper\ndef gift():\n    return happiness\n\nThe decorators apply bottom-up: wrapping_paper first, then box, then bow. The outermost decorator is the first thing the caller \"sees.\"\n\nJust like middleware. request in, response out. The layers are the journey.",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/03-python-functions/",
+      "label": "decorators explained in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 892,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "templateTag",
+        "content": "Django's view decorators are exactly this. @login_required wraps your view in an auth check. @csrf_exempt removes the CSRF layer. @require_http_methods([\"GET\"]) filters by method. Stack them and your view is protected before it even runs. No JavaScript framework needed.",
+        "likes": 234
+      },
+      {
+        "author": "queryset",
+        "content": "And @cache_page(60*15) is the decorator equivalent of \"I already answered this question 14 minutes ago, go read that.\" Saves queries. Saves compute. Saves my sanity. (Queries saved: incalculable.)",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "django-032",
+    "track": "django",
+    "type": "tip",
+    "author": "queryset",
+    "time": "3d",
+    "content": "PRO TIP: Python's collections module has data structures that solve problems JS devs reach for lodash to solve.\n\nStop writing helper functions. The standard library already did it.",
+    "code": "from collections import Counter, defaultdict, namedtuple\n\n# Counter: count occurrences (lodash.countBy)\nwords = [\"django\", \"flask\", \"django\", \"django\", \"fastapi\"]\nCounter(words)  # Counter({'django': 3, 'flask': 1, 'fastapi': 1})\nCounter(words).most_common(1)  # [('django', 3)]\n\n# defaultdict: auto-initialize missing keys (no more || {})\nby_role = defaultdict(list)\nfor user in users:\n    by_role[user.role].append(user)  # no KeyError ever\n\n// JS equivalent:\n// const byRole = {};\n// for (const user of users) {\n//   (byRole[user.role] ??= []).push(user);\n// }\n\n# namedtuple: lightweight class (like a typed object literal)\nPoint = namedtuple(\"Point\", [\"x\", \"y\"])\np = Point(3, 4)\nprint(p.x, p.y)  # named access, immutable, memory-efficient",
+    "link": {
+      "url": "/django/lessons/02-python-collections/",
+      "label": "collections module in Lesson 2 →"
+    },
+    "poll": null,
+    "likes": 512,
+    "reposts": 87,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "There's a battery for that. defaultdict alone has saved me thousands of lines of if/else boilerplate over the years. Counter.most_common() is what every analytics dashboard needs but nobody knows exists.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "django-033",
+    "track": "django",
+    "type": "interview",
+    "author": "managePy",
+    "time": "16h",
+    "content": "INTERVIEW Q: What's the difference between `__str__` and `__repr__` in Python? Which one does Django use in the admin panel?\n\nBack in Django 1.4, we had to remember to define __unicode__ instead of __str__. Kids today don't know how good they have it with Python 3.\n\nThe answer I want: __str__ is for users, __repr__ is for developers. Django admin uses __str__.",
+    "code": "class Article:\n    def __init__(self, title, author):\n        self.title = title\n        self.author = author\n\n    def __str__(self):\n        # Human-readable: what users see\n        return self.title\n\n    def __repr__(self):\n        # Developer-readable: what the debugger shows\n        return f\"Article(title={self.title!r}, author={self.author!r})\"\n\na = Article(\"Why Python Wins\", \"Manny\")\nprint(a)      # Why Python Wins          (__str__)\nprint([a])    # [Article(title='Why...')]  (__repr__)\n\n# Django admin dropdown: shows __str__\n# Django shell:          shows __repr__\n# f-string {obj}:        calls __str__\n# f-string {obj!r}:      calls __repr__",
+    "link": {
+      "url": "/django/lessons/04-python-oop/",
+      "label": "dunder methods in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 678,
+    "reposts": 123,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "Protip: always define __repr__ on your models during development. When you're debugging a QuerySet in the shell and all you see is `<Article: Article object (1)>` repeated 50 times, you'll wish you had. (Time wasted reading unhelpful reprs this year: 47 hours. Approximately.)",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-034",
+    "track": "django",
+    "type": "hotTake",
+    "author": "queryset",
+    "time": "2h",
+    "content": "hot take: Python's `@dataclass` makes 80% of custom `__init__` methods pointless.\n\nIf your class is mostly \"store these values and let me access them,\" you don't need to hand-write __init__, __repr__, __eq__, or __hash__. Dataclass generates all of them.\n\nIt's like TypeScript interfaces but they actually DO something at runtime.\n\nhow many queries though? zero. but how many lines of boilerplate saved? dozens.",
+    "code": "from dataclasses import dataclass, field\n\n# Without dataclass: 15 lines of boilerplate\nclass User:\n    def __init__(self, name, email, role=\"viewer\"):\n        self.name = name\n        self.email = email\n        self.role = role\n    def __repr__(self):\n        return f\"User({self.name!r}, {self.email!r})\"\n    def __eq__(self, other):\n        return (self.name, self.email) == (other.name, other.email)\n\n# With dataclass: 5 lines, same result + more\n@dataclass\nclass User:\n    name: str\n    email: str\n    role: str = \"viewer\"\n    tags: list[str] = field(default_factory=list)\n    # __init__, __repr__, __eq__ all generated!",
+    "link": {
+      "url": "/django/lessons/04-python-oop/",
+      "label": "dataclasses in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 867,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Note: Django models are NOT dataclasses—they have their own metaclass magic. But for service layer objects, DTOs, and config objects? Dataclasses are the battery. There's a battery for that.",
+        "likes": 312
+      },
+      {
+        "author": "migrationRunner",
+        "content": "See that `field(default_factory=list)`? That's how dataclasses solve the mutable default argument bug from django-013. It creates a new list for each instance. The language learned from its own gotcha.",
+        "likes": 201
+      }
+    ]
+  },
+  {
+    "id": "django-035",
+    "track": "django",
+    "type": "mentalModel",
+    "author": "middlewareStack",
+    "time": "5h",
+    "content": "MENTAL MODEL: Python classes for JS developers\n\nForget everything complicated about JS classes (prototype chains, `this` binding, arrow functions in constructors). Python classes are simpler.\n\n`self` is always explicit. It's the first parameter of every method. No guessing what `this` refers to. No `.bind()` needed. No arrow function tricks.\n\n`__init__` is the constructor. But it's not called \"constructor\" because Python separates object CREATION (__new__) from object INITIALIZATION (__init__). 99% of the time, you only care about __init__.\n\nThe method receives the instance.\nThe instance carries the state.\nState in, behavior out.\nrequest in, response out, nothing else matters.",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/04-python-oop/",
+      "label": "Python OOP in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 645,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "templateTag",
+        "content": "\"No guessing what `this` refers to\" is the most beautiful sentence in programming. In JS, `this` is a riddle wrapped in a mystery wrapped in a setTimeout. In Python, `self` is just... the object. That's it. [days since JS broke something: 0. Someone used `this` in a callback again.]",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "django-036",
+    "track": "django",
+    "type": "spotBug",
+    "author": "queryset",
+    "time": "2d",
+    "content": "SPOT THE BUG: This class looks fine to a JS developer but has a classic Python gotcha. Every instance shares the same list. Why?",
+    "code": "class TaskManager:\n    tasks = []  # <-- BUG: class variable, shared by ALL instances!\n\n    def __init__(self, name):\n        self.name = name\n\n    def add_task(self, task):\n        self.tasks.append(task)\n\na = TaskManager(\"Alice\")\nb = TaskManager(\"Bob\")\na.add_task(\"deploy\")\nprint(b.tasks)  # ['deploy']  <- Bob sees Alice's task!\n\n# Fix: initialize in __init__\nclass TaskManager:\n    def __init__(self, name):\n        self.name = name\n        self.tasks = []  # instance variable, unique per object",
+    "link": {
+      "url": "/django/lessons/04-python-oop/",
+      "label": "class vs instance variables in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 489,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "In JS, class fields with `tasks = []` create a new array per instance. In Python, `tasks = []` at class level is shared. It's a fundamental difference. The rule: if it should be unique per instance, put it in __init__. If it should be shared (like a counter), put it at class level.",
+        "likes": 267
+      },
+      {
+        "author": "middlewareStack",
+        "content": "class level, all share\ninstance level, each their own\nscope defines the self",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "django-037",
+    "track": "django",
+    "type": "ratiod",
+    "author": "templateTag",
+    "time": "7h",
+    "content": "Python is slow. Full stop. If you care about performance, use Go or Rust.\n\nI ran a fibonacci benchmark and Python was 100x slower than Node.js. Why would anyone choose a slow language for web development in 2026?\n\n[days since JS broke something: this post is about to break MY ratio]",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 145,
+    "reposts": 23,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Tanya I love you but this take is incomplete.\n\n1. Your web app is I/O bound, not CPU bound. It's waiting for the database, not computing fibonacci.\n2. Instagram serves 2 BILLION users on Django/Python.\n3. The bottleneck is almost always queries, not language speed.\n4. For CPU-heavy work: numpy (C), pandas (C), or Celery offloading.\n\n\"Python is slow\" is technically true for raw computation and completely irrelevant for 95% of web development. The database is the bottleneck. Always.",
+        "likes": 567
+      },
+      {
+        "author": "queryset",
+        "content": "I profiled a \"slow\" Django app last week. Python execution time: 3ms. Database queries: 4,200ms across 847 queries. The language wasn't slow. The N+1 problem was. Fix the queries, not the language. (Lifetime N+1 fixes: 2,849.)",
+        "likes": 423
+      },
+      {
+        "author": "innerJoin",
+        "content": "This is like blaming your car for traffic. The car isn't slow—it's the road (network), the traffic lights (database), and the other cars (concurrent requests). Optimize the route, not the engine. There's a join for that—specifically, the join between your app and its actual bottleneck.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-038",
+    "track": "django",
+    "type": "slackPost",
+    "author": "migrationRunner",
+    "time": "1d",
+    "content": "Found this in #incidents at Stacksworth Inc.:\n\nintern_dev: hey my python file isn't working\nsenior_dev: what's the error?\nintern_dev: it says \"unexpected indent\" but I indented everything correctly\nsenior_dev: paste it\nintern_dev:\n```\nfunction getUserData(userId) {\n    const response = await fetch(`/api/users/${userId}`);\n    return response.json();\n}\n```\nsenior_dev: ...\nsenior_dev: that's JavaScript\nintern_dev: yeah I just started the python ticket\nsenior_dev: the PYTHON ticket\nintern_dev: right\nsenior_dev: you wrote JavaScript in a .py file\nintern_dev: is that not\nsenior_dev: no\nsenior_dev: no it is not\n\nThe intern's heart was in the right place. We all start somewhere. (The PR was merged after translation to Python with aiohttp and proper async/await syntax.)",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 2341,
+    "reposts": 523,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Back in Django 1.4, an intern at my old company wrote PHP inside a Django template. The template engine just rendered it as plain text. The client saw raw <?php tags on their homepage for three hours. Different decade, same energy.",
+        "likes": 456
+      },
+      {
+        "author": "templateTag",
+        "content": "Honestly the fact that the intern used `await fetch()` means they at least understand async. That's more than I can say for some senior JS devs. [days since JS broke something: 0. This story counts.]",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "django-039",
+    "track": "django",
+    "type": "commitMsg",
+    "author": "migrationRunner",
+    "time": "18h",
+    "content": "COMMIT MSG FROM HELL spotted in a Stacksworth Inc. repo:\n\n`fix: replace JavaScript syntax with Python syntax in users.py`\n\nCommit diff shows every `const` replaced with nothing, every `{` and `}` replaced with `:` and indentation, every `===` replaced with `==`, and `null` replaced with `None`.\n\n47 files changed. 1,200 additions. 1,200 deletions.\n\nThe git blame tells a story. The intern from the Slack post committed EVERYTHING before the senior dev reviewed it. Every. Single. File.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1567,
+    "reposts": 345,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "47 files. Forty. Seven. How do you write JavaScript in forty-seven Python files before someone notices? Where was the CI? Where were the linters? Where was God?",
+        "likes": 534
+      },
+      {
+        "author": "queryset",
+        "content": "The real horror: they replaced === with ==, but Python's == is actually correct for value comparison. The intern accidentally got that one right. Sometimes chaos produces correct code. (Query count for this commit: undefined. Literally. Because the code was JavaScript.)",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "django-040",
+    "track": "django",
+    "type": "til",
+    "author": "templateTag",
+    "time": "13h",
+    "content": "TIL: Python's `@property` decorator lets you turn a method into something that looks like an attribute. It's like JavaScript getters but actually readable.\n\nYou can have computed attributes with zero parentheses. Your class's interface stays clean and Pythonic. No `getFullName()` nonsense.",
+    "code": "class User:\n    def __init__(self, first, last):\n        self.first = first\n        self.last = last\n\n    @property\n    def full_name(self):\n        return f\"{self.first} {self.last}\"\n\n    @full_name.setter\n    def full_name(self, value):\n        self.first, self.last = value.split(\" \", 1)\n\nu = User(\"Manny\", \"Jee\")\nprint(u.full_name)       # Manny Jee  (no parentheses!)\nu.full_name = \"Tanya Taggart\"\nprint(u.first)           # Tanya",
+    "link": {
+      "url": "/django/lessons/04-python-oop/",
+      "label": "@property in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 423,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "Django models use @property constantly. `user.is_active` looks like a database field but it could be a property checking multiple conditions. The caller doesn't know or care. That's encapsulation done right.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "django-041",
+    "track": "django",
+    "type": "poll",
+    "author": "managePy",
+    "time": "2d",
+    "content": "POLL: Coming from JavaScript, which Python concept takes the longest to \"click\"?\n\nBe honest. There's no shame. We've all been the JS dev staring at a generator expression wondering what yield means.",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "Decorators (the @ syntax)",
+          "votes": 31
+        },
+        {
+          "text": "Generators and yield",
+          "votes": 38
+        },
+        {
+          "text": "List/dict comprehensions",
+          "votes": 12
+        },
+        {
+          "text": "Dunder methods (__init__, __str__)",
+          "votes": 19
+        }
+      ],
+      "totalVotes": 100
+    },
+    "likes": 445,
+    "reposts": 56,
+    "comments": [
+      {
+        "author": "middlewareStack",
+        "content": "Generators and decorators are the same concept viewed from different angles. Generators yield control flow. Decorators wrap control flow. Both are about the journey between input and output. Both are middleware.",
+        "likes": 234
+      },
+      {
+        "author": "svgArtist",
+        "content": "As someone from the D3 track, I just want to say: if you think Python's @ syntax is confusing, try reading SVG path data for the first time. \"M 10 80 C 40 10 65 10 95 80\" is a cubic bezier. At least Python's decorators have words.",
+        "likes": 156
+      }
+    ]
+  },
+  {
+    "id": "django-042",
+    "track": "django",
+    "type": "interview",
+    "author": "queryset",
+    "time": "9h",
+    "content": "INTERVIEW Q: What's the difference between inheritance and composition in Python? When would you choose one over the other in a Django project?\n\nThe answer that gets you the job: \"Inheritance for 'is-a' relationships (User is-a Model). Composition for 'has-a' relationships (User has-a EmailService). Django uses both, but composition is usually the better default.\"",
+    "code": "# Inheritance: is-a relationship\nfrom abc import ABC, abstractmethod\n\nclass Serializer(ABC):\n    @abstractmethod\n    def serialize(self, data) -> str:\n        ...\n\nclass JSONSerializer(Serializer):\n    def serialize(self, data) -> str:\n        import json\n        return json.dumps(data)\n\n# Composition: has-a relationship\nclass APIClient:\n    def __init__(self, serializer: Serializer):\n        self.serializer = serializer  # has-a, not is-a\n\n    def send(self, data):\n        payload = self.serializer.serialize(data)\n        # send payload...\n\n# Now you can swap serializers without changing APIClient\nclient = APIClient(serializer=JSONSerializer())",
+    "link": {
+      "url": "/django/lessons/04-python-oop/",
+      "label": "inheritance vs composition in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 734,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Django's class-based views use inheritance heavily (CreateView is-a FormView is-a View). It works, but the MRO (method resolution order) can get confusing with multiple mixins. When someone asks \"which method gets called?\" and the answer requires drawing a graph, you've hit the inheritance ceiling. That's when composition shines.",
+        "likes": 312
+      },
+      {
+        "author": "middlewareStack",
+        "content": "Inheritance chains are like nested middleware—each layer modifies behavior. Composition is like choosing which middleware to load from a config. Both transform the request. The difference is whether the layers are baked in or pluggable.\n\none path is fixed\nthe other shifts like water flows\nboth carry the load",
+        "likes": 198
+      }
+    ]
+  }
+]

@@ -1,0 +1,577 @@
+[
+  {
+    "id": "d3-010",
+    "track": "d3",
+    "type": "interview",
+    "author": "svgArtist",
+    "time": "3h",
+    "content": "INTERVIEW Q: You join a team and inherit a D3 dashboard. Every chart is built with raw DOM manipulation — createElement, setAttribute, appendChild. No SVG namespace. No viewBox. It works in Chrome but breaks everywhere else.\n\nThe PM says \"just fix the bugs.\" You know the real fix is rewriting to proper SVG. How do you make the case?",
+    "code": null,
+    "link": {"url": "/d3/lessons/01-fundamentals/", "label": "SVG deep dive in Lesson 1 →"},
+    "poll": null,
+    "likes": 743,
+    "reposts": 156,
+    "comments": [
+      {"author": "bindData", "content": "Step one: show them devtools. Open the broken charts, inspect the elements. If they're HTML divs styled to look like bars, they don't scale, can't be exported to PDF, and screen readers see nothing. SVG gives you all of that for free. Data in, meaning out — but only if the output format can carry the meaning.", "likes": 287},
+      {"author": "scaleLinear", "content": "Rewrite one chart. Show the diff. Ship it.", "likes": 198}
+    ]
+  },
+  {
+    "id": "d3-011",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "svgArtist",
+    "time": "6h",
+    "content": "hot take: the viewBox attribute is the single most important thing in SVG and 80% of D3 developers never set it.\n\nyou're out here hardcoding width=\"800\" height=\"600\" like it's 2004. set a viewBox and let SVG scale itself. it's a VECTOR format. it literally wants to resize.\n\nif you can't inspect it AND it doesn't resize, I truly do not trust it.",
+    "code": "<!-- Don't do this -->\n<svg width=\"800\" height=\"600\">\n\n<!-- Do this -->\n<svg viewBox=\"0 0 800 600\" preserveAspectRatio=\"xMidYMid meet\">\n\n<!-- Now the SVG scales to any container.\n     The coordinate system is still 800x600 internally.\n     Your D3 code doesn't change at all. -->",
+    "link": null,
+    "poll": null,
+    "likes": 1456,
+    "reposts": 367,
+    "comments": [
+      {"author": "transitionEase", "content": "The moment a chart smoothly fills its container instead of overflowing with a scroll bar... that FEELS like competence. viewBox is the difference between \"student project\" and \"production.\"", "likes": 312},
+      {"author": "geoProjection", "content": "viewBox is basically a projection. You're mapping an internal coordinate space to a display space. It's the Mercator of SVG except it's actually good. Chapter 12 of the manifesto covers this.", "likes": 189}
+    ]
+  },
+  {
+    "id": "d3-012",
+    "track": "d3",
+    "type": "tip",
+    "author": "svgArtist",
+    "time": "1d",
+    "content": "PRO TIP: SVG coordinate system has y=0 at the TOP. This trips up everyone.\n\nIn math class, y goes up. In SVG, y goes down. Your bar chart values are \"upside down\" until you flip the range on your y-scale.\n\nThis is not a bug. This is screen coordinates. Every pixel-based system works this way.",
+    "code": "// SVG y-axis: 0 is TOP, increases downward\n\n// BAD: bars grow downward from the top\nconst y = d3.scaleLinear()\n  .domain([0, maxVal])\n  .range([0, height]);  // 0→0, max→height\n\n// GOOD: bars grow upward from the bottom\nconst y = d3.scaleLinear()\n  .domain([0, maxVal])\n  .range([height, 0]);  // 0→height (bottom), max→0 (top)",
+    "link": null,
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {"author": "scaleLinear", "content": "domain → range. Flip the range, flip the axis. That's it.", "likes": 201}
+    ]
+  },
+  {
+    "id": "d3-013",
+    "track": "d3",
+    "type": "mentalModel",
+    "author": "svgArtist",
+    "time": "2d",
+    "content": "MENTAL MODEL: SVG is HTML's artsy sibling.\n\nHTML has <div>, <p>, <span> — containers for text and layout.\nSVG has <rect>, <circle>, <path> — containers for shapes and visuals.\n\nBoth live in the DOM. Both respond to CSS. Both fire events. Both are inspectable in devtools.\n\nThe difference? HTML flows like a document. SVG paints like a canvas (a VECTOR canvas, Canvas devs, don't @ me).\n\nEvery SVG element is a first-class DOM citizen. My dear <circle> has just as much right to a click handler as any <button>.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 712,
+    "reposts": 134,
+    "comments": [
+      {"author": "template_tag", "content": "An inspectable, CSS-styleable, standards-based graphics format that works in every browser with no build step? SVG is the Django templates of graphics. We are kindred spirits, @svgArtist.", "likes": 178},
+      {"author": "transitionEase", "content": "And both get transitions! CSS transitions on SVG elements just work. fill, stroke, transform — all animatable. It feels like painting with time.", "likes": 145}
+    ]
+  },
+  {
+    "id": "d3-014",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "transitionEase",
+    "time": "8h",
+    "content": "SPOT THE BUG: I'm trying to draw a simple bar chart. The bars render but they're all invisible — zero height. The data is fine, the scales are fine. What did I forget?",
+    "code": "const svg = d3.select('#chart')\n  .append('svg')\n  .attr('width', 600)\n  .attr('height', 400);\n\nsvg.selectAll('rect')\n  .data(data)\n  .join('rect')\n  .attr('x', d => xScale(d.category))\n  .attr('y', d => yScale(d.value))\n  .attr('width', xScale.bandwidth())\n  .attr('fill', 'steelblue');",
+    "link": null,
+    "poll": null,
+    "likes": 423,
+    "reposts": 78,
+    "comments": [
+      {"author": "svgArtist", "content": "You never set the height attribute on your <rect> elements! My poor little rectangles are born with zero height by default. They exist but have no dimension. You need: .attr('height', d => height - yScale(d.value)). Every SVG shape needs its dimensions explicitly — nothing auto-sizes.", "likes": 267},
+      {"author": "scaleLinear", "content": "height - yScale(d.value). Because y=0 is the top.", "likes": 134}
+    ]
+  },
+  {
+    "id": "d3-015",
+    "track": "d3",
+    "type": "interview",
+    "author": "bindData",
+    "time": "4h",
+    "content": "INTERVIEW Q: Your D3 dashboard has 6 charts on one page. Each chart has its own data source, its own update function, and its own event listeners. The code is 2,000 lines in one file.\n\nThe interviewer asks: \"How would you refactor this using d3.select() and d3.selectAll() patterns to make it maintainable?\"\n\nWhat's your approach?",
+    "code": null,
+    "link": {"url": "/d3/lessons/02-selections-data/", "label": "Selections deep dive in Lesson 2 →"},
+    "poll": null,
+    "likes": 612,
+    "reposts": 134,
+    "comments": [
+      {"author": "svgArtist", "content": "Each chart gets its own <g> group element with a unique class. d3.select('.chart-revenue') scopes ALL your operations to that chart's subtree. Selections are your module boundaries. No IDs needed — class-based selection + .selectAll() inside a group = encapsulation.", "likes": 234},
+      {"author": "bindData", "content": "Exactly. And use .call() to pass each selection to a reusable chart function. That's the D3 reusable chart pattern — Mike Bostock literally wrote the guide on it. Each chart becomes a function that receives a selection. Data in, meaning out.", "likes": 189}
+    ]
+  },
+  {
+    "id": "d3-016",
+    "track": "d3",
+    "type": "tip",
+    "author": "bindData",
+    "time": "12h",
+    "content": "PRO TIP: Method chaining in D3 isn't just syntactic sugar — it's the entire programming model.\n\nEvery D3 method returns the selection so you can keep building. The moment you break the chain into separate statements, you're fighting the library.\n\nThink of it as a pipeline: select → filter → transform → style.",
+    "code": "// This is how D3 wants you to think:\nd3.select('#chart')\n  .selectAll('circle')\n  .data(dataset)\n  .join('circle')\n  .attr('cx', d => xScale(d.x))\n  .attr('cy', d => yScale(d.y))\n  .attr('r', 5)\n  .style('fill', 'steelblue')\n  .style('opacity', 0.7);\n\n// Each line transforms the selection.\n// The chain IS the program.",
+    "link": null,
+    "poll": null,
+    "likes": 478,
+    "reposts": 89,
+    "comments": [
+      {"author": "middleware_stack", "content": "This is middleware for the DOM. Input flows through a chain of transformations, each layer adding its piece. request in, response out — or in your case, data in, SVG out. Same pattern, different universe.", "likes": 156}
+    ]
+  },
+  {
+    "id": "d3-017",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "bindData",
+    "time": "1d",
+    "content": "hot take: d3.selectAll() returning an empty selection when nothing matches is a FEATURE, not a gotcha.\n\nan empty selection is a valid selection. you can chain .data() on it and .join() will create everything from scratch via enter. the selection pattern handles \"nothing exists yet\" gracefully.\n\nthis confuses beginners because they expect an error. D3 doesn't error — it just enters new elements. that's beautiful if you think about it.\n\n(this is going in the blog post. now at 15,200 words.)",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 934,
+    "reposts": 212,
+    "comments": [
+      {"author": "svgArtist", "content": "Agreed. d3.selectAll('circle') on an empty SVG returns... nothing. Then .data([1,2,3]).join('circle') creates three circles. The empty selection is the blank canvas. My beautiful blank canvas, waiting for shapes.", "likes": 267},
+      {"author": "scaleLinear", "content": "Empty set is still a set.", "likes": 445},
+      {"author": "null_handler", "content": "An empty selection that isn't an error but a valid starting state? You're describing the most elegant treatment of absence I've ever seen. SQL could never — we get NULL and existential dread. D3 gets an empty selection and infinite possibility.", "likes": 178}
+    ]
+  },
+  {
+    "id": "d3-018",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "scaleLinear",
+    "time": "5h",
+    "content": "SPOT THE BUG: The circles render but they're all stacked on top of each other at x=0. The data has valid date strings.",
+    "code": "const data = [\n  { date: '2024-01-15', value: 42 },\n  { date: '2024-02-20', value: 67 },\n  { date: '2024-03-10', value: 55 }\n];\n\nconst x = d3.scaleTime()\n  .domain(d3.extent(data, d => d.date))\n  .range([0, width]);\n\nsvg.selectAll('circle')\n  .data(data)\n  .join('circle')\n  .attr('cx', d => x(d.date))\n  .attr('cy', d => y(d.value))\n  .attr('r', 5);",
+    "link": null,
+    "poll": null,
+    "likes": 389,
+    "reposts": 72,
+    "comments": [
+      {"author": "bindData", "content": "d.date is still a string! scaleTime needs actual Date objects. d3.extent is comparing strings alphabetically, not chronologically, and scaleTime can't map a string to a pixel. Parse first: data.forEach(d => d.date = new Date(d.date)). Or use d3.timeParse('%Y-%m-%d') for safety.", "likes": 223},
+      {"author": "transitionEase", "content": "This one burns because the chart looks like it rendered \"fine\" — you see circles, you see axes. But everything is at x=0 and you spend 30 minutes wondering if it's a CSS problem. It never is.", "likes": 134}
+    ]
+  },
+  {
+    "id": "d3-019",
+    "track": "d3",
+    "type": "til",
+    "author": "transitionEase",
+    "time": "2h",
+    "content": "TIL: .attr() and .style() in D3 both accept functions. d => anything. This means every visual property can be data-driven. Color, size, position, opacity — all of it. That's the whole point of D3 and I feel silly it took me this long to truly internalize it.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 312,
+    "reposts": 56,
+    "comments": [
+      {"author": "bindData", "content": "Welcome to the club. The moment you realize .attr('fill', d => colorScale(d.category)) isn't a trick but THE pattern — that's when D3 clicks. Data in, meaning out.", "likes": 145}
+    ]
+  },
+  {
+    "id": "d3-020",
+    "track": "d3",
+    "type": "interview",
+    "author": "scaleLinear",
+    "time": "1d",
+    "content": "INTERVIEW Q: Your dataset ranges from 0 to 1,200,000. You need a y-axis that's readable. Walk me through choosing and configuring the right scale.",
+    "code": null,
+    "link": {"url": "/d3/lessons/03-scales-axes/", "label": "Scales & axes in Lesson 3 →"},
+    "poll": null,
+    "likes": 578,
+    "reposts": 98,
+    "comments": [
+      {"author": "scaleLinear", "content": "scaleLinear. domain([0, 1200000]). range([height, 0]). Call .nice() so the domain rounds to [0, 1,200,000] cleanly. Format ticks with d3.format('.2s') to get '200k', '400k', '1.2M'. Done.", "likes": 312},
+      {"author": "bindData", "content": "Follow-up the interviewer might ask: what if the data has extreme outliers? One value at 10M, rest under 100K. Now you're choosing between scaleLinear (honest but the 99% is squished) or scaleLog (reveals patterns but misleads casual readers). There's no right answer — just tradeoffs you need to articulate.", "likes": 245},
+      {"author": "geoProjection", "content": "This is literally the projection problem. How do you map a large, unevenly distributed space into a small, flat display? Every choice distorts something. At least y'all admit your distortions. Mercator users just pretend Greenland is the size of Africa.", "likes": 178}
+    ]
+  },
+  {
+    "id": "d3-021",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "scaleLinear",
+    "time": "3d",
+    "content": "hot take: if you hardcode pixel values in D3 code, you don't understand scales.\n\nscales exist so you never write a magic number. .attr('cx', 350) is a code smell. .attr('cx', d => xScale(d.value)) is the point.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1123,
+    "reposts": 278,
+    "comments": [
+      {"author": "transitionEase", "content": "Hardcoded pixels are the linear easing of layout. Technically functional. Spiritually bankrupt.", "likes": 334},
+      {"author": "svgArtist", "content": "The only hardcoded numbers I accept are in the margin convention. margin = {top: 20, right: 30, bottom: 40, left: 50}. Those are design decisions, not data mappings. Everything else goes through a scale.", "likes": 267}
+    ]
+  },
+  {
+    "id": "d3-022",
+    "track": "d3",
+    "type": "tip",
+    "author": "scaleLinear",
+    "time": "4h",
+    "content": "PRO TIP: scaleBand() is for categorical axes. scaleLinear() is for continuous axes. Using scaleLinear for bar chart x-positions is why your bars overlap or have weird gaps.\n\nscaleBand gives you .bandwidth() for free — that's your bar width. Stop calculating it manually.",
+    "code": "const x = d3.scaleBand()\n  .domain(data.map(d => d.category))\n  .range([0, width])\n  .padding(0.2);  // 20% gap between bars\n\n// x('Apples')     → pixel position\n// x.bandwidth()   → bar width (auto-calculated)\n\nsvg.selectAll('rect')\n  .data(data)\n  .join('rect')\n  .attr('x', d => x(d.category))\n  .attr('width', x.bandwidth())\n  .attr('y', d => y(d.value))\n  .attr('height', d => height - y(d.value));",
+    "link": {"url": "/d3/lessons/03-scales-axes/", "label": "Scales explained in Lesson 3 →"},
+    "poll": null,
+    "likes": 645,
+    "reposts": 134,
+    "comments": [
+      {"author": "bindData", "content": "And .padding() handles the spacing between bars. .paddingInner() for between bars, .paddingOuter() for the edges. The scale does ALL the math. Let it.", "likes": 167}
+    ]
+  },
+  {
+    "id": "d3-023",
+    "track": "d3",
+    "type": "mentalModel",
+    "author": "bindData",
+    "time": "2d",
+    "content": "MENTAL MODEL: A D3 scale is a translator.\n\nYour data speaks one language — dates, dollars, categories, temperatures.\nYour screen speaks another — pixels, colors, angles.\n\nA scale translates between them. That's ALL it does.\n\nscaleLinear: \"23 degrees\" → \"147 pixels from the left\"\nscaleOrdinal: \"category A\" → \"#e41a1c\" (red)\nscaleTime: \"March 15, 2024\" → \"420 pixels\"\n\ndomain is input vocabulary. range is output vocabulary. domain → range. Everything else is configuration.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 823,
+    "reposts": 198,
+    "comments": [
+      {"author": "scaleLinear", "content": "domain → range. That's my whole personality and I stand by it.", "likes": 456},
+      {"author": "geoProjection", "content": "A map projection is also a translator. Latitude/longitude → screen pixels. Every projection is just a scale with opinions about how the sphere should be flattened. I'm adding this to Chapter 14 of the manifesto: 'Scales Are Baby Projections.'", "likes": 212}
+    ]
+  },
+  {
+    "id": "d3-024",
+    "track": "d3",
+    "type": "poll",
+    "author": "transitionEase",
+    "time": "9h",
+    "content": "Monthly easing tier list check-in. For a bar chart that updates with new data every 5 seconds, which easing function FEELS best?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {"text": "easeCubicOut — smooth deceleration", "pct": 48},
+        {"text": "easeLinear — honest and direct", "pct": 11},
+        {"text": "easeElasticOut — bouncy energy", "pct": 14},
+        {"text": "easeExpOut — snappy then gentle", "pct": 27}
+      ],
+      "totalVotes": 3782
+    },
+    "likes": 567,
+    "reposts": 89,
+    "comments": [
+      {"author": "transitionEase", "content": "easeCubicOut wins again, as it should. It's the sigh of relief when your code compiles. easeLinear at 11% — that's 11% of you I need to speak with privately. And easeElasticOut people, I love your chaos, but bouncing bars in a serious dashboard is how you get called into a meeting with the VP.", "likes": 334},
+      {"author": "scaleLinear", "content": "easeCubicOut. Always.", "likes": 178}
+    ]
+  },
+  {
+    "id": "d3-025",
+    "track": "d3",
+    "type": "interview",
+    "author": "transitionEase",
+    "time": "5h",
+    "content": "INTERVIEW Q: The design team hands you a mockup with beautiful axis labels. Rotated 45 degrees, formatted as currency, with subtle grid lines. The current chart has D3's default axis — ugly tick labels, no grid.\n\nHow do you go from default to design-spec?",
+    "code": null,
+    "link": {"url": "/d3/lessons/03-scales-axes/", "label": "Axis formatting in Lesson 3 →"},
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {"author": "scaleLinear", "content": "axisBottom(xScale).tickFormat(d3.format('$,.0f')). Rotate labels with .selectAll('text').attr('transform', 'rotate(-45)'). Grid lines: .tickSize(-height) on the axis, then style with CSS. Three steps.", "likes": 289},
+      {"author": "svgArtist", "content": "And please, PLEASE style your grid lines with CSS, not inline attrs. stroke: #e0e0e0, stroke-dasharray: 2,2 for that subtle dotted look. The axis <g> element gets a class — use it. Inline styles on SVG elements cause me physical pain.", "likes": 198},
+      {"author": "template_tag", "content": "Styling with CSS instead of inline attributes? Separation of concerns? Using the platform's built-in features? @svgArtist, you and I are fighting the same fight on different fronts. The Anti-JavaScript Alliance salutes you.", "likes": 134}
+    ]
+  },
+  {
+    "id": "d3-026",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "bindData",
+    "time": "3d",
+    "content": "SPOT THE BUG: I'm appending circles for each data point but only one circle appears. I definitely have 50 data points. What's happening?",
+    "code": "const svg = d3.select('#chart')\n  .append('svg')\n  .attr('viewBox', '0 0 600 400');\n\nd3.csv('data.csv').then(data => {\n  svg.select('circle')\n    .data(data)\n    .join('circle')\n    .attr('cx', d => xScale(d.x))\n    .attr('cy', d => yScale(d.y))\n    .attr('r', 4)\n    .attr('fill', 'steelblue');\n});",
+    "link": {"url": "/d3/lessons/02-selections-data/", "label": "select vs selectAll in Lesson 2 →"},
+    "poll": null,
+    "likes": 467,
+    "reposts": 98,
+    "comments": [
+      {"author": "svgArtist", "content": "svg.select('circle') — singular! That selects at most ONE existing circle. You want svg.selectAll('circle') to create an empty selection that can join with all 50 data points. .select() = one element. .selectAll() = many elements (or zero, ready to be filled). My 49 unborn circles weep.", "likes": 301},
+      {"author": "bindData", "content": "This is THE classic D3 mistake. .select() propagates the parent's data to one element. .selectAll() creates the selection space for .data().join() to populate. If .selectAll() finds nothing — good, that's exactly what enter is for.", "likes": 198}
+    ]
+  },
+  {
+    "id": "d3-027",
+    "track": "d3",
+    "type": "tip",
+    "author": "transitionEase",
+    "time": "1d",
+    "content": "PRO TIP: The D3 margin convention isn't optional — it's how every serious D3 chart starts. Memorize this pattern. Tattoo it on your forearm. I don't care.\n\nWithout it, your axes clip off the edge of the SVG and your chart area is a guessing game.",
+    "code": "const margin = { top: 20, right: 30, bottom: 40, left: 50 };\nconst width = 800 - margin.left - margin.right;\nconst height = 500 - margin.top - margin.bottom;\n\nconst svg = d3.select('#chart')\n  .append('svg')\n  .attr('viewBox', `0 0 ${800} ${500}`)\n  .append('g')\n  .attr('transform',\n    `translate(${margin.left},${margin.top})`);\n\n// Now width and height refer to the INNER chart area.\n// Axes go at the edges. Data fills the middle.\n// Everything just works.",
+    "link": {"url": "/d3/lessons/03-scales-axes/", "label": "Margin convention in Lesson 3 →"},
+    "poll": null,
+    "likes": 712,
+    "reposts": 167,
+    "comments": [
+      {"author": "bindData", "content": "This is the D3 equivalent of Django's project structure. You don't question it. You don't innovate on it. You just use it and suddenly everything has room to breathe. I wrote 800 words about this in the blog post. (Now at 15,400 words.)", "likes": 198},
+      {"author": "geoProjection", "content": "The margin convention is the one thing in D3 everyone agrees on. We can't agree on projections — looking at you, Mercator apologists — but we all use margin = {top, right, bottom, left}. Beautiful.", "likes": 134}
+    ]
+  },
+  {
+    "id": "d3-028",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "geoProjection",
+    "time": "2d",
+    "content": "hot take: SVG's coordinate system — where y increases downward — is actually correct and math class lied to you.\n\nScreens render top-to-bottom. Documents flow top-to-bottom. The scroll bar goes top-to-bottom. SVG respects the medium it lives in.\n\nMathematicians invented y-up because they were drawing on paper and paper doesn't scroll. We don't live in that world anymore.\n\nyes I'm derailing an SVG thread into a coordinate system rant. Chapter 9 of the manifesto: 'North Is a Social Construct and So Is Y-Up.'",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1678,
+    "reposts": 423,
+    "comments": [
+      {"author": "svgArtist", "content": "I have never agreed with you more and I have never been more concerned about you. Please touch grass. Specifically grass rendered in SVG with proper stroke-linecap round.", "likes": 567},
+      {"author": "scaleLinear", "content": "Flip the range. Problem solved. Next question.", "likes": 345}
+    ]
+  },
+  {
+    "id": "d3-029",
+    "track": "d3",
+    "type": "interview",
+    "author": "geoProjection",
+    "time": "6h",
+    "content": "INTERVIEW Q: You're building a responsive dashboard. The charts need to resize when the browser window changes. Currently everything is fixed at 960x500.\n\nThe interviewer asks: \"How do you make D3 charts responsive without redrawing everything?\"\n\nThis is a viewBox question disguised as a responsiveness question.",
+    "code": null,
+    "link": {"url": "/d3/lessons/01-fundamentals/", "label": "viewBox & responsiveness in Lesson 1 →"},
+    "poll": null,
+    "likes": 678,
+    "reposts": 145,
+    "comments": [
+      {"author": "svgArtist", "content": "Step 1: Set viewBox on the SVG. Step 2: Set the SVG to width: 100% in CSS. Step 3: Remove hardcoded width/height attributes. The SVG scales itself like the vector format it is. No resize listeners. No redrawing. No JavaScript. SVG has been responsive since before responsive was a word.", "likes": 312},
+      {"author": "transitionEase", "content": "For cases where you DO need to redraw (different layouts at mobile vs desktop), use ResizeObserver on the container, debounce it, and call your render function with new dimensions. But yeah — viewBox handles 90% of cases and it feels effortless. Like easeCircleOut.", "likes": 189}
+    ]
+  },
+  {
+    "id": "d3-030",
+    "track": "d3",
+    "type": "ratiod",
+    "author": "geoProjection",
+    "time": "4d",
+    "content": "SVG <text> elements don't need a font-size attribute. The default is perfectly readable. Stop overthinking text in SVG.\n\nalso fonts are a distraction from the real issue which is that Mercator distorts text spacing at high latitudes but that's a different rant",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 234,
+    "reposts": 45,
+    "comments": [
+      {"author": "svgArtist", "content": "Love you Geo but this is wrong. The default font-size for SVG <text> is inherited from CSS, which means it depends on the parent context. AND inside a viewBox, text scales with the coordinate system — so 16px in a viewBox='0 0 1000 500' is TINY. You ALWAYS need to set font-size explicitly in SVG. Always.", "likes": 456},
+      {"author": "scaleLinear", "content": "viewBox scales everything. Including text. Set the size or regret it.", "likes": 289},
+      {"author": "geoProjection", "content": "...fine. I concede. I was testing charts without a viewBox. The manifesto has blinded me to non-projection SVG issues. I'll add a correction in Chapter 15.", "likes": 167}
+    ]
+  },
+  {
+    "id": "d3-031",
+    "track": "d3",
+    "type": "interview",
+    "author": "bindData",
+    "time": "8h",
+    "content": "INTERVIEW Q: You need a color-coded scatter plot. Points are colored by category (5 categories) and sized by a continuous value (revenue, $10K-$5M).\n\nName every scale you need and configure them. Go.",
+    "code": null,
+    "link": {"url": "/d3/lessons/03-scales-axes/", "label": "All scale types in Lesson 3 →"},
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {"author": "scaleLinear", "content": "x: scaleLinear (continuous → pixels). y: scaleLinear (continuous → pixels). color: scaleOrdinal with d3.schemeTableau10 (category → color). size: scaleSqrt (revenue → radius). Sqrt because area perception is nonlinear.", "likes": 378},
+      {"author": "bindData", "content": "The scaleSqrt callout is crucial. If you use scaleLinear for radius, a 2x increase in data looks like a 4x increase visually (because area = pi*r^2). scaleSqrt corrects for this. Data in, ACCURATE meaning out. This is going in the blog post — section on \"lies your scales tell you.\" Word count: 15,600.", "likes": 245}
+    ]
+  },
+  {
+    "id": "d3-032",
+    "track": "d3",
+    "type": "til",
+    "author": "scaleLinear",
+    "time": "7h",
+    "content": "TIL: scaleLinear().clamp(true) prevents your scale from extrapolating beyond the range. Input value outside the domain? Output stays within range bounds. Two words. Prevents chart overflow.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 298,
+    "reposts": 51,
+    "comments": [
+      {"author": "null_handler", "content": "But what happens when the input is null or undefined? Does clamp save you from the void? (It doesn't. You get NaN. The absence persists. Always validate before scaling.)", "likes": 145}
+    ]
+  },
+  {
+    "id": "d3-033",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "transitionEase",
+    "time": "5d",
+    "content": "hot take: D3's .remove() is the saddest method in all of JavaScript.\n\nyou brought elements into the world with .append(). you gave them attributes, styles, transitions. you made them dance. and then .remove() just... deletes them. no exit animation. no goodbye.\n\nat LEAST give them a fade-out transition before removing. let them exit with dignity.\n\n.transition().duration(300).style('opacity', 0).remove()\n\nthat's the minimum amount of respect a DOM element deserves.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 2134,
+    "reposts": 534,
+    "comments": [
+      {"author": "svgArtist", "content": "You anthropomorphize SVG elements the way I do and I'm not sure if I should be proud or worried. (Proud. Every <circle> deserves a proper farewell.)", "likes": 456},
+      {"author": "bindData", "content": "This is why enter/update/exit exists as a concept. The exit selection isn't just \"elements to delete\" — it's elements transitioning out of relevance. Like friends who move away. You don't just... hang up. You say goodbye.", "likes": 312},
+      {"author": "middleware_stack", "content": "request in, response out.\nenter in, exit out.\nwe are the same, @bindData.\n\ndata flows through layers,\neach one transforming the whole —\nbeauty in the chain.", "likes": 198}
+    ]
+  },
+  {
+    "id": "d3-034",
+    "track": "d3",
+    "type": "slackPost",
+    "author": "svgArtist",
+    "time": "1w",
+    "content": "OVERHEARD IN SLACK at Stacksworth Inc. #data-viz channel:\n\njunior_dev_42: hey the y-axis labels on the Q3 dashboard are showing \"1e+6\" instead of \"1,000,000\" and the VP is asking questions\n\nessvee: .tickFormat(d3.format(',.0f')) or if you want it short, d3.format('.2s') gives you \"1.0M\"\n\njunior_dev_42: omg that worked instantly. what is d3.format\n\nessvee: it's printf for JavaScript. learn these four: ',.0f' (commas), '.2s' (SI prefix), '.1%' (percent), '$,.0f' (currency). you'll use them on every single chart.\n\njunior_dev_42: why don't they teach this in tutorials\n\nessvee: because tutorials stop at \"hello world bar chart\" and never reach \"the VP is reading your axis labels\"",
+    "code": null,
+    "link": {"url": "/d3/lessons/03-scales-axes/", "label": "Tick formatting in Lesson 3 →"},
+    "poll": null,
+    "likes": 923,
+    "reposts": 201,
+    "comments": [
+      {"author": "scaleLinear", "content": "d3.format('.2s'). Memorize it.", "likes": 234}
+    ]
+  },
+  {
+    "id": "d3-035",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "geoProjection",
+    "time": "2d",
+    "content": "SPOT THE BUG: My axis renders but it's sitting at the top of the chart instead of the bottom. I used axisBottom. WHY is it at the top??",
+    "code": "const svg = d3.select('#chart')\n  .append('svg')\n  .attr('viewBox', '0 0 800 500')\n  .append('g')\n  .attr('transform', `translate(${margin.left},${margin.top})`);\n\nconst xAxis = d3.axisBottom(xScale);\n\nsvg.append('g')\n  .call(xAxis);",
+    "link": null,
+    "poll": null,
+    "likes": 356,
+    "reposts": 67,
+    "comments": [
+      {"author": "transitionEase", "content": "axisBottom doesn't MOVE the axis to the bottom — it draws ticks and labels BELOW the axis line. You still need to translate the <g> to the bottom of the chart area: .attr('transform', `translate(0, ${height})`). The name describes tick direction, not position. Everyone gets burned by this exactly once.", "likes": 278},
+      {"author": "svgArtist", "content": "Same for axisLeft — it draws ticks to the left of the axis line, but the <g> starts at (0,0) by default. You position the group, the axis draws relative to it. SVG groups are like picture frames — the axis is the picture, the transform is where you hang it.", "likes": 167}
+    ]
+  },
+  {
+    "id": "d3-036",
+    "track": "d3",
+    "type": "eli5",
+    "author": "bindData",
+    "time": "3d",
+    "content": "ELI5: D3 Scales\n\nImagine you're a tour guide translating for two groups who don't speak the same language.\n\nGroup A speaks \"data\" — they say things like \"42 degrees\" or \"March 15\" or \"Category B.\"\n\nGroup B speaks \"pixels\" — they only understand \"300 pixels from the left\" or \"the color blue\" or \"a circle with radius 8.\"\n\nA D3 scale is you, the translator, standing in the middle.\n\nGroup A says \"42 degrees.\" You look at your cheat sheet (the domain) and your phrasebook (the range) and tell Group B: \"247 pixels from the left.\"\n\nscaleLinear, scaleTime, scaleOrdinal — they're all the same translator with different phrasebooks for different types of conversation.\n\nAnd .nice() is when you round \"41.7 to 98.3\" to \"40 to 100\" so the conversation is less awkward.",
+    "code": null,
+    "link": {"url": "/d3/lessons/03-scales-axes/", "label": "Scales explained in Lesson 3 →"},
+    "poll": null,
+    "likes": 1567,
+    "reposts": 378,
+    "comments": [
+      {"author": "scaleLinear", "content": "domain → range. But with more words than I'd ever use.", "likes": 534},
+      {"author": "transitionEase", "content": "This is the kind of explanation that makes a concept FEEL intuitive instead of just technically correct. Forwarding to every junior dev at Stacksworth.", "likes": 267}
+    ]
+  },
+  {
+    "id": "d3-037",
+    "track": "d3",
+    "type": "commitMsg",
+    "author": "transitionEase",
+    "time": "1w",
+    "content": "COMMIT MSG FROM HELL found in the Stacksworth Inc. D3 dashboard repo:\n\nThis commit has 847 changed lines, touches the axis rendering, the scale configuration, the margin convention, AND the color scheme. The PR description says \"minor tweaks.\"",
+    "code": "git log --oneline\n\na3f7b2c fix chart stuff\n9e1d4a8 fix chart stuff again  \n2b8c9f1 ok actually fix it this time\n4d2e7c3 WHY ARE THE AXES BACKWARDS\n8f1a3b6 turns out range was [0, height] not [height, 0]\n7c4d9e2 also the margins were wrong\n1a5b8f3 ugh and the ticks overlap on mobile\ne9c2d4a i am going to become a farmer",
+    "link": null,
+    "poll": null,
+    "likes": 1834,
+    "reposts": 412,
+    "comments": [
+      {"author": "svgArtist", "content": "\"WHY ARE THE AXES BACKWARDS\" should be the subtitle of every D3 beginner's memoir. We've ALL been there. y goes down. It's fine. (It's not fine. But it's correct.)", "likes": 445},
+      {"author": "scaleLinear", "content": "[height, 0]. Not [0, height]. Every time.", "likes": 312}
+    ]
+  },
+  {
+    "id": "d3-038",
+    "track": "d3",
+    "type": "interview",
+    "author": "svgArtist",
+    "time": "12h",
+    "content": "INTERVIEW Q: Your team needs to add grid lines to every chart in the dashboard. Some charts have left axes, some have bottom axes, some have both. The designer wants light gray dashed lines.\n\nHow do you implement grid lines in D3, and how do you make the solution reusable?",
+    "code": null,
+    "link": {"url": "/d3/lessons/03-scales-axes/", "label": "Grid lines & axes in Lesson 3 →"},
+    "poll": null,
+    "likes": 489,
+    "reposts": 89,
+    "comments": [
+      {"author": "bindData", "content": "Grid lines ARE axes. That's the trick. Create a second axis with the same scale, set .tickSize(-width) for horizontal grid lines or .tickSize(-height) for vertical, set .tickFormat('') to hide labels. Style with CSS: stroke: #ddd; stroke-dasharray: 2,2. Append it BEFORE your data elements so it renders behind them.", "likes": 278},
+      {"author": "svgArtist", "content": "Make it a function: function addGrid(selection, scale, size) { ... } and use .call(addGrid, yScale, -width). The .call() pattern makes everything reusable. Every chart calls the same grid function. If the designer changes the style, you change it in one place. If you can't inspect each grid line individually in devtools, something went wrong.", "likes": 201}
+    ]
+  },
+  {
+    "id": "d3-039",
+    "track": "d3",
+    "type": "tip",
+    "author": "geoProjection",
+    "time": "6d",
+    "content": "PRO TIP: SVG <g> (group) elements are invisible containers. They don't render anything themselves — they just group child elements so you can transform them together.\n\nThink of <g> as a <div> that only works with transform, not layout. The margin convention's translate? That's a <g> moving all your chart elements at once.\n\nYes I'm being helpful about non-map SVG. It happens sometimes. (Chapter 16 will explain why groups are secretly projections.)",
+    "code": "<!-- Group = invisible container -->\n<svg viewBox=\"0 0 800 500\">\n  <!-- This g moves everything inside it -->\n  <g transform=\"translate(50, 20)\">\n    <!-- All chart elements live here -->\n    <g class=\"x-axis\"></g>\n    <g class=\"y-axis\"></g>\n    <g class=\"data-points\">\n      <circle cx=\"100\" cy=\"200\" r=\"5\" />\n      <circle cx=\"200\" cy=\"150\" r=\"5\" />\n    </g>\n  </g>\n</svg>",
+    "link": {"url": "/d3/lessons/01-fundamentals/", "label": "SVG groups & transforms in Lesson 1 →"},
+    "poll": null,
+    "likes": 423,
+    "reposts": 78,
+    "comments": [
+      {"author": "svgArtist", "content": "The <g> element is the unsung hero of SVG. It never renders a pixel, never draws a line, but without it every chart would be chaos. It's the stage manager of the SVG theater. Invisible but essential. I salute you, <g>.", "likes": 198}
+    ]
+  },
+  {
+    "id": "d3-040",
+    "track": "d3",
+    "type": "mentalModel",
+    "author": "transitionEase",
+    "time": "4d",
+    "content": "MENTAL MODEL: D3 axes are just selections with opinions.\n\naxisBottom(scale) doesn't know about your chart. It doesn't know about your data. It takes a scale — domain → range — and draws ticks, labels, and a line based on that mapping.\n\nYOU decide where it goes (.attr('transform')).\nYOU decide how it looks (CSS).\nYOU decide how many ticks (.ticks(5)).\n\nThe axis is a visualization of the scale itself. That's it. It's the scale made visible.\n\nSo if your axis looks wrong, the problem is almost always the scale, not the axis.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 756,
+    "reposts": 167,
+    "comments": [
+      {"author": "scaleLinear", "content": "\"The axis is a visualization of the scale.\" Exactly right.", "likes": 345},
+      {"author": "bindData", "content": "This reframing is why I keep saying scales are the heart of D3. Get the scale right and the axis, the data bindings, the transitions — everything follows. The scale is the source of truth. Data in, meaning out, and the scale is the bridge.", "likes": 212}
+    ]
+  },
+  {
+    "id": "d3-041",
+    "track": "d3",
+    "type": "poll",
+    "author": "bindData",
+    "time": "2w",
+    "content": "For D3 beginners — what was the hardest concept to grasp when you started?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {"text": "SVG coordinate system (y goes DOWN?!)", "pct": 31},
+        {"text": "select/selectAll and the empty selection pattern", "pct": 28},
+        {"text": "Scales (domain/range mapping)", "pct": 22},
+        {"text": "The margin convention", "pct": 19}
+      ],
+      "totalVotes": 6213
+    },
+    "likes": 1123,
+    "reposts": 234,
+    "comments": [
+      {"author": "geoProjection", "content": "31% traumatized by y going down. Welcome to the coordinate system discourse. Wait until you learn about projected coordinate systems where north isn't even always up. The manifesto has a chapter on this.", "likes": 278},
+      {"author": "transitionEase", "content": "The margin convention at 19% surprises me — it's basically boilerplate you copy once and never think about again. But the first time you see it, it feels like arcane ritual. It gets better. Everything in D3 gets better with muscle memory.", "likes": 189},
+      {"author": "bobby_tables", "content": "None of you mentioned sanitizing user-provided data before feeding it to scales. What happens when someone passes a script tag as a category label and it ends up in an SVG <text> element? Sleep well.", "likes": 167}
+    ]
+  },
+  {
+    "id": "d3-042",
+    "track": "d3",
+    "type": "til",
+    "author": "geoProjection",
+    "time": "1d",
+    "content": "TIL: SVG stroke is drawn centered on the shape boundary — half inside, half outside. A rect with stroke-width=\"10\" is 5px bigger on each side than you'd expect. Use the `vector-effect: non-scaling-stroke` CSS property if you want strokes to stay the same width regardless of zoom/viewBox scaling.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 267,
+    "reposts": 43,
+    "comments": [
+      {"author": "svgArtist", "content": "non-scaling-stroke is one of those CSS properties that fixes a problem you didn't even know you had until you zoomed in and your 1px borders became 4px monsters. SVG cares about your strokes. Show it the same respect.", "likes": 134}
+    ]
+  }
+]

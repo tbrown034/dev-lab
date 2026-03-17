@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Capstone Project - Civic Data Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #f97316; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #f97316; }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 2rem; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; line-height: 1.6; font-size: 0.9rem; }
+
+    /* ===== DASHBOARD LAYOUT ===== */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto 1fr 1fr;
+      gap: 1rem;
+      padding: 1.5rem 2rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      min-height: calc(100vh - 120px);
+    }
+
+    /* Filters span full width at top */
+    #filters {
+      grid-column: 1 / -1;
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    #filters label { color: #888; font-size: 0.85rem; }
+    #filters select, #filters input {
+      background: #1a1a1a;
+      color: #e5e5e5;
+      border: 1px solid #333;
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+    #filters .filter-title {
+      color: #f97316;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      margin-right: 0.5rem;
+    }
+    #filters button {
+      background: #f97316;
+      color: #000;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* Map takes left column, both rows */
+    #map {
+      grid-row: 2 / 4;
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1rem;
+      min-height: 450px;
+      position: relative;
+    }
+
+    /* Charts on right, stacked */
+    #bar-chart {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    #donut-chart {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .panel-title {
+      color: #f97316;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .placeholder {
+      color: #555;
+      font-size: 0.85rem;
+      text-align: center;
+      padding: 1rem;
+      border: 1px dashed #333;
+      border-radius: 4px;
+      margin-top: 0.5rem;
+    }
+
+    svg { background: #1a1a1a; border-radius: 4px; }
+
+    #map-tooltip {
+      position: fixed;
+      background: #1a1a1a;
+      border: 1px solid #f97316;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: #e5e5e5;
+      pointer-events: none;
+      display: none;
+      z-index: 100;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-right: 0.75rem;
+      font-size: 0.75rem;
+      color: #888;
+    }
+    .legend-item span.swatch {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+
+    /* Responsive: stack on narrow screens */
+    @media (max-width: 900px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+      }
+      #map { grid-row: auto; min-height: 350px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>Capstone</span> Civic Data Dashboard</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="callout">
+    <p><strong>Project brief:</strong> Build an interactive dashboard combining a US choropleth map with companion charts. The map shows state-level data; clicking a state updates the bar and donut charts with detailed breakdowns. Filters at the top control the data metric. This is your interview demo piece -- it ties together everything from Lessons 01-06.</p>
+  </div>
+
+  <div id="map-tooltip"></div>
+
+  <!-- ===== DASHBOARD GRID ===== -->
+  <div class="dashboard">
+
+    <!-- ===== FILTER BAR (top, full width) ===== -->
+    <!-- Controls what data metric is shown on the map and charts -->
+    <div id="filters">
+      <span class="filter-title">Filters</span>
+      <label for="metric-select">Metric:</label>
+      <select id="metric-select">
+        <option value="income">Median Household Income</option>
+        <option value="population">Population</option>
+        <option value="poverty">Poverty Rate</option>
+      </select>
+      <label for="region-select">Region:</label>
+      <select id="region-select">
+        <option value="all">All Regions</option>
+        <option value="northeast">Northeast</option>
+        <option value="south">South</option>
+        <option value="midwest">Midwest</option>
+        <option value="west">West</option>
+      </select>
+      <button id="btn-reset-filters">Reset</button>
+    </div>
+
+    <!-- ===== MAP (left column, spans 2 rows) ===== -->
+    <!-- Choropleth colored by selected metric. Click a state to drill down. -->
+    <div id="map">
+      <div class="panel-title">US State Map</div>
+      <!-- SVG will be appended here by D3 -->
+      <div id="map-container"></div>
+    </div>
+
+    <!-- ===== BAR CHART (right column, top) ===== -->
+    <!-- Shows top 10 states for the selected metric. Updates on filter/click. -->
+    <div id="bar-chart">
+      <div class="panel-title">Top States Comparison</div>
+      <!-- SVG will be appended here by D3 -->
+      <div id="bar-container"></div>
+    </div>
+
+    <!-- ===== DONUT CHART (right column, bottom) ===== -->
+    <!-- Shows breakdown for selected state or national aggregate. -->
+    <div id="donut-chart">
+      <div class="panel-title">Regional Breakdown</div>
+      <!-- SVG will be appended here by D3 -->
+      <div id="donut-container"></div>
+      <div id="donut-legend"></div>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+    import * as topojson from "topojson-client";
+
+    // ============================================================
+    // CAPSTONE PROJECT: Civic Data Dashboard
+    // ============================================================
+    // This starter code sets up the layout and loads the US map.
+    // YOUR TASKS:
+    // 1. Wire up the metric filter to change the choropleth coloring
+    // 2. Wire up the region filter to highlight/filter states
+    // 3. Make the bar chart update when filters change
+    // 4. Make the donut chart show regional breakdown
+    // 5. Add click-on-state to drill down into that state's data
+    // 6. Add transitions to all chart updates
+    // 7. Add tooltips to the map and charts
+    // ============================================================
+
+    // ---------- DATA ----------
+    // State-level data: income, population, poverty, region
+    const stateData = [
+      { fips: "01", name: "Alabama", income: 56929, population: 5024279, poverty: 14.9, region: "south" },
+      { fips: "02", name: "Alaska", income: 77790, population: 733391, poverty: 10.2, region: "west" },
+      { fips: "04", name: "Arizona", income: 65913, population: 7151502, poverty: 13.5, region: "west" },
+      { fips: "05", name: "Arkansas", income: 52528, population: 3011524, poverty: 15.7, region: "south" },
+      { fips: "06", name: "California", income: 84097, population: 39538223, poverty: 11.0, region: "west" },
+      { fips: "08", name: "Colorado", income: 80184, population: 5773714, poverty: 9.1, region: "west" },
+      { fips: "09", name: "Connecticut", income: 83771, population: 3605944, poverty: 9.8, region: "northeast" },
+      { fips: "10", name: "Delaware", income: 72724, population: 989948, poverty: 11.3, region: "south" },
+      { fips: "12", name: "Florida", income: 63062, population: 21538187, poverty: 11.7, region: "south" },
+      { fips: "13", name: "Georgia", income: 61224, population: 10711908, poverty: 12.9, region: "south" },
+      { fips: "15", name: "Hawaii", income: 84857, population: 1455271, poverty: 9.3, region: "west" },
+      { fips: "16", name: "Idaho", income: 60999, population: 1839106, poverty: 10.9, region: "west" },
+      { fips: "17", name: "Illinois", income: 72205, population: 12812508, poverty: 10.7, region: "midwest" },
+      { fips: "18", name: "Indiana", income: 61944, population: 6785528, poverty: 11.4, region: "midwest" },
+      { fips: "19", name: "Iowa", income: 65573, population: 3190369, poverty: 10.4, region: "midwest" },
+      { fips: "20", name: "Kansas", income: 64521, population: 2937880, poverty: 10.3, region: "midwest" },
+      { fips: "21", name: "Kentucky", income: 55573, population: 4505836, poverty: 15.5, region: "south" },
+      { fips: "22", name: "Louisiana", income: 52295, population: 4657757, poverty: 18.6, region: "south" },
+      { fips: "23", name: "Maine", income: 64767, population: 1362359, poverty: 10.9, region: "northeast" },
+      { fips: "24", name: "Maryland", income: 90203, population: 6177224, poverty: 9.0, region: "south" },
+      { fips: "25", name: "Massachusetts", income: 89645, population: 7029917, poverty: 10.3, region: "northeast" },
+      { fips: "26", name: "Michigan", income: 63498, population: 10077331, poverty: 12.6, region: "midwest" },
+      { fips: "27", name: "Minnesota", income: 77706, population: 5706494, poverty: 8.3, region: "midwest" },
+      { fips: "28", name: "Mississippi", income: 46511, population: 2961279, poverty: 18.7, region: "south" },
+      { fips: "29", name: "Missouri", income: 59264, population: 6154913, poverty: 11.9, region: "midwest" },
+      { fips: "30", name: "Montana", income: 60560, population: 1084225, poverty: 12.1, region: "west" },
+      { fips: "31", name: "Nebraska", income: 66644, population: 1961504, poverty: 10.0, region: "midwest" },
+      { fips: "32", name: "Nevada", income: 65006, population: 3104614, poverty: 11.2, region: "west" },
+      { fips: "33", name: "New Hampshire", income: 83449, population: 1377529, poverty: 7.3, region: "northeast" },
+      { fips: "34", name: "New Jersey", income: 89296, population: 9288994, poverty: 9.4, region: "northeast" },
+      { fips: "35", name: "New Mexico", income: 53992, population: 2117522, poverty: 17.6, region: "west" },
+      { fips: "36", name: "New York", income: 75157, population: 20201249, poverty: 12.7, region: "northeast" },
+      { fips: "37", name: "North Carolina", income: 60516, population: 10439388, poverty: 12.9, region: "south" },
+      { fips: "38", name: "North Dakota", income: 68131, population: 779094, poverty: 10.8, region: "midwest" },
+      { fips: "39", name: "Ohio", income: 61938, population: 11799448, poverty: 13.0, region: "midwest" },
+      { fips: "40", name: "Oklahoma", income: 55826, population: 3959353, poverty: 14.5, region: "south" },
+      { fips: "41", name: "Oregon", income: 71562, population: 4237256, poverty: 11.2, region: "west" },
+      { fips: "42", name: "Pennsylvania", income: 67587, population: 13002700, poverty: 11.1, region: "northeast" },
+      { fips: "44", name: "Rhode Island", income: 71169, population: 1097379, poverty: 10.3, region: "northeast" },
+      { fips: "45", name: "South Carolina", income: 58234, population: 5118425, poverty: 13.8, region: "south" },
+      { fips: "46", name: "South Dakota", income: 62520, population: 886667, poverty: 12.5, region: "midwest" },
+      { fips: "47", name: "Tennessee", income: 57153, population: 6910840, poverty: 13.2, region: "south" },
+      { fips: "48", name: "Texas", income: 67321, population: 29145505, poverty: 13.4, region: "south" },
+      { fips: "49", name: "Utah", income: 75780, population: 3271616, poverty: 8.0, region: "west" },
+      { fips: "50", name: "Vermont", income: 67673, population: 643077, poverty: 10.3, region: "northeast" },
+      { fips: "51", name: "Virginia", income: 80615, population: 8631393, poverty: 9.6, region: "south" },
+      { fips: "53", name: "Washington", income: 82228, population: 7614893, poverty: 10.0, region: "west" },
+      { fips: "54", name: "West Virginia", income: 50884, population: 1793716, poverty: 16.8, region: "south" },
+      { fips: "55", name: "Wisconsin", income: 67125, population: 5893718, poverty: 10.6, region: "midwest" },
+      { fips: "56", name: "Wyoming", income: 65204, population: 576851, poverty: 9.6, region: "west" },
+    ];
+
+    // Create a lookup map: FIPS -> state data object
+    const stateMap = new Map(stateData.map(d => [String(parseInt(d.fips, 10)), d]));
+
+    // Region colors
+    const regionColors = {
+      northeast: "#818cf8",
+      south: "#f97316",
+      midwest: "#4ade80",
+      west: "#f472b6",
+    };
+
+    // ---------- MAP SETUP ----------
+    const mapW = 580, mapH = 400;
+
+    const mapSvg = d3.select("#map-container")
+      .append("svg")
+      .attr("viewBox", `0 0 ${mapW} ${mapH}`);
+
+    const tooltip = d3.select("#map-tooltip");
+
+    // ---------- BAR CHART SETUP ----------
+    const barM = { top: 15, right: 20, bottom: 50, left: 50 };
+    const barW = 400 - barM.left - barM.right;
+    const barH = 220 - barM.top - barM.bottom;
+
+    const barSvg = d3.select("#bar-container")
+      .append("svg")
+      .attr("viewBox", `0 0 ${barW + barM.left + barM.right} ${barH + barM.top + barM.bottom}`)
+      .append("g")
+      .attr("transform", `translate(${barM.left},${barM.top})`);
+
+    const barX = d3.scaleBand().range([0, barW]).padding(0.2);
+    const barY = d3.scaleLinear().range([barH, 0]);
+
+    const barXAxisG = barSvg.append("g")
+      .attr("transform", `translate(0,${barH})`);
+    const barYAxisG = barSvg.append("g");
+
+    // ---------- DONUT CHART SETUP ----------
+    const donutW = 350, donutH = 220;
+    const donutRadius = Math.min(donutW, donutH) / 2 - 15;
+
+    const donutSvg = d3.select("#donut-container")
+      .append("svg")
+      .attr("viewBox", `0 0 ${donutW} ${donutH}`)
+      .append("g")
+      .attr("transform", `translate(${donutW / 2},${donutH / 2})`);
+
+    const pie = d3.pie().value(d => d.value).sort(null).padAngle(0.02);
+    const arc = d3.arc().innerRadius(donutRadius * 0.5).outerRadius(donutRadius).cornerRadius(3);
+
+    // ---------- LOAD MAP & RENDER ----------
+    async function init() {
+      try {
+        const us = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json");
+        const states = topojson.feature(us, us.objects.states);
+
+        const projection = d3.geoAlbersUsa().fitSize([mapW, mapH], states);
+        const path = d3.geoPath(projection);
+
+        // Draw state paths
+        mapSvg.selectAll("path.state")
+          .data(states.features)
+          .join("path")
+          .attr("class", "state")
+          .attr("d", path)
+          .attr("stroke", "#222")
+          .attr("stroke-width", 0.5)
+          .style("cursor", "pointer")
+          .on("mouseenter", function(event, d) {
+            d3.select(this).attr("stroke", "#f97316").attr("stroke-width", 2).raise();
+            const sd = stateMap.get(String(d.id));
+            if (sd) {
+              tooltip.style("display", "block")
+                .html(`<strong style="color:#f97316">${sd.name}</strong><br>Income: ${d3.format("$,.0f")(sd.income)}<br>Pop: ${d3.format(",")(sd.population)}<br>Poverty: ${sd.poverty}%`);
+            }
+          })
+          .on("mousemove", (event) => {
+            tooltip.style("left", (event.clientX + 14) + "px").style("top", (event.clientY - 30) + "px");
+          })
+          .on("mouseleave", function() {
+            d3.select(this).attr("stroke", "#222").attr("stroke-width", 0.5);
+            tooltip.style("display", "none");
+          });
+
+        // State borders
+        mapSvg.append("path")
+          .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
+          .attr("d", path)
+          .attr("fill", "none")
+          .attr("stroke", "#222")
+          .attr("stroke-width", 0.5)
+          .style("pointer-events", "none");
+
+        // Initial render
+        updateDashboard();
+
+        // Wire up filter changes
+        d3.select("#metric-select").on("change", updateDashboard);
+        d3.select("#region-select").on("change", updateDashboard);
+        d3.select("#btn-reset-filters").on("click", () => {
+          d3.select("#metric-select").property("value", "income");
+          d3.select("#region-select").property("value", "all");
+          updateDashboard();
+        });
+
+      } catch (err) {
+        d3.select("#map-container")
+          .html(`<div class="placeholder">Failed to load map: ${err.message}</div>`);
+      }
+    }
+
+    // ---------- UPDATE FUNCTION ----------
+    // Called when filters change. Recolors map, updates bar & donut charts.
+    function updateDashboard() {
+      const metric = d3.select("#metric-select").property("value");
+      const region = d3.select("#region-select").property("value");
+
+      // Filter data by region
+      const filtered = region === "all"
+        ? stateData
+        : stateData.filter(d => d.region === region);
+
+      // ---------- UPDATE MAP COLORS ----------
+      const colorScale = d3.scaleSequential(
+        metric === "poverty" ? d3.interpolateRdYlGn : d3.interpolateYlOrRd
+      ).domain(
+        metric === "poverty"
+          ? [d3.max(stateData, d => d[metric]), d3.min(stateData, d => d[metric])]
+          : d3.extent(stateData, d => d[metric])
+      );
+
+      const filteredFips = new Set(filtered.map(d => String(parseInt(d.fips, 10))));
+
+      mapSvg.selectAll("path.state")
+        .transition().duration(500)
+        .attr("fill", function(d) {
+          const sd = stateMap.get(String(d.id));
+          if (!sd) return "#333";
+          if (region !== "all" && !filteredFips.has(String(d.id))) return "#1a1a1a";
+          return colorScale(sd[metric]);
+        })
+        .attr("opacity", function(d) {
+          if (region === "all") return 1;
+          return filteredFips.has(String(d.id)) ? 1 : 0.3;
+        });
+
+      // ---------- UPDATE BAR CHART ----------
+      const top10 = [...filtered]
+        .sort((a, b) => b[metric] - a[metric])
+        .slice(0, 10);
+
+      barX.domain(top10.map(d => d.name.length > 8 ? d.name.slice(0, 7) + "." : d.name));
+      barY.domain([0, d3.max(top10, d => d[metric]) * 1.1]).nice();
+
+      const formatVal = metric === "income" ? d3.format("$,.0f")
+        : metric === "population" ? d3.format(",.0f")
+        : d => d + "%";
+
+      barXAxisG.transition().duration(500)
+        .call(d3.axisBottom(barX));
+      barXAxisG.selectAll("text").attr("fill", "#888").attr("font-size", "9px")
+        .attr("transform", "rotate(-25)").attr("text-anchor", "end");
+      barXAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+      barYAxisG.transition().duration(500)
+        .call(d3.axisLeft(barY).ticks(4).tickFormat(
+          metric === "income" ? d => `$${d/1000}k` :
+          metric === "population" ? d => `${(d/1e6).toFixed(1)}M` :
+          d => d + "%"
+        ));
+      barYAxisG.selectAll("text").attr("fill", "#888");
+      barYAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+      barSvg.selectAll(".bar")
+        .data(top10, d => d.fips)
+        .join(
+          enter => enter.append("rect")
+            .attr("class", "bar")
+            .attr("x", (d, i) => barX(d.name.length > 8 ? d.name.slice(0, 7) + "." : d.name))
+            .attr("y", barH)
+            .attr("width", barX.bandwidth())
+            .attr("height", 0)
+            .attr("fill", d => regionColors[d.region])
+            .attr("rx", 2)
+            .call(e => e.transition().duration(600).delay((d, i) => i * 40)
+              .attr("y", d => barY(d[metric]))
+              .attr("height", d => barH - barY(d[metric]))),
+          update => update.call(u => u.transition().duration(500)
+            .attr("x", (d, i) => barX(d.name.length > 8 ? d.name.slice(0, 7) + "." : d.name))
+            .attr("width", barX.bandwidth())
+            .attr("y", d => barY(d[metric]))
+            .attr("height", d => barH - barY(d[metric]))
+            .attr("fill", d => regionColors[d.region])),
+          exit => exit.transition().duration(300)
+            .attr("y", barH).attr("height", 0).remove()
+        );
+
+      // ---------- UPDATE DONUT CHART ----------
+      const regionAgg = d3.rollups(
+        filtered,
+        v => metric === "poverty"
+          ? d3.mean(v, d => d[metric])
+          : d3.sum(v, d => d[metric]),
+        d => d.region
+      ).map(([key, value]) => ({ region: key, value }));
+
+      donutSvg.selectAll("path")
+        .data(pie(regionAgg), d => d.data.region)
+        .join(
+          enter => enter.append("path")
+            .attr("d", arc)
+            .attr("fill", d => regionColors[d.data.region])
+            .attr("stroke", "#141414")
+            .attr("stroke-width", 1)
+            .style("opacity", 0)
+            .call(e => e.transition().duration(500).style("opacity", 1)),
+          update => update.call(u => u.transition().duration(500).attr("d", arc)),
+          exit => exit.transition().duration(300).style("opacity", 0).remove()
+        );
+
+      // Center text
+      donutSvg.selectAll(".center-text").remove();
+      donutSvg.append("text")
+        .attr("class", "center-text")
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .attr("fill", "#e5e5e5")
+        .attr("font-size", "12px")
+        .attr("font-weight", "bold")
+        .text(region === "all" ? "All Regions" : region.charAt(0).toUpperCase() + region.slice(1));
+
+      // Legend
+      const legendEl = d3.select("#donut-legend");
+      legendEl.selectAll("*").remove();
+      regionAgg.forEach(d => {
+        const item = legendEl.append("span").attr("class", "legend-item");
+        item.append("span").attr("class", "swatch").style("background", regionColors[d.region]);
+        item.append("span").text(
+          d.region.charAt(0).toUpperCase() + d.region.slice(1) +
+          ": " + (metric === "income" ? d3.format("$,.0f")(d.value) :
+                  metric === "population" ? d3.format(",.0f")(d.value) :
+                  d.value.toFixed(1) + "%")
+        );
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

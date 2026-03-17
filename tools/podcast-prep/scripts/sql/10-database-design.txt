@@ -1,0 +1,281 @@
+================================================================================
+SECTION 1: SOURCE DOCUMENT
+================================================================================
+
+TITLE: Views, Functions & Triggers -- Reusable Database Objects
+TRACK: SQL / PostgreSQL (Lesson 10 of 12)
+
+--------------------------------------------------------------------------------
+CONTEXT FOR HOSTS
+--------------------------------------------------------------------------------
+
+This is Lesson 10 of a 12-lesson SQL curriculum. In Lessons 01-09, Trevor learned to read, write, design schemas, optimize queries, and use PostgreSQL-specific features. Now he learns to create reusable database objects -- views that simplify complex queries, functions that encapsulate logic, and triggers that automate actions. These are the building blocks that turn a database from a passive data store into an active, intelligent system.
+
+Note: Despite the directory name "database-design," this lesson is actually about Views, Functions & Triggers.
+
+THE LEARNER: Trevor is an investigative journalist with 15+ years of experience who taught himself web development (React, Next.js, TypeScript, Tailwind). He has been using Prisma as his ORM. He is learning raw SQL/PostgreSQL for a potential role at Tenga, a chain of broadcast TV networks.
+
+WHAT TREVOR ALREADY KNOWS THAT CONNECTS:
+- React computed properties: A view is like a derived value in React -- it computes its result from underlying data every time you access it, just like a variable derived from state.
+- useMemo: A materialized view is like useMemo -- it caches the computed result and only recalculates when you explicitly tell it to (REFRESH instead of dependency changes).
+- JavaScript functions: PostgreSQL functions work the same way -- inputs, logic, output. PL/pgSQL is SQL with variables, loops, and conditionals bolted on.
+- Event listeners / middleware: Triggers are event listeners for the database. BEFORE INSERT is like Express middleware that runs before a request handler. AFTER UPDATE is like an event listener that fires after something happens.
+- Prisma limitations: Prisma can read from views (using the view keyword in the schema), but it cannot create views, materialized views, functions, or triggers. These must be created with raw SQL in migration files.
+
+TREVOR'S GOAL: Building reusable database objects for broadcast TV workflows -- views for the newsroom dashboard, functions for editorial reports, triggers for automatic timestamps and audit logging, materialized views for election night performance.
+
+MENTAL MODELS THAT MATTER MOST:
+1. Views are saved queries. You write a complex SELECT once, save it as a view, and query it like a table forever. It is the DRY principle applied to SQL.
+2. Materialized views are cached query results. Regular views re-run every time (like a computed property). Materialized views store the results physically (like useMemo). Fast reads, but can be stale.
+3. Functions are stored JavaScript. PL/pgSQL gives you variables, IF/ELSE, loops -- the same constructs you use in JavaScript, but running inside the database.
+4. Triggers are event listeners. They fire automatically when data changes. BEFORE triggers can modify incoming data. AFTER triggers can log changes or notify other systems.
+5. NEW and OLD are the event object. In a trigger, NEW is the row after the change, OLD is the row before. Like event.target in a DOM event listener.
+
+--------------------------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+--------------------------------------------------------------------------------
+
+1. VIEWS -- SAVED QUERIES: CREATE VIEW name AS SELECT... creates a virtual table. The query runs fresh every time you SELECT from the view. Views do not store data. Use for simplifying complex queries, restricting access to certain columns, and the DRY principle. CREATE OR REPLACE VIEW updates an existing view. DROP VIEW removes it.
+
+2. UPDATABLE VIEWS: Simple views (single table, no aggregation, no DISTINCT, no GROUP BY, no JOINs) can be written to -- INSERT, UPDATE, DELETE through the view affect the underlying table. WITH CHECK OPTION prevents inserts/updates that would make the row invisible to the view (the "disappearing row" trap).
+
+3. MATERIALIZED VIEWS: CREATE MATERIALIZED VIEW stores query results physically. Fast to read (pre-computed), but can be stale. REFRESH MATERIALIZED VIEW re-runs the query. REFRESH MATERIALIZED VIEW CONCURRENTLY allows reads during refresh (requires a unique index). Can be indexed for even faster reads.
+
+4. USER-DEFINED FUNCTIONS: CREATE FUNCTION name(params) RETURNS type AS $$ ... $$ LANGUAGE plpgsql. The $$ is dollar-quoting (avoids escaping issues). DECLARE block for variables. BEGIN...END for the body. RETURN QUERY for functions that return tables. Two languages: plpgsql (full programming) and sql (simple expressions).
+
+5. PL/PGSQL BASICS: Variables declared in DECLARE block, assigned with := or SELECT INTO. IF/ELSIF/ELSE/END IF for conditionals. FOR...LOOP/END LOOP for iteration. RECORD type for iterating over query results. Use PL/pgSQL when logic needs to be close to the data (bulk operations on many rows).
+
+6. TRIGGERS: Two-part system -- a trigger function (what to do) and a trigger definition (when to do it). Timing: BEFORE or AFTER. Events: INSERT, UPDATE, DELETE. Scope: FOR EACH ROW. Special variables: NEW (row after change), OLD (row before change). BEFORE triggers must RETURN NEW to proceed (returning NULL cancels the operation). AFTER triggers can return NULL.
+
+7. TRIGGER USE CASES: Auto-setting updated_at timestamps, auto-generating slugs, logging status changes to an events table, enforcing complex business rules, sending notifications via pg_notify.
+
+8. PRISMA AND VIEWS: Prisma's view keyword lets you read from existing views. Prisma cannot create views, materialized views, functions, or triggers. Use prisma.$queryRaw to call functions and prisma.$executeRaw to refresh materialized views. Create these objects in raw SQL migration files.
+
+--------------------------------------------------------------------------------
+DATA JOURNALISM CONNECTION
+--------------------------------------------------------------------------------
+
+Views, functions, and triggers transform a passive database into an active analytical tool for journalism:
+
+Views for Data Exploration: When investigating a FOIA dataset, you write complex queries to cross-reference tables. Instead of re-writing a 20-line JOIN query every time, save it as a view. CREATE VIEW contractor_payments_detailed AS SELECT... Then every future query is just SELECT * FROM contractor_payments_detailed WHERE amount > 100000. This accelerates the investigative workflow dramatically.
+
+Materialized Views for Dashboards: Election night dashboards need sub-second response times, but the underlying aggregation queries touch millions of rows. A materialized view pre-computes the dashboard data. REFRESH it every 30 seconds on election night. Between refreshes, dashboard queries return instantly from the cached results.
+
+Functions for Repeatable Analysis: When you have a standard analysis pattern (daily article counts, author performance metrics, beat-level statistics), encapsulate it in a function. SELECT * FROM daily_report('2024-11-05') gives you a consistent, tested report every time. No copy-pasting complex queries.
+
+Triggers for Automatic Data Quality: When election results stream in, a BEFORE INSERT trigger can validate that vote counts are non-negative, that reporting percentages are between 0 and 100, and that precinct IDs exist. An AFTER INSERT trigger can log every update to an audit trail and notify connected dashboards via pg_notify.
+
+For Trevor at Tenga: "Your newsroom CMS has a view called trending_articles that computes views-per-hour for articles published in the last 7 days. The homepage queries this view. A materialized view called author_dashboard pre-computes stats for each journalist. A trigger automatically sets published_at when an article's published flag changes to true. Another trigger logs every edit to an audit trail. None of this requires application code -- the database handles it all."
+
+--------------------------------------------------------------------------------
+BROADCAST TV SCENARIOS
+--------------------------------------------------------------------------------
+
+VIEWS:
+- "Editor queue": CREATE VIEW editor_queue AS SELECT a.id, a.title, u.name AS author, a.beat, a.created_at FROM articles a JOIN users u ON a.author_id = u.id WHERE a.published = false ORDER BY a.created_at ASC;
+- "Trending articles": CREATE VIEW trending_articles AS SELECT a.title, u.name AS author, a.views, a.views / GREATEST(1, EXTRACT(EPOCH FROM NOW() - a.published_at) / 3600) AS views_per_hour FROM articles a JOIN users u ON a.author_id = u.id WHERE a.published = true AND a.published_at > NOW() - INTERVAL '7 days';
+
+MATERIALIZED VIEWS:
+- "Newsroom dashboard": CREATE MATERIALIZED VIEW author_dashboard AS SELECT u.name, u.beat, COUNT(*) AS total_articles, COUNT(*) FILTER (WHERE a.published = true) AS published, SUM(a.views) AS total_views FROM users u LEFT JOIN articles a ON u.id = a.author_id WHERE u.role = 'journalist' GROUP BY u.id, u.name, u.beat;
+- "Refresh every 5 minutes": REFRESH MATERIALIZED VIEW CONCURRENTLY author_dashboard;
+
+FUNCTIONS:
+- "Daily editorial report": CREATE FUNCTION daily_report(report_date DATE DEFAULT CURRENT_DATE) RETURNS TABLE(metric TEXT, value BIGINT) AS $$ BEGIN RETURN QUERY SELECT 'Articles published'::TEXT, COUNT(*)::BIGINT FROM articles WHERE published_at::DATE = report_date AND published = true; END; $$ LANGUAGE plpgsql;
+- "Word count function": CREATE FUNCTION word_count(text_input TEXT) RETURNS INTEGER AS $$ BEGIN IF text_input IS NULL THEN RETURN 0; END IF; RETURN array_length(string_to_array(trim(text_input), ' '), 1); END; $$ LANGUAGE plpgsql;
+
+TRIGGERS:
+- "Auto-set published_at": CREATE FUNCTION set_published_at() RETURNS TRIGGER AS $$ BEGIN IF OLD.published = false AND NEW.published = true THEN NEW.published_at := NOW(); END IF; RETURN NEW; END; $$ LANGUAGE plpgsql; CREATE TRIGGER auto_published_at BEFORE UPDATE ON articles FOR EACH ROW EXECUTE FUNCTION set_published_at();
+- "Auto-set updated_at": CREATE FUNCTION set_updated_at() RETURNS TRIGGER AS $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END; $$ LANGUAGE plpgsql; CREATE TRIGGER update_timestamp BEFORE UPDATE ON articles FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+--------------------------------------------------------------------------------
+LESSON CONTENT
+--------------------------------------------------------------------------------
+
+VIEWS -- SAVED QUERIES YOU CAN REUSE
+
+A view is a saved SELECT query that acts like a virtual table. It does not store data -- it runs the query every time you read from it. Think of it like a computed property in a React component: it derives its value from underlying data.
+
+  CREATE VIEW published_articles AS
+  SELECT a.title, u.name AS author, a.views
+  FROM articles a
+  JOIN users u ON a.author_id = u.id
+  WHERE a.published = true;
+
+Once created, query it like a table:
+  SELECT * FROM published_articles WHERE views > 1000 ORDER BY views DESC LIMIT 10;
+
+Why views matter: Instead of copying a complex 20-line query into every API route, you create it once as a view. The DRY principle applied to SQL.
+
+Managing views:
+  CREATE OR REPLACE VIEW active_journalists AS SELECT id, name, email, beat FROM users WHERE role = 'journalist' AND active = true;
+  DROP VIEW IF EXISTS active_journalists;
+
+Views do not store data. They store the query definition. Every time you SELECT from a view, PostgreSQL runs the underlying query fresh.
+
+UPDATABLE VIEWS
+
+Simple views (single table, no aggregation, no DISTINCT) can be written to:
+
+  CREATE VIEW draft_articles AS
+  SELECT id, title, body, author_id, created_at FROM articles WHERE published = false;
+  INSERT INTO draft_articles (title, body, author_id) VALUES ('New Story', 'Working on it...', 3);
+  UPDATE draft_articles SET title = 'Updated Title' WHERE id = 15;
+
+The "disappearing row" trap: If you INSERT through draft_articles with published = true, the row goes into the articles table but will not appear in the view. Use WITH CHECK OPTION to prevent this:
+
+  CREATE VIEW draft_articles AS
+  SELECT id, title, body, author_id, created_at FROM articles WHERE published = false WITH CHECK OPTION;
+
+MATERIALIZED VIEWS -- CACHED QUERY RESULTS
+
+Regular views re-run the query every time. Materialized views actually store the results -- like caching. Think of it as the difference between a computed property and useMemo in React.
+
+  CREATE MATERIALIZED VIEW article_stats AS
+  SELECT author_id, COUNT(*) AS total, AVG(views) AS avg_views FROM articles GROUP BY author_id;
+
+  REFRESH MATERIALIZED VIEW article_stats;
+  REFRESH MATERIALIZED VIEW CONCURRENTLY article_stats; -- allows reads during refresh (requires unique index)
+
+When to use materialized views: Dashboard queries that aggregate millions of rows but do not need real-time data. A newsroom dashboard showing "articles per beat this month" does not need to be recalculated on every page load -- refreshing every 5 minutes is fine.
+
+Feature comparison:
+  Regular View: No stored data, always fresh, read speed depends on query, cannot be indexed, sometimes updatable.
+  Materialized View: Stored data, must refresh, fast reads, can be indexed, not updatable.
+
+USER-DEFINED FUNCTIONS
+
+Functions in SQL are like functions in JavaScript -- inputs, logic, output. In PostgreSQL, you write them using PL/pgSQL.
+
+  CREATE FUNCTION word_count(text_input TEXT) RETURNS INTEGER AS $$
+  BEGIN
+    IF text_input IS NULL THEN RETURN 0; END IF;
+    RETURN array_length(string_to_array(trim(text_input), ' '), 1);
+  END;
+  $$ LANGUAGE plpgsql;
+
+Anatomy: CREATE FUNCTION name(params), RETURNS type, $$ (dollar-quoting), BEGIN...END, LANGUAGE plpgsql.
+
+Use in queries: SELECT title, word_count(body) AS words FROM articles ORDER BY words DESC;
+
+Simple SQL functions (no BEGIN/END needed):
+  CREATE FUNCTION reading_time(body TEXT) RETURNS INTEGER AS $$
+    SELECT GREATEST(1, word_count(body) / 200);
+  $$ LANGUAGE sql;
+
+Functions that return tables:
+  CREATE FUNCTION get_articles_by_beat(beat_name TEXT) RETURNS TABLE(title TEXT, author TEXT, views INTEGER) AS $$
+  BEGIN
+    RETURN QUERY SELECT a.title, u.name, a.views FROM articles a JOIN users u ON a.author_id = u.id WHERE a.beat = beat_name AND a.published = true ORDER BY a.views DESC;
+  END;
+  $$ LANGUAGE plpgsql;
+
+  SELECT * FROM get_articles_by_beat('politics') WHERE views > 5000;
+
+PL/PGSQL BASICS
+
+Variables: Declared in DECLARE block, assigned with := or SELECT INTO.
+Conditionals: IF...THEN...ELSIF...ELSE...END IF.
+Loops: FOR article_row IN SELECT id, title FROM articles WHERE slug IS NULL LOOP ... END LOOP;
+
+When to use PL/pgSQL vs application code: Use PL/pgSQL when logic needs to be close to the data (bulk operations, complex calculations on many rows). Use your Next.js app for business logic, API responses, and anything that needs external services. Rule of thumb: if you would need to fetch 10,000 rows to your app just to update them, do it in a function instead.
+
+TRIGGERS -- AUTOMATIC DATABASE REACTIONS
+
+A trigger is code that runs automatically when something happens to a table. Think of it like an event listener in JavaScript.
+
+Two parts: (1) the trigger function (what to do), (2) the trigger definition (when to do it).
+
+  CREATE FUNCTION set_updated_at() RETURNS TRIGGER AS $$
+  BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+  END;
+  $$ LANGUAGE plpgsql;
+
+  CREATE TRIGGER update_timestamp BEFORE UPDATE ON articles FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+Trigger timing: BEFORE INSERT, AFTER INSERT, BEFORE UPDATE, AFTER UPDATE, BEFORE DELETE, AFTER DELETE.
+
+NEW and OLD: NEW is the row after the change (available in INSERT and UPDATE). OLD is the row before the change (available in UPDATE and DELETE). They let you compare what changed and modify incoming data.
+
+BEFORE triggers must RETURN NEW to proceed. Returning NULL cancels the operation. AFTER triggers can return NULL since the row is already written.
+
+Example -- log article status changes:
+  CREATE FUNCTION log_publish_event() RETURNS TRIGGER AS $$
+  BEGIN
+    IF OLD.published = false AND NEW.published = true THEN
+      INSERT INTO article_events (article_id, event_type, occurred_at) VALUES (NEW.id, 'published', NOW());
+    END IF;
+    RETURN NEW;
+  END;
+  $$ LANGUAGE plpgsql;
+
+  CREATE TRIGGER on_article_publish AFTER UPDATE ON articles FOR EACH ROW EXECUTE FUNCTION log_publish_event();
+
+PRISMA AND VIEWS
+
+Prisma can read from existing views (using the view keyword in the schema), but cannot create views, materialized views, functions, or triggers. Create those with raw SQL in migration files. Use prisma.$queryRaw to call functions and prisma.$executeRaw to refresh materialized views.
+
+================================================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+================================================================================
+
+LESSON-SPECIFIC INSTRUCTIONS FOR NOTEBOOKLM PODCAST HOSTS:
+
+MENTAL MODELS TO FOCUS ON:
+- Views as saved queries / DRY principle. Trevor uses the DRY principle in React -- do not repeat yourself. Views are the SQL equivalent. Write the complex query once, name it, use it everywhere.
+- Materialized views as useMemo. Regular views = computed property (recalculates every render). Materialized views = useMemo (cached until you explicitly refresh). This analogy maps perfectly to Trevor's React experience.
+- Triggers as event listeners. document.addEventListener('click', handler) in JavaScript is the same concept as CREATE TRIGGER... AFTER UPDATE ON articles. The database fires events, triggers listen and respond.
+- NEW and OLD as the event object. In a DOM event, event.target gives you what was clicked. In a trigger, NEW gives you the incoming row and OLD gives you the previous row. Same concept.
+
+JS/PRISMA EQUIVALENTS TO HIGHLIGHT:
+- View = derived state / computed property in React
+- Materialized View = useMemo / cached computation
+- Function = JavaScript function with typed params and return
+- PL/pgSQL = SQL + JavaScript control flow (variables, if/else, loops)
+- DECLARE = const/let declarations
+- := assignment = = in JavaScript
+- SELECT INTO = like destructuring assignment (const { salary } = ...)
+- Trigger = addEventListener / Express middleware
+- BEFORE trigger = middleware (runs before, can modify request)
+- AFTER trigger = event listener (runs after, for side effects)
+- NEW = event.target / incoming request body
+- OLD = previous state before the change
+- CREATE OR REPLACE VIEW = function overriding
+- Prisma view keyword = read-only access to existing views
+
+INVESTIGATIVE JOURNALISM ANGLE:
+Frame views as the investigative journalist's query library: "You are investigating government contractor payments. You write a 25-line query joining contractors, payments, agencies, and violations. Instead of copy-pasting that query every time you explore, save it as a view. Now every analysis starts with SELECT * FROM contractor_payment_details WHERE amount > 100000. Your investigation moves faster."
+
+Frame materialized views as the election night performance tool: "On election night, your dashboard aggregates results from 10,000 precincts. That aggregation query touches millions of rows and takes 3 seconds. With a materialized view refreshed every 30 seconds, the dashboard query returns instantly. Your anchors get results in real-time."
+
+Frame triggers as automatic data quality enforcement: "When precinct results stream in, a BEFORE INSERT trigger validates the data before it enters the database. A reporting percentage of 150? Rejected. A negative vote count? Rejected. An AFTER INSERT trigger logs the update and notifies the dashboard. No application code needed."
+
+CONNECTIONS TO PREVIOUS/NEXT LESSONS:
+- Connect back to Lesson 08: "Materialized views can be indexed, connecting to the indexing concepts from Lesson 08."
+- Connect back to Lesson 09: "Triggers can use pg_notify from Lesson 09 to send real-time notifications when data changes."
+- Connect back to Lesson 06: "The RETURNING clause from Lesson 06 is what functions use internally with RETURN QUERY."
+- Tease Lesson 11 (Transactions & Concurrency): "Next, we learn about transactions -- ensuring that multiple operations succeed or fail together, and how to handle concurrent access safely."
+
+TONE:
+- One host should be excited about the power of database-level automation: "Triggers mean the database enforces your rules automatically. No matter how the data arrives -- through your app, an admin tool, a migration script -- the triggers fire."
+- The other host should connect to practical developer experience: "So a materialized view is basically useMemo for my database? And triggers are like addEventListener but for table changes?"
+- The function section should feel empowering: "You can write IF/ELSE, loops, and variables right inside the database. PL/pgSQL is like learning that your database speaks JavaScript."
+
+MEMORIZATION TECHNIQUES:
+- "Views are saved SELECTs." One sentence, complete understanding.
+- "Materialized = cached. REFRESH to update." Two words.
+- "BEFORE triggers can modify. AFTER triggers can log." Timing determines capability.
+- "NEW = after, OLD = before." NEW is the new row, OLD is the old row.
+- "RETURN NEW to proceed, NULL to cancel." In BEFORE triggers.
+- "$$ dollar-quoting avoids quote escaping." The reason for the weird syntax.
+- "Prisma reads views, SQL creates them." The limitation to remember.
+
+BROADCAST TV DATA EXAMPLES:
+- Editor queue view: unpublished articles with author names, oldest first
+- Trending articles view: views-per-hour calculation for the last 7 days
+- Author dashboard materialized view: article counts, view totals, refreshed every 5 minutes
+- Word count function: called in SELECT to calculate reading time
+- Auto-published_at trigger: sets timestamp when published flag changes
+- Auto-updated_at trigger: sets timestamp on any article modification
+- Publish event logger: AFTER UPDATE trigger that logs to article_events table

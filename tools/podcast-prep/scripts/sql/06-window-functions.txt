@@ -1,0 +1,228 @@
+================================================================================
+SECTION 1: SOURCE DOCUMENT
+================================================================================
+
+TITLE: Data Modification -- INSERT, UPDATE, DELETE, UPSERT & Transactions
+TRACK: SQL / PostgreSQL (Lesson 6 of 12)
+
+--------------------------------------------------------------------------------
+CONTEXT FOR HOSTS
+--------------------------------------------------------------------------------
+
+This is Lesson 6 of a 12-lesson SQL curriculum. Note: despite the directory name "window-functions," this lesson is actually about Data Modification. In Lessons 01-05, Trevor mastered reading data: SELECT, filtering, JOINs, aggregation, subqueries, and CTEs. Now he learns to write, change, and remove data -- the other three letters of CRUD.
+
+THE LEARNER: Trevor is an investigative journalist with 15+ years of experience who taught himself web development (React, Next.js, TypeScript, Tailwind). He has been using Prisma as his ORM. He is learning raw SQL/PostgreSQL for a potential role at Tenga, a chain of broadcast TV networks.
+
+WHAT TREVOR ALREADY KNOWS THAT CONNECTS:
+- Prisma's .create(), .update(), .delete(): Trevor uses these daily. This lesson shows the SQL those methods generate.
+- Prisma's .createMany(), .updateMany(), .deleteMany(): The bulk operation equivalents.
+- Prisma's .upsert(): Maps directly to SQL's INSERT...ON CONFLICT.
+- Prisma's $transaction(): Maps directly to SQL's BEGIN/COMMIT/ROLLBACK.
+- REST API CRUD operations: POST = INSERT, GET = SELECT, PUT/PATCH = UPDATE, DELETE = DELETE.
+
+TREVOR'S GOAL: Managing broadcast TV data safely -- inserting new election results as they come in, updating weather station readings, upserting daily stats, archiving old records with transactions.
+
+DATA JOURNALISM CONNECTION: Data modification is critical for data journalism workflows. Journalists load FOIA datasets (INSERT...SELECT to import), clean dirty data (UPDATE with expressions), remove test records (DELETE with WHERE), and maintain reporting tables that get refreshed daily (UPSERT). Transactions ensure that multi-step data operations either complete fully or not at all -- you never want half-imported data.
+
+MENTAL MODELS THAT MATTER MOST:
+1. CRUD in SQL maps directly to Prisma: .create() = INSERT, .findMany() = SELECT, .update() = UPDATE, .delete() = DELETE.
+2. The golden rule: always use WHERE with UPDATE and DELETE. Without WHERE, you affect every row.
+3. RETURNING is Prisma's secret: when .create() returns the full object including the auto-generated id, it is using RETURNING under the hood.
+4. UPSERT = "insert if new, update if existing." ON CONFLICT handles the collision. EXCLUDED refers to the attempted values.
+5. Transactions are all-or-nothing: BEGIN...COMMIT saves everything. ROLLBACK undoes everything. If the database crashes mid-transaction, all changes are automatically rolled back.
+
+--------------------------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+--------------------------------------------------------------------------------
+
+1. INSERT: Single row and multi-row inserts. INSERT INTO table (columns) VALUES (values). RETURNING * to get the created row back (including auto-generated id and timestamps). INSERT...SELECT to insert from a query result -- a powerful pattern Prisma cannot do.
+
+2. UPDATE: UPDATE table SET column = value WHERE condition. Can use expressions (views = views + 1), CASE expressions, and even JOINs (PostgreSQL's UPDATE...FROM syntax). Always preview with SELECT first. RETURNING to get updated rows back.
+
+3. DELETE: DELETE FROM table WHERE condition. RETURNING to see what was deleted. DELETE without WHERE removes all rows (not the same as DROP TABLE which removes the table itself). Prefer soft deletes (deleted_at timestamp) in production.
+
+4. UPSERT (INSERT...ON CONFLICT): INSERT...ON CONFLICT (column) DO UPDATE SET... The conflict target must be a unique constraint. EXCLUDED refers to the row that was attempted to be inserted. DO NOTHING skips silently. Bulk upsert with multiple VALUES rows.
+
+5. CASCADING DELETES: ON DELETE CASCADE, SET NULL, RESTRICT defined on foreign keys. CASCADE deletes child rows automatically. SET NULL keeps children but clears the foreign key. RESTRICT prevents the delete entirely. Maps directly to Prisma's onDelete option.
+
+6. TRANSACTIONS: BEGIN starts, COMMIT saves, ROLLBACK undoes. Multiple operations succeed or fail as a unit. Prisma's $transaction() maps directly. Essential for multi-step operations like publishing an article (update + create audit log + update author stats).
+
+7. INSERT...SELECT: Insert rows based on query results. Powerful for data migration, archiving, and populating reporting tables. Entirely server-side -- no data transfer to the application.
+
+8. PRISMA VS RAW SQL: For simple CRUD, use Prisma. For INSERT...SELECT, UPDATE with JOINs, bulk upserts, and conditional updates -- use raw SQL.
+
+--------------------------------------------------------------------------------
+DATA JOURNALISM CONNECTION
+--------------------------------------------------------------------------------
+
+Data modification is a daily workflow for data journalists:
+
+Importing FOIA Data: When you receive a government dataset, you load it into a database with INSERT or INSERT...SELECT. A 500,000-row CSV of police complaint records becomes queryable in seconds.
+
+Cleaning Dirty Data: Government data is messy. UPDATE with expressions standardizes formats: UPDATE records SET name = UPPER(TRIM(name)) WHERE name != UPPER(TRIM(name)). UPDATE with CASE categorizes raw values.
+
+Maintaining Reporting Tables: Daily summary tables get refreshed with UPSERT. INSERT INTO daily_stats (...) SELECT ... ON CONFLICT (date, category) DO UPDATE SET... -- this is idempotent. Run it twice and you get the same result.
+
+Safe Multi-Step Operations: Transactions ensure data integrity. When archiving old records: BEGIN, INSERT INTO archive SELECT FROM main WHERE old, DELETE FROM main WHERE old, COMMIT. Either both the copy and the delete happen, or neither does.
+
+For Trevor specifically: on election night, results come in continuously. Each batch of precinct results is an UPSERT -- if the precinct already has results, update them; if not, insert them. INSERT INTO election_results (...) VALUES (...) ON CONFLICT (precinct_id) DO UPDATE SET vote_count = EXCLUDED.vote_count, reporting_pct = EXCLUDED.reporting_pct. This is exactly how real election systems work.
+
+--------------------------------------------------------------------------------
+BROADCAST TV SCENARIOS
+--------------------------------------------------------------------------------
+
+ELECTION DATA:
+- "Insert new precinct results as they come in": INSERT INTO election_results (precinct_id, candidate, vote_count, reporting_pct) VALUES (101, 'Smith', 2500, 75) ON CONFLICT (precinct_id, candidate) DO UPDATE SET vote_count = EXCLUDED.vote_count, reporting_pct = EXCLUDED.reporting_pct RETURNING *;
+- "Archive yesterday's results to history": INSERT INTO election_history SELECT * FROM election_results WHERE election_date = CURRENT_DATE - 1;
+
+WEATHER DATA:
+- "Update weather readings as they stream in": UPDATE weather_stations SET temperature = 98.5, humidity = 45, recorded_at = NOW() WHERE station_id = 'KHOU-001';
+- "Upsert daily weather summaries": INSERT INTO weather_daily (station_id, date, high_temp, low_temp) VALUES ('KHOU-001', CURRENT_DATE, 98.5, 72.1) ON CONFLICT (station_id, date) DO UPDATE SET high_temp = GREATEST(weather_daily.high_temp, EXCLUDED.high_temp), low_temp = LEAST(weather_daily.low_temp, EXCLUDED.low_temp);
+
+AD REVENUE:
+- "Insert a new ad booking": INSERT INTO ad_revenue (advertiser, campaign, amount, time_slot, air_date, station) VALUES ('Acme Corp', 'Spring Sale', 15000.00, 'primetime', '2024-04-15', 'KHOU') RETURNING id;
+- "Archive and delete old ad records in a transaction": BEGIN; INSERT INTO ad_archive SELECT * FROM ad_revenue WHERE air_date < '2023-01-01'; DELETE FROM ad_revenue WHERE air_date < '2023-01-01'; COMMIT;
+
+--------------------------------------------------------------------------------
+LESSON CONTENT
+--------------------------------------------------------------------------------
+
+THE MENTAL MODEL -- CRUD IN SQL
+
+Every web app does four things with data: Create, Read, Update, Delete. You have mastered Read (SELECT). The other three are simpler than SELECT -- they have fewer options and fewer clauses.
+
+  Create: INSERT INTO (.create())  -- Low risk, adds data
+  Read:   SELECT (.findMany())     -- No risk, just reads
+  Update: UPDATE...SET (.update()) -- Medium risk, changes data
+  Delete: DELETE FROM (.delete())  -- High risk, removes data
+
+The golden rule of data modification: Always use a WHERE clause with UPDATE and DELETE. Without WHERE, you affect EVERY row in the table. In production, run a SELECT with the same WHERE clause first to preview which rows you will change.
+
+INSERT -- ADDING DATA
+
+Single Row Insert:
+  Prisma: await prisma.article.create({ data: { title: '...', body: '...' } });
+  SQL: INSERT INTO articles (title, body, category, author_id, published) VALUES ('Breaking: City Council Vote', 'The city council voted...', 'politics', 1, true);
+
+RETURNING gets the created row back:
+  INSERT INTO articles (title, body, category) VALUES ('New Story', '...', 'culture') RETURNING *;
+  INSERT INTO articles (title, body, category) VALUES ('New Story', '...', 'culture') RETURNING id, title, created_at;
+
+RETURNING is a PostgreSQL feature. This is what Prisma uses behind the scenes when .create() returns the full object including the auto-generated id and created_at.
+
+Multiple Row Insert:
+  INSERT INTO articles (title, body, category) VALUES ('Story A', '...', 'politics'), ('Story B', '...', 'sports'), ('Story C', '...', 'culture') RETURNING id, title;
+
+INSERT...SELECT -- Insert from a Query:
+A powerful pattern Prisma cannot do directly. Insert rows based on a SELECT result:
+
+  INSERT INTO archived_articles (title, body, category, original_id)
+  SELECT title, body, category, id FROM articles WHERE published = true AND published_at < '2023-01-01';
+
+  INSERT INTO daily_stats (date, article_count, total_views)
+  SELECT CURRENT_DATE, COUNT(*), SUM(views) FROM articles WHERE published_at::DATE = CURRENT_DATE;
+
+UPDATE -- CHANGING EXISTING DATA
+
+  UPDATE articles SET title = 'Updated Headline', published = true, views = views + 1 WHERE id = 5;
+
+Always preview with SELECT first:
+  SELECT id, title, status FROM articles WHERE published = false AND created_at < '2023-06-01';
+  -- Check results, then:
+  UPDATE articles SET status = 'archived' WHERE published = false AND created_at < '2023-06-01';
+
+UPDATE with Expressions:
+  UPDATE articles SET views = views + 1 WHERE id = 5;
+  UPDATE employees SET salary = salary * 1.10 WHERE department = 'engineering';
+  UPDATE articles SET slug = LOWER(REPLACE(title, ' ', '-')) WHERE slug IS NULL;
+  UPDATE articles SET priority = CASE WHEN views > 10000 THEN 'high' WHEN views > 1000 THEN 'medium' ELSE 'low' END;
+
+UPDATE with RETURNING:
+  UPDATE articles SET published = true, published_at = NOW() WHERE id = 5 RETURNING id, title, published, published_at;
+
+UPDATE with JOIN (PostgreSQL-specific UPDATE...FROM):
+  UPDATE articles a SET beat = au.beat FROM authors au WHERE a.author_id = au.id AND a.beat IS NULL;
+
+DELETE -- REMOVING DATA
+
+  DELETE FROM articles WHERE id = 5;
+  DELETE FROM articles WHERE id = 5 RETURNING id, title;
+  DELETE FROM articles WHERE published = false AND created_at < CURRENT_DATE - INTERVAL '90 days';
+
+DELETE is permanent. No undo, no recycle bin. In production, prefer soft deletes -- set a deleted_at timestamp instead.
+
+DELETE with Subqueries:
+  DELETE FROM articles WHERE author_id IN (SELECT id FROM authors WHERE active = false);
+  DELETE FROM articles a WHERE NOT EXISTS (SELECT 1 FROM comments c WHERE c.article_id = a.id);
+
+Cascading Deletes: Defined on the foreign key with ON DELETE CASCADE / SET NULL / RESTRICT.
+
+UPSERT -- INSERT OR UPDATE
+
+Insert if the row does not exist, update if it does. Common when syncing data from external sources.
+
+  Prisma: await prisma.author.upsert({ where: { email: '...' }, create: {...}, update: {...} });
+  SQL: INSERT INTO authors (email, name, beat) VALUES ('sarah@news.com', 'Sarah Chen', 'politics') ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, beat = EXCLUDED.beat;
+
+EXCLUDED is a special table that refers to the row attempted for insertion.
+DO NOTHING skips silently if there is a conflict.
+RETURNING works with upserts too.
+
+TRANSACTIONS -- ALL OR NOTHING
+
+When multiple operations must succeed or fail together:
+
+  Prisma: await prisma.$transaction([...]);
+  SQL: BEGIN; UPDATE articles SET published = true WHERE id = 5; INSERT INTO notifications (message, article_id) VALUES ('Article published!', 5); COMMIT;
+
+BEGIN starts. COMMIT saves all changes. ROLLBACK undoes everything since BEGIN. If the database crashes between BEGIN and COMMIT, all changes are automatically rolled back.
+
+================================================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+================================================================================
+
+LESSON-SPECIFIC INSTRUCTIONS FOR NOTEBOOKLM PODCAST HOSTS:
+
+MENTAL MODELS TO FOCUS ON:
+- CRUD maps directly to Prisma. Trevor uses .create(), .update(), .delete() daily. Each one generates the SQL taught in this lesson. Frame it as "now you are seeing the SQL your Prisma calls generate."
+- RETURNING is Prisma's secret weapon. When .create() returns the full record with the id, it is using INSERT...RETURNING behind the scenes. This is a PostgreSQL feature, not standard SQL.
+- UPSERT is election-night essential. Frame ON CONFLICT as the pattern for streaming data: "Results come in for a precinct. If you already have results for that precinct, update them. If not, insert them. That is one query, not a check-then-insert."
+- Transactions are insurance. BEGIN...COMMIT is like try/catch for your database. If anything fails, ROLLBACK undoes everything.
+
+JS/PRISMA EQUIVALENTS TO HIGHLIGHT:
+- INSERT = .create() / .createMany()
+- INSERT...RETURNING = how .create() returns the full object
+- UPDATE = .update() / .updateMany()
+- DELETE = .delete() / .deleteMany()
+- INSERT...ON CONFLICT = .upsert()
+- BEGIN/COMMIT/ROLLBACK = prisma.$transaction()
+- INSERT...SELECT = no Prisma equivalent (raw SQL only)
+- UPDATE...FROM = no Prisma equivalent (raw SQL only)
+
+INVESTIGATIVE JOURNALISM ANGLE:
+Frame data modification as the data journalist's workflow: "You get a FOIA dataset. You INSERT it into the database. You find inconsistencies, so you UPDATE to clean them. You find test records, so you DELETE them. You build a daily summary table with UPSERT. Every step of the data pipeline is a modification operation."
+
+The transaction concept matters for data integrity: "When archiving old records, you copy them to the archive table and delete them from the main table. If the delete fails but the copy succeeded, you have duplicates. A transaction ensures both happen or neither does."
+
+CONNECTIONS TO PREVIOUS/NEXT LESSONS:
+- Connect back to Lesson 01: "You learned INSERT, UPDATE, DELETE basics in Lesson 01. Now you learn the advanced patterns: RETURNING, INSERT...SELECT, UPDATE with JOINs, UPSERT, and transactions."
+- Connect back to Lesson 05: "Subqueries and CTEs from Lesson 05 power advanced DELETE (DELETE WHERE IN (SELECT...)) and UPDATE (UPDATE...FROM with subqueries)."
+- Tease Lesson 07 (Data Types & Constraints): "The schema designs that protect your data -- NOT NULL, UNIQUE, CHECK, foreign keys with CASCADE -- are next. These constraints are what prevent bad data from ever reaching your tables."
+
+TONE:
+- One host should emphasize the safety angle: "Always WHERE with UPDATE and DELETE. Always preview with SELECT first. Always use transactions for multi-step operations."
+- The other host should be connecting to Prisma: "So RETURNING is why .create() gives me back the id! And ON CONFLICT is what .upsert() does!"
+- The UPSERT section should feel practical and exciting: "This is how real-time data systems work. Election results, weather readings, stock prices -- all upserts."
+
+MEMORIZATION TECHNIQUES:
+- "Always WHERE with UPDATE and DELETE." Say it multiple times. This is the SQL equivalent of rm -rf /.
+- RETURNING: "Get back what you just changed." Works with INSERT, UPDATE, and DELETE.
+- UPSERT pattern: INSERT...ON CONFLICT (unique_column) DO UPDATE SET column = EXCLUDED.column.
+- EXCLUDED: "The values that tried to come in but hit a conflict."
+- Transaction commands: BEGIN, COMMIT, ROLLBACK -- three words, three operations.
+
+BROADCAST TV DATA EXAMPLES:
+- "Upsert election results as precincts report": INSERT...ON CONFLICT (precinct_id, candidate) DO UPDATE SET vote_count = EXCLUDED.vote_count
+- "Archive old ad records safely": BEGIN; INSERT INTO archive SELECT FROM main; DELETE FROM main; COMMIT;
+- "Update weather readings": UPDATE weather_stations SET temperature = 98.5 WHERE station_id = 'KHOU-001' RETURNING *;
+- "Insert daily stats from today's articles": INSERT INTO daily_stats SELECT CURRENT_DATE, COUNT(*), SUM(views) FROM articles WHERE published_at::DATE = CURRENT_DATE;

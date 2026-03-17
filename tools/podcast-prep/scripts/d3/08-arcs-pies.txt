@@ -1,0 +1,185 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+LESSON TITLE: Lesson 08 - Lines, Areas & Time Series
+TRACK: D3.js (12-lesson curriculum)
+
+--- CONTEXT FOR HOSTS ---
+
+Curriculum Position: Lesson 8 of 12. After mastering bar charts (Lessons 01-07), Trevor now learns line and area charts -- the primary visualization type for time series data. This lesson introduces path generators (d3.line(), d3.area()), which are "cookie cutters" that stamp out SVG path strings from data arrays. It also covers the critical .datum() vs .data() distinction and curve types.
+
+What came before: Lesson 07 covered the enter/update/exit pattern and the general update pattern. Trevor now understands dynamic data changes and key functions. Lessons 01-06 gave him SVG, scales, selections, data binding, axes, and margins.
+
+What's coming next: Lesson 09 covers arcs and pies (d3.pie() and d3.arc()), and Lesson 10 covers maps and geography.
+
+What Trevor already knows: React component rendering, the concept of generator functions, SVG path elements from Lesson 01, data binding from Lesson 04, scales from Lessons 02 and 05.
+
+Learner's goal: Broadcast TV dashboards frequently show trends over time -- approval ratings, economic indicators, stock prices, temperature forecasts. Line and area charts are essential for these.
+
+Specific analogies for THIS lesson:
+- Path generators are "cookie cutters" -- you give them data (the dough) and they stamp out an SVG path string (the shape)
+- .datum() vs .data() is like giving ONE employee the entire spreadsheet vs. handing each employee ONE row
+- d3.line() is a function factory -- it creates a function that creates path strings
+- Curve types are like different handwriting styles -- same words, different look
+- The stroke-dasharray animation trick is like revealing a drawing by pulling away a cover
+
+Key mental models:
+- d3.line() and d3.area() are path generators -- functions that return functions
+- .datum() binds the entire array to ONE element (used for line/area paths)
+- .data() binds each array item to a SEPARATE element (used for bars, circles)
+- A line chart is ONE <path> element using ALL data points
+- Curve types control how points are connected -- curveMonotoneX is the safe choice for journalism
+
+--- LESSON CONTENT ---
+
+Path Generators: Cookie Cutters for Data
+
+A path generator is a function factory. d3.line() creates a function. You configure that function with .x() and .y() accessors that tell it how to extract coordinates from each data point. When you call the resulting function with an array of data, it returns an SVG path string -- the "d" attribute for a <path> element.
+
+const line = d3.line()
+  .x(d => xScale(d.date))
+  .y(d => yScale(d.value));
+
+line(data)  // returns "M0,150 L50,120 L100,80..."
+
+You never write path commands by hand. The generator handles all the M (move to), L (line to), and other SVG path commands automatically.
+
+.datum() vs .data(): The Critical Distinction
+
+This is one of the most important distinctions in D3:
+
+.data(array) = one element per array item. Used for bar charts (one rect per data point), scatter plots (one circle per data point). Each element gets one array item bound to it.
+
+.datum(array) = one element for the ENTIRE array. Used for line charts and area charts. A line chart is ONE <path> element that uses ALL the data points to draw the line. You bind the whole array to that single path.
+
+svg.append("path")
+  .datum(data)          // entire array bound to this ONE path
+  .attr("d", line)      // line generator receives the array
+  .attr("fill", "none")
+  .attr("stroke", "#f97316");
+
+When you write .attr("d", line), D3 calls line(data) automatically -- passing the bound datum (the entire array) to the line generator, which returns the path string.
+
+d3.area(): Filled Regions
+
+An area generator works like a line generator but defines TWO boundaries:
+
+.y0() = the bottom edge (baseline), usually the chart height
+.y1() = the top edge, driven by data values
+
+The filled region between y0 and y1 creates the area chart. For a confidence band (showing uncertainty), both y0 and y1 can be data-driven -- y0 maps to the lower bound, y1 maps to the upper bound.
+
+const area = d3.area()
+  .x(d => xScale(d.date))
+  .y0(height)                // bottom baseline
+  .y1(d => yScale(d.value))  // top edge from data
+  .curve(d3.curveMonotoneX);
+
+Curve Types: How Points Connect
+
+The .curve() method controls how points are connected. This matters for journalism:
+
+curveLinear -- straight line segments between points. Default. Most accurate representation of the data.
+
+curveMonotoneX -- smooth curve that preserves monotonicity. Passes through every data point. The safe "smooth" option for journalism because it does not create false peaks or valleys between data points.
+
+curveStep -- staircase pattern. Good for showing discrete values that change at specific points (like interest rate changes).
+
+curveBasis -- very smooth but does NOT pass through data points. It creates values between data points that never existed in the actual data. For factual reporting, this is misleading. Use only for aesthetic purposes where data accuracy is not critical.
+
+For journalism, use curveLinear or curveMonotoneX. Basis and cardinal curves create phantom data points that never existed. On a broadcast graphic showing approval ratings, creating a false peak between two survey dates is editorially indefensible.
+
+The Animated Line Drawing Effect
+
+The stroke-dasharray trick creates the illusion of a line being drawn on screen:
+
+1. Get the total length of the path: path.node().getTotalLength()
+2. Set stroke-dasharray and stroke-dashoffset to the total length (makes the line invisible)
+3. Transition stroke-dashoffset to 0 (gradually reveals the line)
+
+This is a pure SVG trick -- no D3-specific API needed. It works by creating a dash pattern as long as the entire line, then sliding the offset from "fully hidden" to "fully visible."
+
+Combining Line and Area
+
+A common pattern layers an area fill underneath a line:
+
+1. Draw the area first (so it appears behind)
+2. Draw the line on top
+3. Optionally add dots at each data point using .data().join("circle")
+
+The area uses semi-transparent fill (e.g., "#f9731622") so it provides subtle context without overpowering the line.
+
+The lesson demonstrates two charts:
+- A presidential approval rating line chart with an animated drawing effect, area fill, dots at data points, a 50% reference line, and time-formatted axes
+- An economic indicator area chart with a confidence band showing uncertainty ranges
+
+--- KEY CONCEPTS TO EMPHASIZE ---
+
+1. d3.line() and d3.area() are function factories -- they create functions that return path strings
+2. .datum() binds the entire array to ONE element (line/area); .data() binds each item to a SEPARATE element (bars/circles)
+3. curveMonotoneX is the safe smooth curve for journalism -- it passes through every data point
+4. The stroke-dasharray trick creates animated line-drawing effects
+5. d3.area() defines a region between two boundaries (y0 and y1) -- useful for confidence bands
+
+--- COMMON PITFALLS ---
+
+- Confusing .datum() and .data() -- using .data() for a line chart creates multiple broken paths instead of one continuous line
+- Using curveBasis for factual data -- it creates phantom values between data points
+- Forgetting to set fill to "none" on line paths -- by default, SVG paths fill with black, creating weird shapes
+- Not understanding that d3.line() returns a FUNCTION, not a path string -- you call the function with data to get the string
+- Forgetting that the path "d" attribute is what d3.line() generates -- .attr("d", line) calls line(datum) automatically
+
+--- BROADCAST TV CONNECTION ---
+
+- Presidential approval tracking: line chart with smooth curve showing poll trends over months/years
+- Economic indicators: area chart with confidence band showing GDP growth with uncertainty ranges
+- Weather forecasts: line charts showing temperature predictions over the coming week
+- Stock market tickers: line charts showing intraday or multi-day price movements
+- Election polling averages: layered area charts showing multiple candidates' polling trends
+- The animated line-drawing effect is a classic broadcast transition -- the line appears to draw itself on screen during a segment introduction
+- COVID case counts, unemployment rates, inflation trends -- all time series data that broadcast newsrooms visualize constantly
+
+
+========================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+========================================
+
+PODCAST CUSTOMIZATION FOR LESSON 08: Lines, Areas & Time Series
+
+TARGET MENTAL MODELS:
+- Path generators as "cookie cutters" -- data goes in, path strings come out
+- .datum() as "handing the entire spreadsheet to one person" vs .data() as "giving each person one row"
+- d3.line() as a "function that makes a function" -- a factory pattern
+- Curve types as editorial choices -- curveMonotoneX is the honest choice for journalism
+
+SPECIFIC ANALOGIES TO USE:
+- "Path generators are like React render functions. You configure them once with accessors, then call them with different data. d3.line().x(...).y(...) is like defining a component. Calling line(data) is like rendering it with props."
+- ".datum() vs .data() is the single most confusing thing in D3. Here's the simple rule: if you want ONE element from ALL your data (a single line), use .datum(). If you want MANY elements, one per data point (bars, circles), use .data(). A line chart is one path element. A bar chart is many rect elements."
+- "For broadcast journalism, curve type is an editorial decision. Using curveBasis is like putting words in someone's mouth -- it creates data points that never existed. curveMonotoneX smooths without fabricating. On election night, you would never show a polling average that invents peaks between actual survey dates."
+- "The stroke-dasharray animation is like pulling a curtain off a painting. The line is already drawn; you're just revealing it. This is the exact animation you see on broadcast graphics when they show a trend line appearing during a segment."
+
+CONNECTIONS TO OTHER LESSONS:
+- Connect to Lesson 01: "Remember the SVG <path> element with that cryptic 'd' attribute? d3.line() generates those path strings automatically. No more writing M, L, C commands by hand."
+- Connect to Lesson 04: "Data binding introduced .data(). Now you meet its sibling .datum(). Same concept -- attaching data to DOM elements -- but .datum() binds the WHOLE array to one element."
+- Connect to Lesson 05: "Scales feed directly into line generators. xScale and yScale become the .x() and .y() accessors. scaleTime handles the date axis; scaleLinear handles the value axis."
+- Connect to Lesson 07: "Enter/update/exit works with line charts too, but differently. When data changes, you re-generate the path string and transition the 'd' attribute. The path morphs smoothly from old shape to new shape."
+- Tease Lesson 09: "Next lesson introduces another pair of generators: d3.pie() computes angles, d3.arc() draws slices. Same factory pattern -- configure once, call with data."
+
+TREVOR'S BACKGROUND TO REFERENCE:
+- React: "Think of d3.line() like a React component definition. You define it once with its accessors (.x(), .y()), and then you 'render' it by calling it with data. Different data, different output -- same component."
+- Journalism: "As a journalist, you know that data integrity matters. curveBasis is the data viz equivalent of a misleading headline -- technically based on real numbers, but the visual output suggests things that aren't in the data. curveMonotoneX is the responsible choice."
+- Broadcast TV: "Every broadcast newsroom shows trend lines. COVID cases, gas prices, polling averages. The animated line-drawing effect -- where the line appears to draw itself -- is what makes these segments feel dynamic on air."
+
+MEMORIZATION TECHNIQUES:
+- ".datum() = ONE element, ONE array. .data() = MANY elements, MANY items." -- the singular/plural rule
+- "d3.line() returns a function" -- it does not return a path string until you call it with data
+- "curveMonotoneX for journalism" -- one sentence, remember it every time
+- "y0 is the floor, y1 is the ceiling" -- for d3.area()
+- "fill: none on lines" -- or you get weird black shapes
+
+TONE:
+- This should feel like expanding the toolkit. The React-dev host should be excited: "So now I can do trend lines, not just bars? Approval ratings over time? Economic charts?"
+- D3-expert: "Exactly. And the pattern is almost identical. Instead of selectAll-data-join for many elements, it's append-datum for one element. Instead of .attr('height'), it's .attr('d', lineGenerator). Same concepts, different shapes."
+- The .datum() vs .data() distinction should get special emphasis: "This trips up everyone. Let me say it one more time: .datum() glues the whole array to one element. .data() distributes array items across many elements."
+- The journalism angle on curves should be strong: "On a broadcast graphic, every pixel is editorial. If your curve shows a peak that didn't happen, that's misinformation. curveMonotoneX is the journalist's curve."

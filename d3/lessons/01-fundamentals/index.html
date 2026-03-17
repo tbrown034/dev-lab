@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 01 - Pure SVG</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #f97316; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #f97316; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #f97316; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #f97316; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .demo h4 { color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .demo svg { background: #1a1a1a; border-radius: 4px; display: block; }
+    .quiz { background: #1a1500; border: 1px solid #f9731644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #f97316; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #f97316; text-decoration: none; }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #1a0a00; border-left: 3px solid #f97316; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #fdba74; }
+    .aha strong { color: #f97316; }
+    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
+    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
+    .try-it { background: #0a0a1a; border: 1px solid #818cf844; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .try-it h4 { color: #818cf8; margin-bottom: 0.75rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th { text-align: left; color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
+    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
+    td code { font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>01</span> Pure SVG &mdash; The Canvas You're Painting On</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #f97316;">No JavaScript in this lesson.</strong> Just HTML. Every D3 chart is made of SVG elements. Before we touch D3, you need to be fluent in what it produces.</p>
+
+    <!-- ============================================ -->
+    <!-- WHAT IS SVG                                  -->
+    <!-- ============================================ -->
+
+    <h2>What is SVG?</h2>
+
+    <p>SVG stands for <strong>Scalable Vector Graphics</strong>. It's a set of HTML tags for drawing shapes. You already know <code>&lt;div&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;img&gt;</code>. SVG adds tags like <code>&lt;rect&gt;</code>, <code>&lt;circle&gt;</code>, <code>&lt;line&gt;</code>, <code>&lt;text&gt;</code>.</p>
+
+    <p>An SVG element is just a container, like a <code>&lt;div&gt;</code>. You put shapes inside it:</p>
+
+    <pre><code>&lt;svg width="300" height="100"&gt;
+  &lt;rect x="10" y="10" width="200" height="80" fill="orange" /&gt;
+&lt;/svg&gt;</code></pre>
+
+    <div class="demo">
+      <h4>Result:</h4>
+      <svg width="300" height="100">
+        <rect x="10" y="10" width="200" height="80" fill="#f97316" rx="4" />
+      </svg>
+    </div>
+
+    <div class="aha">
+      <p><strong>This is the entire foundation of D3.</strong> Every bar chart, line chart, map, and visualization that D3 produces is just SVG elements like this. D3 doesn't use canvas or WebGL by default &mdash; it writes these exact HTML tags into the page.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE COORDINATE SYSTEM                        -->
+    <!-- ============================================ -->
+
+    <h2>The Coordinate System (The One Gotcha)</h2>
+
+    <p>SVG's coordinate system has <strong>one critical difference</strong> from what you'd expect:</p>
+    <ul>
+      <li><code>(0, 0)</code> is the <strong>top-left</strong> corner</li>
+      <li><strong>X</strong> increases going right (normal)</li>
+      <li><strong>Y</strong> increases going <strong>down</strong> (opposite of math class)</li>
+    </ul>
+
+    <div class="demo">
+      <h4>The coordinate system</h4>
+      <svg width="400" height="250">
+        <!-- Axes -->
+        <line x1="40" y1="10" x2="40" y2="230" stroke="#333" stroke-width="1" />
+        <line x1="40" y1="10" x2="380" y2="10" stroke="#333" stroke-width="1" />
+        <!-- Origin label -->
+        <text x="30" y="8" text-anchor="end" fill="#f97316" font-size="12" font-weight="bold">(0,0)</text>
+        <!-- Arrow heads -->
+        <text x="385" y="14" fill="#666" font-size="11">x &rarr;</text>
+        <text x="44" y="245" fill="#666" font-size="11">y &darr;</text>
+        <!-- Points -->
+        <circle cx="40" cy="10" r="5" fill="#f97316" />
+        <circle cx="150" cy="10" r="4" fill="#818cf8" />
+        <text x="155" y="28" fill="#818cf8" font-size="11">(110, 0)</text>
+        <circle cx="40" cy="120" r="4" fill="#818cf8" />
+        <text x="50" y="124" fill="#818cf8" font-size="11">(0, 110)</text>
+        <circle cx="200" cy="80" r="5" fill="#4ade80" />
+        <text x="210" y="84" fill="#4ade80" font-size="11">(160, 70)</text>
+        <circle cx="300" cy="180" r="5" fill="#f472b6" />
+        <text x="310" y="184" fill="#f472b6" font-size="11">(260, 170)</text>
+        <!-- Dotted guides -->
+        <line x1="200" y1="10" x2="200" y2="80" stroke="#4ade8044" stroke-dasharray="4" />
+        <line x1="40" y1="80" x2="200" y2="80" stroke="#4ade8044" stroke-dasharray="4" />
+      </svg>
+    </div>
+
+    <div class="callout">
+      <p><strong>Why this matters:</strong> When you make a bar chart, taller bars need <em>smaller</em> Y values (to reach higher on screen). This feels backwards at first, but you'll get used to it. D3's scales handle this for you later &mdash; but you need to know WHY.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EVERY SHAPE YOU NEED                         -->
+    <!-- ============================================ -->
+
+    <h2>Every Shape You Need to Know</h2>
+
+    <h3>&lt;rect&gt; &mdash; Rectangles (bars in bar charts)</h3>
+
+    <pre><code>&lt;rect x="10" y="20" width="150" height="60" fill="#f97316" rx="4" /&gt;
+<span class="comment">&lt;!--   x,y = top-left corner position
+       width, height = size
+       fill = color
+       rx = corner radius (optional, makes it rounded) --&gt;</span></code></pre>
+
+    <div class="demo">
+      <h4>Rectangles</h4>
+      <svg width="500" height="100">
+        <rect x="10" y="10" width="150" height="60" fill="#f97316" rx="4" />
+        <rect x="180" y="20" width="80" height="40" fill="#818cf8" />
+        <rect x="280" y="5" width="200" height="80" fill="none" stroke="#4ade80" stroke-width="2" rx="8" />
+      </svg>
+    </div>
+
+    <div class="try-it">
+      <h4>Play with it: drag the sliders to move &amp; resize a rect</h4>
+      <div id="playground-rect"></div>
+    </div>
+
+    <h3>&lt;circle&gt; &mdash; Circles (dots in scatter plots)</h3>
+
+    <pre><code>&lt;circle cx="100" cy="60" r="40" fill="#818cf8" /&gt;
+<span class="comment">&lt;!--   cx, cy = CENTER position (not top-left!)
+       r = radius
+       fill = color --&gt;</span></code></pre>
+
+    <div class="demo">
+      <h4>Circles</h4>
+      <svg width="500" height="120">
+        <circle cx="60" cy="60" r="40" fill="#818cf8" />
+        <circle cx="180" cy="60" r="25" fill="#f97316" opacity="0.7" />
+        <circle cx="280" cy="60" r="50" fill="none" stroke="#f472b6" stroke-width="2" />
+        <circle cx="400" cy="60" r="15" fill="#4ade80" />
+      </svg>
+    </div>
+
+    <div class="try-it">
+      <h4>Play with it: rect vs circle positioning</h4>
+      <p style="margin-bottom: 1rem; font-size: 0.85rem;">Notice how the rect moves from its <strong>top-left corner</strong> but the circle moves from its <strong>center</strong>. Drag the sliders &mdash; the crosshair marks the x/y or cx/cy point.</p>
+      <div id="playground-rect-vs-circle"></div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Notice:</strong> Circles use <code>cx/cy</code> (center x, center y), not <code>x/y</code>. This trips people up. Rects position from their top-left corner. Circles position from their center.</p>
+    </div>
+
+    <h3>&lt;line&gt; &mdash; Lines</h3>
+
+    <pre><code>&lt;line x1="10" y1="80" x2="200" y2="20" stroke="#4ade80" stroke-width="2" /&gt;
+<span class="comment">&lt;!--   x1,y1 = start point
+       x2,y2 = end point
+       stroke = line color (not fill!)
+       stroke-width = thickness --&gt;</span></code></pre>
+
+    <div class="demo">
+      <h4>Lines</h4>
+      <svg width="500" height="100">
+        <line x1="10" y1="80" x2="200" y2="20" stroke="#4ade80" stroke-width="2" />
+        <line x1="220" y1="50" x2="490" y2="50" stroke="#f97316" stroke-width="1" stroke-dasharray="8 4" />
+      </svg>
+    </div>
+
+    <h3>&lt;text&gt; &mdash; Labels</h3>
+
+    <p><code>&lt;text&gt;</code> is the only way to put words in SVG. It's weird in one way: the <code>x, y</code> position refers to where the text <strong>sits on its baseline</strong> (like where a letter rests on a ruled line), not the top-left corner like <code>&lt;rect&gt;</code>.</p>
+
+    <pre><code>&lt;text x="50" y="40" fill="#ccc" font-size="16"&gt;Hello SVG&lt;/text&gt;
+<span class="comment">&lt;!--   x,y = baseline position (think: where the letter sits on the line)
+       fill = text color (not "color" like CSS!)
+       font-size = just like CSS --&gt;</span></code></pre>
+
+    <div class="demo">
+      <h4>Where does text actually sit?</h4>
+      <svg width="500" height="80">
+        <!-- Baseline reference -->
+        <line x1="10" y1="50" x2="490" y2="50" stroke="#f9731644" stroke-dasharray="4" />
+        <text x="10" y="50" fill="#ccc" font-size="24">The y-value is where this sits</text>
+        <text x="490" y="50" text-anchor="end" fill="#f97316" font-size="11">&larr; y=50 baseline</text>
+      </svg>
+    </div>
+
+    <p>The killer feature is <code>text-anchor</code> &mdash; it controls horizontal alignment. Think CSS <code>text-align</code>, but relative to the x-position you set:</p>
+
+    <div class="demo">
+      <h4>text-anchor = how text aligns to its x position</h4>
+      <svg width="500" height="150">
+        <!-- Anchor point reference line -->
+        <line x1="250" y1="5" x2="250" y2="145" stroke="#f97316" stroke-width="1" stroke-dasharray="4" />
+        <text x="250" y="15" text-anchor="middle" fill="#f97316" font-size="10">x = 250</text>
+
+        <!-- Start: text flows RIGHT from the point -->
+        <circle cx="250" cy="50" r="4" fill="#4ade80" />
+        <text x="250" y="50" text-anchor="start" fill="#ccc" font-size="14">start &rarr; text flows right</text>
+        <text x="20" y="50" fill="#4ade80" font-size="11">text-anchor="start"</text>
+
+        <!-- Middle: text CENTERS on the point -->
+        <circle cx="250" cy="85" r="4" fill="#818cf8" />
+        <text x="250" y="85" text-anchor="middle" fill="#ccc" font-size="14">centered on the point</text>
+        <text x="20" y="85" fill="#818cf8" font-size="11">text-anchor="middle"</text>
+
+        <!-- End: text flows LEFT from the point -->
+        <circle cx="250" cy="120" r="4" fill="#f472b6" />
+        <text x="250" y="120" text-anchor="end" fill="#ccc" font-size="14">text flows left &larr;</text>
+        <text x="20" y="120" fill="#f472b6" font-size="11">text-anchor="end"</text>
+      </svg>
+    </div>
+
+    <h3>text-anchor in action: labeling bars</h3>
+
+    <p>Here's the real payoff. Look at this bar chart &mdash; every label uses <code>text-anchor</code> to align perfectly:</p>
+
+    <div class="demo">
+      <h4>text-anchor="middle" &mdash; centering labels on bars</h4>
+      <svg width="500" height="200" viewBox="0 0 500 200">
+        <!-- Bar 1 -->
+        <rect x="40" y="30" width="80" height="120" fill="#f97316" rx="4" />
+        <text x="80" y="22" text-anchor="middle" fill="#f97316" font-size="12" font-weight="bold">39.5M</text>
+        <text x="80" y="170" text-anchor="middle" fill="#888" font-size="11">California</text>
+        <!-- Annotation -->
+        <line x1="80" y1="175" x2="80" y2="195" stroke="#f9731644" stroke-dasharray="2" />
+        <text x="80" y="195" text-anchor="middle" fill="#555" font-size="9">x=80 (bar center)</text>
+
+        <!-- Bar 2 -->
+        <rect x="160" y="60" width="80" height="90" fill="#818cf8" rx="4" />
+        <text x="200" y="52" text-anchor="middle" fill="#818cf8" font-size="12" font-weight="bold">29.1M</text>
+        <text x="200" y="170" text-anchor="middle" fill="#888" font-size="11">Texas</text>
+
+        <!-- Bar 3 -->
+        <rect x="280" y="80" width="80" height="70" fill="#4ade80" rx="4" />
+        <text x="320" y="72" text-anchor="middle" fill="#4ade80" font-size="12" font-weight="bold">21.5M</text>
+        <text x="320" y="170" text-anchor="middle" fill="#888" font-size="11">Florida</text>
+
+        <!-- Bar 4 -->
+        <rect x="400" y="85" width="80" height="65" fill="#f472b6" rx="4" />
+        <text x="440" y="77" text-anchor="middle" fill="#f472b6" font-size="12" font-weight="bold">20.2M</text>
+        <text x="440" y="170" text-anchor="middle" fill="#888" font-size="11">New York</text>
+
+        <!-- Baseline -->
+        <line x1="30" y1="150" x2="490" y2="150" stroke="#333" />
+      </svg>
+    </div>
+
+    <p>Notice: the bar starts at <code>x="40"</code> and is <code>width="80"</code>, so its center is <code>40 + 80/2 = 80</code>. Set the text's <code>x="80"</code> with <code>text-anchor="middle"</code> and it lines up perfectly. No guessing.</p>
+
+    <h3>text-anchor in action: axis labels</h3>
+
+    <p>Horizontal bar charts need right-aligned labels so they don't overlap the bars. That's <code>text-anchor="end"</code>:</p>
+
+    <div class="demo">
+      <h4>text-anchor="end" &mdash; right-aligning axis labels</h4>
+      <svg width="500" height="180" viewBox="0 0 500 180">
+        <!-- Alignment guide line -->
+        <line x1="110" y1="5" x2="110" y2="175" stroke="#333" stroke-dasharray="4" />
+
+        <!-- Row 1 -->
+        <text x="105" y="35" text-anchor="end" fill="#ccc" font-size="13">California</text>
+        <rect x="115" y="18" width="300" height="24" fill="#f97316" rx="3" />
+        <text x="425" y="35" fill="#666" font-size="11">39.5M</text>
+
+        <!-- Row 2 -->
+        <text x="105" y="75" text-anchor="end" fill="#ccc" font-size="13">Texas</text>
+        <rect x="115" y="58" width="220" height="24" fill="#818cf8" rx="3" />
+        <text x="345" y="75" fill="#666" font-size="11">29.1M</text>
+
+        <!-- Row 3 -->
+        <text x="105" y="115" text-anchor="end" fill="#ccc" font-size="13">Florida</text>
+        <rect x="115" y="98" width="163" height="24" fill="#4ade80" rx="3" />
+        <text x="288" y="115" fill="#666" font-size="11">21.5M</text>
+
+        <!-- Row 4 -->
+        <text x="105" y="155" text-anchor="end" fill="#ccc" font-size="13">New York</text>
+        <rect x="115" y="138" width="153" height="24" fill="#f472b6" rx="3" />
+        <text x="278" y="155" fill="#666" font-size="11">20.2M</text>
+
+        <!-- Annotation -->
+        <text x="105" y="10" text-anchor="end" fill="#555" font-size="9">x=105, text-anchor="end"</text>
+        <text x="115" y="10" fill="#555" font-size="9">&larr; bars start here</text>
+      </svg>
+    </div>
+
+    <p>Every state name has the same <code>x="105"</code>, but <code>text-anchor="end"</code> makes them right-align to that point. The bars all start at <code>x="115"</code>, leaving a clean 10px gap. Without <code>text-anchor="end"</code>, "California" and "NY" would start at the same point and the short names would float in space.</p>
+
+    <div class="aha">
+      <p><strong>The pattern:</strong> <code>text-anchor="middle"</code> for labels centered on bars (vertical charts). <code>text-anchor="end"</code> for labels beside bars (horizontal charts). You'll use one of these two in literally every chart you build.</p>
+    </div>
+
+    <h3>&lt;g&gt; + transform &mdash; "Move everything as a group"</h3>
+
+    <p>Here's the problem <code>&lt;g&gt;</code> solves. Say you draw a labeled bar &mdash; a rect + two text labels:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Without groups: manually position each shape</h5>
+        <pre><code>&lt;rect x="100" y="50" ... /&gt;
+&lt;text x="100" y="45" ...&gt;39.5M&lt;/text&gt;
+&lt;text x="140" y="90" ...&gt;CA&lt;/text&gt;
+
+<span class="comment">&lt;!-- Now move it 200px right?
+     Change x on ALL THREE elements.
+     Tedious and error-prone. --&gt;</span></code></pre>
+      </div>
+      <div>
+        <h5>With a group: move the container, everything follows</h5>
+        <pre><code>&lt;g transform="translate(100, 50)"&gt;
+  &lt;rect x="0" y="0" ... /&gt;
+  &lt;text x="0" y="-5" ...&gt;39.5M&lt;/text&gt;
+  &lt;text x="40" y="40" ...&gt;CA&lt;/text&gt;
+&lt;/g&gt;
+
+<span class="comment">&lt;!-- Move it? Just change translate().
+     All children move together. --&gt;</span></code></pre>
+      </div>
+    </div>
+
+    <p><code>transform="translate(x, y)"</code> means <strong>"slide this group x pixels right and y pixels down."</strong> Everything inside the group draws from (0, 0) of the group's new position. It's like <code>position: relative</code> in CSS.</p>
+
+    <div class="demo">
+      <h4>Same bar + label, placed in 3 different positions just by changing translate()</h4>
+      <svg width="500" height="180">
+        <!-- Bar 1 -->
+        <g transform="translate(30, 30)">
+          <rect width="80" height="100" fill="#f97316" rx="4" />
+          <text x="40" y="-8" text-anchor="middle" fill="#f97316" font-size="12">39.5M</text>
+          <text x="40" y="120" text-anchor="middle" fill="#888" font-size="11">California</text>
+        </g>
+        <!-- Bar 2: exact same internal code, different translate -->
+        <g transform="translate(160, 60)">
+          <rect width="80" height="70" fill="#818cf8" rx="4" />
+          <text x="40" y="-8" text-anchor="middle" fill="#818cf8" font-size="12">29.1M</text>
+          <text x="40" y="90" text-anchor="middle" fill="#888" font-size="11">Texas</text>
+        </g>
+        <!-- Bar 3 -->
+        <g transform="translate(290, 80)">
+          <rect width="80" height="50" fill="#4ade80" rx="4" />
+          <text x="40" y="-8" text-anchor="middle" fill="#4ade80" font-size="12">21.5M</text>
+          <text x="40" y="70" text-anchor="middle" fill="#888" font-size="11">Florida</text>
+        </g>
+        <!-- Show the translate values -->
+        <text x="70" y="170" text-anchor="middle" fill="#555" font-size="9">translate(30, 30)</text>
+        <text x="200" y="170" text-anchor="middle" fill="#555" font-size="9">translate(160, 60)</text>
+        <text x="330" y="170" text-anchor="middle" fill="#555" font-size="9">translate(290, 80)</text>
+      </svg>
+    </div>
+
+    <div class="callout">
+      <p><strong>Real-world use:</strong> In D3, you rarely position each shape individually. Instead, D3 creates a <code>&lt;g&gt;</code> for each data point, translates it into position, then draws the shapes inside at (0, 0). This is how axes work too &mdash; each tick mark is a <code>&lt;g&gt;</code> translated to the right spot.</p>
+    </div>
+
+    <h3>The Margins Convention (why groups matter most)</h3>
+
+    <p>Every D3 chart uses this pattern. The outer SVG is the full canvas. A single <code>&lt;g&gt;</code> group is translated inward to create margins for axes and labels:</p>
+
+    <div class="demo">
+      <h4>The margins convention &mdash; a picture frame for your chart</h4>
+      <svg width="500" height="250" viewBox="0 0 500 250">
+        <!-- Outer SVG boundary -->
+        <rect x="0" y="0" width="500" height="250" fill="none" stroke="#333" stroke-dasharray="4" />
+        <text x="250" y="16" text-anchor="middle" fill="#555" font-size="10">SVG (full size)</text>
+
+        <!-- Margin labels -->
+        <text x="250" y="38" text-anchor="middle" fill="#666" font-size="10">&darr; margin.top = 40</text>
+        <text x="20" y="140" fill="#666" font-size="10" transform="rotate(-90, 20, 140)">margin.left = 60</text>
+        <text x="250" y="230" text-anchor="middle" fill="#666" font-size="10">&uarr; margin.bottom = 30</text>
+        <text x="472" y="140" fill="#666" font-size="10" transform="rotate(90, 472, 140)">margin.right = 20</text>
+
+        <!-- Inner chart area (the <g> with translate) -->
+        <g transform="translate(60, 40)">
+          <!-- Chart area background -->
+          <rect width="420" height="180" fill="#141414" rx="4" stroke="#f97316" stroke-width="1" stroke-dasharray="6 3" />
+          <text x="210" y="85" text-anchor="middle" fill="#f97316" font-size="13" font-weight="bold">&lt;g transform="translate(60, 40)"&gt;</text>
+          <text x="210" y="105" text-anchor="middle" fill="#888" font-size="11">Your chart draws from (0, 0) in here</text>
+          <text x="210" y="125" text-anchor="middle" fill="#666" font-size="10">Axes, bars, lines &mdash; everything goes in this group</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="aha">
+      <p><strong>This is the #1 D3 pattern.</strong> Every chart you build will start with: create SVG &rarr; define margins &rarr; create a <code>&lt;g&gt;</code> group translated by the margins. All chart code draws inside that group. Axes sit in the margin space around it. You'll see this in every lesson from here on.</p>
+    </div>
+
+    <h3>&lt;path&gt; &mdash; Complex Shapes (lines, areas, arcs)</h3>
+
+    <p>The <code>&lt;path&gt;</code> element draws anything using a mini drawing language in its <code>d</code> attribute. You almost never write path commands by hand &mdash; <strong>D3's generators write them for you</strong>. But you should know what they look like:</p>
+
+    <pre><code>&lt;path d="M 10 80 L 50 20 L 90 60 L 130 10 L 170 50"
+      fill="none" stroke="#f97316" stroke-width="2" /&gt;
+<span class="comment">&lt;!-- M = Move to   (pick up the pen)
+     L = Line to   (draw a line)
+     This draws a zig-zag line chart --&gt;</span></code></pre>
+
+    <div class="demo">
+      <h4>Path: a line chart is just connected points</h4>
+      <svg width="500" height="100">
+        <!-- The line -->
+        <path d="M 10 80 L 60 30 L 110 60 L 160 15 L 210 45 L 260 25 L 310 55 L 360 20 L 410 40 L 460 10"
+              fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        <!-- The dots at each point -->
+        <circle cx="10" cy="80" r="3" fill="#f97316" />
+        <circle cx="60" cy="30" r="3" fill="#f97316" />
+        <circle cx="110" cy="60" r="3" fill="#f97316" />
+        <circle cx="160" cy="15" r="3" fill="#f97316" />
+        <circle cx="210" cy="45" r="3" fill="#f97316" />
+        <circle cx="260" cy="25" r="3" fill="#f97316" />
+        <circle cx="310" cy="55" r="3" fill="#f97316" />
+        <circle cx="360" cy="20" r="3" fill="#f97316" />
+        <circle cx="410" cy="40" r="3" fill="#f97316" />
+        <circle cx="460" cy="10" r="3" fill="#f97316" />
+      </svg>
+    </div>
+
+    <div class="callout">
+      <p><strong>Key insight:</strong> A line chart in D3 is a single <code>&lt;path&gt;</code> element. D3's <code>d3.line()</code> generator takes your data array and writes the <code>d="M ... L ... L ..."</code> string for you. You never write path commands manually.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUICK REFERENCE TABLE                        -->
+    <!-- ============================================ -->
+
+    <h2>Quick Reference</h2>
+
+    <table>
+      <tr><th>Element</th><th>Key Attributes</th><th>Used For</th></tr>
+      <tr><td><code>&lt;rect&gt;</code></td><td><code>x, y, width, height, fill, rx</code></td><td>Bars, backgrounds, heatmap cells</td></tr>
+      <tr><td><code>&lt;circle&gt;</code></td><td><code>cx, cy, r, fill</code></td><td>Scatter plot dots, bubble charts</td></tr>
+      <tr><td><code>&lt;line&gt;</code></td><td><code>x1, y1, x2, y2, stroke</code></td><td>Grid lines, reference lines</td></tr>
+      <tr><td><code>&lt;text&gt;</code></td><td><code>x, y, text-anchor, fill, font-size</code></td><td>Labels, axis ticks, annotations</td></tr>
+      <tr><td><code>&lt;path&gt;</code></td><td><code>d, fill, stroke</code></td><td>Lines, areas, arcs, map outlines</td></tr>
+      <tr><td><code>&lt;g&gt;</code></td><td><code>transform</code></td><td>Grouping, positioning, margins</td></tr>
+    </table>
+
+    <h3>fill vs stroke</h3>
+    <ul>
+      <li><code>fill</code> = the inside color. Set <code>fill="none"</code> for just an outline.</li>
+      <li><code>stroke</code> = the border/line color. Lines and paths NEED stroke to be visible.</li>
+      <li><code>opacity</code> = transparency (0 = invisible, 1 = solid)</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- HAND-CODE A BAR CHART                        -->
+    <!-- ============================================ -->
+
+    <h2>Build: A Bar Chart in Pure HTML</h2>
+
+    <p>No JavaScript. Just type out the SVG. Here's a bar chart of the top 5 US states by population:</p>
+
+    <pre><code>&lt;svg width="600" height="280" style="background: #1a1a1a"&gt;
+  <span class="comment">&lt;!-- California: 39.5M --&gt;</span>
+  &lt;text x="100" y="35" text-anchor="end" fill="#888"&gt;California&lt;/text&gt;
+  &lt;rect x="110" y="15" width="395" height="30" fill="#f97316" rx="3" /&gt;
+  &lt;text x="515" y="35" fill="#666"&gt;39.5M&lt;/text&gt;
+
+  <span class="comment">&lt;!-- Texas: 29.1M --&gt;</span>
+  &lt;text x="100" y="85" text-anchor="end" fill="#888"&gt;Texas&lt;/text&gt;
+  &lt;rect x="110" y="65" width="291" height="30" fill="#f97316" rx="3" /&gt;
+  &lt;text x="411" y="85" fill="#666"&gt;29.1M&lt;/text&gt;
+
+  <span class="comment">&lt;!-- ... and so on --&gt;</span>
+&lt;/svg&gt;</code></pre>
+
+    <div class="demo">
+      <h4>Result: hand-coded bar chart (zero JavaScript)</h4>
+      <svg width="600" height="280" viewBox="0 0 600 280">
+        <!-- California -->
+        <text x="100" y="35" text-anchor="end" fill="#888" font-size="13">California</text>
+        <rect x="110" y="15" width="395" height="30" fill="#f97316" rx="3" />
+        <text x="515" y="35" fill="#666" font-size="12">39.5M</text>
+        <!-- Texas -->
+        <text x="100" y="85" text-anchor="end" fill="#888" font-size="13">Texas</text>
+        <rect x="110" y="65" width="291" height="30" fill="#f97316" rx="3" />
+        <text x="411" y="85" fill="#666" font-size="12">29.1M</text>
+        <!-- Florida -->
+        <text x="100" y="135" text-anchor="end" fill="#888" font-size="13">Florida</text>
+        <rect x="110" y="115" width="215" height="30" fill="#f97316" rx="3" />
+        <text x="335" y="135" fill="#666" font-size="12">21.5M</text>
+        <!-- New York -->
+        <text x="100" y="185" text-anchor="end" fill="#888" font-size="13">New York</text>
+        <rect x="110" y="165" width="202" height="30" fill="#f97316" rx="3" />
+        <text x="322" y="185" fill="#666" font-size="12">20.2M</text>
+        <!-- Pennsylvania -->
+        <text x="100" y="235" text-anchor="end" fill="#888" font-size="13">Pennsylvania</text>
+        <rect x="110" y="215" width="130" height="30" fill="#f97316" rx="3" />
+        <text x="250" y="235" fill="#666" font-size="12">13.0M</text>
+      </svg>
+    </div>
+
+    <div class="aha">
+      <p><strong>That's a bar chart.</strong> Five rectangles and ten text labels. No framework, no library, no build step. This is what D3 produces. When you see complex D3 code, remember: the end result is always just shapes like these.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HAND-CODE A SCATTER PLOT                     -->
+    <!-- ============================================ -->
+
+    <h2>Build: A Scatter Plot in Pure HTML</h2>
+
+    <p>A scatter plot is just circles positioned by two data values. Here's one showing median income vs. voter turnout by state (made up but realistic data):</p>
+
+    <div class="demo">
+      <h4>Hand-coded scatter plot</h4>
+      <svg width="500" height="350" viewBox="0 0 500 350">
+        <!-- Axis lines -->
+        <line x1="50" y1="10" x2="50" y2="300" stroke="#333" />
+        <line x1="50" y1="300" x2="480" y2="300" stroke="#333" />
+        <!-- Y axis labels -->
+        <text x="45" y="300" text-anchor="end" fill="#666" font-size="10">50%</text>
+        <text x="45" y="200" text-anchor="end" fill="#666" font-size="10">60%</text>
+        <text x="45" y="100" text-anchor="end" fill="#666" font-size="10">70%</text>
+        <text x="45" y="15" text-anchor="end" fill="#666" font-size="10">80%</text>
+        <!-- X axis labels -->
+        <text x="50" y="320" fill="#666" font-size="10">$40k</text>
+        <text x="200" y="320" fill="#666" font-size="10" text-anchor="middle">$60k</text>
+        <text x="350" y="320" fill="#666" font-size="10" text-anchor="middle">$80k</text>
+        <text x="470" y="320" fill="#666" font-size="10" text-anchor="end">$95k</text>
+        <!-- Grid lines -->
+        <line x1="50" y1="200" x2="480" y2="200" stroke="#1a1a1a" />
+        <line x1="50" y1="100" x2="480" y2="100" stroke="#1a1a1a" />
+        <!-- Data points (circles!) -->
+        <circle cx="120" cy="220" r="7" fill="#f97316" opacity="0.7" /> <!-- MS -->
+        <circle cx="95" cy="250" r="7" fill="#f97316" opacity="0.7" /> <!-- WV -->
+        <circle cx="200" cy="180" r="7" fill="#f97316" opacity="0.7" /> <!-- OH -->
+        <circle cx="250" cy="120" r="7" fill="#f97316" opacity="0.7" /> <!-- MN -->
+        <circle cx="300" cy="150" r="7" fill="#f97316" opacity="0.7" /> <!-- VA -->
+        <circle cx="350" cy="90" r="7" fill="#f97316" opacity="0.7" /> <!-- CO -->
+        <circle cx="420" cy="60" r="7" fill="#f97316" opacity="0.7" /> <!-- MA -->
+        <circle cx="440" cy="100" r="7" fill="#f97316" opacity="0.7" /> <!-- CT -->
+        <circle cx="180" cy="260" r="7" fill="#f97316" opacity="0.7" /> <!-- AR -->
+        <circle cx="270" cy="170" r="7" fill="#f97316" opacity="0.7" /> <!-- PA -->
+        <circle cx="150" cy="190" r="7" fill="#f97316" opacity="0.7" /> <!-- IN -->
+        <circle cx="380" cy="70" r="7" fill="#f97316" opacity="0.7" /> <!-- NH -->
+        <!-- Axis titles -->
+        <text x="260" y="345" text-anchor="middle" fill="#888" font-size="12">Median Household Income</text>
+        <text x="15" y="160" text-anchor="middle" fill="#888" font-size="12" transform="rotate(-90, 15, 160)">Voter Turnout</text>
+      </svg>
+    </div>
+
+    <p>A scatter plot is <code>&lt;circle&gt;</code> elements. Each circle's <code>cx</code> represents one variable (income), <code>cy</code> represents another (turnout). That's the entire concept.</p>
+
+    <!-- ============================================ -->
+    <!-- THE SVG INSPECT TRICK                        -->
+    <!-- ============================================ -->
+
+    <h2>The Inspect Trick</h2>
+
+    <p>Here's something powerful: right-click any D3 visualization on the web and click <strong>"Inspect"</strong>. You'll see the raw SVG elements &mdash; the same <code>&lt;rect&gt;</code>, <code>&lt;circle&gt;</code>, <code>&lt;path&gt;</code>, <code>&lt;text&gt;</code> tags you just learned. Try it on the charts above.</p>
+
+    <div class="callout">
+      <p><strong>Do this now:</strong> Right-click the bar chart above, hit "Inspect Element." You'll see exactly the HTML we wrote. There's no magic layer between D3's code and what appears on screen. This is why SVG fluency matters &mdash; when you debug D3, you're debugging SVG.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. Where is (0, 0) in SVG, and which direction does Y increase?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Top-left corner. Y increases going DOWN. This is the opposite of math coordinates and it's why chart-building requires flipping values.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What's the difference between how &lt;rect&gt; and &lt;circle&gt; are positioned?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>&lt;rect&gt;</code> uses <code>x, y</code> for its <strong>top-left corner</strong>. <code>&lt;circle&gt;</code> uses <code>cx, cy</code> for its <strong>center point</strong>. This is a common source of off-by-one positioning bugs.</div>
+      </div>
+
+      <div class="question">
+        <p>3. A line is invisible even though you set x1, y1, x2, y2. What did you forget?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>stroke</code>. Lines don't use <code>fill</code> &mdash; they need a <code>stroke</code> color to be visible. You probably also want <code>stroke-width</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What does &lt;g transform="translate(50, 30)"&gt; do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It creates a group and shifts everything inside it 50 pixels right and 30 pixels down. All child elements use (50, 30) as their new origin (0, 0). D3 uses this for the margins convention.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What SVG element does D3 use to draw a line chart?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A single <code>&lt;path&gt;</code> element. D3's line generator writes the <code>d</code> attribute string (the "M ... L ... L ..." commands) from your data array. The path connects all the points into one continuous line.</div>
+      </div>
+
+      <div class="question">
+        <p>6. You want to label a bar chart's bars with centered text. What attribute centers text horizontally?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>text-anchor="middle"</code>. Set the text's <code>x</code> to the center point you want, and <code>text-anchor="middle"</code> makes the text center itself on that point.</div>
+      </div>
+
+      <div class="question">
+        <p>7. What's the difference between <code>fill</code> and <code>stroke</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>fill</code> is the inside color. <code>stroke</code> is the outline/border color. Rectangles and circles default to black fill. Lines and paths have no fill by default and need <code>stroke</code> to be visible.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Hand-Code These Charts</h4>
+      <p>Open <code>code/exercises/01-exercise.html</code> in your editor. No JavaScript &mdash; just write SVG by hand:</p>
+      <ol>
+        <li><strong>Vertical bar chart:</strong> 4 bars going upward from a baseline. Remember: taller bars need smaller Y values.</li>
+        <li><strong>Add labels:</strong> State name below each bar, value above each bar (use <code>text-anchor="middle"</code>).</li>
+        <li><strong>Add color:</strong> Make each bar a different color.</li>
+        <li><strong>Bonus:</strong> Add a horizontal line at y=some value as a "national average" reference line with a label.</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">This forces you to think in SVG coordinates. Once this feels natural, D3 will make way more sense.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- RECAP                                        -->
+    <!-- ============================================ -->
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>SVG is just HTML</strong> &mdash; tags for shapes instead of text content</li>
+      <li><strong>Y is upside down</strong> &mdash; (0,0) is top-left, Y increases downward</li>
+      <li><strong>6 elements</strong> cover 95% of D3 charts: rect, circle, line, text, path, g</li>
+      <li><strong>rect</strong> positions from top-left, <strong>circle</strong> positions from center</li>
+      <li><strong>fill</strong> = inside color, <strong>stroke</strong> = outline color</li>
+      <li><strong>&lt;g&gt; + translate</strong> = the foundation of D3's margins and layout</li>
+      <li><strong>&lt;path&gt;</strong> draws complex shapes &mdash; D3 generates the <code>d</code> string for you</li>
+      <li><strong>Inspect element</strong> on any D3 chart reveals these same tags</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/">&larr; Home</a>
+      <a href="/d3/lessons/02-selections-data/">Lesson 02: Scales &amp; Axes &rarr;</a>
+    </div>
+  </div>
+  <script type="module" src="/components/init-tutor.js"></script>
+  <script type="module">
+    import { createPlayground } from '/components/interactive-playground.js';
+
+    // Playground 1: Drag a rect around
+    createPlayground('playground-rect', {
+      width: 450,
+      height: 150,
+      controls: [
+        { name: 'x', min: 0, max: 350, value: 30, label: 'x (left edge)' },
+        { name: 'y', min: 0, max: 100, value: 20, label: 'y (top edge)' },
+        { name: 'w', min: 10, max: 300, value: 120, label: 'width' },
+        { name: 'h', min: 10, max: 140, value: 60, label: 'height' },
+        { name: 'rx', min: 0, max: 30, value: 4, label: 'rx (corner radius)' },
+      ],
+      render(svg, v) {
+        svg.selectAll('*').remove();
+        // Crosshair at x,y
+        svg.append('line').attr('x1', v.x).attr('y1', 0).attr('x2', v.x).attr('y2', 150).attr('stroke', '#f9731644').attr('stroke-dasharray', '4');
+        svg.append('line').attr('x1', 0).attr('y1', v.y).attr('x2', 450).attr('y2', v.y).attr('stroke', '#f9731644').attr('stroke-dasharray', '4');
+        // The rect
+        svg.append('rect').attr('x', v.x).attr('y', v.y).attr('width', v.w).attr('height', v.h).attr('fill', '#f97316').attr('rx', v.rx);
+        // Label
+        svg.append('text').attr('x', v.x).attr('y', v.y - 6).attr('fill', '#f97316').attr('font-size', 11)
+          .text(`x=${v.x}, y=${v.y} (top-left corner)`);
+        // Dot at x,y
+        svg.append('circle').attr('cx', v.x).attr('cy', v.y).attr('r', 4).attr('fill', '#fff');
+      }
+    });
+
+    // Playground 2: Rect vs Circle positioning
+    createPlayground('playground-rect-vs-circle', {
+      width: 450,
+      height: 180,
+      controls: [
+        { name: 'pos', min: 30, max: 420, value: 120, label: 'x / cx position' },
+        { name: 'posY', min: 20, max: 160, value: 90, label: 'y / cy position' },
+      ],
+      render(svg, v) {
+        svg.selectAll('*').remove();
+        // Divider
+        svg.append('line').attr('x1', 225).attr('y1', 0).attr('x2', 225).attr('y2', 180).attr('stroke', '#333');
+        svg.append('text').attr('x', 112).attr('y', 14).attr('text-anchor', 'middle').attr('fill', '#666').attr('font-size', 10).text('rect: x,y = top-left');
+        svg.append('text').attr('x', 337).attr('y', 14).attr('text-anchor', 'middle').attr('fill', '#666').attr('font-size', 10).text('circle: cx,cy = center');
+        // Crosshairs
+        const posX = Math.min(v.pos, 200);
+        svg.append('line').attr('x1', posX).attr('y1', 0).attr('x2', posX).attr('y2', 180).attr('stroke', '#f9731644').attr('stroke-dasharray', '3');
+        svg.append('line').attr('x1', 0).attr('y1', v.posY).attr('x2', 225).attr('y2', v.posY).attr('stroke', '#f9731644').attr('stroke-dasharray', '3');
+        const posX2 = Math.min(v.pos, 200) + 225;
+        svg.append('line').attr('x1', posX2).attr('y1', 0).attr('x2', posX2).attr('y2', 180).attr('stroke', '#818cf844').attr('stroke-dasharray', '3');
+        svg.append('line').attr('x1', 225).attr('y1', v.posY).attr('x2', 450).attr('y2', v.posY).attr('stroke', '#818cf844').attr('stroke-dasharray', '3');
+        // Rect (left side)
+        svg.append('rect').attr('x', posX).attr('y', v.posY).attr('width', 70).attr('height', 50).attr('fill', '#f97316').attr('rx', 4);
+        svg.append('circle').attr('cx', posX).attr('cy', v.posY).attr('r', 4).attr('fill', '#fff');
+        svg.append('text').attr('x', posX).attr('y', v.posY - 6).attr('fill', '#f97316').attr('font-size', 10).text(`(${posX}, ${v.posY})`);
+        // Circle (right side)
+        svg.append('circle').attr('cx', posX2).attr('cy', v.posY).attr('r', 35).attr('fill', '#818cf8');
+        svg.append('circle').attr('cx', posX2).attr('cy', v.posY).attr('r', 4).attr('fill', '#fff');
+        svg.append('text').attr('x', posX2).attr('y', v.posY - 42).attr('text-anchor', 'middle').attr('fill', '#818cf8').attr('font-size', 10).text(`(${posX2 - 225}, ${v.posY})`);
+      }
+    });
+  </script>
+</body>
+</html>

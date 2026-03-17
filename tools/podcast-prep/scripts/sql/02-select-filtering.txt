@@ -1,0 +1,381 @@
+================================================================================
+SECTION 1: SOURCE DOCUMENT
+================================================================================
+
+TITLE: SELECT & Filtering Deep Dive -- Mastering the Query You'll Write 100 Times a Day
+TRACK: SQL / PostgreSQL (Lesson 2 of 12)
+
+--------------------------------------------------------------------------------
+CONTEXT FOR HOSTS
+--------------------------------------------------------------------------------
+
+This is Lesson 2 of a 12-lesson SQL curriculum. In Lesson 01 (SQL Fundamentals), Trevor learned the basic vocabulary: SELECT, FROM, WHERE, ORDER BY, LIMIT, INSERT, UPDATE, DELETE. He also learned the mental model that Prisma is a translator and SQL reads like English. This lesson takes SELECT from "I know the basics" to "I can do serious data exploration."
+
+THE LEARNER: Trevor is an investigative journalist with 15+ years of experience who taught himself web development (React, Next.js, TypeScript, Tailwind). He has been using Prisma as his ORM. He is learning raw SQL/PostgreSQL for a potential role at Tenga, a chain of broadcast TV networks, where he would work with election dashboards, weather maps, and census data. His learning philosophy is "mental models first, syntax second."
+
+WHAT TREVOR ALREADY KNOWS THAT CONNECTS:
+- JavaScript string methods: .toUpperCase(), .toLowerCase(), .trim(), .replace() -- SQL has direct equivalents (UPPER, LOWER, TRIM, REPLACE).
+- Template literals and string concatenation: JavaScript's + or template literals map to PostgreSQL's || concatenation operator.
+- Ternary operators and switch statements: SQL's CASE expression is exactly a ternary/switch for your queries.
+- Nullish coalescing (??): SQL's COALESCE is the exact same concept.
+- Array destructuring with new Set(): DISTINCT is [...new Set(array)] for SQL results.
+- Regex in JavaScript: PostgreSQL has native regex with ~ and ~* operators, using the same patterns Trevor already knows.
+
+TREVOR'S GOAL: Querying broadcast TV data -- election results by precinct, census demographics, weather station data, ad revenue tables.
+
+DATA JOURNALISM CONNECTION: This lesson is about data exploration -- the core skill of investigative data journalism. When a journalist receives a FOIA dataset, the first thing they do is explore it: What columns are there? What are the unique values? Are there NULLs? What patterns exist in the text? Every technique in this lesson (DISTINCT, ILIKE, COALESCE, CASE) is a tool for that initial data exploration phase. ILIKE is especially critical -- public records have wildly inconsistent capitalization, and case-insensitive search is non-negotiable.
+
+MENTAL MODELS THAT MATTER MOST:
+1. SELECT as .map() with superpowers -- it doesn't just pick columns, it transforms data on the way out with calculations, string functions, and conditional logic.
+2. COALESCE is ?? (nullish coalescing) -- Trevor uses ?? in JavaScript daily, and COALESCE is the exact same pattern.
+3. CASE is a ternary/switch -- Trevor writes ternaries constantly in JSX. CASE WHEN...THEN...ELSE...END is the SQL version.
+4. ILIKE is the journalist's best friend -- public records are messy. Case-insensitive search is not optional.
+5. SQL NULL is not JavaScript null -- NULL = NULL is not true. This trips up every developer. IS NULL and IS NOT NULL are required.
+
+--------------------------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+--------------------------------------------------------------------------------
+
+1. SELECT EXPRESSIONS AND ALIASES: SELECT doesn't just pick columns -- it computes new ones. salary / 12 AS monthly_salary creates a calculated column. This is like .map(item => ({ ...item, monthly: item.salary / 12 })). AS names the computed column so it shows up with a proper label.
+
+2. PATTERN MATCHING (LIKE, ILIKE, REGEX): LIKE uses % (any characters) and _ (one character) as wildcards. LIKE is case-sensitive. ILIKE is case-insensitive (PostgreSQL-specific). For journalism, always use ILIKE because public records have inconsistent capitalization. PostgreSQL also supports regex with ~ (case-sensitive) and ~* (case-insensitive), using the same regex patterns Trevor knows from JavaScript.
+
+3. NULL HANDLING: This is the biggest "gotcha" for JavaScript developers learning SQL. NULL means "unknown" -- not "empty" or "zero." NULL = NULL evaluates to NULL (not true). You must use IS NULL and IS NOT NULL. COALESCE(value, 'default') is the SQL version of value ?? 'default'. NULLIF(a, b) returns NULL if a equals b, useful for preventing division by zero.
+
+4. CASE EXPRESSIONS: SQL's ternary/switch. CASE WHEN condition THEN result ELSE default END. Conditions evaluate top to bottom (first match wins). Can be used in SELECT, WHERE, ORDER BY, or inside aggregate functions. The CASE-inside-COUNT pattern is essential for data analysis: COUNT(CASE WHEN status = 'active' THEN 1 END).
+
+5. DISTINCT: Removes duplicate rows. Like [...new Set(array)]. DISTINCT applies to the entire row, not individual columns. COUNT(DISTINCT column) counts unique values.
+
+6. TYPE CASTING: PostgreSQL's :: operator (shorthand for CAST). '42'::INTEGER converts types. Important for mixed-type math and formatting.
+
+7. BOOLEAN LOGIC PRECEDENCE: AND binds tighter than OR (just like && binds tighter than ||). Always use parentheses when mixing AND and OR to make intent clear.
+
+--------------------------------------------------------------------------------
+DATA JOURNALISM CONNECTION
+--------------------------------------------------------------------------------
+
+This lesson is the data journalist's Swiss Army knife. Every technique here maps directly to investigative work:
+
+ILIKE for name searching: When investigating campaign donors, government contractors, or corporate officers, names in public records are spelled inconsistently. WHERE donor_name ILIKE '%smith%' catches "Smith," "SMITH," "smith," and "Blacksmith." Without ILIKE, you miss records and miss stories.
+
+COALESCE for dirty data: Government datasets are full of NULLs. An employer field might be NULL for self-employed donors. COALESCE(employer, 'Not disclosed') gives you a clean display without losing the information that it was missing.
+
+CASE for categorization: Bucketing data is fundamental to analysis. "How many donations were large (over $10,000), medium ($1,000-$10,000), or small (under $1,000)?" -- that's a CASE expression. It turns raw numbers into meaningful categories for your story.
+
+DISTINCT for data profiling: The first thing a data journalist does with a new dataset is ask "what are the unique values in each column?" SELECT DISTINCT column FROM table answers that instantly.
+
+For Trevor specifically: imagine getting a dataset of all weather station readings across your broadcast area. Some stations report temperature in different formats. Some have NULL humidity readings. You need ILIKE to search station names, COALESCE to handle missing readings, CASE to flag extreme conditions, and DISTINCT to see what states are represented. This lesson gives you every tool for that workflow.
+
+--------------------------------------------------------------------------------
+BROADCAST TV SCENARIOS
+--------------------------------------------------------------------------------
+
+ELECTION DATA:
+- Table: election_results (id, precinct, county, state, candidate, party, vote_count, total_registered, reporting_pct)
+- "Get all candidates with their party, showing 'Independent' if party is null": SELECT candidate, COALESCE(party, 'Independent') AS party_display FROM election_results;
+- "Categorize precincts by turnout": SELECT precinct, CASE WHEN (vote_count::NUMERIC / total_registered) > 0.7 THEN 'High Turnout' WHEN (vote_count::NUMERIC / total_registered) > 0.4 THEN 'Moderate' ELSE 'Low Turnout' END AS turnout_level FROM election_results;
+
+WEATHER DATA:
+- Table: weather_stations (id, station_name, city, state, temperature, humidity, wind_speed, recorded_at)
+- "Find stations with 'creek' in the name (case-insensitive)": SELECT * FROM weather_stations WHERE station_name ILIKE '%creek%';
+- "Flag extreme conditions": SELECT station_name, temperature, CASE WHEN temperature > 100 THEN 'Extreme Heat' WHEN temperature > 90 THEN 'Heat Advisory' WHEN temperature < 32 THEN 'Freeze Warning' ELSE 'Normal' END AS alert_level FROM weather_stations;
+
+CENSUS DATA:
+- Table: census_demographics (id, county, state, population, median_income, median_age, pct_college_educated)
+- "Show all unique states in the data": SELECT DISTINCT state FROM census_demographics ORDER BY state;
+- "Show median income with a label": SELECT county, median_income, CASE WHEN median_income > 80000 THEN 'High' WHEN median_income > 50000 THEN 'Middle' ELSE 'Below Average' END AS income_bracket FROM census_demographics;
+
+AD REVENUE:
+- Table: ad_revenue (id, advertiser, campaign, amount, air_date, time_slot, station)
+- "Search for political ads": SELECT * FROM ad_revenue WHERE campaign ILIKE '%election%' OR campaign ILIKE '%vote%';
+
+--------------------------------------------------------------------------------
+LESSON CONTENT
+--------------------------------------------------------------------------------
+
+SELECT EXPRESSIONS AND ALIASES
+
+Lesson 01 taught SELECT to pick columns. But SELECT can also compute things. Think of it like .map(item => ({ ...item, fullName: item.first + ' ' + item.last })) -- you are transforming data on the way out.
+
+Aliases with AS:
+AS renames a column in the output. The data does not change -- just the label.
+
+  SELECT
+    first_name AS first,
+    last_name AS last,
+    salary / 12 AS monthly_salary
+  FROM employees;
+
+Without AS, a calculated column shows up as ?column? in the results. Aliases give computed columns a proper name.
+
+JavaScript equivalent:
+  employees.map(emp => ({
+    first: emp.first_name,
+    last: emp.last_name,
+    monthly_salary: emp.salary / 12,
+  }));
+
+String Concatenation:
+In PostgreSQL, use || to concatenate strings (like + in JavaScript):
+
+  SELECT first_name || ' ' || last_name AS full_name
+  FROM employees;
+
+Useful String Functions:
+UPPER(str) = str.toUpperCase()
+LOWER(str) = str.toLowerCase()
+LENGTH(str) = str.length
+TRIM(str) = str.trim()
+SUBSTRING(str, start, len) = str.substring(start, end)
+REPLACE(str, from, to) = str.replace(from, to)
+
+Important: SQL string positions start at 1, not 0. SUBSTRING('hello', 1, 3) gives 'hel'. This is different from JavaScript where indexes start at 0.
+
+Math in SELECT:
+Standard math operators work: +, -, *, /, % (modulo). ROUND(value, decimals) rounds to specified decimal places.
+
+  SELECT
+    name,
+    salary,
+    salary * 0.30 AS tax,
+    salary * 0.70 AS take_home,
+    ROUND(salary / 2080.0, 2) AS hourly_rate
+  FROM employees;
+
+COMPARISON OPERATORS
+
+BETWEEN:
+BETWEEN is inclusive on both ends. Cleaner than >= AND <=:
+
+  WHERE salary BETWEEN 50000 AND 100000
+  WHERE hire_date BETWEEN '2023-01-01' AND '2023-12-31'
+
+IN:
+IN checks if a value matches any item in a list. Like .includes() in JavaScript:
+
+  JavaScript: ['NY', 'CA', 'TX'].includes(emp.state)
+  SQL: WHERE state IN ('NY', 'CA', 'TX')
+
+  NOT IN excludes specific values:
+  WHERE department NOT IN ('HR', 'Legal')
+
+PATTERN MATCHING -- LIKE, ILIKE, AND REGEX
+
+Pattern matching is essential for investigative work. Searching names, addresses, document text -- you need to match partial strings.
+
+LIKE and Wildcards:
+LIKE uses two wildcards:
+- % = any number of characters (like .* in regex)
+- _ = exactly one character (like . in regex)
+
+  WHERE name LIKE 'John%'     -- starts with 'John'
+  WHERE name LIKE '%son'      -- ends with 'son'
+  WHERE name LIKE '%smith%'   -- contains 'smith'
+  WHERE code LIKE '_____'     -- exactly 5 characters
+  WHERE code LIKE 'A_C%'      -- starts with A, any char, then C
+
+ILIKE (PostgreSQL-Specific):
+ILIKE is the case-insensitive version of LIKE. This is a PostgreSQL extension.
+
+  WHERE name LIKE '%smith%'   -- case-sensitive (misses 'SMITH', 'Smith')
+  WHERE name ILIKE '%smith%'  -- case-insensitive (catches all variations)
+
+For journalism: always use ILIKE. Public records have inconsistent capitalization. ILIKE saves you from missing records because someone typed "JOHNSON" instead of "Johnson."
+
+PostgreSQL Regex Matching:
+For more complex patterns, PostgreSQL supports regex with ~ and ~*:
+
+  ~ = regex match (case-sensitive)
+  ~* = regex match (case-insensitive)
+  !~ = does NOT match regex
+  !~* = does NOT match regex (case-insensitive)
+
+  WHERE name ~ '^John(son|ston)$'
+  WHERE email ~* '^[a-z]+@gmail\.com$'
+  WHERE phone !~ '^\d{3}-\d{3}-\d{4}$'
+
+NULL HANDLING
+
+This is the concept that trips up every developer. NULL in SQL is not null in JavaScript. It means "unknown" or "not applicable" -- not "empty" or "zero."
+
+The critical rule: NULL is not equal to anything -- not even itself. NULL = NULL is NOT true. It evaluates to NULL (unknown). You MUST use IS NULL or IS NOT NULL instead of =.
+
+  WRONG: SELECT * FROM contacts WHERE phone = NULL;
+  CORRECT: SELECT * FROM contacts WHERE phone IS NULL;
+  SELECT * FROM contacts WHERE phone IS NOT NULL;
+
+COALESCE -- SQL's Nullish Coalescing:
+COALESCE returns the first non-NULL value from a list. Exactly like ?? in JavaScript.
+
+  JavaScript: const display = name ?? 'Anonymous';
+  SQL: SELECT COALESCE(name, 'Anonymous') AS display;
+
+  Chain multiple fallbacks (like a ?? b ?? c):
+  SELECT COALESCE(mobile_phone, work_phone, home_phone, 'No phone') AS best_phone
+  FROM contacts;
+
+NULLIF:
+NULLIF(a, b) returns NULL if a = b, otherwise returns a. Useful for preventing division by zero:
+
+  SELECT votes_for / NULLIF(total_votes, 0) AS percentage FROM results;
+
+BOOLEAN LOGIC -- AND, OR, NOT
+
+Same as JavaScript's &&, ||, !, but operator precedence matters more.
+
+AND binds tighter than OR (just like && binds tighter than ||). Use parentheses to be explicit:
+
+  DANGEROUS:
+  WHERE beat = 'politics' AND trust_level > 7 OR beat = 'crime'
+  -- Means: (politics AND trust > 7) OR crime -- returns ALL crime sources
+
+  SAFE:
+  WHERE (beat = 'politics' OR beat = 'crime') AND trust_level > 7
+
+Rule of thumb: If you have both AND and OR in a WHERE clause, always use parentheses.
+
+DISTINCT -- Unique Values
+
+DISTINCT removes duplicate rows. Like [...new Set(array)] in JavaScript.
+
+  JavaScript: const departments = [...new Set(employees.map(e => e.department))];
+  SQL: SELECT DISTINCT department FROM employees;
+
+  Count unique values: SELECT COUNT(DISTINCT department) AS dept_count FROM employees;
+
+  DISTINCT applies to the entire row. SELECT DISTINCT department, title returns unique (department, title) pairs, not unique departments and unique titles separately.
+
+CASE EXPRESSIONS -- SQL's Ternary / Switch
+
+CASE is SQL's version of if/else or switch. It creates computed columns with conditional logic.
+
+  JavaScript ternary: const label = salary > 100000 ? 'Senior' : 'Standard';
+  SQL: SELECT name, CASE WHEN salary > 100000 THEN 'Senior' ELSE 'Standard' END AS label;
+
+Multi-condition CASE:
+  SELECT name,
+    CASE
+      WHEN salary > 150000 THEN 'Executive'
+      WHEN salary > 100000 THEN 'Senior'
+      WHEN salary > 60000  THEN 'Mid'
+      ELSE 'Entry'
+    END AS tier
+  FROM employees;
+
+Structure: CASE WHEN condition THEN result ... ELSE default END. Conditions are evaluated top to bottom -- first match wins.
+
+CASE can be used anywhere an expression is valid -- SELECT, WHERE, ORDER BY, even inside functions.
+
+CASE for Conditional Counting (power pattern):
+  SELECT
+    COUNT(*) AS total_articles,
+    COUNT(CASE WHEN published = true THEN 1 END) AS published_count,
+    COUNT(CASE WHEN published = false THEN 1 END) AS draft_count,
+    COUNT(CASE WHEN views > 1000 THEN 1 END) AS viral_count
+  FROM articles;
+
+This pattern is incredibly useful for journalism. Count subgroups in a single query: complaints per category, donors per bracket, violations per district.
+
+CASTING AND TYPE CONVERSION
+
+Sometimes you need to convert between types. PostgreSQL has two syntaxes:
+
+CAST() -- Standard SQL:
+  SELECT CAST('42' AS INTEGER);
+  SELECT CAST(salary AS TEXT);
+
+:: Operator -- PostgreSQL Shorthand:
+  SELECT '42'::INTEGER;
+  SELECT salary::TEXT;
+  SELECT '2024-01-15'::DATE;
+
+When do you need casting? Most often when: (1) comparing columns of different types, (2) formatting output, (3) doing math with mixed types (integer division gives integers -- use ::NUMERIC to get decimals).
+
+PUTTING IT ALL TOGETHER
+
+A realistic query combining everything from this lesson -- investigating campaign donations:
+
+  SELECT
+    donor_name,
+    UPPER(donor_state) AS state,
+    amount,
+    CASE
+      WHEN amount >= 10000 THEN 'Major Donor'
+      WHEN amount >= 1000  THEN 'Mid-Level'
+      ELSE 'Small Donor'
+    END AS donor_tier,
+    COALESCE(employer, 'Not disclosed') AS employer_display,
+    donation_date::TEXT AS date_string
+  FROM donations
+  WHERE donor_state IN ('NY', 'CA', 'TX', 'FL')
+    AND amount > 500
+    AND donor_name ILIKE '%smith%'
+    AND donation_date BETWEEN '2024-01-01' AND '2024-06-30'
+  ORDER BY amount DESC
+  LIMIT 50;
+
+Read it out loud: "Select the donor name, state (uppercased), amount, a tier label based on the amount, the employer (or 'Not disclosed' if null), and the date as text -- from donations -- where the state is one of four states, amount is over 500, the name contains 'smith' (case-insensitive), and the date is in the first half of 2024 -- sorted by amount descending, top 50."
+
+================================================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+================================================================================
+
+LESSON-SPECIFIC INSTRUCTIONS FOR NOTEBOOKLM PODCAST HOSTS:
+
+MENTAL MODELS TO FOCUS ON:
+- SELECT as .map() with superpowers. Trevor knows .map() transforms every item in an array. SELECT does the same thing with rows, but it can also compute new values (salary / 12 AS monthly_salary), concatenate strings (first_name || ' ' || last_name), and apply conditional logic (CASE WHEN...).
+- COALESCE is ?? (nullish coalescing). This is a one-to-one mapping that will click instantly for a JavaScript developer. COALESCE(name, 'Anonymous') is name ?? 'Anonymous'. Hit this analogy hard.
+- CASE is a ternary/switch. Trevor writes ternaries in JSX every day. CASE WHEN salary > 100000 THEN 'Senior' ELSE 'Standard' END is the same logic. Multi-condition CASE is like a switch statement.
+- NULL is SQL's "unknown," not JavaScript's null. This is the biggest trap. NULL = NULL is not true. You must use IS NULL. Spend time on this because it will bite Trevor in real queries.
+
+JS EQUIVALENTS TO HIGHLIGHT:
+- UPPER/LOWER = toUpperCase()/toLowerCase()
+- LENGTH = .length
+- TRIM = .trim()
+- || (concatenation) = + or template literals
+- COALESCE = ??
+- CASE = ternary ? : or switch
+- DISTINCT = [...new Set(array)]
+- IN = .includes()
+- ILIKE = case-insensitive regex match (/pattern/i.test(string))
+- :: (casting) = Number(), String(), parseInt()
+
+INVESTIGATIVE JOURNALISM ANGLE:
+Frame ILIKE as the journalist's most important tool in this lesson. "Public records databases are a mess. The same person might appear as 'JOHN SMITH', 'John Smith', 'john smith', or 'Smith, John.' Without case-insensitive search, you miss records and you miss stories." This is not hypothetical -- it is how every data journalist searches government databases.
+
+The CASE expression should be framed as the journalist's categorization tool. "When you get a FOIA dataset with 100,000 rows of contractor payments, the raw dollar amounts don't tell a story. But when you add CASE WHEN amount > 100000 THEN 'Major Contract' WHEN amount > 10000 THEN 'Mid-Level' ELSE 'Small' END -- now you can see the distribution. Now you can say 'three companies received 80% of the major contracts.' That's a story."
+
+COALESCE should be framed as the dirty-data handler. "Government data has NULLs everywhere. Employer fields, phone numbers, addresses. COALESCE lets you display something useful ('Not disclosed', 'No address on file') without losing the information that the data was missing."
+
+CONNECTIONS TO PREVIOUS/NEXT LESSONS:
+- Connect back to Lesson 01: "Last time you learned SELECT picks columns. Now you know it can also compute columns, concatenate strings, do math, and apply conditional logic. SELECT is way more powerful than just picking columns."
+- Tease Lesson 03 (JOINs): "So far we've been working with one table at a time. Next lesson we connect multiple tables together with JOINs -- that's when SQL starts to feel like a database superpower."
+- The CASE-inside-COUNT pattern previews Lesson 04 (Aggregation). Mention that GROUP BY will make this even more powerful.
+
+TREVOR'S BACKGROUND:
+- 15+ years investigative journalism
+- Self-taught web dev (React, Next.js, TypeScript, Tailwind)
+- Has been using Prisma ORM
+- Learning SQL for a potential role at Tenga (broadcast TV networks)
+- Learning philosophy: "Mental models first, syntax second"
+
+TONE:
+- One host should be a database expert with data journalism experience -- someone who knows why ILIKE matters for public records.
+- The other host should be a web developer learning SQL, making JavaScript connections -- "Oh wait, COALESCE is just nullish coalescing? I already know that."
+- Emphasize the "you already know this concept" theme. Most of this lesson maps directly to JavaScript patterns Trevor uses daily.
+
+MEMORIZATION TECHNIQUES FOR THIS LESSON:
+- COALESCE = ?? (nullish coalescing). Say it once, Trevor will never forget it.
+- ILIKE = "I Like case-insensitive search" -- the I stands for Insensitive.
+- CASE structure: CASE WHEN...THEN...ELSE...END. The END keyword closes it. This is different from JavaScript where you close with } -- SQL uses END.
+- NULL comparisons: "IS NULL, not equals NULL." Make this a mantra.
+- String positions start at 1, not 0. This trips up every JavaScript developer. Mention it clearly.
+
+BROADCAST TV DATA EXAMPLES:
+Use these table names throughout: election_results (precinct, county, candidate, party, vote_count, reporting_pct), weather_stations (station_name, city, temperature, wind_speed, humidity), census_demographics (county, population, median_income), ad_revenue (advertiser, amount, time_slot, campaign).
+
+Example queries to weave in:
+- "Categorize weather stations by alert level": SELECT station_name, temperature, CASE WHEN temperature > 100 THEN 'Extreme Heat' WHEN temperature < 32 THEN 'Freeze Warning' ELSE 'Normal' END AS alert FROM weather_stations;
+- "Find all donors named 'Johnson' regardless of capitalization": WHERE donor_name ILIKE '%johnson%'
+- "Show employer or 'Not disclosed' if missing": SELECT donor_name, COALESCE(employer, 'Not disclosed') AS employer FROM donations;
+- "What unique states are in the census data?": SELECT DISTINCT state FROM census_demographics ORDER BY state;

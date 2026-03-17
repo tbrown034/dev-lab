@@ -1,0 +1,166 @@
+============================================================
+SECTION 1: SOURCE DOCUMENT FOR NOTEBOOKLM
+============================================================
+
+LESSON: 08 - Views & URLs Deep Dive — API Routes to Django
+TRACK: Django / Python (12-lesson curriculum)
+
+------------------------------------------------------------
+CONTEXT FOR HOSTS
+------------------------------------------------------------
+
+Where this lesson fits:
+Lesson 8 of 12. Lesson 7 covered models and the ORM (the M in MVT). This lesson covers views (the V) and URL configuration in depth — function-based views, class-based views, URL parameters, template rendering, redirects, and error handling. Lesson 9 covers templates and forms (the T).
+
+Who Trevor is:
+Trevor writes Next.js API routes (route.ts) and page components (page.tsx) daily. He understands request/response cycles, HTTP methods, URL parameters (dynamic routes), and server-side rendering. He needs to map all of this to Django's view system. He's seen the basics in lesson 6; now he needs the full picture.
+
+Key Next.js-to-Django translations:
+- app/api/articles/route.ts -> views.py + urls.py
+- export async function GET(request) -> def article_list(request): or class ArticleList(APIView): def get(self, request):
+- export async function POST(request) -> same view, check request.method == "POST"
+- NextResponse.json({...}) -> JsonResponse({...})
+- Server Component returning JSX -> render(request, "template.html", context)
+- {children} props -> {% block content %} template tag
+- params.slug from [slug] folder -> slug function argument from <slug:slug> URL pattern
+- new URL(request.url).searchParams -> request.GET.get("q")
+- await request.json() -> json.loads(request.body) or request.POST
+- Middleware -> @login_required, @require_http_methods decorators
+- redirect() -> redirect() (same name!)
+- Return 404 -> raise Http404 or get_object_or_404()
+
+Mental models:
+1. A view is a function: request in, response out — identical to a Next.js route handler
+2. The context dict is template props — each key becomes a template variable
+3. Two-level URL routing — root urls.py delegates to app urls.py, like nested route groups
+4. Named URLs generate links — {% url 'name' %} means you never hardcode paths
+
+------------------------------------------------------------
+LESSON CONTENT
+------------------------------------------------------------
+
+THE MENTAL MODEL — VIEWS ARE ROUTE HANDLERS
+
+In Next.js, you write route.ts files for API endpoints and page.tsx files for pages. Django combines both into one concept: views. A Django view is a Python function (or class) that receives an HTTP request and returns an HTTP response. Request in, response out. That's it.
+
+FUNCTION-BASED VIEWS (FBVs) — THE FOUNDATION
+
+The three response types you'll use constantly:
+
+1. HttpResponse — raw text or HTML string. Like: return new Response('Hello')
+2. JsonResponse — JSON data for APIs. Like: NextResponse.json({...})
+3. render() — HTML template with data. The most common. Like a Server Component that fetches data and returns JSX.
+
+The render() function takes three arguments: request, template path, and a context dictionary. The context dict is like props — each key becomes a variable available in the template.
+
+ACCESSING THE REQUEST OBJECT
+
+Django separates query parameters (request.GET) from form body data (request.POST). These are both dict-like objects. For raw JSON bodies (like from a React frontend), use json.loads(request.body). This is different from Next.js where you call request.json() for everything.
+
+Key properties: request.method ("GET"/"POST"), request.GET.get("q") for query params, request.POST.get("title") for form data, request.headers.get("Authorization"), request.user (current user), request.path (URL path).
+
+HANDLING HTTP METHODS
+
+In Next.js, you export separate functions (GET, POST). In Django FBVs, you check request.method inside one function. The @require_http_methods decorator restricts which methods are allowed.
+
+URL CONFIGURATION — WIRING VIEWS TO URLS
+
+Writing a view is only half the job. You also need to tell Django which URL triggers that view. You wire them up explicitly in urls.py using path().
+
+Two-level routing: Root urls.py uses include() to delegate to each app's urls.py. When Django sees path('newsroom/', include('newsroom.urls')), it strips /newsroom/ from the URL and hands the rest to the app's router. Same idea as nested route groups.
+
+path(route, view, name) — each URL pattern has three parts: the URL string, the view function, and a unique name for reverse URL generation.
+
+Named URLs are a Django superpower. Instead of hardcoding "/newsroom/city-council-vote/", you reference URLs by name: reverse('newsroom:article-detail', kwargs={'slug': 'city-council-vote'}). In templates: {% url 'newsroom:article-detail' slug='city-council-vote' %}. If you ever change the URL structure, every reference updates automatically.
+
+URL PARAMETERS & CONVERTERS
+
+Dynamic routes work differently but solve the same problem. Next.js uses [slug] in file names. Django uses <slug:slug> in the URL pattern.
+
+Built-in converters with automatic validation: <str:name>, <int:pk> (guarantees actual integer!), <slug:slug>, <uuid:id>, <path:rest>. In Next.js, params.id is always a string — you have to parseInt() yourself. In Django, <int:pk> guarantees pk is a real integer. If someone visits /article/abc/, Django returns a 404 automatically.
+
+TEMPLATE RENDERING FROM VIEWS
+
+The most common pattern: view queries data and hands it to a template. The third argument to render() is the context dictionary — each key becomes a template variable. Same mental model as passing props to a React component.
+
+CLASS-BASED VIEWS (CBVs)
+
+Django also has class-based views for common patterns. ListView auto-paginates, DetailView auto-fetches by pk/slug, CreateView auto-handles forms. They reduce boilerplate but have a steeper learning curve.
+
+Translation: Next.js doesn't have an equivalent — you'd build these patterns manually. CBVs are like pre-built page templates that handle common CRUD patterns.
+
+Start with function-based views (explicit, easy to understand), then graduate to class-based views when you see the patterns repeating.
+
+REDIRECTS AND ERROR HANDLING
+
+redirect('article-detail', slug=article.slug) sends a 302 redirect. raise Http404("Article not found") returns a 404 page. get_object_or_404(Article, slug=slug) combines both — get the object or 404.
+
+------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+------------------------------------------------------------
+
+1. Views are just route handlers — request in, response out. The same mental model as Next.js API routes.
+2. The context dict is template props — every key in the dict becomes a variable in the template.
+3. Named URLs prevent broken links — {% url 'name' %} means you never hardcode paths.
+4. URL converters provide free validation — <int:pk> guarantees an integer, returns 404 for anything else.
+5. Start with FBVs, graduate to CBVs — function-based views are explicit and easy to debug. Class-based views reduce boilerplate once you know the patterns.
+
+------------------------------------------------------------
+COMMON PITFALLS FOR JS DEVELOPERS
+------------------------------------------------------------
+
+- Expecting file-based routing (Django uses explicit urls.py wiring)
+- Forgetting to create the app's urls.py file (startapp doesn't create one)
+- Mixing up request.GET (query params) and request.POST (form body)
+- Forgetting to pass context to render() and wondering why template variables are empty
+- Hardcoding URLs instead of using {% url 'name' %} or reverse()
+- Not using get_object_or_404() (manually handling DoesNotExist is verbose)
+- Returning a template response after a successful POST (use redirect for PRG pattern)
+- Forgetting that Django views are synchronous by default (no async/await needed)
+
+------------------------------------------------------------
+REAL-WORLD CONNECTION
+------------------------------------------------------------
+
+At a broadcast TV network, views are where your business logic lives. A story list view queries published articles with select_related, paginates them, and hands the data to a template. A detail view fetches a single story by slug and renders it with related sources and datasets. An editor dashboard view checks permissions, queries stories in review, and displays them for editorial approval. An API view returns JSON for the mobile app. Every URL is explicitly named, so when the URL structure changes for SEO, no links break. Named URLs are especially valuable in a large newsroom app with dozens of interlinked pages.
+
+
+============================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS FOR NOTEBOOKLM
+============================================================
+
+This episode should feel like "connecting the dots" — views connect models (lesson 7) to templates (lesson 9). The big insight: views are just route handlers with a different wiring system.
+
+Specific mental models for THIS lesson:
+- "View = route handler" — request in, response out. If you can write a Next.js API route, you can write a Django view.
+- "Context dict = props" — the dictionary you pass to render() is exactly like passing props to a React component
+- "Named URLs = no broken links" — reverse URL resolution means you reference routes by name, not hardcoded strings
+- "URL converters = free validation" — <int:pk> validates the URL parameter type before your code even runs
+
+JS/React/Next.js equivalents to reference:
+- route.ts GET/POST exports -> view function with request.method checks
+- page.tsx Server Component -> view + render(request, template, context)
+- NextResponse.json() -> JsonResponse()
+- params.slug -> slug function argument
+- request.url searchParams -> request.GET.get("q")
+- Middleware -> decorators (@login_required, @require_http_methods)
+- redirect() -> redirect() (same concept!)
+- [slug] folder -> <slug:slug> URL pattern
+
+Connect back to lesson 7: "Remember the QuerySets we built last lesson? Now we use them. article_list view calls Article.objects.filter(status='published').order_by('-published_at')[:20] — that's your lesson 7 knowledge in action."
+
+Connect back to lesson 6: "Remember the quick overview of views and URLs? Now we're going deep. Same concepts, full power."
+
+Tease lesson 9: "Next lesson covers templates and forms — that's the T in MVT. You'll learn Django's template language (like JSX but server-rendered) and Django's form system (like combining Zod + React Hook Form into one class)."
+
+Trevor's journalism background: "Think of URL routing like a newsroom assignment desk. The root urls.py is the assignment editor — they direct incoming requests to the right department. The app urls.py is the section editor — they route within their beat. path('breaking/<slug:slug>/') is like saying 'any breaking story goes to this reporter.' Named URLs are like using source slugs instead of page numbers in a CMS — if the page moves, the reference still works."
+
+Memorization techniques:
+- "request in, response out" — every view is this simple
+- "render takes three: request, template, context" — always in that order
+- "context dict = template props" — keys become variables
+- "double angle brackets for URL params" — <int:pk>, <slug:slug>
+- "name your URLs" — every path() gets a name argument
+- "FBV first, CBV later" — learn the explicit way before the shortcut way
+
+Tone: The realization that Django views are structurally identical to Next.js route handlers should be reassuring. Named URLs should feel like a genuine improvement over hardcoded paths. URL converters providing free validation should get an "oh, that's smart" reaction. Class-based views should be presented as "optional power tools" — useful but not required.

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 10 - Maps & Geography</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #f97316; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #f97316; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #f97316; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #f97316; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .demo h4 { color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .demo svg { background: #1a1a1a; border-radius: 4px; display: block; }
+    .quiz { background: #1a1500; border: 1px solid #f9731644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #f97316; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #f97316; text-decoration: none; }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #1a0a00; border-left: 3px solid #f97316; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #fdba74; }
+    .aha strong { color: #f97316; }
+    #map-tooltip {
+      position: fixed; background: #1a1a1a; border: 1px solid #333;
+      padding: 0.5rem 0.75rem; border-radius: 4px; font-size: 0.8rem;
+      color: #e5e5e5; pointer-events: none; display: none; z-index: 100;
+    }
+    #map-tooltip .state-name { color: #f97316; font-weight: 600; }
+    #map-tooltip .state-val { color: #4ade80; }
+    .legend-bar { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; font-size: 0.8rem; color: #888; }
+    .legend-bar .gradient { height: 12px; width: 200px; border-radius: 3px; }
+    #map-loading { color: #888; font-size: 0.9rem; padding: 2rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>10</span> Maps &amp; Geography</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div id="map-tooltip">
+    <span class="state-name"></span><br>
+    <span class="state-val"></span>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #f97316;">Mental Model:</strong> A projection is just another scale. Scales translate data to pixels; projections translate latitude/longitude to pixels. <code>d3.geoPath()</code> is just another path generator, like <code>d3.line()</code> but for geography.</p>
+
+    <h2>The Pipeline</h2>
+
+    <ol>
+      <li><strong>Geographic data</strong> (GeoJSON/TopoJSON) &mdash; shapes as coordinate arrays</li>
+      <li><strong>Projection</strong> &mdash; flattens the globe (like peeling an orange flat)</li>
+      <li><strong>Path generator</strong> &mdash; converts projected coordinates to SVG path strings</li>
+    </ol>
+
+    <pre><code>import * as topojson from "topojson-client";
+
+<span class="comment">// 1. Load geographic data</span>
+const us = await d3.json(
+  "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json"
+);
+const states = topojson.feature(us, us.objects.states);
+
+<span class="comment">// 2. Create projection (like a scale for coordinates)</span>
+const projection = d3.geoAlbersUsa()
+  .fitSize([width, height], states);
+
+<span class="comment">// 3. Create path generator (like d3.line() for geography)</span>
+const path = d3.geoPath(projection);
+
+<span class="comment">// 4. Draw!</span>
+svg.selectAll("path")
+  .data(states.features)
+  .join("path")
+  .attr("d", path)                <span class="comment">// path generator creates "d" attribute</span>
+  .attr("fill", d => color(getData(d)))
+  .attr("stroke", "#333");</code></pre>
+
+    <h2>GeoJSON vs TopoJSON</h2>
+    <ul>
+      <li><strong>GeoJSON</strong> = standard format. Each feature has coordinates. Simple but large files (2MB+ for US states).</li>
+      <li><strong>TopoJSON</strong> = compressed format. Shares borders between adjacent features. 80-90% smaller (~200KB). Convert to GeoJSON in the browser with <code>topojson.feature()</code>.</li>
+    </ul>
+
+    <h2>Projections</h2>
+    <ul>
+      <li><code>d3.geoAlbersUsa()</code> &mdash; US map with Alaska/Hawaii insets. Use this for US maps.</li>
+      <li><code>d3.geoMercator()</code> &mdash; Google Maps projection. Distorts area near poles.</li>
+      <li><code>d3.geoEqualEarth()</code> &mdash; Modern world projection. Equal area.</li>
+    </ul>
+
+    <div class="aha">
+      <p><strong>.fitSize() is your best friend.</strong> Instead of manually calculating scale and translate, call <code>projection.fitSize([width, height], geojsonData)</code>. It automatically scales and centers the map to fit your SVG dimensions.</p>
+    </div>
+
+    <h2>Choropleth Pattern</h2>
+
+    <pre><code><span class="comment">// Create a lookup map: FIPS code → data value</span>
+const dataMap = new Map(data.map(d => [d.fips, d.value]));
+
+<span class="comment">// Color scale</span>
+const color = d3.scaleSequential(d3.interpolateYlOrRd)
+  .domain(d3.extent(data, d => d.value));
+
+<span class="comment">// Color each state by its data value</span>
+svg.selectAll("path")
+  .data(states.features)
+  .join("path")
+  .attr("d", path)
+  .attr("fill", d => {
+    const val = dataMap.get(d.id);
+    return val ? color(val) : "#333";
+  });</code></pre>
+
+    <!-- ============================================ -->
+    <!-- DEMO 1: US CHOROPLETH MAP                    -->
+    <!-- ============================================ -->
+
+    <h2>Demo: US State Choropleth Map</h2>
+    <p>Median household income by state. Hover to see values.</p>
+
+    <div class="demo">
+      <h4>Live: US Median Household Income by State</h4>
+      <div id="map-loading">Loading map data from CDN...</div>
+      <div id="us-map"></div>
+      <div class="legend-bar" id="map-legend" style="display:none;">
+        <span id="legend-min"></span>
+        <div class="gradient" id="legend-gradient"></div>
+        <span id="legend-max"></span>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Accessibility note:</strong> Color-only encoding is problematic for colorblind users. In production, always add tooltips, ARIA labels, and consider colorblind-safe schemes like <code>d3.interpolateViridis</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What does <code>topojson.feature(us, us.objects.states)</code> do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It converts TopoJSON data to GeoJSON format. TopoJSON is a compressed format that shares boundaries between adjacent features. <code>topojson.feature()</code> expands it into standard GeoJSON FeatureCollection that D3's path generator can render.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why use <code>d3.geoAlbersUsa()</code> for US maps?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It is specifically designed for US maps: includes insets for Alaska and Hawaii, uses an equal-area projection so state sizes are proportional, and is centered on the US. <code>geoMercator</code> severely distorts Alaska's size and does not handle the insets.</div>
+      </div>
+
+      <div class="question">
+        <p>3. How is a projection similar to a scale?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Both are translator functions. A scale maps data values (domain) to pixels (range). A projection maps geographic coordinates (latitude/longitude) to pixel coordinates (x/y). Both take input from one "world" and produce output in the pixel world. <code>.fitSize()</code> is like setting domain and range at once.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What is a choropleth map?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A thematic map where geographic areas are colored according to a data variable. For example, coloring states by median income or voter turnout. The color intensity represents the data magnitude. The standard pattern is: data lookup map + sequential color scale + fill each path by its data value.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What does <code>topojson.mesh(us, us.objects.states, (a, b) => a !== b)</code> do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It generates a single path for all internal state borders (where two states share a boundary). The filter function <code>(a, b) => a !== b</code> excludes exterior borders. This gives you clean, non-overlapping border lines without the visual artifacts of per-state strokes.</div>
+      </div>
+
+      <div class="question">
+        <p>6. How do you make a state map responsive?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use <code>viewBox</code> on the SVG element and <code>.fitSize()</code> on the projection. The viewBox creates a virtual coordinate system that scales with the container. <code>.fitSize([width, height], geojson)</code> ensures the map fills that space. No fixed pixel dimensions needed.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Colored US Map</h4>
+      <ol>
+        <li>Load US states TopoJSON from the CDN</li>
+        <li>Convert to GeoJSON with <code>topojson.feature()</code></li>
+        <li>Create a <code>geoAlbersUsa</code> projection with <code>.fitSize()</code></li>
+        <li>Draw state paths with <code>d3.geoPath(projection)</code></li>
+        <li>Color states by a data variable using a sequential color scale</li>
+        <li>Add hover effects: highlight border + show tooltip with state name and value</li>
+        <li>Add a color legend</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Projection = a scale for coordinates</strong> (lat/lng to pixels)</li>
+      <li><strong>d3.geoPath()</strong> = path generator for geography</li>
+      <li><strong>TopoJSON</strong> is smaller, convert with <code>topojson.feature()</code></li>
+      <li><strong>geoAlbersUsa</strong> for US maps with Alaska/Hawaii</li>
+      <li><strong>.fitSize()</strong> auto-scales the projection</li>
+      <li><strong>Choropleth</strong> = data lookup map + color scale + fill</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/09-maps-geo/">&larr; Lesson 09: Arcs &amp; Pies</a>
+      <a href="/d3/lessons/11-d3-react/">Lesson 11: Interactivity &amp; Polish &rarr;</a>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+    import * as topojson from "topojson-client";
+
+    // =============================================
+    // US Choropleth Map
+    // =============================================
+    const incomeByFips = new Map([
+      ["01",56929],["02",77790],["04",65913],["05",52528],["06",84097],
+      ["08",80184],["09",83771],["10",72724],["12",63062],["13",61224],
+      ["15",84857],["16",60999],["17",72205],["18",61944],["19",65573],
+      ["20",64521],["21",55573],["22",52295],["23",64767],["24",90203],
+      ["25",89645],["26",63498],["27",77706],["28",46511],["29",59264],
+      ["30",60560],["31",66644],["32",65006],["33",83449],["34",89296],
+      ["35",53992],["36",75157],["37",60516],["38",68131],["39",61938],
+      ["40",55826],["41",71562],["42",67587],["44",71169],["45",58234],
+      ["46",62520],["47",57153],["48",67321],["49",75780],["50",67673],
+      ["51",80615],["53",82228],["54",50884],["55",67125],["56",65204],
+    ]);
+
+    const stateNames = new Map([
+      ["01","Alabama"],["02","Alaska"],["04","Arizona"],["05","Arkansas"],
+      ["06","California"],["08","Colorado"],["09","Connecticut"],["10","Delaware"],
+      ["12","Florida"],["13","Georgia"],["15","Hawaii"],["16","Idaho"],
+      ["17","Illinois"],["18","Indiana"],["19","Iowa"],["20","Kansas"],
+      ["21","Kentucky"],["22","Louisiana"],["23","Maine"],["24","Maryland"],
+      ["25","Massachusetts"],["26","Michigan"],["27","Minnesota"],["28","Mississippi"],
+      ["29","Missouri"],["30","Montana"],["31","Nebraska"],["32","Nevada"],
+      ["33","New Hampshire"],["34","New Jersey"],["35","New Mexico"],["36","New York"],
+      ["37","North Carolina"],["38","North Dakota"],["39","Ohio"],["40","Oklahoma"],
+      ["41","Oregon"],["42","Pennsylvania"],["44","Rhode Island"],["45","South Carolina"],
+      ["46","South Dakota"],["47","Tennessee"],["48","Texas"],["49","Utah"],
+      ["50","Vermont"],["51","Virginia"],["53","Washington"],["54","West Virginia"],
+      ["55","Wisconsin"],["56","Wyoming"],
+    ]);
+
+    const width = 700, height = 450;
+
+    (async () => {
+      try {
+        const us = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json");
+        const states = topojson.feature(us, us.objects.states);
+
+        d3.select("#map-loading").remove();
+
+        const svg = d3.select("#us-map").append("svg").attr("viewBox", `0 0 ${width} ${height}`);
+
+        const projection = d3.geoAlbersUsa()
+          .fitSize([width - 20, height - 20], states)
+          .translate([width / 2, height / 2]);
+
+        const path = d3.geoPath(projection);
+
+        const incomeByNumericFips = new Map();
+        incomeByFips.forEach((val, key) => {
+          incomeByNumericFips.set(String(parseInt(key, 10)), val);
+        });
+
+        const allValues = [...incomeByFips.values()];
+        const colorScale = d3.scaleSequential(d3.interpolateYlOrRd)
+          .domain([d3.min(allValues), d3.max(allValues)]);
+
+        const tooltip = d3.select("#map-tooltip");
+
+        svg.selectAll("path.state").data(states.features).join("path")
+          .attr("class", "state").attr("d", path)
+          .attr("fill", d => {
+            const val = incomeByNumericFips.get(String(d.id));
+            return val ? colorScale(val) : "#333";
+          })
+          .attr("stroke", "#222").attr("stroke-width", 0.5)
+          .style("cursor", "pointer")
+          .on("mouseenter", function(event, d) {
+            d3.select(this).attr("stroke", "#f97316").attr("stroke-width", 2).raise();
+            const fips = String(d.id);
+            const padFips = fips.padStart(2, "0");
+            const name = stateNames.get(padFips) || `State ${fips}`;
+            const val = incomeByNumericFips.get(fips);
+            tooltip.style("display", "block");
+            tooltip.select(".state-name").text(name);
+            tooltip.select(".state-val").text(val ? `Median Income: ${d3.format("$,.0f")(val)}` : "No data");
+          })
+          .on("mousemove", function(event) {
+            tooltip.style("left", (event.clientX + 14) + "px").style("top", (event.clientY - 24) + "px");
+          })
+          .on("mouseleave", function() {
+            d3.select(this).attr("stroke", "#222").attr("stroke-width", 0.5);
+            tooltip.style("display", "none");
+          });
+
+        // Borders
+        svg.append("path")
+          .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
+          .attr("d", path).attr("fill", "none").attr("stroke", "#222").attr("stroke-width", 0.5)
+          .style("pointer-events", "none");
+
+        // Legend
+        d3.select("#map-legend").style("display", "flex");
+        const minVal = d3.min(allValues), maxVal = d3.max(allValues);
+        d3.select("#legend-min").text(d3.format("$,.0f")(minVal));
+        d3.select("#legend-max").text(d3.format("$,.0f")(maxVal));
+
+        let gradientCSS = "linear-gradient(to right";
+        for (let i = 0; i <= 20; i++) {
+          const t = i / 20;
+          gradientCSS += `, ${colorScale(minVal + t * (maxVal - minVal))}`;
+        }
+        d3.select("#legend-gradient").style("background", gradientCSS + ")");
+
+      } catch (err) {
+        d3.select("#map-loading").text("Failed to load map data. Error: " + err.message);
+      }
+    })();
+  </script>
+</body>
+</html>

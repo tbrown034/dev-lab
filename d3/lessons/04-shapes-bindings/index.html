@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 04 - Data Binding: The ONE Concept</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #f97316; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #f97316; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #f97316; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #f97316; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .demo h4 { color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .demo svg { background: #1a1a1a; border-radius: 4px; display: block; }
+    .demo button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 0.25rem; font-weight: 600; }
+    .demo button:hover { background: #fb923c; }
+    .demo button.secondary { background: #818cf8; color: #000; }
+    .demo button.green { background: #4ade80; color: #000; }
+    .demo .controls { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .quiz { background: #1a1500; border: 1px solid #f9731644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #f97316; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #f97316; text-decoration: none; }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #1a0a00; border-left: 3px solid #f97316; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #fdba74; }
+    .aha strong { color: #f97316; }
+    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
+    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
+    .try-it { background: #0a0a1a; border: 1px solid #818cf844; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .try-it h4 { color: #818cf8; margin-bottom: 0.75rem; }
+    .step-num { display: inline-block; background: #f97316; color: #000; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 700; font-size: 0.85rem; margin-right: 0.5rem; }
+    #stage-info { background: #0a0a0a; border: 1px solid #222; border-radius: 4px; padding: 0.75rem; margin-top: 0.75rem; font-family: monospace; font-size: 0.85rem; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>04</span> Data Binding &mdash; The ONE Concept</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #f97316;">Mental Model:</strong> Data binding is a <code>forEach</code> loop with superpowers. Think of it as attaching a sticky note (data) to each DOM element, then using that sticky note to control the element's appearance.</p>
+
+    <!-- ============================================ -->
+    <!-- THE PROBLEM                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Problem Data Binding Solves</h2>
+
+    <p>Say you have population data for 5 states and you want a bar for each. Without data binding, you would write:</p>
+
+    <pre><code>const data = [
+  { state: "CA", pop: 39538 },
+  { state: "TX", pop: 29146 },
+  { state: "FL", pop: 21538 },
+  { state: "NY", pop: 20201 },
+  { state: "PA", pop: 13002 },
+];
+
+<span class="comment">// The forEach approach (what you know)</span>
+data.forEach((d, i) => {
+  svg.append("rect")
+    .attr("x", i * 100)
+    .attr("y", 300 - d.pop / 150)
+    .attr("width", 80)
+    .attr("height", d.pop / 150)
+    .attr("fill", "#f97316");
+});</code></pre>
+
+    <p>This works, but it has a problem: <strong>there is no link between the data and the elements.</strong> If the data changes, you have to manually find, update, or remove bars. D3's data binding creates that permanent link.</p>
+
+    <!-- ============================================ -->
+    <!-- WHAT .DATA() ACTUALLY DOES                   -->
+    <!-- ============================================ -->
+
+    <h2>What .data() Actually Does</h2>
+
+    <p>When you call <code>.data(array)</code>, D3 does something invisible but powerful: it takes each item in the array and <strong>physically attaches it to a DOM element</strong> using a hidden property called <code>__data__</code>.</p>
+
+    <pre><code><span class="comment">// After data binding, each rect has a hidden property:</span>
+rect.__data__  <span class="comment">// → { state: "CA", pop: 39538 }</span>
+
+<span class="comment">// You can see it! Open DevTools, select a rect, and type:</span>
+$0.__data__    <span class="comment">// → the data object bound to that element</span></code></pre>
+
+    <div class="aha">
+      <p><strong>This is the sticky note.</strong> Each DOM element literally carries its data around. When you write <code>.attr("width", d => d.pop)</code>, that <code>d</code> parameter is the sticky note glued to that specific element. D3 just reads the <code>__data__</code> property and passes it to your function.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE PATTERN                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Pattern: selectAll &rarr; data &rarr; join</h2>
+
+    <pre><code>svg.selectAll("rect")   <span class="comment">// 1. Select all existing rects (probably 0)</span>
+  .data(data)            <span class="comment">// 2. Bind the data array</span>
+  .join("rect")          <span class="comment">// 3. Create/update/remove rects to match data</span>
+  .attr("x", (d, i) => i * 100)  <span class="comment">// 4. Use bound data to set attributes</span>
+  .attr("width", 80)
+  .attr("height", d => d.pop / 150)
+  .attr("fill", "#f97316");</code></pre>
+
+    <h3><span class="step-num">1</span> selectAll("rect") &mdash; declare intent</h3>
+    <p>This usually selects <strong>zero elements</strong> on first run. That is fine. You are telling D3: "I want rects to represent my data." It is a declaration of intent, not a selection of existing elements.</p>
+
+    <div class="callout">
+      <p><strong>Why select things that don't exist?</strong> This is the most confusing part of D3 for newcomers. Think of it like React's <code>return &lt;div&gt;{items.map(...)}&lt;/div&gt;</code>. You are declaring what the DOM <em>should</em> look like, not finding what's there now. D3 uses the empty selection as a starting point to figure out what needs to be created.</p>
+    </div>
+
+    <h3><span class="step-num">2</span> .data(data) &mdash; match data to elements</h3>
+    <p>D3 compares the data array to the existing elements by index. 5 data items, 0 rects = 5 new rects needed.</p>
+
+    <h3><span class="step-num">3</span> .join("rect") &mdash; create, update, or remove</h3>
+    <p>This is the magic. <code>.join()</code> creates missing elements, keeps existing ones, and removes extras. After <code>.join("rect")</code>, you have exactly one rect per data item, each with its <code>__data__</code> attached.</p>
+
+    <h3><span class="step-num">4</span> Accessor functions: (d, i) =&gt; ...</h3>
+    <p>Any method that takes a value can also take a function. D3 calls it once per element:</p>
+    <ul>
+      <li><code>d</code> = the data bound to this element (the sticky note)</li>
+      <li><code>i</code> = the index in the data array</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- SIDE BY SIDE                                 -->
+    <!-- ============================================ -->
+
+    <h2>Side by Side: forEach vs D3</h2>
+
+    <div class="side-by-side">
+      <div>
+        <h5>forEach (manual)</h5>
+        <pre><code>data.forEach((d, i) => {
+  svg.append("rect")
+    .attr("x", i * 100)
+    .attr("y", 300 - d.pop/150)
+    .attr("width", 80)
+    .attr("height", d.pop/150)
+    .attr("fill", "#f97316");
+});
+<span class="comment">// No data link to elements
+// Can't easily update later</span></code></pre>
+      </div>
+      <div>
+        <h5>D3 data binding</h5>
+        <pre><code>svg.selectAll("rect")
+  .data(data)
+  .join("rect")
+  .attr("x", (d,i) => i * 100)
+  .attr("y", d => 300 - d.pop/150)
+  .attr("width", 80)
+  .attr("height", d => d.pop/150)
+  .attr("fill", "#f97316");
+<span class="comment">// Data glued to elements
+// Re-run with new data = auto-update</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The superpower:</strong> If you call the D3 version again with different data, it automatically updates existing bars, creates new ones, and removes old ones. The <code>forEach</code> version would just keep appending duplicates. This is what makes D3's data binding fundamentally different.</p>
+    </div>
+
+    <div class="try-it">
+      <h4>Play with it: data array length &rarr; DOM elements</h4>
+      <p style="color: #a5b4fc; font-size: 0.85rem; margin-bottom: 0.75rem;">Change the number of data points and watch rects appear/disappear. This is .data().join() at work: one rect per data item, always in sync.</p>
+      <div id="playground-data-binding"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 1: STEP BY STEP BAR CHART               -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Build a Bar Chart Step by Step</h2>
+    <p>Click through each stage to see the data binding pattern unfold one step at a time.</p>
+
+    <div class="demo">
+      <h4>Live: Step-by-step bar chart construction</h4>
+      <div class="controls">
+        <button id="btn-stage1">1. selectAll</button>
+        <button id="btn-stage2" class="secondary">2. .data()</button>
+        <button id="btn-stage3" class="green">3. .join()</button>
+        <button id="btn-stage4">4. Set attrs</button>
+        <button id="btn-reset" style="background: #666;">Reset</button>
+      </div>
+      <svg id="step-chart" viewBox="0 0 700 250"></svg>
+      <div id="stage-info">Click "1. selectAll" to begin...</div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 2: LIVE DATA UPDATE                     -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Change Data, Watch Bars Update</h2>
+    <p>Same <code>.data().join()</code> pattern, called with different data. The bars resize automatically.</p>
+
+    <div class="demo">
+      <h4>Live: Dynamic data &rarr; bar chart</h4>
+      <div class="controls">
+        <button id="btn-data1">2020 Census</button>
+        <button id="btn-data2" class="secondary">2010 Census</button>
+        <button id="btn-data3" class="green">Random</button>
+      </div>
+      <svg id="live-chart" viewBox="0 0 700 300"></svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What does <code>.data()</code> actually do to a DOM element?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It attaches each item from the data array to a DOM element via a hidden <code>__data__</code> property. This creates a persistent link between the data and the element. You can verify this in DevTools: select an element and check <code>$0.__data__</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why does <code>selectAll("rect")</code> select zero elements, and why is that OK?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">On first render, there are no rects yet. The empty selection is a <strong>declaration of intent</strong>: "I want rects to represent my data." <code>.data()</code> compares 5 data items to 0 existing elements and determines 5 need to be created. <code>.join("rect")</code> then creates those 5 rects. This is the "enter" phase.</div>
+      </div>
+
+      <div class="question">
+        <p>3. In <code>.attr("width", d => d.pop / 100)</code>, where does <code>d</code> come from?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>d</code> is the data item bound to the current element. D3 reads the element's <code>__data__</code> property and passes it as the first argument to your accessor function. The second argument <code>i</code> is the index. So for the 3rd bar, <code>d</code> is <code>data[2]</code> and <code>i</code> is <code>2</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What happens if you call the data binding pattern again with different data?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>.join()</code> handles it automatically: existing elements get updated with new data (update), new elements are created if the new array is longer (enter), and extra elements are removed if the new array is shorter (exit). This is why D3's data binding is more powerful than a simple forEach loop.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What is the difference between a static value and an accessor function in <code>.attr()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A static value like <code>.attr("width", 80)</code> sets the same value for every element. An accessor function like <code>.attr("width", d => d.pop / 100)</code> is called once per element, receiving the bound data, so each element can have a different value. Use static values for shared properties (like color), functions for data-driven properties (like bar width).</div>
+      </div>
+
+      <div class="question">
+        <p>6. How would you verify that data is correctly bound to a DOM element?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Open DevTools, select the element in the Elements panel, then in the Console type <code>$0.__data__</code>. This shows the data object D3 attached. You can also use <code>d3.select(element).datum()</code> to access the bound data from code. This is an essential debugging technique.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Bar Chart from Data</h4>
+      <p>Using the data binding pattern, create a horizontal bar chart from this data:</p>
+      <pre><code>const data = [
+  { state: "California", pop: 39538, abbr: "CA" },
+  { state: "Texas", pop: 29146, abbr: "TX" },
+  { state: "Florida", pop: 21538, abbr: "FL" },
+  { state: "New York", pop: 20201, abbr: "NY" },
+  { state: "Pennsylvania", pop: 13002, abbr: "PA" },
+  { state: "Illinois", pop: 12812, abbr: "IL" },
+  { state: "Ohio", pop: 11799, abbr: "OH" },
+  { state: "Georgia", pop: 10711, abbr: "GA" },
+];</code></pre>
+      <ol>
+        <li>Use <code>selectAll("rect").data(data).join("rect")</code> to create bars</li>
+        <li>Use accessor functions to set bar height based on <code>d.pop</code></li>
+        <li>Add text labels using a second <code>selectAll("text").data(data).join("text")</code></li>
+        <li>Show the state abbreviation below each bar</li>
+        <li>Bonus: Add value labels above each bar</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">Practice in your browser console on this page, or create a new file. The key is to write the pattern from memory: <code>selectAll &rarr; data &rarr; join &rarr; attrs</code>.</p>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>.data() attaches data to DOM elements</strong> via the hidden <code>__data__</code> property</li>
+      <li><strong>selectAll &rarr; data &rarr; join</strong> is the core pattern</li>
+      <li><strong>Accessor functions</strong> <code>(d, i) =&gt; ...</code> make each element data-driven</li>
+      <li><strong>Empty selectAll is a declaration of intent</strong>, not a bug</li>
+      <li><strong>.join() handles creation and cleanup</strong> automatically</li>
+      <li><strong>Re-running with new data updates the chart</strong> &mdash; no manual DOM management</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/03-scales-axes/">&larr; Lesson 03: D3 Selections Deep Dive</a>
+      <a href="/d3/lessons/05-maps-geo/">Lesson 05: Scales - The Translator &rarr;</a>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+
+    // =============================================
+    // Demo 1: Step-by-step bar chart
+    // =============================================
+    const stepData = [
+      { state: "CA", pop: 39538 },
+      { state: "TX", pop: 29146 },
+      { state: "FL", pop: 21538 },
+      { state: "NY", pop: 20201 },
+      { state: "PA", pop: 13002 },
+    ];
+
+    const stepSvg = d3.select("#step-chart");
+    const info = document.getElementById("stage-info");
+    const maxPop = d3.max(stepData, d => d.pop);
+
+    d3.select("#btn-stage1").on("click", () => {
+      stepSvg.selectAll("*").remove();
+      info.innerHTML = `<span style="color:#f97316">svg.selectAll("rect")</span> → Selection with <strong>0 elements</strong>. No rects exist yet. This is us declaring: "I want rects."`;
+      // Draw a visual representation
+      stepSvg.append("text").attr("x", 350).attr("y", 80)
+        .attr("text-anchor", "middle").attr("fill", "#666").attr("font-size", "14")
+        .text("Empty selection: [ ]");
+      stepSvg.append("text").attr("x", 350).attr("y", 110)
+        .attr("text-anchor", "middle").attr("fill", "#444").attr("font-size", "11")
+        .text("selectAll('rect') matched 0 elements");
+    });
+
+    d3.select("#btn-stage2").on("click", () => {
+      stepSvg.selectAll("*").remove();
+      info.innerHTML = `<span style="color:#818cf8">.data(data)</span> → D3 pairs data items with elements. 5 data, 0 elements = <strong>5 "enter" nodes</strong> (elements that need to be created).`;
+      stepData.forEach((d, i) => {
+        const x = 60 + i * 130;
+        stepSvg.append("rect").attr("x", x).attr("y", 40)
+          .attr("width", 100).attr("height", 50)
+          .attr("fill", "none").attr("stroke", "#f97316")
+          .attr("stroke-dasharray", "4").attr("rx", 4);
+        stepSvg.append("text").attr("x", x + 50).attr("y", 70)
+          .attr("text-anchor", "middle").attr("fill", "#f97316").attr("font-size", "11")
+          .text(`${d.state}: ${d.pop}`);
+        stepSvg.append("text").attr("x", x + 50).attr("y", 110)
+          .attr("text-anchor", "middle").attr("fill", "#666").attr("font-size", "9")
+          .text("needs enter");
+      });
+    });
+
+    d3.select("#btn-stage3").on("click", () => {
+      stepSvg.selectAll("*").remove();
+      info.innerHTML = `<span style="color:#4ade80">.join("rect")</span> → D3 creates 5 &lt;rect&gt; elements. Each has <strong>__data__</strong> attached. Now we have 5 empty rects.`;
+      stepData.forEach((d, i) => {
+        const x = 60 + i * 130;
+        stepSvg.append("rect").attr("x", x).attr("y", 40)
+          .attr("width", 100).attr("height", 50)
+          .attr("fill", "#333").attr("rx", 4)
+          .attr("opacity", 0)
+          .transition().duration(300).delay(i * 80)
+          .attr("opacity", 1);
+        stepSvg.append("text").attr("x", x + 50).attr("y", 120)
+          .attr("text-anchor", "middle").attr("fill", "#4ade80").attr("font-size", "9")
+          .text(`__data__ = ${d.state}`);
+      });
+    });
+
+    d3.select("#btn-stage4").on("click", () => {
+      stepSvg.selectAll("*").remove();
+      info.innerHTML = `<span style="color:#f97316">.attr(name, d => ...)</span> → Accessor functions read each element's __data__ and set attributes accordingly. The bars take shape!`;
+      const barH = 180;
+      stepData.forEach((d, i) => {
+        const x = 60 + i * 130;
+        const h = (d.pop / maxPop) * barH;
+        stepSvg.append("rect")
+          .attr("x", x).attr("y", barH + 20)
+          .attr("width", 100).attr("height", 0)
+          .attr("fill", "#f97316").attr("rx", 4)
+          .transition().duration(600).delay(i * 100)
+          .attr("y", barH + 20 - h).attr("height", h);
+        stepSvg.append("text").attr("x", x + 50).attr("y", barH + 40)
+          .attr("text-anchor", "middle").attr("fill", "#888").attr("font-size", "12")
+          .text(d.state);
+        stepSvg.append("text").attr("x", x + 50).attr("y", barH + 20 - h - 5)
+          .attr("text-anchor", "middle").attr("fill", "#f97316").attr("font-size", "10")
+          .attr("opacity", 0)
+          .transition().delay(i * 100 + 400).duration(200)
+          .attr("opacity", 1)
+          .text(`${(d.pop / 1000).toFixed(1)}M`);
+      });
+    });
+
+    d3.select("#btn-reset").on("click", () => {
+      stepSvg.selectAll("*").remove();
+      info.textContent = 'Click "1. selectAll" to begin...';
+    });
+
+    // =============================================
+    // Demo 2: Live data update
+    // =============================================
+    const datasets = {
+      d2020: [
+        { state: "CA", pop: 39538 }, { state: "TX", pop: 29146 },
+        { state: "FL", pop: 21538 }, { state: "NY", pop: 20201 },
+        { state: "PA", pop: 13002 }, { state: "IL", pop: 12812 },
+        { state: "OH", pop: 11799 }, { state: "GA", pop: 10711 },
+      ],
+      d2010: [
+        { state: "CA", pop: 37254 }, { state: "TX", pop: 25146 },
+        { state: "FL", pop: 18801 }, { state: "NY", pop: 19378 },
+        { state: "PA", pop: 12702 }, { state: "IL", pop: 12831 },
+        { state: "OH", pop: 11536 }, { state: "GA", pop: 9688 },
+      ],
+    };
+
+    const m = { top: 30, right: 20, bottom: 40, left: 50 };
+    const w = 700 - m.left - m.right;
+    const h = 300 - m.top - m.bottom;
+
+    const liveSvg = d3.select("#live-chart")
+      .append("g").attr("transform", `translate(${m.left},${m.top})`);
+
+    // Add a background rect
+    d3.select("#live-chart").insert("rect", ":first-child")
+      .attr("width", 700).attr("height", 300).attr("fill", "#1a1a1a").attr("rx", 4);
+
+    const xScale = d3.scaleBand().range([0, w]).padding(0.2);
+    const yScale = d3.scaleLinear().range([h, 0]);
+
+    const xAxisG = liveSvg.append("g").attr("transform", `translate(0,${h})`);
+    const yAxisG = liveSvg.append("g");
+
+    function updateLiveChart(data) {
+      xScale.domain(data.map(d => d.state));
+      yScale.domain([0, d3.max(data, d => d.pop) * 1.1]).nice();
+
+      xAxisG.transition().duration(600).call(d3.axisBottom(xScale));
+      xAxisG.selectAll("text").attr("fill", "#888");
+      xAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+      yAxisG.transition().duration(600).call(d3.axisLeft(yScale).ticks(5).tickFormat(d => `${d/1000}k`));
+      yAxisG.selectAll("text").attr("fill", "#888");
+      yAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+      // THE PATTERN: selectAll → data → join → attrs
+      liveSvg.selectAll(".bar")
+        .data(data, d => d.state)
+        .join("rect")
+        .attr("class", "bar")
+        .attr("x", d => xScale(d.state))
+        .attr("width", xScale.bandwidth())
+        .attr("fill", "#f97316")
+        .attr("rx", 3)
+        .transition().duration(600)
+        .attr("y", d => yScale(d.pop))
+        .attr("height", d => h - yScale(d.pop));
+
+      liveSvg.selectAll(".label")
+        .data(data, d => d.state)
+        .join("text")
+        .attr("class", "label")
+        .attr("x", d => xScale(d.state) + xScale.bandwidth() / 2)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#f97316").attr("font-size", "10")
+        .transition().duration(600)
+        .attr("y", d => yScale(d.pop) - 5)
+        .text(d => `${(d.pop / 1000).toFixed(1)}M`);
+    }
+
+    updateLiveChart(datasets.d2020);
+
+    d3.select("#btn-data1").on("click", () => updateLiveChart(datasets.d2020));
+    d3.select("#btn-data2").on("click", () => updateLiveChart(datasets.d2010));
+    d3.select("#btn-data3").on("click", () => {
+      const random = datasets.d2020.map(d => ({
+        state: d.state,
+        pop: Math.floor(5000 + Math.random() * 40000)
+      }));
+      updateLiveChart(random);
+    });
+  </script>
+
+  <script type="module">
+    import * as d3 from 'd3';
+    import { createPlayground } from '/components/interactive-playground.js';
+
+    createPlayground('playground-data-binding', {
+      width: 450,
+      height: 200,
+      controls: [
+        { name: 'count', min: 1, max: 8, value: 4, label: 'Data points' },
+      ],
+      render(svg, values) {
+        svg.selectAll('*').remove();
+        const n = values.count;
+        const colors = ['#f97316', '#818cf8', '#4ade80', '#f472b6', '#f97316', '#818cf8', '#4ade80', '#f472b6'];
+        const barWidth = 42;
+        const gap = 8;
+        const totalWidth = n * barWidth + (n - 1) * gap;
+        const startX = (450 - totalWidth) / 2;
+
+        // Title
+        svg.append('text').attr('x', 225).attr('y', 18)
+          .attr('text-anchor', 'middle').attr('fill', '#888').attr('font-size', '11')
+          .text(`data = [${Array.from({length: n}, (_, i) => i + 1).join(', ')}]`);
+
+        // Array bracket visualization
+        svg.append('text').attr('x', 225).attr('y', 35)
+          .attr('text-anchor', 'middle').attr('fill', '#4ade80').attr('font-size', '10')
+          .text(`${n} data items \u2192 .data().join("rect") \u2192 ${n} rects`);
+
+        for (let i = 0; i < n; i++) {
+          const x = startX + i * (barWidth + gap);
+          const barH = 30 + (i + 1) * 14;
+
+          // Rect
+          svg.append('rect')
+            .attr('x', x).attr('y', 180 - barH)
+            .attr('width', barWidth).attr('height', barH)
+            .attr('fill', colors[i]).attr('rx', 4).attr('opacity', 0.85);
+
+          // Data value label
+          svg.append('text')
+            .attr('x', x + barWidth / 2).attr('y', 180 - barH - 6)
+            .attr('text-anchor', 'middle').attr('fill', colors[i]).attr('font-size', '11').attr('font-weight', 'bold')
+            .text(`d=${i + 1}`);
+
+          // __data__ label below
+          svg.append('text')
+            .attr('x', x + barWidth / 2).attr('y', 195)
+            .attr('text-anchor', 'middle').attr('fill', '#555').attr('font-size', '8')
+            .text('__data__');
+        }
+      }
+    });
+  </script>
+</body>
+</html>

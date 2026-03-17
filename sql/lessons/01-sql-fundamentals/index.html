@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 01 - SQL Fundamentals</title>
+  <link rel="icon" type="image/svg+xml" href="/sql/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #3b82f6; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #3b82f6; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #3b82f6; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #3b82f6; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .keyword { color: #3b82f6; }
+    .string { color: #4ade80; }
+    .number { color: #f472b6; }
+    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .demo h4 { color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .quiz { background: #0a0a1a; border: 1px solid #3b82f644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #3b82f6; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #3b82f6; color: #fff; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #3b82f6; text-decoration: none; }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #0a0a1a; border-left: 3px solid #3b82f6; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #93c5fd; }
+    .aha strong { color: #3b82f6; }
+    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
+    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th { text-align: left; color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
+    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
+    td code { font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>01</span> SQL Fundamentals &mdash; From Prisma to Raw SQL</h1>
+    <a href="/sql/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #3b82f6;">You already know this stuff.</strong> You've been writing Prisma queries for months. Now you're going to see the SQL that Prisma generates under the hood. It reads like English.</p>
+
+    <!-- ============================================ -->
+    <!-- WHAT IS SQL                                  -->
+    <!-- ============================================ -->
+
+    <h2>What is SQL?</h2>
+
+    <p><strong>SQL</strong> stands for <strong>Structured Query Language</strong>. It's the language you use to talk directly to a database. Every database understands it: PostgreSQL, MySQL, SQLite, SQL Server.</p>
+
+    <p>Here's the key insight: <strong>Prisma is a translator</strong>. When you write <code>prisma.user.findMany()</code>, Prisma turns that into SQL and sends it to your database. The database only speaks SQL. Prisma just makes it more convenient.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>What you write (Prisma)</h5>
+        <pre><code>const users = await prisma.user.findMany({
+  where: { active: true },
+  orderBy: { name: 'asc' },
+});</code></pre>
+      </div>
+      <div>
+        <h5>What your database actually receives (SQL)</h5>
+        <pre><code>SELECT *
+FROM users
+WHERE active = true
+ORDER BY name ASC;</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Why learn raw SQL?</strong> Three reasons: (1) You'll debug Prisma issues faster when you understand what it generates. (2) Some queries are too complex for ORMs. (3) Job interviews and data journalism almost always require SQL.</p>
+    </div>
+
+    <p>SQL has a small core vocabulary. Here are the main commands you'll learn today:</p>
+
+    <table>
+      <thead>
+        <tr><th>SQL Command</th><th>What It Does</th><th>Prisma Equivalent</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>CREATE TABLE</code></td><td>Define a new table</td><td><code>model User { ... }</code> in schema</td></tr>
+        <tr><td><code>INSERT INTO</code></td><td>Add rows</td><td><code>prisma.user.create()</code></td></tr>
+        <tr><td><code>SELECT</code></td><td>Read rows</td><td><code>prisma.user.findMany()</code></td></tr>
+        <tr><td><code>WHERE</code></td><td>Filter rows</td><td><code>where: { ... }</code></td></tr>
+        <tr><td><code>UPDATE</code></td><td>Change rows</td><td><code>prisma.user.update()</code></td></tr>
+        <tr><td><code>DELETE</code></td><td>Remove rows</td><td><code>prisma.user.delete()</code></td></tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- DATABASES & TABLES                           -->
+    <!-- ============================================ -->
+
+    <h2>Databases &amp; Tables</h2>
+
+    <p>Think of it this way:</p>
+    <ul>
+      <li>A <strong>database</strong> is like your project folder &mdash; it holds everything.</li>
+      <li>A <strong>table</strong> is like a TypeScript interface <em>that also stores data</em>. It defines the shape AND holds the rows.</li>
+      <li>A <strong>row</strong> is like a JavaScript object &mdash; one record with specific values.</li>
+      <li>A <strong>column</strong> is like a property on that object &mdash; <code>name</code>, <code>email</code>, <code>age</code>.</li>
+    </ul>
+
+    <div class="side-by-side">
+      <div>
+        <h5>TypeScript interface</h5>
+        <pre><code>interface User {
+  id: number;
+  name: string;
+  email: string;
+  age: number;
+  active: boolean;
+}</code></pre>
+      </div>
+      <div>
+        <h5>SQL table (same idea)</h5>
+        <pre><code>-- This is a table called "users"
+-- Each column has a name and a type
+
+| id | name      | email           | age | active |
+|----|-----------|-----------------|-----|--------|
+|  1 | Sarah     | sarah@mail.com  |  28 | true   |
+|  2 | Marcus    | marcus@mail.com |  34 | true   |
+|  3 | Priya     | priya@mail.com  |  31 | false  |</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Naming convention:</strong> In PostgreSQL, tables and columns use <code>snake_case</code> (lowercase with underscores): <code>first_name</code>, <code>created_at</code>, <code>user_id</code>. This is different from Prisma/TypeScript which uses <code>camelCase</code>. Prisma maps between them automatically with <code>@map</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CREATE TABLE                                 -->
+    <!-- ============================================ -->
+
+    <h2>CREATE TABLE</h2>
+
+    <p>In Prisma, you define your data shape in <code>schema.prisma</code>. In SQL, you use <code>CREATE TABLE</code>. Same concept, different syntax.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma schema</h5>
+        <pre><code>model Article {
+  id        Int      @id @default(autoincrement())
+  title     String
+  body      String
+  published Boolean  @default(false)
+  views     Int      @default(0)
+  createdAt DateTime @default(now())
+}</code></pre>
+      </div>
+      <div>
+        <h5>SQL equivalent</h5>
+        <pre><code>CREATE TABLE articles (
+  id         SERIAL PRIMARY KEY,
+  title      VARCHAR(255) NOT NULL,
+  body       TEXT NOT NULL,
+  published  BOOLEAN DEFAULT false,
+  views      INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW()
+);</code></pre>
+      </div>
+    </div>
+
+    <p>Let's break down the SQL version:</p>
+    <ul>
+      <li><code>SERIAL</code> = auto-incrementing integer (Prisma's <code>@default(autoincrement())</code>)</li>
+      <li><code>PRIMARY KEY</code> = unique identifier for each row (Prisma's <code>@id</code>)</li>
+      <li><code>VARCHAR(255)</code> = string up to 255 chars. <code>TEXT</code> = unlimited length string</li>
+      <li><code>NOT NULL</code> = required field (Prisma fields are required by default, optional with <code>?</code>)</li>
+      <li><code>DEFAULT</code> = default value if none is provided (same as Prisma's <code>@default()</code>)</li>
+    </ul>
+
+    <h3>Common SQL Data Types</h3>
+    <table>
+      <thead>
+        <tr><th>SQL Type</th><th>TypeScript Equivalent</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>INTEGER</code></td><td><code>number</code></td><td>Whole numbers</td></tr>
+        <tr><td><code>SERIAL</code></td><td><code>number</code> (auto)</td><td>Auto-incrementing integer</td></tr>
+        <tr><td><code>VARCHAR(n)</code></td><td><code>string</code></td><td>String with max length</td></tr>
+        <tr><td><code>TEXT</code></td><td><code>string</code></td><td>Unlimited-length string</td></tr>
+        <tr><td><code>BOOLEAN</code></td><td><code>boolean</code></td><td>true/false</td></tr>
+        <tr><td><code>TIMESTAMP</code></td><td><code>Date</code></td><td>Date + time</td></tr>
+        <tr><td><code>NUMERIC(p,s)</code></td><td><code>number</code></td><td>Exact decimal (money, etc.)</td></tr>
+        <tr><td><code>JSONB</code></td><td><code>object</code></td><td>PostgreSQL's JSON storage</td></tr>
+      </tbody>
+    </table>
+
+    <div class="aha">
+      <p><strong>Prisma runs CREATE TABLE for you.</strong> When you run <code>npx prisma migrate dev</code>, Prisma generates and executes the CREATE TABLE SQL. Now you know what it's actually doing.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- INSERT                                       -->
+    <!-- ============================================ -->
+
+    <h2>INSERT &mdash; Adding Data</h2>
+
+    <p><code>INSERT</code> is like <code>prisma.user.create()</code>. You specify which table, which columns, and what values.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>await prisma.article.create({
+  data: {
+    title: 'Breaking Story',
+    body: 'The investigation...',
+    published: true,
+  },
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>INSERT INTO articles (title, body, published)
+VALUES ('Breaking Story', 'The investigation...', true);</code></pre>
+      </div>
+    </div>
+
+    <p>The pattern is: <code>INSERT INTO table (columns) VALUES (values)</code>. Notice you don't need to specify <code>id</code> or <code>created_at</code> &mdash; those have defaults.</p>
+
+    <h3>Inserting Multiple Rows</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma (createMany)</h5>
+        <pre><code>await prisma.article.createMany({
+  data: [
+    { title: 'Story 1', body: 'Content 1' },
+    { title: 'Story 2', body: 'Content 2' },
+    { title: 'Story 3', body: 'Content 3' },
+  ],
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL (multiple VALUES)</h5>
+        <pre><code>INSERT INTO articles (title, body)
+VALUES
+  ('Story 1', 'Content 1'),
+  ('Story 2', 'Content 2'),
+  ('Story 3', 'Content 3');</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Strings in SQL use single quotes</strong>, not double quotes. <code>'hello'</code> is correct. <code>"hello"</code> means something different in SQL (it refers to a column or table name). This trips up every JavaScript developer at first.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SELECT BASICS                                -->
+    <!-- ============================================ -->
+
+    <h2>SELECT &mdash; Reading Data</h2>
+
+    <p><code>SELECT</code> is the most important SQL command. You'll use it 90% of the time. Think of it like <code>array.map()</code> &mdash; it picks which columns you want from the result.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>// Get all articles (all columns)
+await prisma.article.findMany();
+
+// Get only title and body
+await prisma.article.findMany({
+  select: { title: true, body: true },
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>-- Get all articles (all columns)
+SELECT * FROM articles;
+
+-- Get only title and body
+SELECT title, body
+FROM articles;</code></pre>
+      </div>
+    </div>
+
+    <p>The <code>*</code> in <code>SELECT *</code> means "all columns." It's like <code>findMany()</code> with no <code>select</code> option. When you list specific columns, you're choosing exactly which fields to return.</p>
+
+    <div class="aha">
+      <p><strong>Read it like English:</strong> <code>SELECT title, body FROM articles</code> literally says "Select the title and body from the articles table." SQL is designed to be readable.</p>
+    </div>
+
+    <h3>Get One Row</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>await prisma.article.findUnique({
+  where: { id: 5 },
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT *
+FROM articles
+WHERE id = 5;</code></pre>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHERE                                        -->
+    <!-- ============================================ -->
+
+    <h2>WHERE &mdash; Filtering Rows</h2>
+
+    <p><code>WHERE</code> is like <code>.filter()</code> in JavaScript or the <code>where</code> clause in Prisma. It keeps only the rows that match your condition.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code>// Array.filter()
+articles.filter(a => a.published === true);
+articles.filter(a => a.views > 1000);
+articles.filter(a =>
+  a.published && a.views > 1000
+);</code></pre>
+      </div>
+      <div>
+        <h5>SQL WHERE</h5>
+        <pre><code>SELECT * FROM articles
+WHERE published = true;
+
+SELECT * FROM articles WHERE views > 1000;
+
+SELECT * FROM articles
+WHERE published = true AND views > 1000;</code></pre>
+      </div>
+    </div>
+
+    <h3>Comparison Operators</h3>
+
+    <table>
+      <thead>
+        <tr><th>SQL</th><th>JavaScript</th><th>Prisma</th><th>Meaning</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>=</code></td><td><code>===</code></td><td><code>equals</code></td><td>Equal to</td></tr>
+        <tr><td><code>!=</code> or <code>&lt;&gt;</code></td><td><code>!==</code></td><td><code>not</code></td><td>Not equal</td></tr>
+        <tr><td><code>&lt;</code></td><td><code>&lt;</code></td><td><code>lt</code></td><td>Less than</td></tr>
+        <tr><td><code>&gt;</code></td><td><code>&gt;</code></td><td><code>gt</code></td><td>Greater than</td></tr>
+        <tr><td><code>&lt;=</code></td><td><code>&lt;=</code></td><td><code>lte</code></td><td>Less than or equal</td></tr>
+        <tr><td><code>&gt;=</code></td><td><code>&gt;=</code></td><td><code>gte</code></td><td>Greater than or equal</td></tr>
+      </tbody>
+    </table>
+
+    <h3>LIKE &mdash; Pattern Matching</h3>
+
+    <p><code>LIKE</code> is for partial string matching. The <code>%</code> wildcard means "any characters." Think of it like a simplified regex.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>// Contains
+where: { title: { contains: 'election' } }
+
+// Starts with
+where: { title: { startsWith: 'Breaking' } }
+
+// Ends with
+where: { email: { endsWith: '@gmail.com' } }</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>-- Contains
+WHERE title LIKE '%election%'
+
+-- Starts with
+WHERE title LIKE 'Breaking%'
+
+-- Ends with
+WHERE email LIKE '%@gmail.com'</code></pre>
+      </div>
+    </div>
+
+    <h3>IN &mdash; Multiple Values</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>where: {
+  status: { in: ['draft', 'review'] }
+}</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>WHERE status IN ('draft', 'review')</code></pre>
+      </div>
+    </div>
+
+    <h3>BETWEEN &mdash; Range</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>where: {
+  views: { gte: 100, lte: 1000 }
+}</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>WHERE views BETWEEN 100 AND 1000</code></pre>
+      </div>
+    </div>
+
+    <h3>AND, OR &mdash; Combining Conditions</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code>// AND (both must be true)
+if (published && views > 1000)
+
+// OR (either can be true)
+if (status === 'draft' || status === 'review')</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>-- AND (both must be true)
+WHERE published = true AND views > 1000
+
+-- OR (either can be true)
+WHERE status = 'draft' OR status = 'review'</code></pre>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ORDER BY                                     -->
+    <!-- ============================================ -->
+
+    <h2>ORDER BY &mdash; Sorting Results</h2>
+
+    <p><code>ORDER BY</code> is like <code>.sort()</code> in JavaScript or <code>orderBy</code> in Prisma. It controls the order of your results.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>await prisma.article.findMany({
+  orderBy: { created_at: 'desc' },
+});
+
+// Multiple sort fields
+await prisma.article.findMany({
+  orderBy: [
+    { published: 'desc' },
+    { title: 'asc' },
+  ],
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT * FROM articles
+ORDER BY created_at DESC;
+
+
+-- Multiple sort fields
+SELECT * FROM articles
+ORDER BY published DESC, title ASC;</code></pre>
+      </div>
+    </div>
+
+    <ul>
+      <li><code>ASC</code> = ascending (A-Z, 1-100, oldest first). This is the default.</li>
+      <li><code>DESC</code> = descending (Z-A, 100-1, newest first).</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- LIMIT & OFFSET                               -->
+    <!-- ============================================ -->
+
+    <h2>LIMIT &amp; OFFSET &mdash; Pagination</h2>
+
+    <p>If you've used pagination in Prisma with <code>take</code> and <code>skip</code>, you already know <code>LIMIT</code> and <code>OFFSET</code>.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>// First 10 results
+await prisma.article.findMany({
+  take: 10,
+});
+
+// Page 3 (skip first 20, take 10)
+await prisma.article.findMany({
+  skip: 20,
+  take: 10,
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>-- First 10 results
+SELECT * FROM articles
+LIMIT 10;
+
+-- Page 3 (skip first 20, take 10)
+SELECT * FROM articles
+LIMIT 10 OFFSET 20;</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>LIMIT goes at the very end.</strong> The order of SQL clauses matters: <code>SELECT ... FROM ... WHERE ... ORDER BY ... LIMIT ... OFFSET ...</code></p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- UPDATE & DELETE                              -->
+    <!-- ============================================ -->
+
+    <h2>UPDATE &amp; DELETE &mdash; Modifying Data</h2>
+
+    <h3>UPDATE</h3>
+
+    <p><code>UPDATE</code> changes existing rows. Like <code>prisma.user.update()</code>, you specify which rows to change (WHERE) and what to change (SET).</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>await prisma.article.update({
+  where: { id: 5 },
+  data: {
+    title: 'Updated Title',
+    published: true,
+  },
+});
+
+// Update many
+await prisma.article.updateMany({
+  where: { published: false },
+  data: { views: 0 },
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>UPDATE articles
+SET title = 'Updated Title',
+    published = true
+WHERE id = 5;
+
+
+-- Update many
+UPDATE articles
+SET views = 0
+WHERE published = false;</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Always include WHERE with UPDATE and DELETE!</strong> Without it, you'll update or delete <em>every row</em> in the table. <code>UPDATE articles SET views = 0</code> without a WHERE resets views for ALL articles. This is the SQL equivalent of <code>rm -rf /</code>.</p>
+    </div>
+
+    <h3>DELETE</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>// Delete one
+await prisma.article.delete({
+  where: { id: 5 },
+});
+
+// Delete many
+await prisma.article.deleteMany({
+  where: { published: false },
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>-- Delete one
+DELETE FROM articles
+WHERE id = 5;
+
+-- Delete many
+DELETE FROM articles
+WHERE published = false;</code></pre>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- KEY MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>Key Mental Model &mdash; SQL Reads Like English</h2>
+
+    <p>Here's the thing that makes SQL click. Read this query out loud:</p>
+
+    <pre><code>SELECT title, published, views
+FROM articles
+WHERE published = true
+  AND views > 1000
+ORDER BY views DESC
+LIMIT 5;</code></pre>
+
+    <p>In English: "Select the title, published status, and view count from the articles table, where published is true and views are more than 1000, ordered by views descending, and give me the top 5."</p>
+
+    <p>That's it. SQL is a <strong>declarative</strong> language &mdash; you tell it <em>what</em> you want, not <em>how</em> to get it. Compare that to JavaScript where you'd write loops and conditionals to get the same result:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript (imperative)</h5>
+        <pre><code>const result = articles
+  .filter(a => a.published && a.views > 1000)
+  .sort((a, b) => b.views - a.views)
+  .slice(0, 5)
+  .map(a => ({
+    title: a.title,
+    published: a.published,
+    views: a.views,
+  }));</code></pre>
+      </div>
+      <div>
+        <h5>SQL (declarative)</h5>
+        <pre><code>SELECT title, published, views
+FROM articles
+WHERE published = true
+  AND views > 1000
+ORDER BY views DESC
+LIMIT 5;</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>SQL's clause order maps to a logical pipeline.</strong> Think of each clause as a step: (1) <code>FROM</code> = which table, (2) <code>WHERE</code> = filter rows, (3) <code>SELECT</code> = pick columns, (4) <code>ORDER BY</code> = sort, (5) <code>LIMIT</code> = cap the count. Like chaining array methods.</p>
+    </div>
+
+    <h3>The Full Query Template</h3>
+
+    <pre><code>SELECT columns        -- What columns to return (like .map())
+FROM table_name       -- Which table to query
+WHERE conditions      -- Filter rows (like .filter())
+ORDER BY column       -- Sort results (like .sort())
+LIMIT n               -- Cap the results (like .slice())
+OFFSET n;             -- Skip results (for pagination)</code></pre>
+
+    <p>You don't need all of these every time. <code>SELECT ... FROM ...</code> is the minimum. Add the rest as needed.</p>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Quick Check</h4>
+
+      <div class="question">
+        <p>1. What's the Prisma equivalent of <code>SELECT * FROM users WHERE age > 25</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>prisma.user.findMany({ where: { age: { gt: 25 } } })</code></div>
+      </div>
+
+      <div class="question">
+        <p>2. What does <code>SELECT title FROM articles LIMIT 3</code> return?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">The <code>title</code> column of the first 3 rows from the articles table (in whatever order the database chooses, since there's no ORDER BY).</div>
+      </div>
+
+      <div class="question">
+        <p>3. What's wrong with <code>DELETE FROM articles</code> (no WHERE)?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">It deletes EVERY row in the articles table. Always include a WHERE clause unless you truly want to wipe the entire table.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Strings in SQL use single quotes or double quotes?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">Single quotes: <code>'hello'</code>. Double quotes are for identifiers (column/table names): <code>"users"."firstName"</code>.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Practice Exercise</h4>
+      <p>Imagine you have a table called <code>sources</code> with columns: <code>id</code>, <code>name</code>, <code>outlet</code>, <code>beat</code>, <code>trust_level</code> (1-10), <code>last_contact</code>.</p>
+      <p>Write SQL queries for each of these (check yourself by clicking "Show answer"):</p>
+
+      <div class="question" style="margin-top: 1rem;">
+        <p><strong>A:</strong> Get all sources.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT * FROM sources;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>B:</strong> Get names and outlets of sources with trust_level >= 8.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT name, outlet
+FROM sources
+WHERE trust_level >= 8;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>C:</strong> Get all sources on the "politics" beat, sorted by trust_level (highest first), limit 5.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT *
+FROM sources
+WHERE beat = 'politics'
+ORDER BY trust_level DESC
+LIMIT 5;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>D:</strong> Update trust_level to 10 for the source with id = 42.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>UPDATE sources
+SET trust_level = 10
+WHERE id = 42;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>E:</strong> Delete sources with trust_level less than 3.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>DELETE FROM sources
+WHERE trust_level &lt; 3;</code></pre></div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHEAT SHEET                                  -->
+    <!-- ============================================ -->
+
+    <h2>Cheat Sheet</h2>
+
+    <pre><code>-- Create a table
+CREATE TABLE table_name (
+  id     SERIAL PRIMARY KEY,
+  name   VARCHAR(255) NOT NULL,
+  active BOOLEAN DEFAULT true
+);
+
+-- Insert a row
+INSERT INTO table_name (name, active)
+VALUES ('Trevor', true);
+
+-- Insert multiple rows
+INSERT INTO table_name (name, active)
+VALUES ('Alice', true), ('Bob', false);
+
+-- Select all
+SELECT * FROM table_name;
+
+-- Select with filter, sort, pagination
+SELECT name, active
+FROM table_name
+WHERE active = true
+ORDER BY name ASC
+LIMIT 10 OFFSET 0;
+
+-- Update
+UPDATE table_name
+SET active = false
+WHERE id = 1;
+
+-- Delete
+DELETE FROM table_name
+WHERE id = 1;
+
+-- Drop (delete) the entire table
+DROP TABLE table_name;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/sql/">&larr; Home</a>
+      <a href="/sql/lessons/02-select-filtering/">Lesson 02: SELECT &amp; Filtering &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

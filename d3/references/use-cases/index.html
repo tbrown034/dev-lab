@@ -1,0 +1,1311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-World D3 Use Cases - Learn D3</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      min-height: 100vh;
+    }
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #f97316; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover, .nav a.active {
+      background: #818cf8;
+      color: #000;
+      border-color: #818cf8;
+    }
+
+    .page-title {
+      padding: 2rem 3rem 0.5rem;
+    }
+    .page-title h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+    .page-title h2 span { color: #818cf8; }
+    .page-title p {
+      color: #888;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+      max-width: 700px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.25rem;
+      padding: 1.5rem 3rem 3rem;
+      max-width: 1600px;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      border-color: #444;
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      padding: 1.25rem 1.25rem 0.75rem;
+    }
+    .card-header .card-num {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.35rem;
+    }
+    .card-header h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .card-header .who {
+      font-size: 0.78rem;
+      color: #888;
+      font-style: italic;
+    }
+
+    .card-demo {
+      margin: 0.5rem 1.25rem;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      overflow: hidden;
+      min-height: 170px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-demo svg {
+      display: block;
+    }
+
+    .card-body {
+      padding: 0.75rem 1.25rem 1rem;
+    }
+    .card-body ul {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 0.75rem;
+    }
+    .card-body ul li {
+      font-size: 0.78rem;
+      color: #999;
+      line-height: 1.6;
+      padding-left: 0.85rem;
+      position: relative;
+    }
+    .card-body ul li::before {
+      content: "\2022";
+      position: absolute;
+      left: 0;
+      color: #555;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .tag {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .tag-orange { background: #f9731622; color: #f97316; }
+    .tag-purple { background: #818cf822; color: #818cf8; }
+    .tag-green  { background: #4ade8022; color: #4ade80; }
+    .tag-pink   { background: #f472b622; color: #f472b6; }
+
+    /* color classes for card numbers */
+    .accent-orange { color: #f97316; }
+    .accent-purple { color: #818cf8; }
+    .accent-green  { color: #4ade80; }
+    .accent-pink   { color: #f472b6; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Learn <span>D3</span>.js</h1>
+    <div class="meta">Real-World Use Cases</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/d3/">Home</a>
+    <a href="/d3/lessons/01-fundamentals/">01 Fundamentals</a>
+    <a href="/d3/lessons/02-selections-data/">02 Scales & Axes</a>
+    <a href="/d3/lessons/03-scales-axes/">03 Data Updates</a>
+    <a href="/d3/lessons/04-shapes-bindings/">04 Shapes</a>
+    <a href="/d3/lessons/05-maps-geo/">05 Maps</a>
+    <a href="/d3/lessons/06-transitions-interactivity/">06 Interactivity</a>
+    <a href="/d3/references/use-cases/" class="active">Use Cases</a>
+  </nav>
+
+  <div class="page-title">
+    <h2>15 Production <span>Use Cases</span></h2>
+    <p>Every card below contains a live, working D3 mini-visualization. These are the same techniques used by the New York Times, FiveThirtyEight, Bloomberg, and other newsrooms.</p>
+  </div>
+
+  <div class="grid">
+    <!-- Card 1: Election Results Map -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">01 / GEO</div>
+        <h3>Election Results Map</h3>
+        <div class="who">NYT, AP, CNN</div>
+      </div>
+      <div class="card-demo" id="demo-choropleth-election"></div>
+      <div class="card-body">
+        <ul>
+          <li>TopoJSON parsed into GeoJSON feature collection</li>
+          <li>d3.geoAlbersUsa projection for US state outlines</li>
+          <li>Categorical color scale: red/blue by party</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.geoPath</span>
+          <span class="tag tag-purple">topojson</span>
+          <span class="tag tag-green">d3.geoAlbersUsa</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Live Results Bar Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">02 / BAR</div>
+        <h3>Live Results Bar Chart</h3>
+        <div class="who">Broadcast TV, AP, Decision Desk</div>
+      </div>
+      <div class="card-demo" id="demo-live-bars"></div>
+      <div class="card-body">
+        <ul>
+          <li>Horizontal bars with animated width transitions</li>
+          <li>Vote counts update on a timer to simulate live data</li>
+          <li>d3.transition for smooth value interpolation</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.scaleBand</span>
+          <span class="tag tag-purple">d3.transition</span>
+          <span class="tag tag-green">enter/update</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Polling Average Line Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">03 / LINE</div>
+        <h3>Polling Average Line Chart</h3>
+        <div class="who">FiveThirtyEight, RCP, The Economist</div>
+      </div>
+      <div class="card-demo" id="demo-polling-line"></div>
+      <div class="card-body">
+        <ul>
+          <li>d3.line generator with d3.curveBasis smoothing</li>
+          <li>Confidence band via d3.area with upper/lower bounds</li>
+          <li>Time scale on x-axis for date-based data</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.line</span>
+          <span class="tag tag-purple">d3.area</span>
+          <span class="tag tag-pink">d3.curveBasis</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Election Needle/Gauge -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">04 / ARC</div>
+        <h3>Election Needle / Gauge</h3>
+        <div class="who">New York Times</div>
+      </div>
+      <div class="card-demo" id="demo-gauge"></div>
+      <div class="card-body">
+        <ul>
+          <li>d3.arc generator for the gauge background track</li>
+          <li>Animated needle rotation via d3.interpolate on angle</li>
+          <li>Probability text updates in sync with needle position</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.arc</span>
+          <span class="tag tag-purple">d3.interpolate</span>
+          <span class="tag tag-green">transitions</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: Choropleth Heatmap -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">05 / GEO</div>
+        <h3>Choropleth Heatmap</h3>
+        <div class="who">WaPo COVID Tracker, CDC, Johns Hopkins</div>
+      </div>
+      <div class="card-demo" id="demo-choropleth-heat"></div>
+      <div class="card-body">
+        <ul>
+          <li>Sequential color scale (d3.interpolateYlOrRd) for intensity</li>
+          <li>Same geo pipeline as election map, different encoding</li>
+          <li>Quantize scale bins continuous data into discrete colors</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.scaleSequential</span>
+          <span class="tag tag-purple">d3.geoPath</span>
+          <span class="tag tag-green">topojson</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 6: Treemap -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">06 / LAYOUT</div>
+        <h3>Treemap</h3>
+        <div class="who">ProPublica, Bloomberg, Observable</div>
+      </div>
+      <div class="card-demo" id="demo-treemap"></div>
+      <div class="card-body">
+        <ul>
+          <li>d3.treemap computes nested rectangles from hierarchy</li>
+          <li>d3.hierarchy + sum() to roll up values</li>
+          <li>Color encodes category, size encodes dollar amount</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.treemap</span>
+          <span class="tag tag-purple">d3.hierarchy</span>
+          <span class="tag tag-pink">d3.treemapSquarify</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 7: Bar Chart Race -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">07 / ANIMATION</div>
+        <h3>Animated Bar Chart Race</h3>
+        <div class="who">Bloomberg, Financial Times, Flourish</div>
+      </div>
+      <div class="card-demo" id="demo-bar-race"></div>
+      <div class="card-body">
+        <ul>
+          <li>Bars re-sort and re-position with keyed data joins</li>
+          <li>d3.transition for smooth rank reordering</li>
+          <li>Timer-driven frames to animate over time</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.transition</span>
+          <span class="tag tag-purple">data join (key)</span>
+          <span class="tag tag-green">d3.interval</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 8: Donut Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">08 / ARC</div>
+        <h3>Donut / Pie Chart</h3>
+        <div class="who">Campaign Finance, OpenSecrets, FEC</div>
+      </div>
+      <div class="card-demo" id="demo-donut"></div>
+      <div class="card-body">
+        <ul>
+          <li>d3.pie computes start/end angles from data</li>
+          <li>d3.arc renders each slice as an SVG path</li>
+          <li>Animated entrance with attrTween on arc angles</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.pie</span>
+          <span class="tag tag-purple">d3.arc</span>
+          <span class="tag tag-pink">attrTween</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 9: Force-Directed Graph -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">09 / SIMULATION</div>
+        <h3>Force-Directed Graph</h3>
+        <div class="who">Network Analysis, Social Graphs, Knowledge Maps</div>
+      </div>
+      <div class="card-demo" id="demo-force"></div>
+      <div class="card-body">
+        <ul>
+          <li>d3.forceSimulation with charge, center, and link forces</li>
+          <li>Nodes repel each other, links pull connected pairs</li>
+          <li>Tick function updates positions every animation frame</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.forceSimulation</span>
+          <span class="tag tag-purple">d3.forceLink</span>
+          <span class="tag tag-green">d3.forceManyBody</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 10: Stacked Area Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">10 / AREA</div>
+        <h3>Stacked Area Chart</h3>
+        <div class="who">Budget Trackers, CBO, USASPENDING</div>
+      </div>
+      <div class="card-demo" id="demo-stacked-area"></div>
+      <div class="card-body">
+        <ul>
+          <li>d3.stack transforms tabular data into layered series</li>
+          <li>d3.area generator draws each layer as a filled shape</li>
+          <li>Color scale differentiates budget categories</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.stack</span>
+          <span class="tag tag-purple">d3.area</span>
+          <span class="tag tag-green">d3.scaleOrdinal</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 11: Scatter Plot -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">11 / SCATTER</div>
+        <h3>Scatter Plot</h3>
+        <div class="who">Census Bureau, Pew Research, Gapminder</div>
+      </div>
+      <div class="card-demo" id="demo-scatter"></div>
+      <div class="card-body">
+        <ul>
+          <li>Two linear scales map x/y data to pixel coordinates</li>
+          <li>Circle radius encodes a third variable (population)</li>
+          <li>Color encodes category (region) via ordinal scale</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.scaleLinear</span>
+          <span class="tag tag-purple">d3.scaleSqrt</span>
+          <span class="tag tag-pink">circle elements</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 12: GitHub-style Heatmap -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">12 / GRID</div>
+        <h3>GitHub-style Heatmap</h3>
+        <div class="who">GitHub, GitLab, Contribution Calendars</div>
+      </div>
+      <div class="card-demo" id="demo-heatmap-grid"></div>
+      <div class="card-body">
+        <ul>
+          <li>Grid of small rects, one per day, colored by value</li>
+          <li>d3.scaleQuantize maps continuous values to color steps</li>
+          <li>d3.timeWeek and d3.timeDay compute grid positions</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.scaleQuantize</span>
+          <span class="tag tag-purple">d3.timeWeek</span>
+          <span class="tag tag-green">rect grid</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 13: Small Multiples -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">13 / PATTERN</div>
+        <h3>Small Multiples</h3>
+        <div class="who">NYT, FiveThirtyEight, The Economist</div>
+      </div>
+      <div class="card-demo" id="demo-small-multiples"></div>
+      <div class="card-body">
+        <ul>
+          <li>Same chart template repeated for each data subset</li>
+          <li>Shared scales ensure comparability across panels</li>
+          <li>SVG groups positioned in a grid layout</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.line</span>
+          <span class="tag tag-purple">nested data</span>
+          <span class="tag tag-green">shared scales</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 14: Bubble Map -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">14 / GEO</div>
+        <h3>Bubble Map</h3>
+        <div class="who">NYT, Reuters, CDC City-Level Data</div>
+      </div>
+      <div class="card-demo" id="demo-bubble-map"></div>
+      <div class="card-body">
+        <ul>
+          <li>Circles placed at projected [lon, lat] coordinates</li>
+          <li>d3.scaleSqrt sizes bubbles proportional to population</li>
+          <li>Layered on top of a base geographic path layer</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.geoAlbersUsa</span>
+          <span class="tag tag-purple">d3.scaleSqrt</span>
+          <span class="tag tag-pink">projection</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 15: Sparklines -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">15 / INLINE</div>
+        <h3>Sparklines</h3>
+        <div class="who">Dashboards, Stock Tickers, KPI Panels</div>
+      </div>
+      <div class="card-demo" id="demo-sparklines"></div>
+      <div class="card-body">
+        <ul>
+          <li>Tiny line charts without axes, just the trend shape</li>
+          <li>d3.line with scaleLinear fit to a small viewport</li>
+          <li>Endpoint dot highlights the current/latest value</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.line</span>
+          <span class="tag tag-purple">d3.scaleLinear</span>
+          <span class="tag tag-green">minimal chrome</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+    import * as topojson from "topojson-client";
+
+    // =====================================================================
+    // SHARED HELPERS
+    // =====================================================================
+    const ORANGE = "#f97316", PURPLE = "#818cf8", GREEN = "#4ade80", PINK = "#f472b6";
+    const DEM_BLUE = "#4a90d9", REP_RED = "#e55", NEUTRAL = "#555";
+
+    // Some fake 2024-ish swing state results (simplified)
+    const stateParty = {
+      "01": "R", "02": "R", "04": "R", "05": "R", "06": "D", "08": "D",
+      "09": "D", "10": "D", "11": "D", "12": "R", "13": "R", "15": "D",
+      "16": "R", "17": "D", "18": "R", "19": "R", "20": "R", "21": "R",
+      "22": "R", "23": "D", "24": "D", "25": "D", "26": "D", "27": "D",
+      "28": "R", "29": "R", "30": "D", "31": "R", "32": "D", "33": "D",
+      "34": "D", "35": "D", "36": "D", "37": "D", "38": "R", "39": "R",
+      "40": "R", "41": "D", "42": "D", "44": "D", "45": "R", "46": "R",
+      "47": "R", "48": "R", "49": "R", "50": "D", "51": "D", "53": "D",
+      "54": "R", "55": "R", "56": "R"
+    };
+
+    // State "rates" for heatmap (fake COVID-like data per 100k)
+    const stateRates = {};
+    Object.keys(stateParty).forEach(fips => {
+      stateRates[fips] = Math.random() * 300 + 50;
+    });
+
+    // Load US topology ONCE, share across map demos
+    let usTopology = null;
+    async function getUS() {
+      if (!usTopology) {
+        usTopology = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json");
+      }
+      return usTopology;
+    }
+
+    // =====================================================================
+    // 1. ELECTION RESULTS MAP (choropleth by party)
+    // =====================================================================
+    async function drawElectionMap() {
+      const us = await getUS();
+      const states = topojson.feature(us, us.objects.states);
+      const w = 360, h = 200;
+      const svg = d3.select("#demo-choropleth-election").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`)
+        .attr("width", "100%");
+
+      const projection = d3.geoAlbersUsa().fitSize([w - 10, h - 10], states).translate([w/2, h/2]);
+      const path = d3.geoPath(projection);
+
+      svg.selectAll("path")
+        .data(states.features)
+        .join("path")
+        .attr("d", path)
+        .attr("fill", d => {
+          const p = stateParty[d.id];
+          return p === "D" ? DEM_BLUE : p === "R" ? REP_RED : NEUTRAL;
+        })
+        .attr("stroke", "#222")
+        .attr("stroke-width", 0.5);
+    }
+    drawElectionMap();
+
+    // =====================================================================
+    // 2. LIVE RESULTS BAR CHART
+    // =====================================================================
+    (function drawLiveBars() {
+      const candidates = [
+        { name: "Harris (D)", votes: 72400000, color: DEM_BLUE },
+        { name: "Trump (R)", votes: 74800000, color: REP_RED },
+      ];
+      const w = 340, h = 100;
+      const m = { top: 10, right: 60, bottom: 10, left: 75 };
+      const iw = w - m.left - m.right, ih = h - m.top - m.bottom;
+
+      const svg = d3.select("#demo-live-bars").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+      const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
+
+      const y = d3.scaleBand().domain(candidates.map(d => d.name)).range([0, ih]).padding(0.35);
+      const x = d3.scaleLinear().domain([0, 80000000]).range([0, iw]);
+
+      g.selectAll(".label")
+        .data(candidates).join("text")
+        .attr("x", -5).attr("y", d => y(d.name) + y.bandwidth() / 2)
+        .attr("text-anchor", "end").attr("dominant-baseline", "central")
+        .attr("fill", "#ccc").attr("font-size", "11px")
+        .text(d => d.name);
+
+      const bars = g.selectAll("rect")
+        .data(candidates).join("rect")
+        .attr("y", d => y(d.name)).attr("height", y.bandwidth())
+        .attr("x", 0).attr("width", 0)
+        .attr("fill", d => d.color).attr("rx", 3);
+
+      const labels = g.selectAll(".val")
+        .data(candidates).join("text").attr("class", "val")
+        .attr("y", d => y(d.name) + y.bandwidth() / 2)
+        .attr("dominant-baseline", "central")
+        .attr("fill", "#aaa").attr("font-size", "10px");
+
+      function update() {
+        candidates.forEach(c => { c.votes += Math.floor(Math.random() * 800000); });
+        x.domain([0, d3.max(candidates, d => d.votes) * 1.1]);
+        bars.transition().duration(700)
+          .attr("width", d => x(d.votes));
+        labels.transition().duration(700)
+          .attr("x", d => x(d.votes) + 5)
+          .tween("text", function(d) {
+            const self = this;
+            const i = d3.interpolateNumber(+(self.textContent?.replace(/,/g, "") || 0), d.votes);
+            return t => { self.textContent = d3.format(",")(Math.round(i(t))); };
+          });
+      }
+      update();
+      d3.interval(update, 2000);
+    })();
+
+    // =====================================================================
+    // 3. POLLING AVERAGE LINE CHART
+    // =====================================================================
+    (function drawPollingLine() {
+      const n = 40;
+      const dates = d3.range(n).map(i => new Date(2024, 5, i * 3));
+      const baseA = 47, baseB = 45;
+      const seriesA = dates.map((date, i) => ({
+        date, val: baseA + Math.sin(i * 0.3) * 3 + Math.random() * 1.5,
+        lo: baseA + Math.sin(i * 0.3) * 3 - 2.5,
+        hi: baseA + Math.sin(i * 0.3) * 3 + 3.5
+      }));
+      const seriesB = dates.map((date, i) => ({
+        date, val: baseB + Math.cos(i * 0.25) * 2.5 + Math.random() * 1.5,
+        lo: baseB + Math.cos(i * 0.25) * 2.5 - 2,
+        hi: baseB + Math.cos(i * 0.25) * 2.5 + 3
+      }));
+
+      const w = 360, h = 180;
+      const m = { top: 15, right: 15, bottom: 25, left: 30 };
+      const iw = w - m.left - m.right, ih = h - m.top - m.bottom;
+
+      const svg = d3.select("#demo-polling-line").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+      const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
+
+      const xS = d3.scaleTime().domain(d3.extent(dates)).range([0, iw]);
+      const yS = d3.scaleLinear().domain([38, 55]).range([ih, 0]);
+
+      // Axes
+      g.append("g").attr("transform", `translate(0,${ih})`)
+        .call(d3.axisBottom(xS).ticks(5).tickFormat(d3.timeFormat("%b")))
+        .selectAll("text").attr("fill", "#666").attr("font-size", "9px");
+      g.append("g").call(d3.axisLeft(yS).ticks(4).tickFormat(d => d + "%"))
+        .selectAll("text").attr("fill", "#666").attr("font-size", "9px");
+      g.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+      const area = d3.area().x(d => xS(d.date)).y0(d => yS(d.lo)).y1(d => yS(d.hi)).curve(d3.curveBasis);
+      const line = d3.line().x(d => xS(d.date)).y(d => yS(d.val)).curve(d3.curveBasis);
+
+      // Candidate A (blue)
+      g.append("path").datum(seriesA).attr("d", area).attr("fill", DEM_BLUE).attr("opacity", 0.15);
+      g.append("path").datum(seriesA).attr("d", line).attr("fill", "none").attr("stroke", DEM_BLUE).attr("stroke-width", 2);
+
+      // Candidate B (red)
+      g.append("path").datum(seriesB).attr("d", area).attr("fill", REP_RED).attr("opacity", 0.15);
+      g.append("path").datum(seriesB).attr("d", line).attr("fill", "none").attr("stroke", REP_RED).attr("stroke-width", 2);
+
+      // Labels
+      g.append("text").attr("x", iw - 2).attr("y", yS(seriesA[n-1].val) - 6)
+        .attr("text-anchor", "end").attr("fill", DEM_BLUE).attr("font-size", "9px").text("Dem");
+      g.append("text").attr("x", iw - 2).attr("y", yS(seriesB[n-1].val) + 12)
+        .attr("text-anchor", "end").attr("fill", REP_RED).attr("font-size", "9px").text("Rep");
+    })();
+
+    // =====================================================================
+    // 4. ELECTION NEEDLE / GAUGE
+    // =====================================================================
+    (function drawGauge() {
+      const w = 260, h = 160;
+      const svg = d3.select("#demo-gauge").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+      const g = svg.append("g").attr("transform", `translate(${w/2},${h - 20})`);
+
+      const r = 90;
+      const arcBg = d3.arc().innerRadius(r - 18).outerRadius(r).startAngle(-Math.PI / 2).endAngle(Math.PI / 2);
+
+      // Background arc
+      g.append("path").attr("d", arcBg()).attr("fill", "#222");
+
+      // Colored segments: left = blue (Dem wins), right = red (Rep wins)
+      const arcLeft = d3.arc().innerRadius(r - 18).outerRadius(r).startAngle(-Math.PI / 2).endAngle(0);
+      const arcRight = d3.arc().innerRadius(r - 18).outerRadius(r).startAngle(0).endAngle(Math.PI / 2);
+      g.append("path").attr("d", arcLeft()).attr("fill", DEM_BLUE).attr("opacity", 0.4);
+      g.append("path").attr("d", arcRight()).attr("fill", REP_RED).attr("opacity", 0.4);
+
+      // Tick marks
+      const tickScale = d3.scaleLinear().domain([0, 100]).range([-Math.PI / 2, Math.PI / 2]);
+      [0, 25, 50, 75, 100].forEach(v => {
+        const angle = tickScale(v);
+        g.append("line")
+          .attr("x1", Math.cos(angle - Math.PI/2) * (r + 2))
+          .attr("y1", Math.sin(angle - Math.PI/2) * (r + 2))
+          .attr("x2", Math.cos(angle - Math.PI/2) * (r + 8))
+          .attr("y2", Math.sin(angle - Math.PI/2) * (r + 8))
+          .attr("stroke", "#555").attr("stroke-width", 1.5);
+      });
+
+      // Needle
+      const needle = g.append("line")
+        .attr("x1", 0).attr("y1", 0)
+        .attr("stroke", "#fff").attr("stroke-width", 2.5)
+        .attr("stroke-linecap", "round");
+
+      // Center dot
+      g.append("circle").attr("r", 5).attr("fill", "#fff");
+
+      // Probability label
+      const probText = g.append("text")
+        .attr("y", -20).attr("text-anchor", "middle")
+        .attr("fill", "#fff").attr("font-size", "22px").attr("font-weight", "700");
+      const subtitleText = g.append("text")
+        .attr("y", -42).attr("text-anchor", "middle")
+        .attr("fill", "#888").attr("font-size", "9px");
+
+      function setNeedle(prob) {
+        const angle = tickScale(prob) - Math.PI / 2;
+        const len = r - 25;
+        needle.transition().duration(1500).ease(d3.easeElasticOut.amplitude(1).period(0.4))
+          .attr("x2", Math.cos(angle) * len)
+          .attr("y2", Math.sin(angle) * len);
+        const winner = prob > 50 ? "Rep" : "Dem";
+        const pct = prob > 50 ? prob : 100 - prob;
+        probText.text(`${Math.round(pct)}%`);
+        subtitleText.text(`${winner} win probability`);
+      }
+      setNeedle(62);
+      d3.interval(() => setNeedle(40 + Math.random() * 35), 3000);
+    })();
+
+    // =====================================================================
+    // 5. CHOROPLETH HEATMAP (sequential color)
+    // =====================================================================
+    async function drawHeatMap() {
+      const us = await getUS();
+      const states = topojson.feature(us, us.objects.states);
+      const w = 360, h = 200;
+      const svg = d3.select("#demo-choropleth-heat").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+
+      const projection = d3.geoAlbersUsa().fitSize([w - 10, h - 30], states).translate([w/2, h/2 - 5]);
+      const path = d3.geoPath(projection);
+      const color = d3.scaleSequential(d3.interpolateYlOrRd).domain([0, 350]);
+
+      svg.selectAll("path")
+        .data(states.features)
+        .join("path")
+        .attr("d", path)
+        .attr("fill", d => color(stateRates[d.id] || 0))
+        .attr("stroke", "#222")
+        .attr("stroke-width", 0.5);
+
+      // Legend
+      const lw = 120, lh = 8;
+      const lg = svg.append("g").attr("transform", `translate(${w - lw - 20}, ${h - 22})`);
+      const defs = svg.append("defs");
+      const grad = defs.append("linearGradient").attr("id", "heat-grad");
+      grad.append("stop").attr("offset", "0%").attr("stop-color", d3.interpolateYlOrRd(0));
+      grad.append("stop").attr("offset", "100%").attr("stop-color", d3.interpolateYlOrRd(1));
+      lg.append("rect").attr("width", lw).attr("height", lh).attr("rx", 2).style("fill", "url(#heat-grad)");
+      lg.append("text").attr("x", 0).attr("y", -3).attr("fill", "#888").attr("font-size", "7px").text("Low");
+      lg.append("text").attr("x", lw).attr("y", -3).attr("text-anchor", "end").attr("fill", "#888").attr("font-size", "7px").text("High");
+    }
+    drawHeatMap();
+
+    // =====================================================================
+    // 6. TREEMAP
+    // =====================================================================
+    (function drawTreemap() {
+      const data = {
+        name: "Budget", children: [
+          { name: "Defense", value: 886 },
+          { name: "Health", value: 742 },
+          { name: "Social Sec.", value: 1350 },
+          { name: "Education", value: 274 },
+          { name: "Veterans", value: 301 },
+          { name: "Transport", value: 123 },
+          { name: "Interest", value: 663 },
+          { name: "Other", value: 410 }
+        ]
+      };
+      const w = 360, h = 180;
+      const svg = d3.select("#demo-treemap").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+
+      const colors = [ORANGE, PURPLE, GREEN, PINK, DEM_BLUE, "#fbbf24", "#a78bfa", "#34d399"];
+      const root = d3.treemap().size([w, h]).padding(2).round(true)(
+        d3.hierarchy(data).sum(d => d.value)
+      );
+
+      const cell = svg.selectAll("g").data(root.leaves()).join("g")
+        .attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+      cell.append("rect")
+        .attr("width", d => d.x1 - d.x0)
+        .attr("height", d => d.y1 - d.y0)
+        .attr("fill", (d, i) => colors[i % colors.length])
+        .attr("opacity", 0.8)
+        .attr("rx", 3);
+
+      cell.append("text")
+        .attr("x", 5).attr("y", 16)
+        .attr("fill", "#000").attr("font-size", "10px").attr("font-weight", "600")
+        .text(d => d.data.name)
+        .each(function(d) {
+          if ((d.x1 - d.x0) < 55) d3.select(this).remove();
+        });
+
+      cell.append("text")
+        .attr("x", 5).attr("y", 28)
+        .attr("fill", "#00000088").attr("font-size", "8px")
+        .text(d => `$${d.data.value}B`)
+        .each(function(d) {
+          if ((d.x1 - d.x0) < 55 || (d.y1 - d.y0) < 35) d3.select(this).remove();
+        });
+    })();
+
+    // =====================================================================
+    // 7. BAR CHART RACE
+    // =====================================================================
+    (function drawBarRace() {
+      const items = [
+        { name: "China", value: 14200, color: REP_RED },
+        { name: "India", value: 13900, color: ORANGE },
+        { name: "USA", value: 8400, color: DEM_BLUE },
+        { name: "Brazil", value: 5600, color: GREEN },
+        { name: "Japan", value: 3700, color: PINK },
+      ];
+      const w = 340, h = 170;
+      const m = { top: 5, right: 55, bottom: 5, left: 50 };
+      const iw = w - m.left - m.right, ih = h - m.top - m.bottom;
+
+      const svg = d3.select("#demo-bar-race").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+      const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
+
+      const x = d3.scaleLinear().range([0, iw]);
+      const y = d3.scaleBand().range([0, ih]).padding(0.2);
+
+      function update() {
+        items.forEach(d => { d.value += Math.floor(Math.random() * 600); });
+        items.sort((a, b) => b.value - a.value);
+
+        x.domain([0, d3.max(items, d => d.value) * 1.1]);
+        y.domain(items.map(d => d.name));
+
+        const bars = g.selectAll("rect").data(items, d => d.name);
+        bars.join(
+          enter => enter.append("rect")
+            .attr("y", d => y(d.name)).attr("height", y.bandwidth())
+            .attr("x", 0).attr("width", 0)
+            .attr("fill", d => d.color).attr("rx", 3),
+          update => update
+        ).transition().duration(600)
+          .attr("y", d => y(d.name)).attr("width", d => x(d.value));
+
+        const labels = g.selectAll(".name-label").data(items, d => d.name);
+        labels.join(
+          enter => enter.append("text").attr("class", "name-label")
+            .attr("text-anchor", "end").attr("fill", "#ccc").attr("font-size", "10px"),
+          update => update
+        ).transition().duration(600)
+          .attr("x", -5)
+          .attr("y", d => y(d.name) + y.bandwidth() / 2 + 4);
+        g.selectAll(".name-label").text(d => d.name);
+
+        const vals = g.selectAll(".val-label").data(items, d => d.name);
+        vals.join(
+          enter => enter.append("text").attr("class", "val-label")
+            .attr("fill", "#888").attr("font-size", "9px"),
+          update => update
+        ).transition().duration(600)
+          .attr("x", d => x(d.value) + 4)
+          .attr("y", d => y(d.name) + y.bandwidth() / 2 + 3);
+        g.selectAll(".val-label").text(d => d3.format(",")(d.value));
+      }
+      update();
+      d3.interval(update, 1800);
+    })();
+
+    // =====================================================================
+    // 8. DONUT / PIE CHART
+    // =====================================================================
+    (function drawDonut() {
+      const data = [
+        { label: "Individual", value: 2100, color: DEM_BLUE },
+        { label: "PAC", value: 890, color: REP_RED },
+        { label: "Self-fund", value: 650, color: ORANGE },
+        { label: "Small $", value: 1400, color: GREEN },
+        { label: "Other", value: 320, color: PURPLE },
+      ];
+      const w = 260, h = 180;
+      const svg = d3.select("#demo-donut").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+      const g = svg.append("g").attr("transform", `translate(${w/2 - 30},${h/2})`);
+
+      const radius = 70;
+      const arc = d3.arc().innerRadius(radius * 0.55).outerRadius(radius);
+      const pie = d3.pie().value(d => d.value).sort(null).padAngle(0.02);
+
+      const arcs = g.selectAll("path")
+        .data(pie(data)).join("path")
+        .attr("fill", d => d.data.color)
+        .attr("stroke", "#141414").attr("stroke-width", 2);
+
+      // Animated entrance
+      arcs.transition().duration(1000).delay((d, i) => i * 120)
+        .attrTween("d", function(d) {
+          const i = d3.interpolate({ startAngle: d.startAngle, endAngle: d.startAngle }, d);
+          return t => arc(i(t));
+        });
+
+      // Center text
+      g.append("text").attr("text-anchor", "middle").attr("dy", "-0.1em")
+        .attr("fill", "#fff").attr("font-size", "16px").attr("font-weight", "700")
+        .text("$5.4B");
+      g.append("text").attr("text-anchor", "middle").attr("dy", "1.1em")
+        .attr("fill", "#888").attr("font-size", "8px").text("Total Raised");
+
+      // Legend
+      const legend = svg.append("g").attr("transform", `translate(${w - 90}, 25)`);
+      data.forEach((d, i) => {
+        const row = legend.append("g").attr("transform", `translate(0, ${i * 16})`);
+        row.append("rect").attr("width", 8).attr("height", 8).attr("rx", 2).attr("fill", d.color);
+        row.append("text").attr("x", 12).attr("y", 8).attr("fill", "#aaa").attr("font-size", "9px").text(d.label);
+      });
+    })();
+
+    // =====================================================================
+    // 9. FORCE-DIRECTED GRAPH
+    // =====================================================================
+    (function drawForce() {
+      const nodes = d3.range(25).map(i => ({ id: i, group: i % 4 }));
+      const links = [];
+      for (let i = 1; i < nodes.length; i++) {
+        links.push({ source: i, target: Math.floor(Math.random() * i) });
+        if (Math.random() > 0.6) links.push({ source: i, target: Math.floor(Math.random() * nodes.length) });
+      }
+
+      const w = 360, h = 200;
+      const svg = d3.select("#demo-force").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+
+      const groupColors = [ORANGE, PURPLE, GREEN, PINK];
+
+      const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(30))
+        .force("charge", d3.forceManyBody().strength(-40))
+        .force("center", d3.forceCenter(w / 2, h / 2))
+        .force("collision", d3.forceCollide(8));
+
+      const link = svg.selectAll("line")
+        .data(links).join("line")
+        .attr("stroke", "#333").attr("stroke-width", 1);
+
+      const node = svg.selectAll("circle")
+        .data(nodes).join("circle")
+        .attr("r", d => 4 + (d.id === 0 ? 3 : 0))
+        .attr("fill", d => groupColors[d.group])
+        .attr("opacity", 0.85);
+
+      simulation.on("tick", () => {
+        link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x).attr("y2", d => d.target.y);
+        node.attr("cx", d => d.x).attr("cy", d => d.y);
+      });
+    })();
+
+    // =====================================================================
+    // 10. STACKED AREA CHART
+    // =====================================================================
+    (function drawStackedArea() {
+      const categories = ["Defense", "Health", "Education", "Infrastructure"];
+      const years = d3.range(2010, 2025);
+      const tableData = years.map(year => {
+        const row = { year };
+        categories.forEach((c, i) => {
+          row[c] = 200 + i * 100 + Math.random() * 80 + (year - 2010) * (10 + i * 5);
+        });
+        return row;
+      });
+
+      const w = 360, h = 180;
+      const m = { top: 10, right: 15, bottom: 25, left: 35 };
+      const iw = w - m.left - m.right, ih = h - m.top - m.bottom;
+
+      const svg = d3.select("#demo-stacked-area").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+      const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
+
+      const stack = d3.stack().keys(categories);
+      const series = stack(tableData);
+
+      const xS = d3.scaleLinear().domain([2010, 2024]).range([0, iw]);
+      const yS = d3.scaleLinear().domain([0, d3.max(series[series.length - 1], d => d[1])]).range([ih, 0]);
+      const colors = [ORANGE, PURPLE, GREEN, PINK];
+
+      const area = d3.area()
+        .x((d, i) => xS(years[i]))
+        .y0(d => yS(d[0]))
+        .y1(d => yS(d[1]))
+        .curve(d3.curveMonotoneX);
+
+      g.selectAll("path")
+        .data(series).join("path")
+        .attr("d", area)
+        .attr("fill", (d, i) => colors[i])
+        .attr("opacity", 0.7);
+
+      g.append("g").attr("transform", `translate(0,${ih})`)
+        .call(d3.axisBottom(xS).ticks(5).tickFormat(d3.format("d")))
+        .selectAll("text").attr("fill", "#666").attr("font-size", "9px");
+      g.append("g").call(d3.axisLeft(yS).ticks(4).tickFormat(d => `$${d / 1000}T`))
+        .selectAll("text").attr("fill", "#666").attr("font-size", "9px");
+      g.selectAll(".domain, .tick line").attr("stroke", "#333");
+    })();
+
+    // =====================================================================
+    // 11. SCATTER PLOT
+    // =====================================================================
+    (function drawScatter() {
+      const regions = ["West", "South", "Midwest", "Northeast"];
+      const regionColors = [ORANGE, REP_RED, GREEN, DEM_BLUE];
+      const points = d3.range(40).map(() => {
+        const r = Math.floor(Math.random() * 4);
+        return {
+          income: 35000 + Math.random() * 60000,
+          education: 15 + Math.random() * 35,
+          pop: 100000 + Math.random() * 5000000,
+          region: r
+        };
+      });
+
+      const w = 360, h = 190;
+      const m = { top: 10, right: 15, bottom: 30, left: 40 };
+      const iw = w - m.left - m.right, ih = h - m.top - m.bottom;
+
+      const svg = d3.select("#demo-scatter").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+      const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
+
+      const xS = d3.scaleLinear().domain([30000, 100000]).range([0, iw]);
+      const yS = d3.scaleLinear().domain([10, 55]).range([ih, 0]);
+      const rS = d3.scaleSqrt().domain([0, 5000000]).range([3, 12]);
+
+      g.append("g").attr("transform", `translate(0,${ih})`)
+        .call(d3.axisBottom(xS).ticks(4).tickFormat(d => `$${d/1000}k`))
+        .selectAll("text").attr("fill", "#666").attr("font-size", "9px");
+      g.append("g").call(d3.axisLeft(yS).ticks(4).tickFormat(d => d + "%"))
+        .selectAll("text").attr("fill", "#666").attr("font-size", "9px");
+      g.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+      // Axis labels
+      g.append("text").attr("x", iw/2).attr("y", ih + 22)
+        .attr("text-anchor", "middle").attr("fill", "#555").attr("font-size", "8px").text("Median Income");
+      g.append("text").attr("transform", "rotate(-90)")
+        .attr("x", -ih/2).attr("y", -30).attr("text-anchor", "middle")
+        .attr("fill", "#555").attr("font-size", "8px").text("% College Educated");
+
+      g.selectAll("circle").data(points).join("circle")
+        .attr("cx", d => xS(d.income))
+        .attr("cy", d => yS(d.education))
+        .attr("r", d => rS(d.pop))
+        .attr("fill", d => regionColors[d.region])
+        .attr("opacity", 0.6)
+        .attr("stroke", d => regionColors[d.region])
+        .attr("stroke-width", 0.5);
+    })();
+
+    // =====================================================================
+    // 12. GITHUB-STYLE HEATMAP
+    // =====================================================================
+    (function drawHeatmapGrid() {
+      const w = 360, h = 130;
+      const svg = d3.select("#demo-heatmap-grid").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+      const g = svg.append("g").attr("transform", "translate(30, 15)");
+
+      const cellSize = 11;
+      const weeks = 26;
+      const startDate = new Date(2025, 8, 15); // 6 months ago-ish
+
+      const colorScale = d3.scaleQuantize()
+        .domain([0, 10])
+        .range(["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"]);
+
+      const dayLabels = ["", "Mon", "", "Wed", "", "Fri", ""];
+      g.selectAll(".day-label")
+        .data(dayLabels).join("text")
+        .attr("x", -5).attr("y", (d, i) => i * (cellSize + 2) + cellSize - 1)
+        .attr("text-anchor", "end").attr("fill", "#555").attr("font-size", "8px")
+        .text(d => d);
+
+      for (let week = 0; week < weeks; week++) {
+        for (let day = 0; day < 7; day++) {
+          const val = Math.random() > 0.3 ? Math.floor(Math.random() * 11) : 0;
+          g.append("rect")
+            .attr("x", week * (cellSize + 2))
+            .attr("y", day * (cellSize + 2))
+            .attr("width", cellSize)
+            .attr("height", cellSize)
+            .attr("rx", 2)
+            .attr("fill", colorScale(val));
+        }
+      }
+
+      // Month labels
+      const months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+      months.forEach((m, i) => {
+        g.append("text")
+          .attr("x", i * (weeks / months.length) * (cellSize + 2))
+          .attr("y", -4)
+          .attr("fill", "#555").attr("font-size", "8px").text(m);
+      });
+    })();
+
+    // =====================================================================
+    // 13. SMALL MULTIPLES
+    // =====================================================================
+    (function drawSmallMultiples() {
+      const states = ["CA", "TX", "FL", "NY", "PA", "OH"];
+      const n = 20;
+      const allData = states.map(st => ({
+        name: st,
+        values: d3.range(n).map(i => ({
+          x: i,
+          y: 40 + Math.random() * 20 + Math.sin(i * 0.4) * 10 + (st === "CA" ? 10 : 0)
+        }))
+      }));
+
+      const w = 360, h = 160;
+      const cols = 3, rows = 2;
+      const cellW = w / cols, cellH = h / rows;
+      const pad = { top: 14, right: 5, bottom: 5, left: 5 };
+
+      const svg = d3.select("#demo-small-multiples").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+
+      const xS = d3.scaleLinear().domain([0, n - 1]).range([pad.left, cellW - pad.right]);
+      const yS = d3.scaleLinear().domain([30, 80]).range([cellH - pad.bottom, pad.top]);
+      const line = d3.line().x(d => xS(d.x)).y(d => yS(d.y)).curve(d3.curveMonotoneX);
+      const area = d3.area().x(d => xS(d.x)).y0(cellH - pad.bottom).y1(d => yS(d.y)).curve(d3.curveMonotoneX);
+
+      const colors = [ORANGE, PURPLE, GREEN, PINK, DEM_BLUE, REP_RED];
+
+      allData.forEach((state, i) => {
+        const col = i % cols, row = Math.floor(i / cols);
+        const g = svg.append("g").attr("transform", `translate(${col * cellW},${row * cellH})`);
+
+        g.append("rect").attr("width", cellW).attr("height", cellH)
+          .attr("fill", "none").attr("stroke", "#1a1a1a").attr("rx", 3);
+
+        g.append("path").datum(state.values).attr("d", area)
+          .attr("fill", colors[i]).attr("opacity", 0.15);
+        g.append("path").datum(state.values).attr("d", line)
+          .attr("fill", "none").attr("stroke", colors[i]).attr("stroke-width", 1.5);
+
+        g.append("text").attr("x", 6).attr("y", 11)
+          .attr("fill", colors[i]).attr("font-size", "9px").attr("font-weight", "700")
+          .text(state.name);
+      });
+    })();
+
+    // =====================================================================
+    // 14. BUBBLE MAP
+    // =====================================================================
+    async function drawBubbleMap() {
+      const us = await getUS();
+      const states = topojson.feature(us, us.objects.states);
+      const w = 360, h = 200;
+      const svg = d3.select("#demo-bubble-map").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`).attr("width", "100%");
+
+      const projection = d3.geoAlbersUsa().fitSize([w - 10, h - 10], states).translate([w/2, h/2]);
+      const path = d3.geoPath(projection);
+
+      // Base map (grey)
+      svg.selectAll("path")
+        .data(states.features)
+        .join("path")
+        .attr("d", path)
+        .attr("fill", "#1a1a1a")
+        .attr("stroke", "#333")
+        .attr("stroke-width", 0.5);
+
+      // Major cities
+      const cities = [
+        { name: "New York", lon: -74.006, lat: 40.7128, pop: 8336817 },
+        { name: "Los Angeles", lon: -118.2437, lat: 34.0522, pop: 3979576 },
+        { name: "Chicago", lon: -87.6298, lat: 41.8781, pop: 2693976 },
+        { name: "Houston", lon: -95.3698, lat: 29.7604, pop: 2320268 },
+        { name: "Phoenix", lon: -112.074, lat: 33.4484, pop: 1680992 },
+        { name: "Philadelphia", lon: -75.1652, lat: 39.9526, pop: 1603797 },
+        { name: "San Antonio", lon: -98.4936, lat: 29.4241, pop: 1547253 },
+        { name: "San Diego", lon: -117.1611, lat: 32.7157, pop: 1423851 },
+        { name: "Dallas", lon: -96.797, lat: 32.7767, pop: 1343573 },
+        { name: "Denver", lon: -104.9903, lat: 39.7392, pop: 715522 },
+        { name: "Seattle", lon: -122.3321, lat: 47.6062, pop: 737015 },
+        { name: "Miami", lon: -80.1918, lat: 25.7617, pop: 467963 },
+        { name: "Atlanta", lon: -84.388, lat: 33.749, pop: 498715 },
+      ];
+
+      const rScale = d3.scaleSqrt().domain([0, 8500000]).range([2, 18]);
+
+      svg.selectAll("circle")
+        .data(cities)
+        .join("circle")
+        .attr("cx", d => { const p = projection([d.lon, d.lat]); return p ? p[0] : -100; })
+        .attr("cy", d => { const p = projection([d.lon, d.lat]); return p ? p[1] : -100; })
+        .attr("r", d => rScale(d.pop))
+        .attr("fill", ORANGE)
+        .attr("opacity", 0.6)
+        .attr("stroke", ORANGE)
+        .attr("stroke-width", 0.5);
+    }
+    drawBubbleMap();
+
+    // =====================================================================
+    // 15. SPARKLINES
+    // =====================================================================
+    (function drawSparklines() {
+      const metrics = [
+        { label: "Approval", data: d3.range(30).map(() => 40 + Math.random() * 15), color: DEM_BLUE, suffix: "%" },
+        { label: "Fundraising", data: d3.range(30).map((_, i) => 50 + i * 2 + Math.random() * 20), color: GREEN, suffix: "M" },
+        { label: "Polling Avg", data: d3.range(30).map(() => 44 + Math.random() * 8), color: ORANGE, suffix: "%" },
+        { label: "Turnout Model", data: d3.range(30).map((_, i) => 55 + Math.sin(i * 0.3) * 8 + Math.random() * 3), color: PURPLE, suffix: "%" },
+      ];
+
+      const container = d3.select("#demo-sparklines");
+      const w = 360, h = 170;
+
+      const svg = container.append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`)
+        .attr("width", "100%");
+
+      const rowHeight = h / metrics.length;
+      const sparkW = 130, sparkH = 24;
+
+      metrics.forEach((metric, idx) => {
+        const g = svg.append("g").attr("transform", `translate(0, ${idx * rowHeight + 8})`);
+
+        // Label
+        g.append("text").attr("x", 15).attr("y", rowHeight / 2 + 2)
+          .attr("fill", "#ccc").attr("font-size", "11px").attr("font-weight", "500")
+          .text(metric.label);
+
+        // Current value
+        const lastVal = metric.data[metric.data.length - 1];
+        g.append("text").attr("x", 120).attr("y", rowHeight / 2 + 2)
+          .attr("fill", metric.color).attr("font-size", "13px").attr("font-weight", "700")
+          .text(`${Math.round(lastVal)}${metric.suffix}`);
+
+        // Sparkline
+        const sg = g.append("g").attr("transform", `translate(170, ${(rowHeight - sparkH) / 2})`);
+        const xS = d3.scaleLinear().domain([0, metric.data.length - 1]).range([0, sparkW]);
+        const yS = d3.scaleLinear().domain(d3.extent(metric.data)).range([sparkH, 0]);
+        const line = d3.line().x((d, i) => xS(i)).y(d => yS(d)).curve(d3.curveMonotoneX);
+
+        sg.append("path").datum(metric.data)
+          .attr("d", line).attr("fill", "none")
+          .attr("stroke", metric.color).attr("stroke-width", 1.5);
+
+        // Endpoint dot
+        sg.append("circle")
+          .attr("cx", xS(metric.data.length - 1))
+          .attr("cy", yS(lastVal))
+          .attr("r", 3).attr("fill", metric.color);
+
+        // Separator line
+        if (idx < metrics.length - 1) {
+          g.append("line").attr("x1", 15).attr("x2", w - 15)
+            .attr("y1", rowHeight).attr("y2", rowHeight)
+            .attr("stroke", "#1a1a1a");
+        }
+      });
+    })();
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+============================================================
+SECTION 1: SOURCE DOCUMENT FOR NOTEBOOKLM
+============================================================
+
+LESSON: 05 - Python Data & File Handling
+TRACK: Django / Python (12-lesson curriculum)
+
+------------------------------------------------------------
+CONTEXT FOR HOSTS
+------------------------------------------------------------
+
+Where this lesson fits:
+Lesson 5 of 12. Lessons 1-4 covered Python basics, collections, functions, and OOP. This lesson covers the practical I/O work that every web app needs: reading/writing files, parsing JSON and CSV, error handling, HTTP requests, filesystem operations with pathlib, and regular expressions. Lesson 6 jumps into Django itself. This is the "glue" lesson — it bridges pure Python knowledge with the real-world data processing you'll do in Django management commands, views, and data pipelines.
+
+Who Trevor is:
+Trevor is a JS/React/Next.js/TypeScript developer comfortable with Node.js file operations (fs module), fetch API, try/catch, path module, JSON.parse/stringify, and npm packages for CSV parsing. He needs every Python I/O concept mapped to its Node.js equivalent. His journalism background means he'll be processing CSV files, JSON APIs, and text data constantly.
+
+Key JS-to-Python translations:
+- fs.readFileSync() -> with open() as f: f.read()
+- fs.writeFileSync() -> with open("file", "w") as f: f.write()
+- try/catch -> try/except (Python uses "except" not "catch")
+- throw new Error() -> raise ValueError()
+- JSON.parse() -> json.loads() (load from String)
+- JSON.stringify() -> json.dumps() (dump to String)
+- fetch(url) -> requests.get(url) (pip install requests)
+- await res.json() -> res.json() (synchronous, no await)
+- path.join() -> Path("a") / "b" (/ operator!)
+- fs.existsSync() -> Path("file").exists()
+- require('csv-parse') -> import csv (built-in!)
+- /regex/.test(str) -> re.search(pattern, str)
+- str.match(regex) -> re.search()
+- str.matchAll() -> re.findall()
+- str.replace(regex) -> re.sub()
+
+Mental models:
+1. The "with" statement is Python's automatic cleanup — like a built-in try/finally for files
+2. json.loads/json.dumps — the "s" means string, no "s" means file
+3. Python crashes where JS returns undefined — KeyError, IndexError instead of silent undefined
+4. pathlib's / operator makes path building readable — Path("data") / "file.txt"
+
+------------------------------------------------------------
+LESSON CONTENT
+------------------------------------------------------------
+
+FILE I/O — READING AND WRITING FILES
+
+The "with" statement is Python's superpower for files. It automatically closes the file when the block ends, even if an error occurs. It's like a built-in try/finally. In Node, you'd need to manually call fd.close() or use streams. In Python, with open(...) is the standard — always use it.
+
+Node.js: const text = fs.readFileSync('data.txt', 'utf-8');
+Python: with open("data.txt") as f: text = f.read()
+
+Node.js: fs.writeFileSync('output.txt', 'Hello!')
+Python: with open("output.txt", "w") as f: f.write("Hello!")
+
+File mode cheat sheet: "r" = read (default). "w" = write (overwrites!). "a" = append. "x" = create (fails if exists). "rb"/"wb" = binary mode.
+
+A file object in Python is iterable — you can loop over it line by line with "for line in f:". This reads one line at a time, unlike f.read() which loads everything at once. For large CSV or log files, always iterate instead of reading all at once.
+
+CONTEXT MANAGERS — THE WITH STATEMENT
+
+The with statement isn't just for files — it's Python's general-purpose pattern for resource management. It guarantees cleanup happens, no matter what. JavaScript has no built-in equivalent (the "using" proposal is Stage 3). Python uses with for files, locks, database connections, network sockets, and temp files.
+
+JSON — json.loads() AND json.dumps()
+
+JSON handling maps almost perfectly from JavaScript. Different method names, identical behavior.
+
+Translation rule: JSON.parse() -> json.loads() (load from string). JSON.stringify() -> json.dumps() (dump to string). For files: json.load(f) reads from a file, json.dump(data, f) writes to a file. The "s" at the end = string; no "s" = file.
+
+JSON result is a dict, not an object! In JavaScript, JSON.parse() gives you an object with dot notation: data.name. In Python, json.loads() gives you a dict with bracket notation: data["name"]. No dot notation for dicts. Use data.get("name") for safe access.
+
+Type mapping: JSON {} -> dict, JSON [] -> list, JSON "string" -> str, JSON 42/3.14 -> int/float, JSON true/false -> True/False, JSON null -> None.
+
+CSV HANDLING
+
+Python has a built-in csv module. No npm install needed. This matters because you'll import/export data from spreadsheets constantly.
+
+csv.DictReader(f) reads CSV as a list of dicts (like {columns: true} in the csv-parse npm package). csv.reader(f) reads as a list of lists.
+
+For writing: csv.DictWriter(f, fieldnames=["name", "age"]) creates a writer. Call writer.writeheader() then writer.writerows(data).
+
+Django CSV tip: Django views can return CSV files directly. You'll create views that generate CSV exports for users to download.
+
+ERROR HANDLING — try / except / finally
+
+Translation rule: try/catch -> try/except. throw -> raise. catch (e) -> except ExceptionType as e. Python encourages catching specific exception types. You can have multiple except blocks for different error types, which is cleaner than nested instanceof checks.
+
+The else clause is unique to Python. try/except/else/finally — the else block runs only if no exception occurred. This is cleaner than putting success logic inside the try, because you won't accidentally catch exceptions from the success code itself.
+
+Common Python exceptions and their JS equivalents:
+- ValueError (JS: TypeError/RangeError) — Wrong value: int("abc")
+- TypeError (JS: TypeError) — Wrong type: "a" + 1
+- KeyError (JS: returns undefined) — Missing dict key: d["nope"]
+- IndexError (JS: returns undefined) — List out of range: lst[99]
+- AttributeError (JS: TypeError) — Missing attribute: None.name
+- FileNotFoundError (JS: ENOENT error) — File doesn't exist
+- ImportError (JS: MODULE_NOT_FOUND) — Module not installed
+
+Python crashes where JS returns undefined! In JavaScript, obj.missingKey gives you undefined silently. In Python, dict["missing_key"] raises KeyError. list[99] raises IndexError. This catches bugs earlier but means you must use .get() or try/except for safety.
+
+HTTP REQUESTS — requests LIBRARY
+
+Python's requests library is the fetch() equivalent. It's not built-in (requires pip install requests), but it's the universal standard.
+
+Translation: fetch(url) -> requests.get(url). await res.json() -> res.json() (no await, requests is synchronous). body: JSON.stringify(data) -> json=data (auto-serializes). res.ok check -> res.raise_for_status(). The requests API is cleaner because it handles headers and encoding automatically.
+
+Always set a timeout! requests.get(url, timeout=10). Without it, a slow or unresponsive server can hang your entire application forever. In Django, a hung request blocks a worker thread — do this enough times and your whole site goes down.
+
+FILESYSTEM — os AND pathlib
+
+Python has two ways to work with paths: the older os module and the modern pathlib module. pathlib is strongly preferred.
+
+The mental model: pathlib.Path objects use the / operator to join paths: Path("data") / "file.txt" gives you Path("data/file.txt"). More readable than path.join(). Django uses pathlib in settings: BASE_DIR = Path(__file__).resolve().parent.parent.
+
+Path operations: .exists(), .is_file(), .is_dir(), .name (filename), .stem (without extension), .suffix (extension), .parent (directory), .resolve() (absolute path). Path also has .read_text() and .write_text() shortcuts. .glob("**/*.json") finds files recursively.
+
+Always use pathlib over os.path for new code. Django has used pathlib in generated settings.py since Django 3.1.
+
+STRING METHODS DEEP DIVE
+
+Key translations: .trim() -> .strip(). .toLowerCase() -> .lower(). .includes() -> "in" operator. .slice() -> bracket slicing [start:end]. .repeat(n) -> * n. .indexOf() -> .find() (returns -1 if not found).
+
+.join() is on the separator, not the list! JS: ["a","b"].join("-"). Python: "-".join(["a","b"]). The separator string does the joining.
+
+Python-only string powers: .isdigit(), .isalpha(), .isalnum() for content checking. .title() for title case. .splitlines() for multiline processing. .count("a") for counting occurrences.
+
+REGULAR EXPRESSIONS — re MODULE
+
+Translation rule: /pattern/.test(str) -> re.search(pattern, str). str.match(regex) -> re.search(). str.matchAll() -> re.findall(). str.replace(regex, rep) -> re.sub(pattern, rep, str). Always use r"..." raw strings so backslashes work correctly.
+
+Use raw strings for regex! Always prefix patterns with r: re.search(r"\d+", text). Without r, Python interprets backslashes as escape characters first. "\d" becomes just "d". r"\d" stays as \d (what regex expects).
+
+Named groups: (?P<year>\d{4}) lets you access matches by name: m.group("year"). Compiled patterns: re.compile() for patterns you reuse — better performance.
+
+------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+------------------------------------------------------------
+
+1. The "with" statement for files is non-negotiable — it guarantees cleanup. Every Django developer uses it.
+2. json.loads/dumps vs json.load/dump — "s" = string, no "s" = file. This naming convention unlocks the entire json module.
+3. Python crashes where JS is silent — KeyError, IndexError instead of undefined. This catches bugs early but requires defensive coding with .get() and try/except.
+4. pathlib is the modern standard — the / operator for paths is uniquely Pythonic. Django uses it everywhere.
+5. The requests library is cleaner than fetch — auto-JSON encoding, auto-content-type headers, raise_for_status(). But always set a timeout.
+
+------------------------------------------------------------
+COMMON PITFALLS FOR JS DEVELOPERS
+------------------------------------------------------------
+
+- Forgetting the "with" statement and leaving files open
+- Using json.loads() when you have a file object (use json.load() without "s")
+- Expecting dict["missing_key"] to return undefined (it raises KeyError — use .get())
+- Forgetting to set timeout on requests.get() (can hang forever)
+- Using os.path instead of pathlib (pathlib is the modern standard)
+- Not using raw strings for regex patterns (r"\d+" not "\d+")
+- Calling .join() on the list instead of the separator ("sep".join(list) not list.join("sep"))
+- Writing try/catch instead of try/except
+- Writing throw instead of raise
+- Expecting list[99] to return undefined (it raises IndexError)
+
+------------------------------------------------------------
+REAL-WORLD CONNECTION
+------------------------------------------------------------
+
+At a broadcast TV network, data file handling is everyday work. You'll write Django management commands that read CSV files of Nielsen ratings, parse JSON from wire service APIs, process text files of FCC filings, and export datasets for on-air graphics. The pathlib module navigates project directories. The requests library pulls data from external APIs. The csv module processes the spreadsheets that producers and researchers live in. Error handling keeps your data pipeline running when an API is down or a file is malformed. Every concept in this lesson shows up in the kind of data processing work you'd do at Tenga.
+
+
+============================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS FOR NOTEBOOKLM
+============================================================
+
+This episode should have three "practical skills" moments: (1) the with statement for files, (2) the json.loads/dumps naming convention, and (3) the requests library replacing fetch.
+
+Specific mental models for THIS lesson:
+- "with = automatic cleanup" — the with statement is Python's built-in resource manager. No more forgetting to close files.
+- "s means string" — json.loads/json.dumps have an s for string. json.load/json.dump work with files. One letter, big difference.
+- "Python crashes, JS whispers" — Python raises exceptions where JavaScript returns undefined. This is actually a feature, not a bug — it catches errors at the source.
+
+JS/React/Next.js equivalents to reference:
+- fs.readFileSync -> with open() as f: f.read()
+- try/catch/finally -> try/except/else/finally (Python has an extra "else"!)
+- JSON.parse/stringify -> json.loads/dumps (memorize: s = string)
+- fetch() -> requests.get() (simpler API, no await needed)
+- path.join() -> Path("a") / "b" (the / operator is genius)
+- npm install csv-parse -> import csv (built-in!)
+- /regex/.test() -> re.search()
+
+Connect back to lessons 1-4: "Remember how dicts raise KeyError instead of returning undefined? That's the same philosophy at work in this lesson's error handling. Python would rather crash loudly than let a bug slip through silently."
+
+Connect to lesson 3: "Remember virtual environments and pip install? The requests library is your first real pip install that matters — it's the fetch() of Python."
+
+Tease lesson 6: "Next lesson we jump into Django itself. Everything you learned here — file I/O, JSON, error handling, pathlib — shows up immediately. Django's settings.py uses pathlib. Django views return JSON responses. Django management commands read CSV files. You're ready."
+
+Trevor's journalism background: "Think of error handling like fact-checking. Python's approach is like a newsroom that flags every unverified claim — KeyError is Python saying 'I can't verify this key exists.' JavaScript's approach is like running the story without checking — undefined just means 'we don't know and we're not telling you.' Which newsroom do you want to work in?"
+
+Memorization techniques:
+- "s for string, no s for file" — json.loads = load string, json.load = load file
+- "with = automatic janitor" — the with statement cleans up after you leave
+- "raise, not throw" — picture raising your hand to flag an error, not throwing an exception
+- "except, not catch" — Python excepts (makes an exception for) error types
+- "slash for paths" — Path("a") / "b" uses the actual slash character
+- "r for raw" — r"..." raw strings keep your regex backslashes safe
+
+Tone: The with statement explanation should feel like a genuine quality-of-life improvement. "Wait, it just closes the file automatically? Even if there's an error?" The json naming convention should be a satisfying aha moment. The requests library should make the JS host slightly jealous of how clean the API is compared to fetch. The error handling section should emphasize that Python's crash-early philosophy is actually an advantage for data integrity.

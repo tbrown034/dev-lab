@@ -1,0 +1,274 @@
+================================================================================
+SECTION 1: SOURCE DOCUMENT
+================================================================================
+
+TITLE: PostgreSQL-Specific Features -- Beyond Standard SQL
+TRACK: SQL / PostgreSQL (Lesson 9 of 12)
+
+--------------------------------------------------------------------------------
+CONTEXT FOR HOSTS
+--------------------------------------------------------------------------------
+
+This is Lesson 9 of a 12-lesson SQL curriculum. In Lessons 01-08, Trevor learned standard SQL concepts that work across all databases. Now he learns features specific to PostgreSQL -- the features that make PostgreSQL the database of choice for data-heavy applications and data journalism.
+
+Note: The lesson page for this topic is a stub ("Coming Soon"), so this podcast script is built from the topic list and the broader curriculum context. The topics covered are: JSONB operators, array columns, generate_series(), full-text search, LISTEN/NOTIFY, UPSERT (ON CONFLICT), RETURNING clause, and Enum types. UPSERT and RETURNING were introduced in Lesson 06 (Data Modification), so this lesson goes deeper on them and covers the remaining topics.
+
+THE LEARNER: Trevor is an investigative journalist with 15+ years of experience who taught himself web development (React, Next.js, TypeScript, Tailwind). He has been using Prisma as his ORM. He is learning raw SQL/PostgreSQL for a potential role at Tenga, a chain of broadcast TV networks.
+
+WHAT TREVOR ALREADY KNOWS THAT CONNECTS:
+- JavaScript arrays: PostgreSQL has native array columns that work like JavaScript arrays -- you can store, query, and manipulate arrays directly in the database.
+- JSON and JSONB: Trevor works with JSON constantly in JavaScript. PostgreSQL's JSONB is like a JavaScript object stored in a column, queryable with operators.
+- Full-text search concepts: Trevor has likely used search libraries (Algolia, Fuse.js). PostgreSQL's built-in full-text search provides similar functionality without an external service.
+- JavaScript generators: generate_series() is like a generator function that produces a sequence of values on demand.
+- WebSockets/real-time: LISTEN/NOTIFY is PostgreSQL's built-in pub/sub system, similar to WebSocket events.
+- TypeScript enums: PostgreSQL Enum types are the same concept -- a fixed set of allowed values.
+
+TREVOR'S GOAL: Leveraging PostgreSQL's advanced features for broadcast TV data -- JSONB for flexible election metadata, arrays for multi-value fields, full-text search across article archives, generate_series for time-series dashboards, LISTEN/NOTIFY for real-time election updates.
+
+MENTAL MODELS THAT MATTER MOST:
+1. PostgreSQL is a database AND a toolkit. Standard SQL gives you CRUD. PostgreSQL adds arrays, JSON, full-text search, pub/sub, and more -- features that normally require external services.
+2. JSONB is a JavaScript object in a column. You can access properties, check containment, and even index into nested structures.
+3. Arrays are JavaScript arrays in a column. You can store, query, and manipulate lists without a separate junction table.
+4. Full-text search is built-in search without Algolia. tsvector (the index) + tsquery (the search) = fast, ranked text search.
+5. LISTEN/NOTIFY is database-level WebSockets. Your application can subscribe to events the database fires.
+
+--------------------------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+--------------------------------------------------------------------------------
+
+1. JSONB DEEP DIVE: Beyond the introduction in Lesson 07. Operators: -> (get element), ->> (get as text), #> (path access), #>> (path as text), @> (contains), ? (key exists), ?| (any key exists), ?& (all keys exist). Updating JSONB with jsonb_set(). Creating JSONB with jsonb_build_object(). Indexing JSONB with GIN indexes for fast @> queries.
+
+2. ARRAY COLUMNS: PostgreSQL supports native array columns: INTEGER[], TEXT[], etc. Operators: @> (contains), <@ (contained by), && (overlap), ANY/ALL for comparisons. Array functions: array_agg(), unnest(), array_length(). Use for tags, categories, roles -- small, fixed-length lists. For large or variable lists, a junction table is still better.
+
+3. GENERATE_SERIES(): Generates a sequence of values: numbers or dates. generate_series(1, 10), generate_series('2024-01-01'::date, '2024-12-31'::date, '1 day'). Incredible for generating test data, filling in missing dates in time-series, and creating calendar tables.
+
+4. FULL-TEXT SEARCH: tsvector stores a document as searchable tokens. tsquery represents a search query. to_tsvector() and to_tsquery() convert text. The @@ operator matches a tsquery against a tsvector. ts_rank() scores relevance. GIN indexes make full-text search fast. No external search service needed for many use cases.
+
+5. LISTEN/NOTIFY: PostgreSQL's pub/sub system. NOTIFY channel, 'payload' sends a message. LISTEN channel subscribes. Applications can react to database events in real-time. Use for: invalidating caches, triggering UI updates, signaling workers. Not a replacement for a message queue (messages are lost if no one is listening).
+
+6. ENUM TYPES: CREATE TYPE status AS ENUM ('draft', 'review', 'published', 'archived'). Like TypeScript enums. Enforced at the type level (stricter than CHECK constraints). Values are ordered. Adding values is easy, removing is hard.
+
+7. UPSERT AND RETURNING (DEEPER): Building on Lesson 06. Advanced ON CONFLICT patterns: conflict on composite keys, partial conflict targets, DO UPDATE with complex expressions (GREATEST, LEAST, array concatenation). RETURNING with JOINs and expressions.
+
+--------------------------------------------------------------------------------
+DATA JOURNALISM CONNECTION
+--------------------------------------------------------------------------------
+
+PostgreSQL's features are tailor-made for data journalism workflows:
+
+JSONB for Government Data: Government datasets often have semi-structured metadata that varies by record. Some FOIA records include attachments, some include case notes, some include neither. JSONB lets you store this varying metadata alongside structured columns without redesigning your schema for every new dataset.
+
+Full-Text Search for Document Archives: Investigative journalists often search through thousands of documents -- court filings, email archives, meeting minutes. PostgreSQL's full-text search lets you search these documents directly in the database, with relevance ranking, without setting up Elasticsearch.
+
+generate_series for Time-Series Analysis: "Show me daily article counts for the last 90 days, including days with zero articles." generate_series creates the complete date range, and a LEFT JOIN fills in the actual counts. Without generate_series, days with zero articles would be invisible.
+
+Arrays for Multi-Value Fields: Election results tagged with multiple issues (economy, healthcare, immigration). Weather stations with multiple alert types. Articles with multiple categories. Array columns handle these without junction tables for simple cases.
+
+LISTEN/NOTIFY for Election Night: When precinct results update in the database, NOTIFY can signal connected dashboard clients to refresh. Real-time updates without polling.
+
+For Trevor at Tenga: "Your election dashboard receives precinct results via an API. The API does an UPSERT into the database. The UPSERT triggers a NOTIFY. Every connected dashboard client is LISTENing, so they refresh automatically. JSONB stores the varying metadata each precinct reports. Full-text search lets producers search through candidate statements. generate_series fills in the timeline for precincts that have not yet reported."
+
+--------------------------------------------------------------------------------
+BROADCAST TV SCENARIOS
+--------------------------------------------------------------------------------
+
+JSONB:
+- "Store election metadata that varies by precinct": election_results.metadata JSONB with fields like {"total_registered": 5000, "early_votes": 1200, "mail_in": 800}
+- "Query JSONB": SELECT * FROM election_results WHERE metadata @> '{"mail_in": true}'; SELECT metadata->>'total_registered' FROM election_results;
+- "GIN index for fast JSONB queries": CREATE INDEX idx_election_metadata ON election_results USING GIN (metadata);
+
+ARRAYS:
+- "Weather stations with multiple alert types": alerts TEXT[] with values like ARRAY['heat', 'wind', 'flood']
+- "Find stations with heat alerts": SELECT * FROM weather_stations WHERE 'heat' = ANY(alerts);
+- "Articles with multiple tags": tags TEXT[] DEFAULT '{}', then SELECT * FROM articles WHERE tags @> ARRAY['election', 'breaking'];
+
+GENERATE_SERIES:
+- "Election reporting timeline": SELECT d::date, COALESCE(COUNT(er.id), 0) AS results_in FROM generate_series('2024-11-05'::date, '2024-11-06'::date, '1 hour') d LEFT JOIN election_results er ON er.updated_at::date = d::date GROUP BY d ORDER BY d;
+- "Fill in missing dates for ad revenue report": Generate all dates in a range, LEFT JOIN actual revenue data.
+
+FULL-TEXT SEARCH:
+- "Search article archive": SELECT title, ts_rank(to_tsvector(body), to_tsquery('election & results')) AS rank FROM articles WHERE to_tsvector(body) @@ to_tsquery('election & results') ORDER BY rank DESC;
+- "Create a search index": CREATE INDEX idx_articles_search ON articles USING GIN (to_tsvector('english', title || ' ' || body));
+
+LISTEN/NOTIFY:
+- "Notify dashboards when results update": CREATE FUNCTION notify_result_update() RETURNS TRIGGER AS $$ BEGIN PERFORM pg_notify('election_updates', row_to_json(NEW)::text); RETURN NEW; END; $$ LANGUAGE plpgsql; CREATE TRIGGER election_result_notify AFTER INSERT OR UPDATE ON election_results FOR EACH ROW EXECUTE FUNCTION notify_result_update();
+
+--------------------------------------------------------------------------------
+LESSON CONTENT
+--------------------------------------------------------------------------------
+
+JSONB DEEP DIVE
+
+JSONB was introduced in Lesson 07. Here we go deeper into operators, updates, and indexing.
+
+Key operators:
+  -> gets a JSON element: metadata->'tags' returns ["politics", "election"]
+  ->> gets text value: metadata->>'word_count' returns '1200' as text
+  #> path access: metadata#>'{address,city}' gets nested value
+  #>> path as text: metadata#>>'{address,city}' returns text
+  @> contains: metadata @> '{"featured": true}' checks if JSON contains key-value
+  ? key exists: metadata ? 'tags' checks if key exists
+  ?| any key: metadata ?| array['tags', 'featured'] checks if any key exists
+  ?& all keys: metadata ?& array['tags', 'featured'] checks if all keys exist
+
+Updating JSONB:
+  UPDATE articles SET metadata = jsonb_set(metadata, '{featured}', 'true') WHERE id = 5;
+  UPDATE articles SET metadata = metadata || '{"reviewed": true}' WHERE id = 5;
+  UPDATE articles SET metadata = metadata - 'deprecated_key' WHERE id = 5;
+
+Building JSONB:
+  SELECT jsonb_build_object('name', name, 'email', email, 'article_count', COUNT(a.id)) FROM authors...
+
+GIN Indexes for JSONB:
+  CREATE INDEX idx_articles_metadata ON articles USING GIN (metadata);
+  -- Speeds up @>, ?, ?|, ?& queries
+
+ARRAY COLUMNS
+
+PostgreSQL supports native array columns:
+
+  CREATE TABLE articles (id SERIAL PRIMARY KEY, title TEXT NOT NULL, tags TEXT[] DEFAULT '{}');
+  INSERT INTO articles (title, tags) VALUES ('Election Coverage', ARRAY['politics', 'election', 'breaking']);
+
+Array operators:
+  @> contains: WHERE tags @> ARRAY['politics'] -- articles tagged with politics
+  <@ contained by: WHERE tags <@ ARRAY['politics', 'sports'] -- articles whose tags are all within this list
+  && overlap: WHERE tags && ARRAY['politics', 'sports'] -- articles with politics OR sports tag
+  ANY: WHERE 'politics' = ANY(tags) -- check if value is in array
+
+Array functions:
+  array_agg(): Aggregate rows into an array. SELECT author_id, array_agg(title) FROM articles GROUP BY author_id;
+  unnest(): Expand array into rows. SELECT unnest(tags) FROM articles;
+  array_length(): Get array size. SELECT array_length(tags, 1) FROM articles;
+
+When to use arrays vs junction tables: Arrays for small, simple lists (tags, roles, categories) where you rarely need to JOIN or aggregate by the values. Junction tables for many-to-many relationships with their own attributes or when you need referential integrity.
+
+GENERATE_SERIES()
+
+Generates a sequence of values:
+
+  generate_series(1, 10) -- integers 1 through 10
+  generate_series(1, 100, 5) -- 1, 6, 11, 16... (step of 5)
+  generate_series('2024-01-01'::date, '2024-12-31'::date, '1 day') -- every day of 2024
+  generate_series('2024-01-01'::timestamp, '2024-01-02'::timestamp, '1 hour') -- every hour
+
+Filling gaps in time-series data:
+  SELECT
+    d::date AS date,
+    COALESCE(COUNT(a.id), 0) AS article_count
+  FROM generate_series('2024-01-01'::date, '2024-03-31'::date, '1 day') d
+  LEFT JOIN articles a ON a.published_at::date = d::date AND a.published = true
+  GROUP BY d
+  ORDER BY d;
+
+This shows every day in the range, including days with zero articles. Without generate_series, those days would be missing.
+
+Generating test data:
+  INSERT INTO weather_readings (station_id, temperature, recorded_at)
+  SELECT
+    'STATION-001',
+    60 + random() * 40,
+    ts
+  FROM generate_series('2024-01-01'::timestamp, '2024-12-31'::timestamp, '1 hour') ts;
+
+FULL-TEXT SEARCH
+
+PostgreSQL has built-in full-text search that handles stemming, stop words, ranking, and phrase matching.
+
+Core concepts:
+  to_tsvector('english', 'The quick brown fox') -- creates searchable tokens: 'brown':3 'fox':4 'quick':2
+  to_tsquery('english', 'quick & fox') -- creates search query: 'quick' & 'fox'
+  @@ operator matches: to_tsvector('english', text) @@ to_tsquery('english', 'search terms')
+
+Ranked search:
+  SELECT title, ts_rank(to_tsvector('english', body), query) AS rank
+  FROM articles, to_tsquery('english', 'election & results') query
+  WHERE to_tsvector('english', body) @@ query
+  ORDER BY rank DESC;
+
+GIN index for performance:
+  CREATE INDEX idx_articles_fts ON articles USING GIN (to_tsvector('english', title || ' ' || body));
+
+Stored tsvector column (faster for frequent searches):
+  ALTER TABLE articles ADD COLUMN search_vector tsvector;
+  UPDATE articles SET search_vector = to_tsvector('english', title || ' ' || body);
+  CREATE INDEX idx_articles_search ON articles USING GIN (search_vector);
+  SELECT * FROM articles WHERE search_vector @@ to_tsquery('english', 'election & results');
+
+LISTEN/NOTIFY
+
+PostgreSQL's built-in pub/sub:
+
+  -- In one connection: listen for events
+  LISTEN election_updates;
+
+  -- In another connection: send an event
+  NOTIFY election_updates, '{"precinct": 101, "reporting": 100}';
+
+Practical use with triggers:
+  CREATE FUNCTION notify_result_update() RETURNS TRIGGER AS $$
+  BEGIN
+    PERFORM pg_notify('election_updates', row_to_json(NEW)::text);
+    RETURN NEW;
+  END;
+  $$ LANGUAGE plpgsql;
+
+  CREATE TRIGGER election_notify AFTER INSERT OR UPDATE ON election_results
+  FOR EACH ROW EXECUTE FUNCTION notify_result_update();
+
+ENUM TYPES
+
+  CREATE TYPE article_status AS ENUM ('draft', 'review', 'published', 'archived');
+  CREATE TABLE articles (id SERIAL PRIMARY KEY, status article_status DEFAULT 'draft');
+
+  Adding a value: ALTER TYPE article_status ADD VALUE 'retracted' AFTER 'archived';
+  Note: You cannot easily remove values from an enum. Plan carefully.
+
+================================================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+================================================================================
+
+LESSON-SPECIFIC INSTRUCTIONS FOR NOTEBOOKLM PODCAST HOSTS:
+
+MENTAL MODELS TO FOCUS ON:
+- PostgreSQL as a toolkit. Standard SQL is a language. PostgreSQL is a language PLUS a toolkit. Arrays, JSONB, full-text search, pub/sub -- these are features that normally require separate services (Redis, Elasticsearch, RabbitMQ). PostgreSQL has them built in.
+- JSONB is a JavaScript object in a column. Trevor works with JSON constantly. JSONB operators (-> and ->>) are like JavaScript's dot notation and bracket notation for objects.
+- generate_series is a generator function. It produces values on demand. Combined with LEFT JOIN, it fills gaps in data -- showing zero-count days, empty time slots, missing precincts.
+- Full-text search is built-in Algolia. No external service needed for many use cases. tsvector is the index, tsquery is the search query, @@ matches them together.
+
+JS EQUIVALENTS TO HIGHLIGHT:
+- JSONB -> = obj.key (returns object/array)
+- JSONB ->> = obj.key (returns string)
+- JSONB @> = like a "deep includes" check
+- Array columns = JavaScript arrays
+- ANY() = array.includes()
+- array_agg() = like reduce to build an array
+- unnest() = like flatMap
+- generate_series = generator function / range()
+- LISTEN/NOTIFY = EventEmitter / WebSocket events
+- ENUM = TypeScript enum
+
+INVESTIGATIVE JOURNALISM ANGLE:
+Frame full-text search as the investigative journalist's document search tool: "You have 50,000 pages of court filings. SELECT * WHERE body @@ to_tsquery('fraud & contractor') finds every document mentioning fraud and contractors, ranked by relevance. No Elasticsearch needed. No external service to maintain."
+
+Frame generate_series as the gap-filler: "Your story says 'no complaints were filed in March.' How do you prove a negative? generate_series creates every day, LEFT JOIN fills in counts. Days with zero complaints show up with a count of 0. That is proof of the gap."
+
+Frame JSONB as the flexible data handler: "Government agencies do not agree on data formats. One county reports demographic breakdowns, another does not. JSONB lets you store whatever metadata each county provides without redesigning your schema."
+
+CONNECTIONS TO PREVIOUS/NEXT LESSONS:
+- Connect back to Lesson 07: "JSONB was introduced in Lesson 07. Now we go deep on operators, updates, and indexing."
+- Connect back to Lesson 06: "UPSERT and RETURNING were introduced in Lesson 06. Here we cover advanced patterns."
+- Connect back to Lesson 08: "GIN indexes from this lesson connect to the indexing concepts from Lesson 08."
+- Tease Lesson 10 (Views, Functions & Triggers): "Next, we create reusable database objects -- views that simplify complex queries, functions that encapsulate logic, and triggers that automate actions."
+
+TONE:
+- One host should be excited about PostgreSQL's capabilities: "Most people think they need Elasticsearch for search, Redis for pub/sub, a separate time-series database for generate_series. PostgreSQL does all of this."
+- The other host should ground it in practical use: "So I can add full-text search to my articles table without setting up Algolia? And generate_series fills in my missing dates without JavaScript post-processing?"
+- The LISTEN/NOTIFY section should feel futuristic: "Your database fires an event when data changes, and your dashboard refreshes automatically. No polling."
+
+MEMORIZATION TECHNIQUES:
+- JSONB arrows: -> gives JSON, ->> gives text. "One arrow = JSON, two arrows = text."
+- Array containment: @> means "contains." Think of > as the bigger set containing the smaller.
+- Full-text search trio: tsvector (document), tsquery (search), @@ (match).
+- generate_series: "generate a series of dates/numbers." Always pair with LEFT JOIN for gap-filling.
+- LISTEN/NOTIFY: "LISTEN subscribes, NOTIFY publishes." Database-level pub/sub.

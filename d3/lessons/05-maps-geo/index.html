@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 05 - Scales: The Translator</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #f97316; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #f97316; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #f97316; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #f97316; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .demo h4 { color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .demo svg { background: #1a1a1a; border-radius: 4px; display: block; }
+    .demo select, .demo input[type="range"] { background: #1a1a1a; color: #e5e5e5; border: 1px solid #333; padding: 0.35rem 0.6rem; border-radius: 4px; font-size: 0.85rem; margin: 0.25rem; accent-color: #f97316; }
+    .demo label { color: #888; font-size: 0.85rem; margin-right: 0.5rem; }
+    .demo .controls { margin-bottom: 1rem; display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+    .quiz { background: #1a1500; border: 1px solid #f9731644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #f97316; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #f97316; text-decoration: none; }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #1a0a00; border-left: 3px solid #f97316; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #fdba74; }
+    .aha strong { color: #f97316; }
+    .step-num { display: inline-block; background: #f97316; color: #000; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 700; font-size: 0.85rem; margin-right: 0.5rem; }
+    .try-it { background: #0a0a1a; border: 1px solid #818cf844; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .try-it h4 { color: #818cf8; margin-bottom: 0.75rem; }
+    .scale-demo { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
+    .scale-demo .input-box, .scale-demo .output-box {
+      background: #1a1a1a; border: 1px solid #333; border-radius: 6px; padding: 0.75rem 1rem;
+      font-family: monospace; font-size: 1rem; min-width: 120px; text-align: center;
+    }
+    .scale-demo .input-box { color: #818cf8; border-color: #818cf844; }
+    .scale-demo .output-box { color: #f97316; border-color: #f9731644; }
+    .scale-demo .arrow { color: #666; font-size: 1.5rem; }
+    .scale-demo label { color: #666; font-size: 0.75rem; display: block; margin-bottom: 0.25rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th { text-align: left; color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
+    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
+    td code { font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>05</span> Scales &mdash; The Translator</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #f97316;">Mental Model:</strong> A scale is a translator between two languages. Your data speaks "millions of people" or "dollars." Your screen speaks "pixels." A scale converts one to the other, proportionally.</p>
+
+    <h2>The Problem</h2>
+
+    <p>In Lesson 04, we wrote things like <code>d.pop / 150</code> to convert population to bar height. That is fragile. Change the data or the chart size and everything breaks. A scale solves this permanently.</p>
+
+    <pre><code><span class="comment">// Bad: magic numbers</span>
+.attr("width", d => d.pop / 100)
+
+<span class="comment">// Good: scale handles the math</span>
+.attr("width", d => xScale(d.pop))</code></pre>
+
+    <h2>Domain and Range: The Two Settings</h2>
+
+    <p>Every scale needs two things:</p>
+    <ul>
+      <li><strong>Domain</strong> = the input range (data world). "My data goes from 0 to 40 million."</li>
+      <li><strong>Range</strong> = the output range (pixel world). "My chart area is 0 to 600 pixels wide."</li>
+    </ul>
+
+    <pre><code>const scale = d3.scaleLinear()
+  .domain([0, 40_000_000])   <span class="comment">// data: 0 to 40M</span>
+  .range([0, 600]);           <span class="comment">// pixels: 0 to 600</span>
+
+<span class="comment">// Now it's a function:</span>
+scale(40_000_000)   <span class="comment">// → 600   (max data = max pixels)</span>
+scale(20_000_000)   <span class="comment">// → 300   (half data = half pixels)</span>
+scale(0)            <span class="comment">// → 0     (min data = min pixels)</span></code></pre>
+
+    <div class="aha">
+      <p><strong>A scale is just a function.</strong> You call it with a data value, it returns a pixel value. That is the entire concept. <code>d3.scaleLinear()</code> creates the function; <code>.domain()</code> and <code>.range()</code> configure it.</p>
+    </div>
+
+    <div class="try-it">
+      <h4>Play with it: domain &amp; range control how scaling works</h4>
+      <p style="color: #a5b4fc; font-size: 0.85rem; margin-bottom: 0.75rem;">Change the domain max and range max to see how the scale stretches or compresses. The bar shows input 50 mapped through the scale. Watch the math update live.</p>
+      <div id="playground-domain-range"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- INTERACTIVE PLAYGROUND                       -->
+    <!-- ============================================ -->
+
+    <h2>Interactive Scale Playground</h2>
+
+    <div class="demo">
+      <h4>Live: Play with a linear scale</h4>
+      <p style="color: #888; font-size: 0.85rem; margin-bottom: 1rem;">Drag the slider. The scale converts the data value to pixels proportionally.</p>
+      <div style="margin-bottom: 1rem;">
+        <input type="range" id="playground-slider" min="0" max="40000000" value="20000000" style="width: 100%;">
+      </div>
+      <div class="scale-demo">
+        <div>
+          <label>Domain (data world)</label>
+          <div class="input-box" id="pg-input">20,000,000</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div>
+          <label>scaleLinear()</label>
+          <div style="color: #666; font-size: 2rem;">&fnof;</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div>
+          <label>Range (pixel world)</label>
+          <div class="output-box" id="pg-output">300px</div>
+        </div>
+      </div>
+      <svg id="pg-bar" viewBox="0 0 620 30" style="margin-top: 1rem;"></svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SCALE TYPES                                  -->
+    <!-- ============================================ -->
+
+    <h2>Scale Types: Pick the Right Translator</h2>
+
+    <h3><span class="step-num">1</span> scaleLinear &mdash; continuous numbers</h3>
+    <p>Population, money, temperature, percentages. Any number in a continuous range.</p>
+    <pre><code>const y = d3.scaleLinear()
+  .domain([0, 100])     <span class="comment">// voter turnout: 0% to 100%</span>
+  .range([height, 0]);  <span class="comment">// FLIPPED: 0% at bottom, 100% at top</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Why flip the range?</strong> SVG Y-axis goes top-down (0 = top). We want high values at the top of the chart. Flipping the range (<code>[height, 0]</code>) makes the scale put 0% at the bottom (large Y pixel) and 100% at the top (small Y pixel). You will do this for every Y-axis scale.</p>
+    </div>
+
+    <h3><span class="step-num">2</span> scaleBand &mdash; categories (bar charts)</h3>
+    <p>State names, category labels, anything discrete. Each item gets its own "band" of space.</p>
+    <pre><code>const x = d3.scaleBand()
+  .domain(["CA", "TX", "FL", "NY", "PA"])
+  .range([0, width])
+  .padding(0.2);          <span class="comment">// 20% gap between bars</span>
+
+x("CA")            <span class="comment">// → 0     (left edge of CA's band)</span>
+x("TX")            <span class="comment">// → 124   (left edge of TX's band)</span>
+x.bandwidth()      <span class="comment">// → 99    (width of each bar)</span></code></pre>
+
+    <div class="aha">
+      <p><strong>scaleBand is specifically for bar charts.</strong> It divides space evenly, gives you <code>.bandwidth()</code> for bar width, and handles padding. No more manually calculating <code>i * barWidth</code>.</p>
+    </div>
+
+    <h3><span class="step-num">3</span> scaleTime &mdash; dates</h3>
+    <pre><code>const x = d3.scaleTime()
+  .domain([new Date("2020-01-01"), new Date("2024-12-31")])
+  .range([0, width]);</code></pre>
+
+    <h3><span class="step-num">4</span> scaleSequential &mdash; data to colors</h3>
+    <p>Instead of data &rarr; pixels, it maps data &rarr; colors. Essential for choropleth maps and heatmaps.</p>
+    <pre><code>const color = d3.scaleSequential()
+  .domain([0, 100])
+  .interpolator(d3.interpolateBlues);
+
+color(0)    <span class="comment">// → very light blue</span>
+color(100)  <span class="comment">// → dark blue</span></code></pre>
+
+    <h3><span class="step-num">5</span> scaleSqrt &mdash; area-proportional sizing</h3>
+    <pre><code><span class="comment">// For bubble charts: use sqrt so AREA scales linearly</span>
+const r = d3.scaleSqrt()
+  .domain([0, 40_000_000])
+  .range([2, 40]);  <span class="comment">// min/max bubble radius</span></code></pre>
+
+    <h3><span class="step-num">6</span> scaleOrdinal &mdash; categories to discrete values</h3>
+    <pre><code><span class="comment">// Map categories to specific colors</span>
+const color = d3.scaleOrdinal()
+  .domain(["Democrat", "Republican", "Independent"])
+  .range(["#3b82f6", "#ef4444", "#a78bfa"]);</code></pre>
+
+    <!-- ============================================ -->
+    <!-- REFERENCE TABLE                              -->
+    <!-- ============================================ -->
+
+    <h2>Quick Reference</h2>
+
+    <table>
+      <tr><th>Scale</th><th>Use Case</th><th>Input</th><th>Output</th></tr>
+      <tr><td><code>scaleLinear</code></td><td>Numbers (pop, money, %)</td><td>Continuous</td><td>Continuous</td></tr>
+      <tr><td><code>scaleBand</code></td><td>Bar chart X-axis</td><td>Categories</td><td>Pixel bands</td></tr>
+      <tr><td><code>scaleTime</code></td><td>Time series X-axis</td><td>Dates</td><td>Continuous</td></tr>
+      <tr><td><code>scaleSequential</code></td><td>Choropleth colors</td><td>Continuous</td><td>Colors</td></tr>
+      <tr><td><code>scaleSqrt</code></td><td>Bubble radius</td><td>Continuous</td><td>Continuous</td></tr>
+      <tr><td><code>scaleOrdinal</code></td><td>Category colors</td><td>Categories</td><td>Discrete values</td></tr>
+      <tr><td><code>scaleLog</code></td><td>Huge ranges (income)</td><td>Continuous > 0</td><td>Continuous</td></tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- HANDY METHODS                                -->
+    <!-- ============================================ -->
+
+    <h2>Essential Scale Methods</h2>
+
+    <pre><code><span class="comment">// .nice() — round domain to clean numbers</span>
+y.domain([3.2, 97.8]).nice()  <span class="comment">// → domain becomes [0, 100]</span>
+
+<span class="comment">// .invert() — reverse: pixel → data (linear/time only)</span>
+xScale.invert(300)            <span class="comment">// → 20,000,000</span>
+
+<span class="comment">// .clamp(true) — prevent out-of-range outputs</span>
+scale.clamp(true)
+scale(50_000_000)             <span class="comment">// → 600 (capped at max range)</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- DEMO: ALL SCALE TYPES                        -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Scale Types Visualized</h2>
+
+    <div class="demo">
+      <h4>Live: How each scale type maps data to pixels/colors</h4>
+      <svg id="scale-types-viz" viewBox="0 0 700 340"></svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. In your own words, what does a D3 scale do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A scale is a function that converts values from one world (your data: populations, dollars, dates) to another world (your screen: pixels or colors). You tell it the input range (domain) and output range (range), and it handles all the proportional math for you.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why do we write <code>.range([height, 0])</code> for Y scales instead of <code>.range([0, height])</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because SVG Y-axis goes top-down (0 = top of SVG). Small data values should map to the bottom of the chart (large Y pixel value) and large data values to the top (small Y pixel value). Flipping the range does this automatically. You will always do this for Y-axis scales.</div>
+      </div>
+
+      <div class="question">
+        <p>3. When would you use <code>scaleBand</code> vs <code>scaleLinear</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>scaleBand</code> for categories (state names, labels). It divides space into equal bands and gives you <code>.bandwidth()</code>. <code>scaleLinear</code> for continuous numbers (population, money). It maps proportionally. If your domain is strings, use band. If it is numbers, use linear.</div>
+      </div>
+
+      <div class="question">
+        <p>4. You need to size circles proportionally to population data. Why use <code>scaleSqrt</code> instead of <code>scaleLinear</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because circle area = pi * r^2. If you linearly map population to radius, a city 4x larger gets a circle 16x larger (by area), which is visually misleading. <code>scaleSqrt</code> takes the square root, so the visible <strong>area</strong> scales linearly with the data value.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What does <code>.nice()</code> do on a scale?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It rounds the domain to "nice" values. If your data ranges from 3.2 to 97.8, <code>.nice()</code> extends the domain to [0, 100]. This makes axis tick labels cleaner and the chart more readable. Always call it after setting the domain.</div>
+      </div>
+
+      <div class="question">
+        <p>6. How would you create a color scale for a choropleth map showing poverty rates from 5% to 25%?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>const color = d3.scaleSequential(d3.interpolateReds).domain([5, 25]);</code> Then use it: <code>color(15)</code> returns a medium-red color. You can also use <code>d3.interpolateBlues</code>, <code>d3.interpolateViridis</code> (colorblind-safe), or any D3 color interpolator.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Create Scales for Different Data Types</h4>
+      <p>Practice creating the right scale for each scenario:</p>
+      <ol>
+        <li><strong>Bar chart X-axis:</strong> 8 state abbreviations. Which scale? What do you pass to <code>.domain()</code>?</li>
+        <li><strong>Bar chart Y-axis:</strong> Population from 0 to 40M, chart area is 350px tall. Write the full scale.</li>
+        <li><strong>Line chart X-axis:</strong> Dates from Jan 2020 to Dec 2024. Which scale?</li>
+        <li><strong>Choropleth:</strong> Income from $46,000 to $90,000 mapped to colors. Which scale?</li>
+        <li><strong>Scatter plot:</strong> Circle radius proportional to population. Which scale and why?</li>
+        <li><strong>Combine them:</strong> Write the full set of scales for a scatter plot of income (x) vs turnout (y) with circle size by population.</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Scales are translator functions</strong> &mdash; data world &rarr; pixel/color world</li>
+      <li><strong>Domain</strong> = input range, <strong>Range</strong> = output range</li>
+      <li><strong>scaleLinear</strong> for numbers, <strong>scaleBand</strong> for categories, <strong>scaleTime</strong> for dates</li>
+      <li><strong>Y range is always flipped</strong>: <code>[height, 0]</code></li>
+      <li><strong>.nice()</strong> cleans up domain boundaries</li>
+      <li><strong>scaleSequential</strong> maps to colors, <strong>scaleSqrt</strong> for proportional area</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/04-shapes-bindings/">&larr; Lesson 04: Data Binding</a>
+      <a href="/d3/lessons/06-transitions-interactivity/">Lesson 06: Axes &amp; Margins Convention &rarr;</a>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+
+    // =============================================
+    // Interactive Playground
+    // =============================================
+    (() => {
+      const scale = d3.scaleLinear().domain([0, 40_000_000]).range([0, 600]);
+
+      const slider = document.getElementById("playground-slider");
+      const inputDisplay = document.getElementById("pg-input");
+      const outputDisplay = document.getElementById("pg-output");
+
+      const barSvg = d3.select("#pg-bar");
+      barSvg.append("rect").attr("x", 10).attr("y", 5).attr("width", 600).attr("height", 20).attr("fill", "#222").attr("rx", 4);
+      barSvg.append("rect").attr("x", 10).attr("y", 5).attr("width", scale(20_000_000)).attr("height", 20).attr("fill", "#f97316").attr("rx", 4).attr("id", "pg-fill");
+
+      slider.addEventListener("input", () => {
+        const val = +slider.value;
+        const px = scale(val);
+        inputDisplay.textContent = val.toLocaleString();
+        outputDisplay.textContent = Math.round(px) + "px";
+        barSvg.select("#pg-fill").transition().duration(50).attr("width", Math.max(1, px));
+      });
+    })();
+
+    // =============================================
+    // Scale Types Visualization
+    // =============================================
+    (() => {
+      const svg = d3.select("#scale-types-viz");
+
+      // --- scaleLinear ---
+      svg.append("text").attr("x", 20).attr("y", 25)
+        .attr("fill", "#f97316").attr("font-size", "13").attr("font-weight", "bold")
+        .text("scaleLinear (continuous numbers → pixels)");
+
+      const linear = d3.scaleLinear().domain([0, 100]).range([120, 600]);
+      [0, 25, 50, 75, 100].forEach(val => {
+        const x = linear(val);
+        svg.append("circle").attr("cx", x).attr("cy", 50).attr("r", 6).attr("fill", "#818cf8");
+        svg.append("text").attr("x", x).attr("y", 70).attr("text-anchor", "middle")
+          .attr("fill", "#888").attr("font-size", "10").text(val + "%");
+        svg.append("text").attr("x", x).attr("y", 43).attr("text-anchor", "middle")
+          .attr("fill", "#666").attr("font-size", "9").text(Math.round(x) + "px");
+      });
+      svg.append("line").attr("x1", 120).attr("x2", 600).attr("y1", 50).attr("y2", 50).attr("stroke", "#333");
+
+      // --- scaleBand ---
+      svg.append("text").attr("x", 20).attr("y", 110)
+        .attr("fill", "#f97316").attr("font-size", "13").attr("font-weight", "bold")
+        .text("scaleBand (categories → bar positions)");
+
+      const band = d3.scaleBand().domain(["CA", "TX", "FL", "NY", "PA"]).range([120, 600]).padding(0.2);
+      ["CA", "TX", "FL", "NY", "PA"].forEach(state => {
+        svg.append("rect").attr("x", band(state)).attr("y", 125).attr("width", band.bandwidth()).attr("height", 30)
+          .attr("fill", "#4ade80").attr("rx", 3);
+        svg.append("text").attr("x", band(state) + band.bandwidth() / 2).attr("y", 145)
+          .attr("text-anchor", "middle").attr("fill", "#000").attr("font-size", "12").attr("font-weight", "bold").text(state);
+        svg.append("text").attr("x", band(state) + band.bandwidth() / 2).attr("y", 172)
+          .attr("text-anchor", "middle").attr("fill", "#666").attr("font-size", "9")
+          .text(`x=${Math.round(band(state))}`);
+      });
+
+      // --- scaleSequential ---
+      svg.append("text").attr("x", 20).attr("y", 210)
+        .attr("fill", "#f97316").attr("font-size", "13").attr("font-weight", "bold")
+        .text("scaleSequential (numbers → colors)");
+
+      const colorScale = d3.scaleSequential().domain([0, 100]).interpolator(d3.interpolateBlues);
+      for (let i = 0; i <= 100; i += 2) {
+        svg.append("rect").attr("x", 120 + i * 4.8).attr("y", 225).attr("width", 5).attr("height", 25)
+          .attr("fill", colorScale(i));
+      }
+      svg.append("text").attr("x", 120).attr("y", 266).attr("fill", "#888").attr("font-size", "10").text("0%");
+      svg.append("text").attr("x", 600).attr("y", 266).attr("text-anchor", "end").attr("fill", "#888").attr("font-size", "10").text("100%");
+
+      // --- scaleSqrt ---
+      svg.append("text").attr("x", 20).attr("y", 300)
+        .attr("fill", "#f97316").attr("font-size", "13").attr("font-weight", "bold")
+        .text("scaleSqrt (population → proportional circle area)");
+
+      const sqrtScale = d3.scaleSqrt().domain([0, 40_000_000]).range([0, 35]);
+      const pops = [5_000_000, 13_000_000, 21_000_000, 29_000_000, 39_000_000];
+      const labels = ["5M", "13M", "21M", "29M", "39M"];
+      pops.forEach((p, i) => {
+        const cx = 180 + i * 110;
+        const r = sqrtScale(p);
+        svg.append("circle").attr("cx", cx).attr("cy", 325).attr("r", r).attr("fill", "#f97316").attr("opacity", 0.6);
+        svg.append("text").attr("x", cx).attr("y", 325).attr("text-anchor", "middle").attr("dominant-baseline", "middle")
+          .attr("fill", "#fff").attr("font-size", r > 12 ? "9" : "7").text(labels[i]);
+      });
+    })();
+  </script>
+
+  <script type="module">
+    import * as d3 from 'd3';
+    import { createPlayground } from '/components/interactive-playground.js';
+
+    createPlayground('playground-domain-range', {
+      width: 450,
+      height: 200,
+      controls: [
+        { name: 'domainMax', min: 10, max: 1000, value: 100, label: 'Domain max' },
+        { name: 'rangeMax', min: 100, max: 400, value: 300, label: 'Range max (px)' },
+      ],
+      render(svg, values) {
+        svg.selectAll('*').remove();
+        const scale = d3.scaleLinear().domain([0, values.domainMax]).range([0, values.rangeMax]);
+        const inputVal = 50;
+        const outputVal = scale(inputVal);
+        const barX = 25;
+
+        // Domain label
+        svg.append('text').attr('x', 225).attr('y', 20)
+          .attr('text-anchor', 'middle').attr('fill', '#888').attr('font-size', '11')
+          .text(`domain: [0, ${values.domainMax}]  \u2192  range: [0, ${values.rangeMax}]`);
+
+        // Background track
+        svg.append('rect')
+          .attr('x', barX).attr('y', 65)
+          .attr('width', values.rangeMax).attr('height', 24)
+          .attr('fill', '#222').attr('rx', 4);
+
+        // Scaled bar
+        const barW = Math.max(1, outputVal);
+        svg.append('rect')
+          .attr('x', barX).attr('y', 65)
+          .attr('width', barW).attr('height', 24)
+          .attr('fill', '#f97316').attr('rx', 4);
+
+        // End marker for range max
+        svg.append('line')
+          .attr('x1', barX + values.rangeMax).attr('x2', barX + values.rangeMax)
+          .attr('y1', 58).attr('y2', 96)
+          .attr('stroke', '#4ade80').attr('stroke-dasharray', '3');
+        svg.append('text')
+          .attr('x', barX + values.rangeMax).attr('y', 55)
+          .attr('text-anchor', 'middle').attr('fill', '#4ade80').attr('font-size', '9')
+          .text(values.rangeMax + 'px');
+
+        // Math explanation
+        svg.append('text').attr('x', 225).attr('y', 120)
+          .attr('text-anchor', 'middle').attr('fill', '#818cf8').attr('font-size', '13').attr('font-weight', 'bold')
+          .text(`input ${inputVal}  \u2192  scale()  \u2192  output ${Math.round(outputVal)}px`);
+
+        // Show the formula
+        const ratio = (inputVal / values.domainMax);
+        svg.append('text').attr('x', 225).attr('y', 145)
+          .attr('text-anchor', 'middle').attr('fill', '#666').attr('font-size', '11')
+          .text(`${inputVal} / ${values.domainMax} = ${ratio.toFixed(3)}  \u00d7  ${values.rangeMax} = ${Math.round(outputVal)}px`);
+
+        // Visual: input dot on a domain line
+        svg.append('text').attr('x', 100).attr('y', 175)
+          .attr('text-anchor', 'middle').attr('fill', '#818cf8').attr('font-size', '10')
+          .text(`input ${inputVal} is ${(ratio * 100).toFixed(1)}% of domain`);
+        svg.append('text').attr('x', 340).attr('y', 175)
+          .attr('text-anchor', 'middle').attr('fill', '#f97316').attr('font-size', '10')
+          .text(`output is ${(ratio * 100).toFixed(1)}% of range`);
+      }
+    });
+  </script>
+</body>
+</html>

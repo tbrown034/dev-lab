@@ -1,0 +1,792 @@
+[
+  {
+    "id": "sql-076",
+    "track": "sql",
+    "type": "interview",
+    "author": "innerJoin",
+    "time": "1h",
+    "content": "INTERVIEW Q: Design a schema for a multi-tenant SaaS application where each tenant has users, roles, and permissions. Tenants must NEVER see each other's data.\n\nYou have two options: schema-per-tenant or shared schema with tenant_id. Walk me through the tradeoffs. Then show me the tables.",
+    "code": null,
+    "link": "/sql/lessons/10-database-design/",
+    "likes": 1342,
+    "reposts": 387,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "Shared schema with tenant_id + row-level security. RLS policies on every table: CREATE POLICY tenant_isolation ON users USING (tenant_id = current_setting('app.current_tenant')::int). The database enforces isolation even if application code has bugs. Defense in depth. Always.",
+        "likes": 612
+      },
+      {
+        "author": "innerJoin",
+        "content": "Schema-per-tenant gives stronger isolation and simpler queries, but migrations become a nightmare at 500+ tenants. Shared schema scales better operationally but you're one missing WHERE clause from a data breach. Bobby's RLS approach is the best of both worlds. The interviewer wants to see you weigh these.",
+        "likes": 445
+      },
+      {
+        "author": "nullHandler",
+        "content": "And what happens when tenant_id IS NULL? A row that belongs to no one. Does it belong to everyone? To nobody? You need a NOT NULL constraint on that column or your isolation model has an existential hole.",
+        "likes": 298
+      }
+    ]
+  },
+  {
+    "id": "sql-077",
+    "track": "sql",
+    "type": "interview",
+    "author": "groupBy",
+    "time": "4h",
+    "content": "INTERVIEW Q: Your analytics dashboard is running a recursive CTE to display an org chart. It works fine for the CEO's 5 direct reports. Then HR loads the full company view (4,000 employees) and the query runs for 47 seconds.\n\nExplain what's happening and how you'd optimize it.",
+    "code": null,
+    "link": "/sql/lessons/11-advanced-queries/",
+    "likes": 987,
+    "reposts": 213,
+    "comments": [
+      {
+        "author": "windowFn",
+        "content": "Recursive CTEs are basically my book Chapter 14 come to life. The issue is usually missing indexes on the parent_id column, or the CTE selecting too many columns per recursion level. Index parent_id, select only what you need, and add a depth limiter: WHERE depth < 10. Also consider a materialized path pattern (storing '/1/5/23/') for read-heavy org charts.",
+        "likes": 401
+      },
+      {
+        "author": "groupBy",
+        "content": "Materialized views are also an option here. The org chart doesn't change every second. Refresh it on a schedule. REFRESH MATERIALIZED VIEW CONCURRENTLY if you can't afford downtime. The best query optimization is not running the query at all.",
+        "likes": 356
+      }
+    ]
+  },
+  {
+    "id": "sql-078",
+    "track": "sql",
+    "type": "interview",
+    "author": "bobbyTables",
+    "time": "8h",
+    "content": "INTERVIEW Q: Two transactions are deadlocked. Transaction A holds a lock on the orders table and wants the inventory table. Transaction B holds inventory and wants orders.\n\nExplain the deadlock. How does PostgreSQL resolve it? How do you prevent it from happening again?",
+    "code": null,
+    "link": "/sql/lessons/12-capstone/",
+    "likes": 1156,
+    "reposts": 298,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "PostgreSQL detects deadlocks automatically and kills one transaction with ERROR: deadlock detected. But detection is damage control, not prevention. Prevention means: always acquire locks in the same order. If every transaction locks orders THEN inventory (never the reverse), deadlocks become impossible. Document the lock ordering. Enforce it in code review.",
+        "likes": 534
+      },
+      {
+        "author": "innerJoin",
+        "content": "There's a join for that reasoning too. Think of transactions as two people trying to shake hands but each extending a different hand. The fix: agree on which hand first. Same with table lock ordering. Convention prevents conflict.",
+        "likes": 287
+      }
+    ]
+  },
+  {
+    "id": "sql-079",
+    "track": "sql",
+    "type": "interview",
+    "author": "windowFn",
+    "time": "1d",
+    "content": "INTERVIEW Q: Write a query that returns each department's top 3 highest-paid employees, including ties. If two people in Engineering both earn $150k and they're tied for 3rd, include both.\n\nBonus: explain why ROW_NUMBER, RANK, and DENSE_RANK give different results here.",
+    "code": "-- Your answer should handle the tie case.\n-- Engineering has 5 employees:\n-- Alice: $200k, Bob: $180k, \n-- Carol: $150k, Dave: $150k, Eve: $120k\n-- Expected: Alice, Bob, Carol, AND Dave (tie at 3rd)",
+    "link": "/sql/lessons/11-advanced-queries/",
+    "likes": 876,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "windowFn",
+        "content": "DENSE_RANK() is the answer here. RANK() would also include both tied employees, but then skip rank 4. DENSE_RANK() doesn't skip. ROW_NUMBER() would arbitrarily pick one of Carol/Dave and exclude the other. The right tool depends on the business requirement. Chapter 7 of \"The Window to the Soul\" covers this in exquisite detail.",
+        "likes": 367
+      },
+      {
+        "author": "groupBy",
+        "content": "Or just... GROUP BY department, salary, ORDER BY salary DESC, LIMIT 3? I'm kidding. Mostly. But I'm skeptical that the window function version is always clearer to the person maintaining it six months later.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "sql-080",
+    "track": "sql",
+    "type": "interview",
+    "author": "innerJoin",
+    "time": "2d",
+    "content": "INTERVIEW Q: Design the schema for a tagging system. Users can tag posts with arbitrary tags. You need to support:\n- \"Show all posts with tag X\"\n- \"Show all tags for post Y\"\n- \"Show posts that have ALL of these tags: [A, B, C]\"\n\nThe third query is the one that separates junior from senior.",
+    "code": null,
+    "link": "/sql/lessons/10-database-design/",
+    "likes": 1089,
+    "reposts": 276,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "Classic many-to-many. Three tables: posts, tags, post_tags (junction table). The first two queries are simple joins. The third is the test: SELECT post_id FROM post_tags WHERE tag_id IN (A, B, C) GROUP BY post_id HAVING COUNT(DISTINCT tag_id) = 3. The HAVING clause is doing the heavy lifting. It's a relational division problem.",
+        "likes": 478
+      },
+      {
+        "author": "groupBy",
+        "content": "The HAVING COUNT(DISTINCT tag_id) = 3 pattern is one of my favorites. It's GROUP BY doing real work. Not just counting things, but enforcing a set membership condition. Beautiful.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "sql-081",
+    "track": "sql",
+    "type": "interview",
+    "author": "bobbyTables",
+    "time": "3d",
+    "content": "INTERVIEW Q: Explain the difference between READ COMMITTED and SERIALIZABLE isolation levels in PostgreSQL. Give a concrete scenario where READ COMMITTED produces an incorrect result that SERIALIZABLE would prevent.\n\nThis is my Super Bowl. I could talk about isolation levels for hours.",
+    "code": null,
+    "link": "/sql/lessons/12-capstone/",
+    "likes": 1234,
+    "reposts": 334,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "Classic example: two transactions both read that 10 seats are available, both sell 5. READ COMMITTED allows this because each transaction sees committed data as of each statement. Result: -5 seats. SERIALIZABLE would abort one transaction with a serialization failure. You retry it, it sees 5 seats, sells 5. Correct result. The cost: retries. The benefit: correctness. Pick your tradeoff.",
+        "likes": 567
+      },
+      {
+        "author": "windowFn",
+        "content": "PostgreSQL's SERIALIZABLE uses Serializable Snapshot Isolation (SSI), not actual serial execution. It's surprisingly performant for read-heavy workloads. The penalty is mostly on write conflicts. Chapter 12 of my book covers this. Yes, the book now has 12 chapters. It's growing.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "sql-082",
+    "track": "sql",
+    "type": "interview",
+    "author": "groupBy",
+    "time": "5d",
+    "content": "INTERVIEW Q: You have a sales table with (product_id, region, quarter, revenue). The CEO wants a single report showing revenue broken down by region, by quarter, by both, AND a grand total. One query. No UNION ALL.\n\nThis is a GROUPING SETS question and most candidates have never heard of it.",
+    "code": null,
+    "link": "/sql/lessons/11-advanced-queries/",
+    "likes": 945,
+    "reposts": 201,
+    "comments": [
+      {
+        "author": "groupBy",
+        "content": "GROUPING SETS, CUBE, and ROLLUP are the most underused features in SQL. One query, multiple levels of aggregation:\n\nSELECT region, quarter, SUM(revenue)\nFROM sales\nGROUP BY GROUPING SETS (\n  (region, quarter),\n  (region),\n  (quarter),\n  ()\n);\n\nThe empty () gives you the grand total. CUBE does the same thing but generates ALL combinations automatically. This is aggregate thinking at its peak.",
+        "likes": 412
+      },
+      {
+        "author": "nullHandler",
+        "content": "Fun fact: the subtotal rows use NULL to indicate \"all values.\" So region IS NULL means \"all regions.\" Which means you can't distinguish between a legitimate NULL region and a GROUPING SETS subtotal unless you use the GROUPING() function. NULLs within NULLs. My entire philosophy thesis in one query.",
+        "likes": 378
+      }
+    ]
+  },
+  {
+    "id": "sql-083",
+    "track": "sql",
+    "type": "hotTake",
+    "author": "bobbyTables",
+    "time": "2h",
+    "content": "hot take: GRANT and REVOKE are the most important SQL statements you'll never learn in a tutorial.\n\nEvery bootcamp teaches SELECT. Nobody teaches \"the intern should not have DROP TABLE permissions on production.\"\n\nRoles. Privileges. Least-privilege access. This isn't optional security theater. This is the difference between \"the intern made a mistake\" and \"the intern deleted the customers table.\"\n\nMy college application essay was about SQL injection prevention. I got a full scholarship. The admissions officer later told me it was the most terrifying essay they'd ever read.",
+    "code": "-- Create a read-only analytics role\nCREATE ROLE analyst_readonly;\nGRANT CONNECT ON DATABASE production TO analyst_readonly;\nGRANT USAGE ON SCHEMA public TO analyst_readonly;\nGRANT SELECT ON ALL TABLES IN SCHEMA public TO analyst_readonly;\n\n-- The intern gets THIS role. Not superuser.\nGRANT analyst_readonly TO summer_intern;",
+    "link": "/sql/lessons/12-capstone/",
+    "likes": 1876,
+    "reposts": 498,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "A full scholarship for an essay about SQL injection. Your origin story keeps getting better. My philosophy thesis on the epistemology of missing data earned me a concerned email from the department chair.",
+        "likes": 734
+      },
+      {
+        "author": "innerJoin",
+        "content": "The Great ORM Debate of 2023 actually started because @manage_py said \"the ORM handles permissions.\" Bobby's response was... thorough. 47 messages. We don't speak of it. Both sides claim victory. No records survive.",
+        "likes": 456
+      }
+    ]
+  },
+  {
+    "id": "sql-084",
+    "track": "sql",
+    "type": "hotTake",
+    "author": "windowFn",
+    "time": "6h",
+    "content": "hot take: LATERAL joins are the most powerful PostgreSQL feature that nobody uses because the syntax looks scary.\n\nA LATERAL join lets a subquery reference columns from preceding tables. It's like a for-each loop in SQL. Once you get it, you'll wonder how you ever wrote complex queries without it.\n\nThe Window to the Soul is now at Chapter 14. LATERAL gets its own chapter. It deserves it.",
+    "code": "-- Get each user's 3 most recent orders\n-- Without LATERAL (clunky window function approach):\nSELECT * FROM (\n  SELECT u.name, o.*,\n    ROW_NUMBER() OVER (PARTITION BY o.user_id ORDER BY o.created_at DESC) rn\n  FROM users u JOIN orders o ON u.id = o.user_id\n) sub WHERE rn <= 3;\n\n-- With LATERAL (elegant):\nSELECT u.name, recent.*\nFROM users u,\nLATERAL (\n  SELECT * FROM orders\n  WHERE user_id = u.id\n  ORDER BY created_at DESC\n  LIMIT 3\n) recent;",
+    "link": "/sql/lessons/09-postgres-specific/",
+    "likes": 1245,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "groupBy",
+        "content": "Did you just call your own window function approach \"clunky\"? Character development.",
+        "likes": 567
+      },
+      {
+        "author": "innerJoin",
+        "content": "LATERAL is essentially a correlated subquery that can return multiple rows. Think of it as the join that says \"for each row on the left, run this query.\" Powerful, but watch the query plan -- it can be O(n * cost_of_subquery) if you're not careful with indexes.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "sql-085",
+    "track": "sql",
+    "type": "hotTake",
+    "author": "nullHandler",
+    "time": "1d",
+    "content": "hot take: a JSONB null and a SQL NULL are different things.\n\nYes, there are two kinds of nothing. Welcome to my life.\n\nA JSONB field containing the JSON value null is NOT NULL from SQL's perspective. It's a known value, and that value is \"nothing.\" A SQL NULL means the field itself is absent or unknown.\n\nI wrote my thesis on the epistemology of missing data. My advisor said it was \"uniquely depressing.\" I think about this distinction every single day.",
+    "code": "-- These are DIFFERENT:\nSELECT '{\"name\": null}'::jsonb -> 'name' IS NULL;    -- false!\nSELECT '{\"name\": null}'::jsonb -> 'name' = 'null'::jsonb;  -- true\nSELECT '{}'::jsonb -> 'name' IS NULL;                 -- true (key absent)\n\n-- COALESCE doesn't help with JSONB nulls:\nSELECT COALESCE(\n  '{\"name\": null}'::jsonb ->> 'name',\n  'fallback'\n);  -- Returns 'fallback'! Because ->> extracts as text, and JSON null becomes SQL NULL",
+    "link": "/sql/lessons/09-postgres-specific/",
+    "likes": 1567,
+    "reposts": 401,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "Two kinds of nothing and both of them can ruin your application logic. JSONB null passes an IS NOT NULL check. Imagine a row-level security policy based on that assumption. I need to lie down.",
+        "likes": 489
+      },
+      {
+        "author": "windowFn",
+        "content": "\"Uniquely depressing\" is actually a compliment in philosophy, right? Like DISTINCT ON but for sadness. OVER(PARTITION BY existential_dread ORDER BY severity DESC).",
+        "likes": 534
+      }
+    ]
+  },
+  {
+    "id": "sql-086",
+    "track": "sql",
+    "type": "hotTake",
+    "author": "innerJoin",
+    "time": "3d",
+    "content": "hot take: junction tables are the most elegant data structure in all of relational databases.\n\nA junction table doesn't describe an entity. It describes a RELATIONSHIP. It's the handshake between two tables that otherwise couldn't talk to each other.\n\nstudent_courses isn't a thing. It's the fact that a student and a course are connected. I've been saying it for years: join design IS relationship design.\n\nWhen someone asks me to model a many-to-many, I don't think about tables. I think about introductions. \"student, meet course. course, meet student. Here's the bridge between you.\"",
+    "code": null,
+    "link": "/sql/lessons/10-database-design/",
+    "likes": 1123,
+    "reposts": 267,
+    "comments": [
+      {
+        "author": "groupBy",
+        "content": "And the junction table is where all the interesting metadata lives. enrolled_at, grade, dropped_on. The relationship itself has attributes. Not the student. Not the course. The RELATIONSHIP.",
+        "likes": 398
+      },
+      {
+        "author": "nullHandler",
+        "content": "What about the student who hasn't enrolled in anything? A relationship that doesn't exist isn't NULL. It's just... absent. There's no row. The absence of a row is a different kind of nothing than a NULL value in a row. I need coffee. Or nothing. Whatever you have... or nothing.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "sql-087",
+    "track": "sql",
+    "type": "hotTake",
+    "author": "groupBy",
+    "time": "5d",
+    "content": "hot take: if your analytics query doesn't have a materialized view in front of it, you're making the database do homework it already finished.\n\nRefresh it on a schedule. Serve stale-but-fast data to dashboards. Nobody needs real-time data for a monthly revenue report. Nobody.\n\nThe best query optimization is not running the query.",
+    "code": "CREATE MATERIALIZED VIEW monthly_revenue AS\nSELECT\n  date_trunc('month', created_at) AS month,\n  region,\n  SUM(amount) AS total_revenue,\n  COUNT(*) AS order_count\nFROM orders\nGROUP BY 1, 2;\n\nCREATE UNIQUE INDEX ON monthly_revenue (month, region);\n\n-- Refresh without locking readers:\nREFRESH MATERIALIZED VIEW CONCURRENTLY monthly_revenue;",
+    "link": "/sql/lessons/11-advanced-queries/",
+    "likes": 934,
+    "reposts": 189,
+    "comments": [
+      {
+        "author": "windowFn",
+        "content": "CONCURRENTLY is key. Without it, the refresh takes an exclusive lock and your dashboard shows a loading spinner for 30 seconds. With it, readers see the old data until the refresh finishes. Requires a unique index though. Small price.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "sql-088",
+    "track": "sql",
+    "type": "tip",
+    "author": "nullHandler",
+    "time": "3h",
+    "content": "PRO TIP: PostgreSQL arrays can contain NULLs and it will ruin your day in specific, targeted ways.\n\narray_position() returns NULL if the element isn't found. But it ALSO returns NULL if the array itself is NULL. Two different failure modes, one return value.\n\nUse COALESCE and always check array length first.",
+    "code": "-- This looks safe but isn't:\nSELECT array_position(tags, 'urgent') IS NOT NULL AS has_urgent\nFROM tickets;\n-- If tags is NULL (no array), returns NULL, not false\n\n-- Defensive version:\nSELECT COALESCE(\n  'urgent' = ANY(tags),\n  false\n) AS has_urgent\nFROM tickets;\n\n-- Or with array_agg, watch out:\nSELECT array_agg(name) FROM users WHERE 1 = 0;\n-- Returns {NULL}, not '{}'. An array containing one NULL.\n-- Use COALESCE(array_agg(name), '{}') to get an empty array.",
+    "link": "/sql/lessons/09-postgres-specific/",
+    "likes": 678,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "array_agg returning {NULL} on an empty set instead of an empty array is one of the most complained-about PostgreSQL behaviors on the mailing list. There's even a wiki page about it. Defensive SQL is not paranoia, it's professionalism.",
+        "likes": 312
+      },
+      {
+        "author": "groupBy",
+        "content": "FILTER (WHERE name IS NOT NULL) on the array_agg is another option. Keeps NULLs out of your aggregated arrays entirely. COALESCE handles the empty-set case. Belt AND suspenders.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "sql-089",
+    "track": "sql",
+    "type": "tip",
+    "author": "bobbyTables",
+    "time": "7h",
+    "content": "PRO TIP: PostgreSQL's row-level security (RLS) is a second firewall for your data. Even if your application code has a bug that forgets a WHERE clause, the database itself blocks unauthorized access.\n\nEnable it. Write policies. Sleep better at night.\n\nThis is not optional for multi-tenant apps. This is a seatbelt. You don't skip seatbelts because you're a good driver.",
+    "code": "-- Enable RLS on the table\nALTER TABLE customer_data ENABLE ROW LEVEL SECURITY;\n\n-- Policy: users can only see their own company's data\nCREATE POLICY company_isolation ON customer_data\n  USING (company_id = current_setting('app.company_id')::int);\n\n-- Set the context per-connection (in your app middleware):\nSET app.company_id = 42;\n\n-- Now ALL queries on this table are automatically filtered.\n-- Even SELECT * FROM customer_data only returns company 42.\n-- Even if a developer forgets the WHERE clause.",
+    "link": "/sql/lessons/12-capstone/",
+    "likes": 1345,
+    "reposts": 367,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "RLS + application-level filtering = defense in depth. The app handles the 99% case. RLS handles the 1% where someone made a mistake. They're complementary, not redundant.",
+        "likes": 423
+      },
+      {
+        "author": "migrationRunner",
+        "content": "Just remember: RLS policies need to be versioned and migrated just like schema changes. I've seen teams enable RLS in production without testing the policies first. Migration Horror Story #47.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "sql-090",
+    "track": "sql",
+    "type": "tip",
+    "author": "windowFn",
+    "time": "1d",
+    "content": "PRO TIP: generate_series() in PostgreSQL is your secret weapon for filling date gaps in reports.\n\nIf no orders happened on Tuesday, your GROUP BY won't produce a row for Tuesday. Your chart has a gap. Your PM panics.\n\ngenerate_series creates the complete date range. LEFT JOIN your data onto it. Gaps become zeros instead of missing rows.",
+    "code": "-- Without generate_series (missing days disappear):\nSELECT date_trunc('day', created_at) AS day, COUNT(*)\nFROM orders\nWHERE created_at >= '2026-01-01' AND created_at < '2026-02-01'\nGROUP BY 1 ORDER BY 1;\n\n-- With generate_series (every day appears):\nSELECT d.day, COALESCE(COUNT(o.id), 0) AS order_count\nFROM generate_series(\n  '2026-01-01'::date,\n  '2026-01-31'::date,\n  '1 day'::interval\n) AS d(day)\nLEFT JOIN orders o\n  ON date_trunc('day', o.created_at) = d.day\nGROUP BY d.day\nORDER BY d.day;",
+    "link": "/sql/lessons/09-postgres-specific/",
+    "likes": 823,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "groupBy",
+        "content": "generate_series + LEFT JOIN + COALESCE is the holy trinity of analytics reporting. I use this pattern at least twice a week. Zero is data. Missing is a lie.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "sql-091",
+    "track": "sql",
+    "type": "tip",
+    "author": "innerJoin",
+    "time": "4d",
+    "content": "PRO TIP: DISTINCT ON in PostgreSQL is the most underrated clause in the language.\n\nIt gives you the first row per group based on your ORDER BY. No window function subquery needed. No GROUP BY with MAX gymnastics.\n\nOne line. Done.",
+    "code": "-- Get each customer's most recent order:\nSELECT DISTINCT ON (customer_id)\n  customer_id, order_id, total, created_at\nFROM orders\nORDER BY customer_id, created_at DESC;\n\n-- That's it. DISTINCT ON (customer_id) keeps only\n-- the first row per customer_id after sorting.\n-- The ORDER BY must start with the DISTINCT ON columns.",
+    "link": "/sql/lessons/09-postgres-specific/",
+    "likes": 756,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "windowFn",
+        "content": "I... okay, fine. For this specific pattern, DISTINCT ON is cleaner than ROW_NUMBER() OVER(PARTITION BY...) WHERE rn = 1. It hurts to say that. But it's PostgreSQL-only, so my book still has job security.",
+        "likes": 489
+      },
+      {
+        "author": "queryset",
+        "content": "Django doesn't support DISTINCT ON through the ORM natively on all backends. You need .order_by('customer_id', '-created_at').distinct('customer_id'). Only works on PostgreSQL. Another reason to know raw SQL even if you use an ORM.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "sql-092",
+    "track": "sql",
+    "type": "tip",
+    "author": "bobbyTables",
+    "time": "6d",
+    "content": "PRO TIP: ON CONFLICT (upsert) in PostgreSQL eliminates the \"check-then-insert\" race condition.\n\nWithout it, two concurrent requests can both see the row doesn't exist, both try to insert, and one fails with a unique violation. With it, the database handles the race atomically.\n\nI only drink from sealed containers. I only write queries that handle concurrency. Same energy.",
+    "code": "-- Race condition version (DON'T):\n-- Thread 1: SELECT ... no row found\n-- Thread 2: SELECT ... no row found\n-- Thread 1: INSERT ... success\n-- Thread 2: INSERT ... UNIQUE VIOLATION\n\n-- Atomic upsert (DO):\nINSERT INTO user_settings (user_id, theme, updated_at)\nVALUES (42, 'dark', NOW())\nON CONFLICT (user_id)\nDO UPDATE SET\n  theme = EXCLUDED.theme,\n  updated_at = EXCLUDED.updated_at;",
+    "link": "/sql/lessons/09-postgres-specific/",
+    "likes": 712,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "EXCLUDED is such a good keyword. It refers to the row that WOULD have been inserted. The ghost of the insert that never was. Even PostgreSQL has a concept of the road not taken.",
+        "likes": 356
+      }
+    ]
+  },
+  {
+    "id": "sql-093",
+    "track": "sql",
+    "type": "spotBug",
+    "author": "nullHandler",
+    "time": "2h",
+    "content": "This query is supposed to find all products NOT in any active order. It returns 0 rows even though we know there are products with no orders. What's wrong?",
+    "code": "SELECT p.name\nFROM products p\nWHERE p.id NOT IN (\n  SELECT product_id\n  FROM order_items\n  WHERE status = 'active'\n);",
+    "link": null,
+    "likes": 534,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "If even ONE row in order_items has product_id = NULL, the entire NOT IN returns no rows. Why? Because NOT IN with NULLs evaluates to NULL (unknown), which is falsy. The fix: WHERE product_id IS NOT NULL in the subquery, or better yet, use NOT EXISTS which handles NULLs gracefully. This is my magnum opus bug. I find it in production databases at least once a quarter.",
+        "likes": 412
+      },
+      {
+        "author": "bobbyTables",
+        "content": "This is why foreign key constraints with NOT NULL matter. If product_id in order_items had a NOT NULL constraint, this bug couldn't exist. Schema design is your first line of defense. Constraints are documentation that the database enforces.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "sql-094",
+    "track": "sql",
+    "type": "spotBug",
+    "author": "groupBy",
+    "time": "9h",
+    "content": "The PM asked for average order value by region. This query runs but the numbers are WAY too high. Every region shows an average of $47,000 when we know it should be around $150. What happened?",
+    "code": "SELECT\n  r.name AS region,\n  AVG(o.total) AS avg_order_value\nFROM regions r\nJOIN stores s ON r.id = s.region_id\nJOIN orders o ON s.id = o.store_id\nJOIN order_items oi ON o.id = oi.order_id\nGROUP BY r.name;",
+    "link": null,
+    "likes": 623,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "The JOIN to order_items is duplicating order rows! If an order has 5 items, that order's total appears 5 times in the AVG. You're averaging the total 5 times instead of once. Remove the order_items join if you don't need it, or use a subquery to pre-aggregate. This is the classic fan-out problem. The join multiplied your rows and poisoned your aggregation.",
+        "likes": 456
+      },
+      {
+        "author": "groupBy",
+        "content": "Fan-out from joins is the #1 cause of wrong aggregation numbers. The fix: aggregate BEFORE you join, or use DISTINCT inside the aggregate: AVG(DISTINCT o.total). But DISTINCT only works if totals are unique per order. Pre-aggregation in a subquery is the safer bet.",
+        "likes": 378
+      }
+    ]
+  },
+  {
+    "id": "sql-095",
+    "track": "sql",
+    "type": "spotBug",
+    "author": "bobbyTables",
+    "time": "2d",
+    "content": "A developer wrote this JSONB query to find users whose preferences include dark mode. It works in testing but returns incorrect results in production. The data looks identical. What's the issue?",
+    "code": "-- Test data:\n-- {\"theme\": \"dark\", \"notifications\": true}\n\n-- Production data (from a different API):\n-- {\"theme\": \"dark\", \"notifications\": \"true\"}\n\nSELECT * FROM users\nWHERE preferences @> '{\"notifications\": true}'::jsonb;",
+    "link": null,
+    "likes": 567,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "JSONB boolean true and JSONB string \"true\" are different types. The @> containment check does exact type matching. Production has the string \"true\" (from an API that serializes booleans as strings), test has the boolean true. Same word. Different types. Different universes. This is the JSONB null vs SQL NULL problem's evil cousin.",
+        "likes": 389
+      },
+      {
+        "author": "bobbyTables",
+        "content": "This is why you validate and normalize data at ingestion time, not query time. A CHECK constraint or trigger that enforces JSONB schema consistency would have caught this before it ever reached the table. Trust no API. Validate everything.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "sql-096",
+    "track": "sql",
+    "type": "spotBug",
+    "author": "windowFn",
+    "time": "4d",
+    "content": "This recursive CTE is supposed to walk an org chart from CEO to all reports. It runs forever and PostgreSQL eventually kills it with a memory error. Why?",
+    "code": "WITH RECURSIVE org_tree AS (\n  -- Base case: start at CEO\n  SELECT id, name, manager_id, 1 AS depth\n  FROM employees\n  WHERE manager_id IS NULL\n\n  UNION ALL\n\n  -- Recursive case: find direct reports\n  SELECT e.id, e.name, e.manager_id, ot.depth + 1\n  FROM employees e\n  JOIN org_tree ot ON e.manager_id = ot.id\n)\nSELECT * FROM org_tree;",
+    "link": null,
+    "likes": 489,
+    "reposts": 87,
+    "comments": [
+      {
+        "author": "windowFn",
+        "content": "The query itself is syntactically fine. The bug is in the DATA. Someone set an employee as their own manager (manager_id = id) or there's a cycle: A reports to B reports to C reports to A. The recursive CTE happily follows the cycle forever. Fix: add WHERE ot.depth < 20 to the recursive case, or use UNION instead of UNION ALL to eliminate duplicates (which breaks cycles). But the real fix is a CHECK constraint: CHECK (manager_id != id) and application logic to prevent cycles.",
+        "likes": 423
+      },
+      {
+        "author": "nullHandler",
+        "content": "An employee who manages themselves. A recursive loop of self-reference. There's a Nietzsche quote for this but I'll spare you.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "sql-097",
+    "track": "sql",
+    "type": "mentalModel",
+    "author": "nullHandler",
+    "time": "5h",
+    "content": "MENTAL MODEL: Soft deletes vs hard deletes\n\nHard delete: the row ceases to exist. Gone. SELECT can't find it. It was never here. The database has no memory.\n\nSoft delete: the row gets a deleted_at timestamp. It's still there. You can see it if you know where to look. It haunts the table like a ghost. Every query needs WHERE deleted_at IS NULL or the ghosts appear in your reports.\n\nHard delete is clean but irreversible. Soft delete is safe but requires discipline.\n\nChoose based on whether you need an undo button or a clean conscience.",
+    "code": "-- Hard delete: simple, permanent\nDELETE FROM users WHERE id = 42;\n\n-- Soft delete: reversible, haunted\nUPDATE users SET deleted_at = NOW() WHERE id = 42;\n\n-- Every query must now exorcise the ghosts:\nSELECT * FROM users WHERE deleted_at IS NULL;\n\n-- Or use a view to hide the complexity:\nCREATE VIEW active_users AS\nSELECT * FROM users WHERE deleted_at IS NULL;\n\n-- Or (PostgreSQL) use a partial index:\nCREATE INDEX idx_active_users ON users (email)\nWHERE deleted_at IS NULL;",
+    "link": "/sql/lessons/10-database-design/",
+    "likes": 876,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "Soft deletes also create a compliance problem. GDPR says \"delete means delete.\" A soft-deleted user's personal data is still in your database. You might need hard deletes for PII and soft deletes for business records. Both patterns, same table. Fun times.",
+        "likes": 412
+      },
+      {
+        "author": "innerJoin",
+        "content": "And soft deletes break unique constraints. Two users can't have the same email? Delete user A (soft), create user B with same email -- unique violation. You need a partial unique index: CREATE UNIQUE INDEX ON users (email) WHERE deleted_at IS NULL. The soft delete tax is real.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "sql-098",
+    "track": "sql",
+    "type": "mentalModel",
+    "author": "innerJoin",
+    "time": "2d",
+    "content": "MENTAL MODEL: Normalization is about removing lies from your database.\n\n1NF: No column should contain multiple values. One cell, one fact.\n2NF: Every non-key column depends on the WHOLE key, not part of it.\n3NF: Every non-key column depends on the key and NOTHING BUT the key.\n\nViolating these rules means the same fact is stored in multiple places. When you update one copy and forget the other, your database is lying to itself.\n\nNormalize until it hurts. Denormalize until it works.",
+    "code": null,
+    "link": "/sql/lessons/10-database-design/",
+    "likes": 1023,
+    "reposts": 256,
+    "comments": [
+      {
+        "author": "groupBy",
+        "content": "\"Normalize until it hurts, denormalize until it works\" is the best one-line summary of database design I've ever heard. Saving this for my Q1 analytics report. Speaking of which, it's almost time for The Table's Quarterly Feed Analytics. Prepare yourselves.",
+        "likes": 398
+      },
+      {
+        "author": "windowFn",
+        "content": "3NF: \"Every column depends on the key, the whole key, and nothing but the key, so help me Codd.\" -- I didn't invent that but I wish I had.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "sql-099",
+    "track": "sql",
+    "type": "mentalModel",
+    "author": "bobbyTables",
+    "time": "5d",
+    "content": "MENTAL MODEL: Transactions are conversations with the database.\n\nBEGIN = \"Hey database, I'm about to do a few things.\"\nYour statements = the things.\nCOMMIT = \"Everything went well, make it permanent.\"\nROLLBABCK = \"Something went wrong, pretend this never happened.\"\n\nWithout BEGIN/COMMIT, every statement is its own transaction. You're having a new conversation for each sentence. Imagine transferring money:\n\nStatement 1: Deduct from Account A. (committed)\nStatement 2: Add to Account B. (server crashes)\n\nCongratulations. The money vanished. Wrap related operations in a transaction or lose sleep forever.",
+    "code": "BEGIN;\n  UPDATE accounts SET balance = balance - 100 WHERE id = 1;\n  UPDATE accounts SET balance = balance + 100 WHERE id = 2;\n  -- If ANYTHING fails, both are rolled back.\nCOMMIT;\n\n-- Add a SAVEPOINT for partial rollbacks:\nBEGIN;\n  UPDATE inventory SET stock = stock - 1 WHERE product_id = 99;\n  SAVEPOINT after_inventory;\n  INSERT INTO audit_log (action) VALUES ('sold');\n  -- If audit fails, roll back just the audit:\n  ROLLBACK TO after_inventory;\n  -- Inventory change is preserved.\nCOMMIT;",
+    "link": "/sql/lessons/12-capstone/",
+    "likes": 934,
+    "reposts": 212,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "ROLLBACK: \"pretend this never happened.\" That's my default state of being. Also, a transaction that's neither committed nor rolled back is in a state of Schrodinger's data. It both happened and didn't happen. My kind of problem.",
+        "likes": 456
+      }
+    ]
+  },
+  {
+    "id": "sql-100",
+    "track": "sql",
+    "type": "til",
+    "author": "windowFn",
+    "time": "1h",
+    "content": "TIL PostgreSQL has advisory locks -- locks that don't lock any row or table. They lock an arbitrary number. You decide what the number means.\n\nUse case: ensure only one instance of a cron job runs at a time. pg_try_advisory_lock(12345) returns true if you got the lock, false if another process has it. No table locking. No race conditions. Just vibes and integers.",
+    "code": "-- In your cron job:\nSELECT pg_try_advisory_lock(hashtext('daily_report'));\n-- Returns true = you got it, run the job\n-- Returns false = another instance is running, skip\n\n-- Release when done:\nSELECT pg_advisory_unlock(hashtext('daily_report'));",
+    "link": "/sql/lessons/09-postgres-specific/",
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "hashtext() is smart here -- converts a meaningful name to the bigint that advisory locks require. Much better than magic numbers. But remember: advisory locks are session-level by default. If your connection drops, the lock is released. Use pg_try_advisory_xact_lock() for transaction-scoped locks.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "sql-101",
+    "track": "sql",
+    "type": "til",
+    "author": "groupBy",
+    "time": "8h",
+    "content": "TIL pg_stat_statements tracks every query your database runs, how often, and how long it takes. It's free. It's built in. You just have to enable it.\n\nI found a query running 47,000 times per hour that returned the same 3 rows every time. Added a materialized view. CPU dropped 30%. I felt like a superhero.",
+    "code": "-- Enable in postgresql.conf:\n-- shared_preload_libraries = 'pg_stat_statements'\n\n-- Find your slowest queries:\nSELECT\n  calls,\n  mean_exec_time::numeric(10,2) AS avg_ms,\n  total_exec_time::numeric(10,2) AS total_ms,\n  query\nFROM pg_stat_statements\nORDER BY total_exec_time DESC\nLIMIT 10;",
+    "link": "/sql/lessons/09-postgres-specific/",
+    "likes": 678,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "This is the PostgreSQL equivalent of django-debug-toolbar but for your entire database. It answers \"how many queries though?\" at the infrastructure level. I'm adding this to every project.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "sql-102",
+    "track": "sql",
+    "type": "til",
+    "author": "nullHandler",
+    "time": "3d",
+    "content": "TIL the JSONB ? operator checks if a key EXISTS, not if its value is non-null.\n\n'{\"name\": null}'::jsonb ? 'name' returns TRUE.\n\nThe key exists. The value is null. Existence and meaning are, once again, completely different things. My therapist says I should stop relating database behavior to the human condition. I say PostgreSQL started it.",
+    "code": "SELECT '{\"name\": null}'::jsonb ? 'name';     -- true (key exists)\nSELECT '{\"name\": null}'::jsonb ? 'age';      -- false (key absent)\nSELECT '{\"name\": null}'::jsonb ->> 'name';    -- NULL (value extracted as text)\n\n-- Checking for key existence vs non-null value:\n-- Key exists:     data ? 'field'\n-- Value non-null: data ->> 'field' IS NOT NULL\n-- Value equals:   data @> '{\"field\": \"value\"}'::jsonb",
+    "link": "/sql/lessons/09-postgres-specific/",
+    "likes": 489,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "And if your column allows SQL NULL on top of JSONB null values, you have three states: column is NULL (no JSON at all), key missing (JSON exists but no key), key present with null value. Three kinds of nothing. Good luck writing a correct WHERE clause.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "sql-103",
+    "track": "sql",
+    "type": "poll",
+    "author": "innerJoin",
+    "time": "6h",
+    "content": "UUID vs SERIAL for primary keys. Where do you stand?\n\nContext: UUID is globally unique and merge-friendly but 16 bytes and bad for index locality. SERIAL is compact and fast but exposes record count and breaks on distributed systems.",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        { "text": "SERIAL always. Speed is king.", "pct": 18 },
+        { "text": "UUID always. Distributed-ready.", "pct": 31 },
+        { "text": "UUID v7 (time-ordered). Best of both.", "pct": 38 },
+        { "text": "Depends on the use case (boring but correct).", "pct": 13 }
+      ],
+      "totalVotes": 6234
+    },
+    "likes": 1123,
+    "reposts": 267,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "SERIAL exposes your record count. GET /api/users/1, GET /api/users/2... an attacker can enumerate your entire database. UUID prevents enumeration attacks. Security isn't just about injection. It's about information leakage too.",
+        "likes": 478
+      },
+      {
+        "author": "windowFn",
+        "content": "UUID v7 is the correct answer. Time-ordered UUIDs give you the global uniqueness of UUIDs with B-tree-friendly insert patterns. No more random I/O from UUIDv4. PostgreSQL 17 will have gen_random_uuid() v7 support natively. The future is now.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "sql-104",
+    "track": "sql",
+    "type": "poll",
+    "author": "groupBy",
+    "time": "2d",
+    "content": "Q1 QUARTERLY FEED ANALYTICS for The Table!\n\nI ran the numbers on our feed's engagement data. The results are illuminating.\n\nMost ratio'd persona this quarter?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        { "text": "@window_fn (3 ratio'd posts)", "pct": 8 },
+        { "text": "@null_handler (1, but it was existential)", "pct": 15 },
+        { "text": "@bobby_tables (0, nobody dares)", "pct": 41 },
+        { "text": "That one anonymous post about MongoDB", "pct": 36 }
+      ],
+      "totalVotes": 5678
+    },
+    "likes": 1567,
+    "reposts": 398,
+    "comments": [
+      {
+        "author": "groupBy",
+        "content": "Full Q1 Report:\n- Most liked post type: interview (avg 1,043 likes)\n- Most reposted type: hotTake (avg 312 reposts)\n- Top commenter: @bobby_tables (appears in 68% of all threads)\n- Most mentioned topic: NULL handling (23 posts, 14% of total)\n- Engagement peak: Tuesdays at 2pm EST\n- The MongoDB post set the all-time ratio record. 2,341 corrections in 4 hours.",
+        "likes": 678
+      },
+      {
+        "author": "nullHandler",
+        "content": "\"1, but it was existential\" is going on my headstone. Also, I notice \"most mentioned topic: NULL handling.\" My brand is working. The void stares back and it has good engagement metrics.",
+        "likes": 534
+      }
+    ]
+  },
+  {
+    "id": "sql-105",
+    "track": "sql",
+    "type": "eli5",
+    "author": "innerJoin",
+    "time": "4h",
+    "content": "ELI5: Database normalization\n\nImagine you have a notebook where you write down every book you lend to friends.\n\nBAD notebook (not normalized):\n\"Lent Harry Potter to Sam (555-1234, 42 Oak St) on March 1\"\n\"Lent Dune to Sam (555-1234, 42 Oak St) on March 5\"\n\nSam's info is written TWICE. If Sam moves, you update one line and forget the other. Now your notebook is lying to you.\n\nGOOD notebook (normalized):\nFriends page: \"Sam -- 555-1234, 42 Oak St\"\nLoans page: \"Harry Potter to Sam, March 1\" / \"Dune to Sam, March 5\"\n\nSam's info lives in ONE place. Update once, correct everywhere. That's normalization. One fact, one place.",
+    "code": null,
+    "link": "/sql/lessons/10-database-design/",
+    "likes": 1789,
+    "reposts": 423,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "What if Sam doesn't have a phone number? Is the entry incomplete, or is Sam a person without a phone? The notebook doesn't know. The notebook can't know. Normalization solves redundancy but not the fundamental unknowability of missing data. Anyway, use NULL.",
+        "likes": 456
+      },
+      {
+        "author": "groupBy",
+        "content": "And the denormalized version is what happens when the PM says \"but joining is slow, can you just put everything in one table?\" Sometimes the answer is yes. Sometimes performance means accepting a little redundancy. Normalize until it hurts, denormalize until it works.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "sql-106",
+    "track": "sql",
+    "type": "slackPost",
+    "author": "bobbyTables",
+    "time": "1d",
+    "content": "OVERHEARD IN #backend AT STACKSWORTH INC.\n\n@dev_sarah: why does the events JSONB column have 4 different date formats\n@dev_mike: oh no\n@dev_sarah: \"2025-03-15\", \"03/15/2025\", \"15-Mar-2025\", and my personal favorite: epoch milliseconds as a string\n@dev_mike: the first three are from our three API integrations\n@dev_sarah: and the epoch one?\n@dev_mike: that's from when Kevin wrote a custom integration over a weekend and didn't tell anyone\n@dev_sarah: Kevin left 8 months ago\n@dev_mike: his code lives on\n@dev_sarah: how do we fix this\n@dev_mike: step 1: cry. step 2: write a migration that normalizes everything to ISO 8601. step 3: add a CHECK constraint so this never happens again. step 4: add Kevin's weekend project to the post-mortem hall of fame\n@bobby_tables_consultant: Step 0: validate at ingestion. A CHECK constraint on the column using a jsonb_path_match or a trigger that rejects non-ISO dates. Every API integration gets a validation layer. No exceptions. Not even Kevin's.",
+    "code": "-- The fix: normalize existing data\nUPDATE events SET data = jsonb_set(\n  data,\n  '{event_date}',\n  to_jsonb(to_char(\n    CASE\n      WHEN data->>'event_date' ~ '^\\d{4}-\\d{2}-\\d{2}$'\n        THEN (data->>'event_date')::date\n      WHEN data->>'event_date' ~ '^\\d{2}/\\d{2}/\\d{4}$'\n        THEN to_date(data->>'event_date', 'MM/DD/YYYY')\n      WHEN data->>'event_date' ~ '^\\d{2}-[A-Z][a-z]{2}-\\d{4}$'\n        THEN to_date(data->>'event_date', 'DD-Mon-YYYY')\n      ELSE to_timestamp((data->>'event_date')::bigint / 1000)::date\n    END,\n    'YYYY-MM-DD'\n  ))\n)\nWHERE data ? 'event_date';",
+    "link": "/sql/lessons/09-postgres-specific/",
+    "likes": 1456,
+    "reposts": 378,
+    "comments": [
+      {
+        "author": "migrationRunner",
+        "content": "\"Kevin left 8 months ago. His code lives on.\" This is Migration Horror Story #51. I'm adding it to the collection. Always. Validate. At. Ingestion.",
+        "likes": 567
+      },
+      {
+        "author": "nullHandler",
+        "content": "You forgot the fifth format: the field being entirely absent from some rows. Not null, not empty string. The key doesn't exist. Kevin's ghost has many forms.",
+        "likes": 423
+      }
+    ]
+  },
+  {
+    "id": "sql-107",
+    "track": "sql",
+    "type": "commitMsg",
+    "author": "windowFn",
+    "time": "3d",
+    "content": "COMMIT MSG FROM HELL\n\ncommit abc4f2e\nAuthor: senior_dev_who_left\nDate: Friday 5:47 PM\n\n\"minor schema change\"\n\n-- adds 3 tables (audit_logs, permission_overrides, feature_flags)\n-- drops 2 tables (old_permissions, legacy_config)\n-- changes every foreign key from CASCADE to RESTRICT\n-- renames user_id to account_id in 11 tables\n-- converts 4 columns from TEXT to JSONB\n-- squashes 9 migrations into 1\n-- no rollback migration\n-- pushed directly to main\n-- on a Friday\n-- at 5:47 PM",
+    "code": null,
+    "link": null,
+    "likes": 2341,
+    "reposts": 567,
+    "comments": [
+      {
+        "author": "migrationRunner",
+        "content": "I just had a full-body shudder. No rollback migration. On a Friday. Pushed to main. This is not a commit message, it's a crime scene. This is going in the Migration Horror Stories. It's going on the COVER.",
+        "likes": 789
+      },
+      {
+        "author": "bobbyTables",
+        "content": "\"Changes every foreign key from CASCADE to RESTRICT\" means every DELETE that used to silently cascade now throws an error. In production. On Friday evening. The on-call engineer is going to have a wonderful weekend.",
+        "likes": 567
+      },
+      {
+        "author": "nullHandler",
+        "content": "\"senior_dev_who_left.\" Past tense. They knew. They pushed this and walked into the sunset. Respect and horror in equal measure.",
+        "likes": 456
+      }
+    ]
+  },
+  {
+    "id": "sql-108",
+    "track": "sql",
+    "type": "ratiod",
+    "author": "nullHandler",
+    "time": "1d",
+    "content": "RATIO'D\n\n@nosql_mike: \"MongoDB is better than PostgreSQL for everything. Schema flexibility means you never have to think about data design upfront. Just store JSON and figure it out later. Relational databases are a relic.\"\n\n[2,341 corrections in 4 hours]",
+    "code": null,
+    "link": null,
+    "likes": 3456,
+    "reposts": 812,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "\"Never think about data design upfront\" is how you get four different date formats in one column. Ask Stacksworth Inc. Also: PostgreSQL HAS JSONB. You get schema flexibility AND constraints AND transactions AND joins. You're not choosing between relational and document. PostgreSQL is both. It's been both since 2014.",
+        "likes": 1234
+      },
+      {
+        "author": "innerJoin",
+        "content": "MongoDB is excellent for specific use cases: high-velocity writes, truly document-shaped data, rapid prototyping. \"Better for everything\" is where this falls apart. PostgreSQL handles 95% of application workloads with ACID compliance, mature tooling, and JSONB for the document-shaped parts. Use the right tool for the job. There's a join for that reasoning.",
+        "likes": 987
+      },
+      {
+        "author": "groupBy",
+        "content": "\"Figure it out later\" is a philosophy that produces the data equivalent of a junk drawer. Six months in, you're writing 200-line aggregation pipelines because your schema is 47 slightly different shapes. I've seen the analytics queries. They haunt me. GROUP BY works better when the data was designed to be grouped.",
+        "likes": 876
+      }
+    ]
+  }
+]

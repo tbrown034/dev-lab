@@ -1,0 +1,147 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+LESSON TITLE: Lesson 06 - Axes & The Margins Convention
+TRACK: D3.js (12-lesson curriculum)
+
+--- CONTEXT FOR HOSTS ---
+
+Curriculum Position: Lesson 6 of 12. This completes the "chart building toolkit" -- after this lesson, Trevor has all the pieces to build a professional bar chart from scratch: SVG (01), scales (02, 05), selections (03), data binding (04), and now axes + margins. Lesson 07 will add dynamic updates with enter/update/exit.
+
+What came before: SVG fundamentals, scales, selections, data binding. The margins convention was previewed in Lessons 01 and 02 but is fully taught here.
+
+What's coming next: Lesson 07 -- enter/update/exit, the pattern for dynamic chart updates and animations.
+
+What Trevor already knows: He's seen the margins convention concept in prior lessons. He understands scales, data binding, and selections.
+
+Learner's goal: Build broadcast-quality charts with proper axes, labels, and grid lines. Professional charts for TV need clean, formatted labels.
+
+Specific analogies for THIS lesson:
+- An axis is a "name tag for your scale" -- it shows the viewer what pixel positions mean
+- The margins convention is like "matting inside a picture frame" -- space for labels around the art
+- Grid lines are just "really long tick marks" -- no separate system needed
+- .call() is like "handing off to a specialist" -- the axis function handles all the details
+
+Key mental models:
+- Axes are GENERATED from scales (not created independently)
+- .call(axisGenerator) passes the selection to the axis function
+- Grid lines = ticks with .tickSize(-width)
+- The margins convention is boilerplate: margin -> dimensions -> SVG+g -> scales -> axes -> data
+
+--- LESSON CONTENT ---
+
+The Problem
+
+Bars without labels are meaningless. The viewer sees 253 pixels tall but doesn't know that means 20 million people. An axis renders tick marks and labels that translate pixel positions back to human-readable data values.
+
+Axes Are Generated FROM Scales
+
+This is the key insight: you create an axis FROM an existing scale. The axis reads the scale's domain and range to figure out where to put ticks and what to label them.
+
+Step 1: Create a scale. Step 2: Create an axis from the scale (d3.axisLeft(yScale)). Step 3: Render it into a <g> group using .call().
+
+Four axis orientations:
+- d3.axisBottom(scale) -- ticks below the line (X-axis at bottom)
+- d3.axisTop(scale) -- ticks above the line
+- d3.axisLeft(scale) -- ticks to the left (Y-axis)
+- d3.axisRight(scale) -- ticks to the right
+
+What does .call() do? It passes the selection to a function. group.call(xAxis) is the same as xAxis(group). The axis function creates multiple child elements (line, ticks, text labels) inside the group. .call() keeps the chain going -- without it, you'd need to break the chain to pass the group.
+
+Customizing Axes:
+- .ticks(5) -- suggest approximately 5 tick marks
+- .tickFormat(d => "$" + d/1000 + "k") -- custom label formatting
+- .tickSize(-width) -- extend ticks to create grid lines
+- .tickValues([0, 25, 50, 75, 100]) -- exact tick positions
+
+Grid lines are just long ticks. Setting .tickSize(-width) extends each tick line across the full chart width. No separate grid system needed.
+
+The Margins Convention (Full Implementation)
+
+The standard pattern every professional D3 chart uses:
+
+Step 1 - Define margins: const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+
+Step 2 - Calculate inner dimensions: width = 700 - margin.left - margin.right (= 620). height = 400 - margin.top - margin.bottom (= 340).
+
+Step 3 - SVG at full size, group pushed inward:
+const svg = d3.select("#chart")
+  .append("svg")
+  .attr("viewBox", "0 0 700 400")
+  .append("g")
+  .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+Now (0,0) in the group = top-left of chart area. Scales use width and height (inner dimensions). Axes fit in the margin space.
+
+The X-axis is positioned with translate(0, height) to push it to the bottom of the chart area. Without this translate, the X-axis would appear at the top.
+
+Complete Pattern: margin -> dimensions -> SVG+g -> scales -> axes -> grid lines -> bars -> labels. This is the template for every bar chart.
+
+--- KEY CONCEPTS TO EMPHASIZE ---
+
+1. Axes are generated FROM scales -- the axis reads the scale's domain and range
+2. .call(axisGenerator) renders the axis into a <g> group
+3. Grid lines = ticks with .tickSize(-width) -- no separate system
+4. Margins convention is boilerplate: margin -> dimensions -> SVG+g -> scales -> axes -> data
+5. X-axis needs translate(0, height) to appear at the bottom
+
+--- COMMON PITFALLS ---
+
+- Forgetting to translate the X-axis to the bottom: translate(0, height)
+- Using total SVG dimensions instead of inner dimensions for scales (should use width after margins)
+- Not styling axis elements (D3's default axis styling is minimal -- you need to set text fill, stroke colors)
+- Forgetting that .tickSize(-width) creates grid lines (many people create a separate grid system unnecessarily)
+- Putting axes BEFORE grid lines in drawing order (grid lines should be drawn first so bars appear on top)
+
+--- BROADCAST TV CONNECTION ---
+
+- Broadcast charts ALWAYS have clean, formatted axis labels -- "$50k" not "50000"
+- Grid lines help viewers read values even from a distance on a TV screen
+- The margins convention ensures labels don't get clipped at screen edges
+- Election result charts need formatted tick labels: "2.5M votes" not "2500000"
+- Weather forecast charts need time-formatted X-axes: "Mon", "Tue", "Wed"
+- The complete pattern (margins + scales + axes + data) is what you'll write every time you build a broadcast graphic
+
+
+========================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+========================================
+
+PODCAST CUSTOMIZATION FOR LESSON 06: Axes & Margins
+
+TARGET MENTAL MODELS:
+- Axis as a "name tag" that tells viewers what the pixels mean
+- Grid lines as "long ticks" -- the simplest possible mental model
+- Margins convention as "boilerplate you copy-paste" -- don't overthink it
+- .call() as "handing off to a specialist function"
+
+SPECIFIC ANALOGIES TO USE:
+- "An axis is like the legend on a map. Without it, the map is just colored shapes. The axis tells the viewer: this color means 50% turnout, this height means 20 million people."
+- "Grid lines are just ticks that got stretched across the chart. You literally just tell the ticks to be longer: .tickSize(-width). That's it. That's the whole trick."
+- "The margins convention is like setting up your desk before you start work. Margins, dimensions, SVG, group -- same four steps, every time. It's the 'boilerplate' of D3, like import React from 'react' at the top of every component."
+- ".call() is like telling a specialist: 'Here's the canvas, do your thing.' The axis function knows how to draw ticks and labels. You just hand it the group element."
+
+CONNECTIONS TO OTHER LESSONS:
+- Connect to Lesson 02: "You saw a preview of margins and axes. Now you're implementing the full pattern."
+- Connect to Lesson 05: "Axes read directly from scales. Change the scale's domain, and the axis ticks update automatically."
+- Connect to Lesson 04: "The bars use data binding (selectAll-data-join) inside the margins convention. Now everything fits together."
+- Tease Lesson 07: "You've built a complete static chart. Next lesson: what happens when the DATA changes? Enter/update/exit handles the animations."
+- Big picture: "After this lesson, you have the complete toolkit for any chart: SVG + selections + data binding + scales + axes + margins. Everything else is variations and additions."
+
+TREVOR'S BACKGROUND TO REFERENCE:
+- React: "In React, you have boilerplate for every component: imports, function declaration, return statement. The margins convention is D3's component boilerplate -- same structure every time."
+- Journalism: "Formatted labels matter. On a broadcast graphic, '39.5M' is readable at a glance. '39538000' is not. .tickFormat() is your headline-writing tool for numbers."
+- Broadcast TV: "On a 1920x1080 broadcast screen, margins ensure your axis labels don't clip at the edge. The margins convention is how you guarantee everything fits."
+
+MEMORIZATION TECHNIQUES:
+- The complete pattern as a checklist: "Margin, Dimensions, SVG+G, Scales, Axes, Data" -- MDSAD (make up a mnemonic)
+- "Grid lines = long ticks" -- one sentence, remember it forever
+- "axisBottom for X, axisLeft for Y" -- the two you use 90% of the time
+- "X-axis needs translate(0, height)" -- the one translation you always forget
+
+TONE:
+- This should feel like a "putting it all together" milestone. The React-dev host should say: "So after this, I can build a real chart? Like, a complete, professional-looking bar chart?"
+- D3-expert confirms: "Yes. Margins, scales, axes, data-bound bars, labels. That's a complete chart. Everything you build from here is an extension of this pattern."
+- Celebrate the grid lines trick: "Wait, .tickSize(-width) just... makes grid lines? No separate grid component? No CSS grid? Just longer ticks?" "Yep. That's D3's elegance."
+- End on the broadcast connection: "This exact pattern -- the complete bar chart template -- is what you'd build for showing election results, budget breakdowns, or population comparisons on TV."

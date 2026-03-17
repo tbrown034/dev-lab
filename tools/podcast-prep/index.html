@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Podcast Prep - NotebookLM Helper</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #818cf8; }
+    .header a { color: #f97316; text-decoration: none; font-size: 0.85rem; }
+
+    .layout { display: grid; grid-template-columns: 300px 1fr; height: calc(100vh - 65px); }
+    .sidebar { border-right: 1px solid #222; overflow-y: auto; padding: 1rem 0; }
+    .main { overflow-y: auto; padding: 2rem; }
+
+    .track-title { color: #f97316; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.75rem 1rem 0.4rem; }
+    .lesson-item {
+      padding: 0.5rem 1rem; cursor: pointer; font-size: 0.85rem; color: #aaa;
+      border-left: 3px solid transparent; transition: all 0.15s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .lesson-item:hover { background: #111; color: #fff; }
+    .lesson-item.active { background: #111; color: #fff; border-left-color: #818cf8; }
+    .lesson-item .status { font-size: 0.7rem; margin-left: auto; }
+    .lesson-item .status.done { color: #4ade80; }
+    .lesson-item .status.missing { color: #555; }
+
+    .instructions {
+      background: #1a1a2e; border: 1px solid #818cf844; border-radius: 8px;
+      padding: 1.5rem; margin-bottom: 2rem; line-height: 1.7;
+    }
+    .instructions h2 { color: #818cf8; font-size: 1rem; margin-bottom: 0.75rem; }
+    .instructions ol { margin-left: 1.5rem; }
+    .instructions li { color: #a5b4fc; font-size: 0.9rem; margin-bottom: 0.4rem; }
+    .instructions code { background: #111; padding: 0.1rem 0.4rem; border-radius: 3px; color: #818cf8; font-size: 0.8rem; }
+    .instructions strong { color: #c7d2fe; }
+
+    .output-section { margin-top: 1.5rem; }
+    .output-section h3 { color: #f97316; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    .output-box {
+      position: relative; background: #111; border: 1px solid #222; border-radius: 6px;
+      padding: 1.25rem; margin-bottom: 1.5rem; max-height: 500px; overflow-y: auto;
+    }
+    .output-box pre {
+      white-space: pre-wrap; word-wrap: break-word; font-size: 0.85rem;
+      color: #ccc; line-height: 1.6; font-family: -apple-system, system-ui, sans-serif;
+    }
+    .copy-btn {
+      position: sticky; top: 0; float: right;
+      background: #818cf8; color: #000; border: none; padding: 6px 14px;
+      border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;
+      font-family: inherit; z-index: 1;
+    }
+    .copy-btn:hover { background: #a5b4fc; }
+    .copy-btn.copied { background: #4ade80; }
+
+    .placeholder {
+      color: #555; font-size: 1rem; text-align: center; padding: 4rem 2rem;
+    }
+    .placeholder p { margin-bottom: 0.5rem; }
+
+    .file-path {
+      background: #0a1a0a; border: 1px solid #4ade8044; border-radius: 6px;
+      padding: 1rem; margin-top: 1rem; font-size: 0.85rem; color: #4ade80;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>Podcast Prep</span> &mdash; NotebookLM Helper</h1>
+    <a href="/">&larr; Back to home</a>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar" id="sidebar"></div>
+    <div class="main" id="main">
+      <div class="instructions">
+        <h2>How to Generate Podcast Episodes</h2>
+        <ol>
+          <li>Click a lesson in the sidebar</li>
+          <li>Copy the <strong>Lesson Content</strong> text below</li>
+          <li>Go to <strong>notebooklm.google.com</strong> and create a new notebook</li>
+          <li>Click "Add source" &rarr; paste the lesson content as a text source</li>
+          <li>Copy the <strong>Customization Instructions</strong> and paste them in the podcast customization field (click the podcast icon, then "Customize")</li>
+          <li>Click <strong>Generate</strong> and wait (~3-5 min)</li>
+          <li>Download the MP3 and save it to the path shown below</li>
+        </ol>
+      </div>
+      <div class="placeholder" id="placeholder">
+        <p>Select a lesson from the sidebar to get started.</p>
+      </div>
+      <div id="output" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const LESSONS = {
+      d3: [
+        { slug: '01-fundamentals', title: '01 - Pure SVG' },
+        { slug: '02-selections-data', title: '02 - How D3 Turns Numbers Into Pixels' },
+        { slug: '03-scales-axes', title: '03 - D3 Selections Deep Dive' },
+        { slug: '04-shapes-bindings', title: '04 - Data Binding: The ONE Concept' },
+        { slug: '05-maps-geo', title: '05 - Scales: The Translator' },
+        { slug: '06-transitions-interactivity', title: '06 - Axes & The Margins Convention' },
+        { slug: '07-lines-areas', title: '07 - Lines, Areas & Time Series' },
+        { slug: '08-arcs-pies', title: '08 - Arcs, Pies & Radial Charts' },
+        { slug: '09-maps-geo', title: '09 - Maps & Geography' },
+        { slug: '10-interactivity', title: '10 - Interactivity & Polish' },
+        { slug: '11-d3-react', title: '11 - D3 + React' },
+        { slug: '12-capstone', title: '12 - Capstone: Broadcast Data Dashboard' },
+      ],
+      django: [
+        { slug: '01-python-fundamentals', title: '01 - Python Fundamentals' },
+        { slug: '02-python-collections', title: '02 - Python Collections & Control Flow' },
+        { slug: '03-python-functions', title: '03 - Python Functions & Modules' },
+        { slug: '04-python-oop', title: '04 - Python OOP' },
+        { slug: '05-python-data-files', title: '05 - Python Data & File Handling' },
+        { slug: '06-django-quickstart', title: '06 - Django Quickstart' },
+        { slug: '07-models-orm', title: '07 - Models & ORM' },
+        { slug: '08-views-urls', title: '08 - Views & URLs Deep Dive' },
+        { slug: '09-templates-forms', title: '09 - Templates & Forms' },
+        { slug: '10-rest-api', title: '10 - REST APIs with DRF' },
+        { slug: '11-auth-testing-deploy', title: '11 - Auth, Testing & Deployment' },
+        { slug: '12-capstone', title: '12 - Capstone Project' },
+      ],
+      sql: [
+        { slug: '01-sql-fundamentals', title: '01 - SQL Fundamentals' },
+        { slug: '02-select-filtering', title: '02 - SELECT & Filtering' },
+        { slug: '03-joins', title: '03 - JOINs & Relationships' },
+        { slug: '04-aggregation', title: '04 - Aggregation & GROUP BY' },
+        { slug: '05-subqueries', title: '05 - Subqueries & CTEs' },
+        { slug: '06-window-functions', title: '06 - Data Modification' },
+        { slug: '07-data-types-constraints', title: '07 - Data Types & Constraints' },
+        { slug: '08-indexes-performance', title: '08 - Indexes & Performance' },
+        { slug: '09-postgres-specific', title: '09 - PostgreSQL-Specific Features' },
+        { slug: '10-database-design', title: '10 - Views, Functions & Triggers' },
+        { slug: '11-advanced-queries', title: '11 - Transactions & Concurrency' },
+        { slug: '12-capstone', title: '12 - Real-World Patterns' },
+      ],
+    };
+
+    const CUSTOMIZE_PROMPT = `This is a lesson from a self-paced coding curriculum. Generate a podcast episode where two hosts discuss this material as a supplemental companion — the listener has either just read or is about to read the actual lesson.
+
+Focus the conversation on:
+
+1. MENTAL MODELS — What's the right way to think about these concepts? Give analogies and frameworks that make the ideas click and stick.
+
+2. BIG PICTURE — How does this topic fit into the larger skill of building real projects? Why does this matter? What would be harder without it?
+
+3. CONNECTIONS — Tie this lesson's concepts to things from earlier lessons or things coming up later. Help the listener see the thread.
+
+4. MEMORIZATION TIPS — Give practical techniques for remembering syntax, patterns, or key concepts. Mnemonics, stories, "the thing to remember is...", etc.
+
+5. COMMON MISTAKES — What do beginners get wrong? What are the gotchas that trip people up?
+
+6. BUILD STAGES — If the lesson teaches how to build something, break down the stages: "First you always..., then you..., the pattern is always..." Give the listener a mental checklist.
+
+7. PRACTICAL TIPS — Things you wish someone told you. Shortcuts, debugging tricks, how to read error messages related to this topic.
+
+Keep it conversational and natural. The hosts should riff on each other's points, have genuine reactions, and make it feel like two experienced developers chatting — not a lecture. Aim for 10-15 minutes. The listener is a beginner-to-intermediate developer learning this material for the first time.`;
+
+    // Build sidebar
+    const sidebar = document.getElementById('sidebar');
+    const trackNames = { d3: 'D3 / Data Viz', django: 'Django / Python', sql: 'SQL / Databases' };
+
+    for (const [track, lessons] of Object.entries(LESSONS)) {
+      const title = document.createElement('div');
+      title.className = 'track-title';
+      title.textContent = trackNames[track];
+      sidebar.appendChild(title);
+
+      for (const lesson of lessons) {
+        const item = document.createElement('div');
+        item.className = 'lesson-item';
+        item.dataset.track = track;
+        item.dataset.slug = lesson.slug;
+        item.textContent = lesson.title;
+
+        // Check if MP3 already exists
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'status';
+        fetch(`/audio/${track}/${lesson.slug}.mp3`, { method: 'HEAD' })
+          .then(r => {
+            if (r.ok) { statusSpan.textContent = '\u2713'; statusSpan.className = 'status done'; }
+            else { statusSpan.textContent = '\u2022'; statusSpan.className = 'status missing'; }
+          })
+          .catch(() => { statusSpan.textContent = '\u2022'; statusSpan.className = 'status missing'; });
+        item.appendChild(statusSpan);
+
+        item.addEventListener('click', () => loadLesson(track, lesson.slug, lesson.title, item));
+        sidebar.appendChild(item);
+      }
+    }
+
+    async function loadLesson(track, slug, title, el) {
+      // Highlight active
+      document.querySelectorAll('.lesson-item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+
+      document.getElementById('placeholder').style.display = 'none';
+      const output = document.getElementById('output');
+      output.style.display = 'block';
+      output.innerHTML = '<p style="color:#888;">Loading enhanced script...</p>';
+
+      const filePath = `audio/${track}/${slug}.mp3`;
+
+      try {
+        // Try loading enhanced pre-generated script first
+        const scriptResp = await fetch(`/tools/podcast-prep/scripts/${track}/${slug}.txt`);
+
+        if (scriptResp.ok) {
+          const scriptText = await scriptResp.text();
+
+          // Split into Section 1 (source) and Section 2 (customization)
+          // Look for common section markers
+          const section2Markers = [
+            /\n={3,}\n*\s*SECTION 2/i,
+            /\n-{3,}\n*\s*SECTION 2/i,
+            /\n\s*SECTION 2[:\s]/i,
+            /\n\s*#{1,3}\s*SECTION 2/i,
+            /\nCUSTOMIZATION INSTRUCTIONS/i,
+            /\n={3,}\n*\s*CUSTOMIZATION/i,
+          ];
+
+          let sourceDoc = scriptText;
+          let customizeInstructions = '';
+
+          for (const marker of section2Markers) {
+            const match = scriptText.search(marker);
+            if (match > 0) {
+              sourceDoc = scriptText.substring(0, match).trim();
+              customizeInstructions = scriptText.substring(match).trim();
+              // Clean up the section header from customization text
+              customizeInstructions = customizeInstructions
+                .replace(/^[=\-]{3,}\s*/m, '')
+                .replace(/^#+\s*SECTION 2[:\s]*/im, '')
+                .replace(/^SECTION 2[:\s]*/im, '')
+                .replace(/^CUSTOMIZATION INSTRUCTIONS[:\s]*/im, '')
+                .trim();
+              break;
+            }
+          }
+
+          // If no split found, use the whole thing as source and fall back to generic customize
+          if (!customizeInstructions) {
+            customizeInstructions = CUSTOMIZE_PROMPT;
+          }
+
+          output.innerHTML = `
+            <div class="output-section">
+              <h3>Step 1: Enhanced Source Document (paste as NotebookLM source)</h3>
+              <p style="color:#4ade80; font-size:0.8rem; margin-bottom:0.5rem;">Enhanced script with broadcast TV connections, mental models, and cross-lesson context</p>
+              <div class="output-box" id="content-box">
+                <button class="copy-btn" onclick="copyText('content-box')">Copy</button>
+                <pre>${escapeHtml(sourceDoc)}</pre>
+              </div>
+            </div>
+
+            <div class="output-section">
+              <h3>Step 2: Customization Instructions (paste in podcast customization)</h3>
+              <p style="color:#818cf8; font-size:0.8rem; margin-bottom:0.5rem;">Lesson-specific instructions tailored to your background</p>
+              <div class="output-box" id="customize-box">
+                <button class="copy-btn" onclick="copyText('customize-box')">Copy</button>
+                <pre>${escapeHtml(customizeInstructions)}</pre>
+              </div>
+            </div>
+
+            <div class="output-section">
+              <h3>Step 3: Save the downloaded MP3 to</h3>
+              <div class="file-path">${filePath}</div>
+            </div>
+          `;
+          return;
+        }
+      } catch (e) {
+        // Fall through to raw extraction
+      }
+
+      // Fallback: raw HTML extraction
+      output.innerHTML = '<p style="color:#888;">No enhanced script found, extracting from lesson...</p>';
+
+      try {
+        const resp = await fetch(`/${track}/lessons/${slug}/index.html`);
+        const html = await resp.text();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const content = doc.querySelector('.content');
+        if (!content) { output.innerHTML = '<p style="color:#f87171;">Could not find lesson content.</p>'; return; }
+
+        content.querySelectorAll('script, style, .demo svg, .try-it').forEach(el => el.remove());
+
+        let text = '';
+        const titleEl = doc.querySelector('.header h1') || doc.querySelector('title');
+        text += `LESSON: ${titleEl ? titleEl.textContent.trim() : title}\n`;
+        text += `TRACK: ${trackNames[track]}\n`;
+        text += '='.repeat(60) + '\n\n';
+
+        const els = content.querySelectorAll('h2, h3, p, li, pre code, .aha, .callout, .warning, table');
+        for (const el of els) {
+          if (el.closest('.aha') && !el.classList.contains('aha')) continue;
+          if (el.closest('.callout') && !el.classList.contains('callout')) continue;
+          if (el.closest('.warning') && !el.classList.contains('warning')) continue;
+          if (el.closest('.quiz')) continue;
+
+          if (el.tagName === 'H2') { text += '\n## ' + el.textContent.trim() + '\n\n'; }
+          else if (el.tagName === 'H3') { text += '### ' + el.textContent.trim() + '\n\n'; }
+          else if (el.tagName === 'P') { text += el.textContent.trim() + '\n\n'; }
+          else if (el.tagName === 'LI') { text += '- ' + el.textContent.trim() + '\n'; }
+          else if (el.tagName === 'CODE' && el.closest('pre')) { text += '```\n' + el.textContent.trim() + '\n```\n\n'; }
+          else if (el.tagName === 'TABLE') {
+            const rows = el.querySelectorAll('tr');
+            for (const row of rows) {
+              const cells = row.querySelectorAll('th, td');
+              text += '| ' + Array.from(cells).map(c => c.textContent.trim()).join(' | ') + ' |\n';
+            }
+            text += '\n';
+          }
+          else if (el.classList.contains('aha') || el.classList.contains('callout') || el.classList.contains('warning')) {
+            const inner = el.querySelector('p');
+            if (inner) text += '> ' + inner.textContent.trim() + '\n\n';
+          }
+        }
+
+        const quizQs = content.querySelectorAll('.quiz .question p');
+        if (quizQs.length) {
+          text += '\n## Quiz Questions (for reference)\n\n';
+          quizQs.forEach((q, i) => { text += `${i + 1}. ${q.textContent.trim()}\n`; });
+        }
+
+        output.innerHTML = `
+          <div class="output-section">
+            <h3>Step 1: Lesson Content (paste as NotebookLM source)</h3>
+            <p style="color:#f97316; font-size:0.8rem; margin-bottom:0.5rem;">Raw extraction (no enhanced script available)</p>
+            <div class="output-box" id="content-box">
+              <button class="copy-btn" onclick="copyText('content-box')">Copy</button>
+              <pre>${escapeHtml(text.trim())}</pre>
+            </div>
+          </div>
+
+          <div class="output-section">
+            <h3>Step 2: Customization Instructions (paste in podcast customization)</h3>
+            <div class="output-box" id="customize-box">
+              <button class="copy-btn" onclick="copyText('customize-box')">Copy</button>
+              <pre>${escapeHtml(CUSTOMIZE_PROMPT)}</pre>
+            </div>
+          </div>
+
+          <div class="output-section">
+            <h3>Step 3: Save the downloaded MP3 to</h3>
+            <div class="file-path">${filePath}</div>
+          </div>
+        `;
+      } catch (err) {
+        output.innerHTML = `<p style="color:#f87171;">Error loading lesson: ${err.message}</p>`;
+      }
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function copyText(boxId) {
+      const box = document.getElementById(boxId);
+      const text = box.querySelector('pre').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = box.querySelector('.copy-btn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

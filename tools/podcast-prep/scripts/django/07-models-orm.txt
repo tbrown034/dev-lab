@@ -1,0 +1,207 @@
+============================================================
+SECTION 1: SOURCE DOCUMENT FOR NOTEBOOKLM
+============================================================
+
+LESSON: 07 - Models & ORM — Prisma to Django ORM
+TRACK: Django / Python (12-lesson curriculum)
+
+------------------------------------------------------------
+CONTEXT FOR HOSTS
+------------------------------------------------------------
+
+Where this lesson fits:
+Lesson 7 of 12. Lesson 6 gave the Django overview. This lesson goes deep on the M in Django's MVT (Model-Template-View) — defining database schemas as Python classes, running migrations, and querying data with the ORM. This is the backbone of every Django app. Lessons 8-9 cover views and templates.
+
+Who Trevor is:
+Trevor knows Prisma thoroughly — schema.prisma files, prisma.article.findMany(), migrations, relations. He needs every Prisma concept mapped to its Django equivalent. He's comfortable with database concepts (foreign keys, indexes, unique constraints) but needs to learn Django's specific syntax and patterns.
+
+Key Prisma-to-Django translations:
+- schema.prisma -> models.py (Python classes)
+- prisma.article.findMany() -> Article.objects.all()
+- prisma.article.findUnique({where}) -> Article.objects.get(slug="...")
+- prisma.article.findMany({where}) -> Article.objects.filter(status="published")
+- prisma.article.create({data}) -> Article.objects.create(title="...")
+- prisma.article.update({where, data}) -> article.save() after modification
+- prisma.article.delete({where}) -> article.delete()
+- npx prisma migrate dev -> makemigrations + migrate (two steps)
+- Prisma Studio -> Django Admin (built-in, way more powerful)
+- @default(autoincrement()) -> automatic id field (invisible)
+- @unique -> unique=True field option
+- @default(now()) -> auto_now_add=True
+- @updatedAt -> auto_now=True
+- ? (nullable) -> null=True, blank=True
+- @@map("tablename") -> class Meta: db_table = "tablename"
+- where: {contains} -> .filter(field__contains="value")
+- orderBy -> .order_by("-field")
+- take: 10 -> [:10] (slice notation)
+
+Mental models:
+1. A Django model is simultaneously your schema, your TypeScript type, AND your query builder — one class does three jobs
+2. The double-underscore pattern (field__lookup=value) is Django's query language
+3. QuerySets are lazy — they build queries, not execute them, until you need the data
+4. The .objects manager is your entry point — like prisma.article
+
+------------------------------------------------------------
+LESSON CONTENT
+------------------------------------------------------------
+
+THE MENTAL MODEL — WHAT ARE MODELS?
+
+In Prisma, you define your database schema in a .prisma file, then Prisma generates a client you use to query. Django flips the order: you define your schema as Python classes (called models), and Django generates both the database tables AND the query API from those classes.
+
+A Django model is a single Python class that is simultaneously your schema definition, your TypeScript type, AND your query builder. One class does the job of three separate things in the Prisma/Next.js world. Every model class maps to one database table. Every attribute maps to one column.
+
+DEFINING MODELS — YOUR SCHEMA IN PYTHON
+
+Django automatically adds an id field (auto-incrementing integer primary key) to every model. You never need to define it yourself.
+
+Field type cheat sheet:
+- Prisma String -> CharField(max_length=N) or TextField() for long text
+- Prisma Int -> IntegerField()
+- Prisma Float -> FloatField() (for money: DecimalField)
+- Prisma Boolean -> BooleanField()
+- Prisma DateTime -> DateTimeField()
+- Prisma Json -> JSONField()
+- @unique -> unique=True as a field option
+- ? nullable -> null=True, blank=True
+- @default -> default=value
+- Django extras: SlugField(), EmailField(), URLField() (with built-in validation)
+
+null vs blank — a Django gotcha: null=True means the database column allows NULL. blank=True means Django forms will accept an empty value. For optional text fields, you typically want both. This two-flag system trips up everyone at first.
+
+The choices pattern: Instead of a separate enum, Django uses a list of (db_value, display_label) tuples directly on the field. The first value goes in the database, the second shows up in forms and the admin panel.
+
+THE META CLASS — TABLE-LEVEL OPTIONS
+
+Prisma uses @@ decorators for table-level settings. Django uses an inner Meta class. ordering = ["-created_at"] sets default sort order for every query. The "-" prefix means descending. Prisma has no equivalent — you must pass orderBy every time.
+
+THE __str__ METHOD
+
+Always define __str__ on your models. It controls how objects appear in the admin panel, the shell, and debug output. Without it, you'll see "Article object (1)" everywhere.
+
+MIGRATIONS — SCHEMA CHANGES WITHOUT TEARS
+
+Django separates "detect changes" (makemigrations) from "apply changes" (migrate) so you can inspect the generated migration file before touching the database. Always: edit model, makemigrations, migrate. In that order.
+
+Common mistake: Forgetting to run makemigrations before migrate. If you change a model and only run migrate, nothing happens.
+
+THE ORM — CRUD OPERATIONS
+
+Creating: Article.objects.create(title="...", slug="...") saves immediately. Or Article(title="...") then article.save() for building incrementally.
+
+Querying: Article.objects.all() gets everything. Article.objects.get(slug="...") gets one (raises DoesNotExist if missing). Article.objects.filter(status="published") returns a QuerySet. Article.objects.exclude(status="draft") excludes matches.
+
+QuerySets are lazy. Article.objects.filter(status="published") does NOT hit the database. It builds a query. The SQL only runs when you iterate, slice, call list(), or access results. You can chain multiple filters without triggering multiple database queries.
+
+.get() vs .filter(): .get() returns a single object and raises exceptions. .filter() returns a QuerySet (possibly empty). Use .get() when you expect exactly one result.
+
+FIELD LOOKUPS — THE DOUBLE-UNDERSCORE MAGIC
+
+In Prisma, you nest filter conditions: {contains: "budget"}. In Django, you use double-underscore suffixes on field names: field__contains="budget".
+
+The pattern: field__lookup=value. It reads like English: title__contains="budget" means "title contains budget."
+
+Key lookups:
+- field__exact=val (or just field=val) — exact match
+- field__icontains=val — case-insensitive contains (great for search!)
+- field__gt, __gte, __lt, __lte — comparison operators
+- field__in=[a, b, c] — in a list
+- field__isnull=True — is null check
+- field__startswith, __endswith — string matching
+- field__range=(start, end) — between range
+- field__year=2025 — date part extraction
+
+The "i" prefix (icontains, iexact) means case-insensitive — incredibly useful for search.
+
+CHAINING QUERYSETS
+
+Because QuerySets are lazy, you can chain filters. Each chain narrows the results further. The database query only runs once, at the end. Multiple .filter() calls are AND conditions by default.
+
+Ordering: .order_by("-published_at") — the "-" prefix means descending. Slicing: [:10] returns the first 10 (like Prisma's take: 10). Counting: .count() executes a COUNT query.
+
+RELATIONSHIPS — ForeignKey AND ManyToManyField
+
+ForeignKey is one-to-many (like Prisma's relation). ManyToManyField is many-to-many. on_delete is required on ForeignKey — CASCADE (delete children too), SET_NULL (set to null), PROTECT (prevent deletion).
+
+related_name lets you query the reverse direction: author.articles.all() instead of Article.objects.filter(author=author).
+
+Querying across relationships uses the double-underscore pattern: Article.objects.filter(author__username="trevor") — this traverses the ForeignKey into the related User table.
+
+PERFORMANCE — select_related AND prefetch_related
+
+The N+1 problem: Listing 20 articles and accessing article.author on each one causes 21 queries. select_related("author") does a SQL JOIN — one query total. prefetch_related is for ManyToMany relationships. Always use these in list views.
+
+AGGREGATION
+
+from django.db.models import Count, Avg, Sum, Max, Min. Article.objects.aggregate(avg_words=Avg("word_count")). Article.objects.values("status").annotate(count=Count("id")) — group-by queries.
+
+------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+------------------------------------------------------------
+
+1. One class, three jobs — a Django model is your schema, your types, and your query builder simultaneously.
+2. The double-underscore pattern — field__lookup=value is the key to Django queries. Once this clicks, you're fluent.
+3. QuerySets are lazy — they don't hit the database until you need the data. Chain freely.
+4. The .objects manager is your Prisma client — Article.objects is like prisma.article.
+5. Always define __str__ — your admin panel and shell experience depends on it.
+
+------------------------------------------------------------
+COMMON PITFALLS FOR JS DEVELOPERS
+------------------------------------------------------------
+
+- Forgetting the two-step migration workflow (makemigrations THEN migrate)
+- Not understanding null vs blank (null = database, blank = forms)
+- Using .get() when .filter() is safer (get raises exceptions on 0 or 2+ results)
+- Forgetting select_related in list views (causes N+1 query problems)
+- Not defining __str__ on models (admin shows "Article object (1)")
+- Expecting Prisma's nested object syntax for filters (Django uses double underscores)
+- Forgetting on_delete on ForeignKey (it's required in Django)
+- Trying to access related objects without related_name
+
+------------------------------------------------------------
+REAL-WORLD CONNECTION
+------------------------------------------------------------
+
+At a broadcast TV network, models are your entire data architecture. Shows, episodes, ratings, schedules, reporters, stories — every entity is a Django model. The ORM lets you query complex relationships: "Show me all stories by reporter Trevor in the politics beat, published this week, ordered by view count." That's one chained QuerySet. The admin panel gives editors a full content management system from just the model definitions. The double-underscore lookup pattern lets you build flexible search interfaces for the content archive. select_related keeps your list pages fast when displaying story titles with author names. This is the foundation that everything else builds on.
+
+
+============================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS FOR NOTEBOOKLM
+============================================================
+
+This episode should have two big revelation moments: (1) one model class does three jobs (schema + types + queries), and (2) the double-underscore lookup pattern.
+
+Specific mental models for THIS lesson:
+- "One class, three jobs" — in Prisma/Next.js world you have schema.prisma, TypeScript types, and Prisma client queries as three separate things. In Django, one Python class does all three.
+- "Double underscore = query language" — field__contains, field__gt, field__isnull. This is Django's SQL-without-SQL. Once you see the pattern, queries write themselves.
+- "QuerySets are promises" — they don't execute until you need the data, just like a Promise that builds a SQL query instead of making an HTTP request.
+- ".objects is your prisma client" — Article.objects.filter() is exactly like prisma.article.findMany({where}).
+
+JS/React/Next.js equivalents to reference:
+- schema.prisma -> models.py
+- prisma.article.findMany() -> Article.objects.all()
+- prisma.article.findUnique({where}) -> Article.objects.get()
+- prisma.article.create({data}) -> Article.objects.create()
+- npx prisma migrate dev -> makemigrations + migrate
+- Prisma Studio -> Django Admin
+- where: {contains: "budget"} -> .filter(title__contains="budget")
+- orderBy: {publishedAt: "desc"} -> .order_by("-published_at")
+- take: 10 -> [:10]
+- include: {author: true} -> select_related("author")
+
+Connect back to lesson 4: "Remember classes and dunder methods? Django models are classes that inherit from models.Model, and the __str__ method you define shows up in the admin panel. OOP is paying off already."
+
+Connect back to lesson 6: "Remember when we said Django is 'batteries included'? The ORM is the biggest battery. No Prisma install, no schema file, no client generation — your Python class IS the schema IS the query builder."
+
+Tease lesson 8: "Next lesson covers views and URLs in depth — that's where you'll use these QuerySets to fetch data and send it to templates."
+
+Trevor's journalism background: "Think of the ORM as a really good research assistant. Article.objects.filter(author__beat='politics', published_at__year=2025).order_by('-word_count') is like telling your assistant 'Find me all politics stories from 2025, longest first.' The double-underscore syntax reads almost like English."
+
+Memorization techniques:
+- ".objects is your entry point" — always start with ModelName.objects
+- "double underscore = cross the boundary" — field__lookup crosses from field name to lookup type; field__related__field crosses to a related table
+- "filter for many, get for one" — filter returns a QuerySet, get returns one object
+- "makemigrations then migrate" — make the plan, then execute it
+- "null for the database, blank for the form" — two different concepts, two different flags
+
+Tone: The "one class, three jobs" moment should be genuinely impressive. The double-underscore pattern should feel like learning a mini-language that makes queries readable. The QuerySet laziness concept should click when compared to Promises. The admin panel integration (models automatically get admin UI) should reinforce the "batteries included" theme from lesson 6.

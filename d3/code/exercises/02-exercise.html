@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exercise 02 - Filterable Bar Chart</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; padding: 2rem; }
+    h1 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+    h1 span { color: #f97316; }
+    p { color: #888; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    #chart { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; }
+    svg { background: #1a1a1a; border-radius: 4px; }
+    .controls { margin-bottom: 1rem; }
+    .controls button {
+      background: #f97316; color: #000; border: none; padding: 0.4rem 1rem;
+      border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 0.25rem; font-weight: 600;
+    }
+    .controls button.dem { background: #3b82f6; color: #fff; }
+    .controls button.rep { background: #ef4444; color: #fff; }
+  </style>
+</head>
+<body>
+  <h1>Exercise <span>02</span>: Filterable Bar Chart</h1>
+  <p>Congressional district voting margins. Filter by party to see the data join in action.</p>
+  <div class="controls">
+    <button id="btn-all">All Districts</button>
+    <button id="btn-dem" class="dem">Democrats</button>
+    <button id="btn-rep" class="rep">Republicans</button>
+  </div>
+  <div id="chart"></div>
+  <script type="module" src="/components/init-tutor.js"></script>
+  <script type="module" src="02-exercise.js"></script>
+</body>
+</html>

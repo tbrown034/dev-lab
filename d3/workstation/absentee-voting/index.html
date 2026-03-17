@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mail Voting in America — Data Workstation — Learn D3</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    /* ── Reset & Base ── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #f97316; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+
+    /* ── Nav ── */
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover {
+      background: #f97316;
+      color: #000;
+      border-color: #f97316;
+    }
+    .nav a.active {
+      background: #f472b6;
+      color: #000;
+      border-color: #f472b6;
+    }
+
+    /* ── Hero ── */
+    .page-hero {
+      padding: 3rem 3rem 1.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .page-hero .kicker {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #f472b6;
+      margin-bottom: 0.75rem;
+    }
+    .page-hero h2 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+      line-height: 1.15;
+    }
+    .page-hero .subtitle {
+      color: #999;
+      font-size: 1.05rem;
+      max-width: 720px;
+      line-height: 1.7;
+    }
+    .page-hero .byline {
+      margin-top: 1rem;
+      color: #666;
+      font-size: 0.85rem;
+    }
+    .page-hero .byline strong { color: #aaa; font-weight: 600; }
+
+    /* ── Content Container ── */
+    .content {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 3rem 6rem;
+    }
+
+    /* ── Section Divider ── */
+    .section-divider {
+      border: none;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #333, transparent);
+      margin: 4rem 0;
+    }
+
+    /* ── Viz Section ── */
+    .viz-section {
+      margin-bottom: 1rem;
+    }
+    .viz-section .section-num {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #f97316;
+      margin-bottom: 0.5rem;
+    }
+    .viz-section h3 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+    .viz-section .viz-subtitle {
+      color: #888;
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+      max-width: 680px;
+    }
+
+    /* ── Chart Container ── */
+    .chart-container {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .chart-container svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ── Controls ── */
+    .controls-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .controls-row label {
+      font-size: 0.8rem;
+      color: #888;
+      margin-right: 0.25rem;
+    }
+    .controls-row select {
+      padding: 0.4rem 0.75rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #e5e5e5;
+      font-size: 0.85rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .controls-row select:focus { outline: none; border-color: #f97316; }
+    .filter-btn {
+      padding: 0.4rem 0.85rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover { border-color: #555; color: #fff; }
+    .filter-btn.active { border-color: #f97316; color: #f97316; background: #f9731615; }
+
+    /* ── Toggle Buttons ── */
+    .toggle-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .toggle-btn {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .toggle-btn:hover { border-color: #555; color: #fff; }
+    .toggle-btn.active { border-color: #f97316; color: #f97316; }
+    .toggle-btn.code-btn.active { border-color: #818cf8; color: #818cf8; }
+    .toggle-btn.learning-btn.active { border-color: #f97316; color: #f97316; }
+    .toggle-btn.brief-btn.active { border-color: #4ade80; color: #4ade80; }
+
+    /* ── Code Block ── */
+    .code-panel {
+      display: none;
+      background: #0d1117;
+      border: 1px solid #222;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .code-panel.open { display: block; }
+    .code-panel .code-header {
+      padding: 0.6rem 1rem;
+      background: #161b22;
+      border-bottom: 1px solid #222;
+      font-size: 0.75rem;
+      color: #8b949e;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .code-panel pre {
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: #e6edf3;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      tab-size: 2;
+    }
+
+    /* ── Explanation Panels ── */
+    .explanation-panel {
+      display: none;
+      border: 1px solid #222;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .explanation-panel.open { display: block; }
+    .explanation-panel.learning {
+      border-color: #f9731633;
+    }
+    .explanation-panel.brief {
+      border-color: #4ade8033;
+    }
+    .explanation-panel .panel-header {
+      padding: 0.75rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-bottom: 1px solid #222;
+    }
+    .explanation-panel.learning .panel-header {
+      background: #f9731610;
+      color: #f97316;
+    }
+    .explanation-panel.brief .panel-header {
+      background: #4ade8010;
+      color: #4ade80;
+    }
+    .explanation-panel .panel-body {
+      padding: 1rem 1.25rem;
+      color: #bbb;
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+    .explanation-panel .panel-body strong { color: #e5e5e5; }
+    .explanation-panel .panel-body code {
+      background: #1a1a1a;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.82rem;
+      color: #f97316;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .explanation-panel .panel-body ul {
+      margin: 0.5rem 0;
+      padding-left: 1.25rem;
+    }
+    .explanation-panel .panel-body li {
+      margin-bottom: 0.4rem;
+    }
+    .explanation-panel .panel-body p {
+      margin-bottom: 0.6rem;
+    }
+
+    /* ── Key Stat Cards ── */
+    .key-stat {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+    .key-stat .stat {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      min-width: 140px;
+      flex: 1;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .key-stat .stat.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .key-stat .stat .number {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .key-stat .stat .label {
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 0.25rem;
+    }
+
+    /* ── Tooltip ── */
+    .tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      color: #e5e5e5;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 1000;
+      max-width: 300px;
+      line-height: 1.4;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .tooltip.visible { opacity: 1; }
+    .tooltip .tip-label { font-weight: 600; margin-bottom: 0.15rem; }
+    .tooltip .tip-value { color: #aaa; }
+    .tooltip .tip-rule { font-size: 0.72rem; margin-top: 0.2rem; }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+      padding: 0.75rem 0;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      color: #aaa;
+    }
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    /* ── Data Sources & Journalist Notes ── */
+    .sources-section, .notes-section {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+    .sources-section h3, .notes-section h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: #ccc;
+    }
+    .sources-section ul, .notes-section ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sources-section li, .notes-section li {
+      padding: 0.4rem 0;
+      color: #888;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .sources-section li:last-child, .notes-section li:last-child { border-bottom: none; }
+    .sources-section li strong, .notes-section li strong { color: #bbb; font-weight: 600; }
+    .notes-section .note-group { margin-bottom: 1.5rem; }
+    .notes-section .note-group h4 {
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .notes-section .note-group ul { list-style: disc; padding-left: 1.25rem; }
+    .notes-section .note-group li { border-bottom: none; padding: 0.2rem 0; }
+
+    /* ── State highlight ── */
+    .state-path { cursor: pointer; transition: opacity 0.15s; }
+    .state-path.dimmed { opacity: 0.25; }
+    .bar-group { cursor: pointer; }
+    .bar-group.dimmed rect { opacity: 0.25; }
+    .bar-group.dimmed text { opacity: 0.35; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header, .nav, .page-hero, .content { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .page-hero h2 { font-size: 1.6rem; }
+      .chart-container { padding: 1rem; }
+      .key-stat { flex-direction: column; }
+    }
+
+    /* ── Syntax highlight colors ── */
+    .code-panel .kw { color: #ff7b72; }
+    .code-panel .fn { color: #d2a8ff; }
+    .code-panel .str { color: #a5d6ff; }
+    .code-panel .num { color: #79c0ff; }
+    .code-panel .cm { color: #8b949e; }
+    .code-panel .op { color: #c9d1d9; }
+  </style>
+</head>
+<body>
+
+  <!-- Shared tooltip -->
+  <div class="tooltip" id="tooltip"></div>
+
+  <!-- ── Header ── -->
+  <div class="header">
+    <h1>Learn <span>D3</span>.js</h1>
+    <div class="meta">Data Journalism Workstation</div>
+  </div>
+
+  <!-- ── Nav ── -->
+  <nav class="nav">
+    <a href="/d3/">Home</a>
+    <a href="/d3/projects/">Portfolio</a>
+    <a href="/d3/workstation/save-act/">SAVE Act</a>
+    <a href="/d3/workstation/absentee-voting/" class="active" style="color: #f472b6;">Mail Voting</a>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <div class="page-hero">
+    <div class="kicker">Data Investigation</div>
+    <h2>Mail Voting in America: Who Relies on It and What's at Stake</h2>
+    <p class="subtitle">
+      A data-driven investigation into absentee and mail-in voting across all 50 states.
+      Five visualizations built with D3.js, exploring how Americans vote by mail, how COVID-19
+      reshaped voting habits, and which populations depend most on this method.
+    </p>
+    <p class="byline">By <strong>Trevor Brown</strong> &middot; Data Visualization Workstation &middot; 2026</p>
+  </div>
+
+  <!-- ── Main Content ── -->
+  <div class="content">
+
+    <!-- ================================================================ -->
+    <!-- SECTION 1: Hero Map -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz1-section">
+      <div class="section-num">Section 01</div>
+      <h3>How America Votes by Mail</h3>
+      <p class="viz-subtitle">A state-by-state look at mail voting's share of total ballots. Oregon and Washington vote almost entirely by mail, while most excuse-required states remain below 10%.</p>
+
+      <div class="controls-row">
+        <label for="year-select-map">Election Year:</label>
+        <select id="year-select-map">
+          <option value="y2024" selected>2024</option>
+          <option value="y2020">2020</option>
+          <option value="y2016">2016</option>
+        </select>
+      </div>
+
+      <div class="chart-container" id="viz1-map"></div>
+
+      <div class="legend" id="viz1-legend"></div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code1">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn1">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief1">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code1">
+        <div class="code-header"><span>viz1-choropleth-map.js</span><span>D3.js v7 + TopoJSON</span></div>
+        <pre id="code1-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn1">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><code>d3.geoAlbersUsa()</code> &mdash; the built-in projection for US maps. It repositions Alaska and Hawaii as insets. No need to set center or rotate.</li>
+            <li><code>d3.geoPath(projection)</code> &mdash; the path generator. Takes a GeoJSON feature and returns an SVG path <code>d</code> attribute string. Think of it as a "translator" from lat/lng to SVG coordinates.</li>
+            <li><strong>TopoJSON &rarr; GeoJSON:</strong> <code>topojson.feature(us, us.objects.states)</code> converts the compressed TopoJSON back to GeoJSON features that D3 can render.</li>
+            <li><code>d3.scaleSequential(d3.interpolateYlOrRd)</code> &mdash; maps a continuous domain [0, 100] to a color ramp. Sequential scales are perfect for "low to high" data like percentages.</li>
+            <li><strong>Data lookup pattern:</strong> Create a <code>Map</code> keyed by FIPS code, then use it in <code>.attr("fill", d => colorScale(lookup.get(d.id)))</code>. This is the standard choropleth pattern.</li>
+            <li><strong>Linked highlighting:</strong> A shared <code>highlightState(abbr)</code> function that both the map and bar chart call. This is how newsroom graphics sync multiple views.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A D3 map is just SVG <code>&lt;path&gt;</code> elements that happen to look like geography. Each state is one path. The projection is the "lens" that converts 3D coordinates to 2D screen positions. <code>geoPath</code> turns those positions into SVG path commands (<code>M</code>, <code>L</code>, <code>C</code>, etc.).</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief1">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers &amp; Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> U.S. Election Assistance Commission (EAVS) reports for 2016, 2020, and 2024. State law classifications from the National Conference of State Legislatures (NCSL), 2025 update.</p>
+          <p><strong>Methodology:</strong> Mail vote share = (mail/absentee ballots cast) / (total ballots cast) x 100. State boundaries from US Atlas TopoJSON (10m resolution). Albers USA projection for standard journalistic layout with Alaska/Hawaii insets.</p>
+          <p><strong>Color scale choice:</strong> Sequential yellow-orange-red ramp chosen for intuitive "cool to hot" reading. States with no data in our subset render as the baseline color.</p>
+          <p><strong>Limitations:</strong> Not all 50 states are represented in our curated dataset. EAVS data completeness varies by state. Some 2024 figures are estimated from early reports and news coverage.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 2: Ranked Bar Chart -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz2-section">
+      <div class="section-num">Section 02</div>
+      <h3>State by State</h3>
+      <p class="viz-subtitle">Every state ranked by its share of mail-in votes. Filter by voting rule type to see how policy shapes behavior.</p>
+
+      <div class="controls-row">
+        <label for="year-select-bar">Year:</label>
+        <select id="year-select-bar">
+          <option value="y2024" selected>2024</option>
+          <option value="y2020">2020</option>
+          <option value="y2016">2016</option>
+        </select>
+        <span style="margin-left:1rem;"></span>
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="all-mail">All-Mail</button>
+        <button class="filter-btn" data-filter="no-excuse">No-Excuse</button>
+        <button class="filter-btn" data-filter="excuse-required">Excuse-Required</button>
+      </div>
+
+      <div class="chart-container" id="viz2-bars"></div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#f472b6;"></div> All-Mail State</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#818cf8;"></div> No-Excuse Absentee</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#f97316;"></div> Excuse Required</div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code2">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn2">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief2">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code2">
+        <div class="code-header"><span>viz2-ranked-bars.js</span><span>D3.js v7</span></div>
+        <pre id="code2-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn2">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><code>d3.scaleBand()</code> for the y-axis &mdash; each state gets an equal vertical slice. <code>.padding(0.25)</code> adds gaps between bars.</li>
+            <li><code>d3.scaleLinear()</code> for the x-axis &mdash; domain [0, 100] maps to [0, chartWidth] since we're showing percentages.</li>
+            <li><strong>Sort + rebind:</strong> When the year changes, re-sort the data, update the <code>scaleBand</code> domain, then transition bars to new positions. This is the <code>.data().join()</code> update pattern in action.</li>
+            <li><strong>Filter pattern:</strong> Don't remove bars on filter &mdash; instead, set <code>opacity</code> or <code>display</code>. This preserves the DOM elements for smooth transitions when toggling filters off.</li>
+            <li><code>.transition().duration(600)</code> on both <code>width</code> and <code>y</code> makes bars smoothly re-sort and resize when the year or filter changes.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A horizontal bar chart is a <code>scaleBand</code> (categories on y) crossed with a <code>scaleLinear</code> (values on x). When data changes, you update both scales' domains and transition the bars. The "linked highlighting" is just a shared function that adds/removes a CSS class on both the map paths and bar groups.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief2">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers &amp; Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> Same EAVS data as Section 01. State rule classifications from NCSL.</p>
+          <p><strong>Why horizontal bars:</strong> With 36+ states, horizontal bars are more readable than vertical. State names serve as natural labels. Sorting by value makes comparison instant.</p>
+          <p><strong>Color encoding:</strong> Rule type is encoded as bar color (pink = all-mail, purple = no-excuse, orange = excuse-required). This dual encoding (position + color) helps readers see clustering of policy types at different mail vote levels.</p>
+          <p><strong>Linked highlighting:</strong> Hovering a state on the map highlights the corresponding bar, and vice versa. This "brushing and linking" technique is standard in data journalism dashboards.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 3: Slope Chart -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz3-section">
+      <div class="section-num">Section 03</div>
+      <h3>The COVID Spike and Rebound</h3>
+      <p class="viz-subtitle">Mail voting surged in 2020 as the pandemic pushed states to expand access. By 2024, many states snapped back &mdash; but not all. The lines tell the story.</p>
+
+      <div class="chart-container" id="viz3-slope"></div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#f472b6;"></div> All-Mail States</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#818cf8;"></div> No-Excuse Absentee</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#f97316;"></div> Excuse Required</div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code3">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn3">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief3">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code3">
+        <div class="code-header"><span>viz3-slope-chart.js</span><span>D3.js v7</span></div>
+        <pre id="code3-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn3">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><strong>Slope chart = simplified line chart</strong> with only 3 x-positions (2016, 2020, 2024). Each state gets a polyline connecting its three data points.</li>
+            <li><code>d3.scalePoint()</code> for the x-axis &mdash; like <code>scaleBand</code> but for points. Perfect when you have discrete categories (years) that need even spacing.</li>
+            <li><code>d3.line()</code> path generator &mdash; takes an array of [x, y] pairs and returns an SVG path string. The same generator used for time series, just with fewer data points.</li>
+            <li><strong>Annotation pattern:</strong> Hand-placed text labels using <code>.append("text")</code> with specific coordinates. In newsrooms, annotations are often the most time-consuming part.</li>
+            <li><strong>Hover interaction on overlapping lines:</strong> Use <code>stroke-width</code> expansion on hover, plus bring the hovered line to front with <code>this.parentNode.appendChild(this)</code>.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A slope chart is just a line chart with the "time" axis compressed to a few columns. The slope (angle) of each line segment shows direction and magnitude of change. Steep up = big increase. The visual pattern of lines crossing each other tells the ranking story.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief3">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers &amp; Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> EAVS 2016, 2020, 2024 reports. State totals cross-referenced with news coverage for 2024 estimates.</p>
+          <p><strong>Why a slope chart:</strong> Slope charts are ideal for showing change across a small number of time periods. They reveal three patterns simultaneously: (1) starting level, (2) magnitude of change, (3) direction of change. The COVID spike in 2020 and partial rebound in 2024 are immediately visible.</p>
+          <p><strong>Key findings:</strong> All-mail states (OR, WA, CO) show flat lines near the top &mdash; mail voting was already universal. Swing states like PA, MI, and WI show dramatic spikes in 2020 followed by significant drops in 2024, suggesting the pandemic expansion was temporary. Excuse-required states barely moved.</p>
+          <p><strong>Limitations:</strong> Three data points can't capture the full trend. State-level aggregation masks county-level variation.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 4: Scatterplot -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz4-section">
+      <div class="section-num">Section 04</div>
+      <h3>Who Has the Most to Lose?</h3>
+      <p class="viz-subtitle">States in the upper-right rely on mail voting both by share and raw volume. Any federal restriction on mail voting would hit these states hardest.</p>
+
+      <div class="chart-container" id="viz4-scatter"></div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#f472b6;"></div> All-Mail</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#818cf8;"></div> No-Excuse</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#f97316;"></div> Excuse Required</div>
+        <div class="legend-item" style="margin-left:1rem; color:#666;">Dot size = total votes cast</div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code4">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn4">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief4">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code4">
+        <div class="code-header"><span>viz4-scatterplot.js</span><span>D3.js v7</span></div>
+        <pre id="code4-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn4">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><strong>Three visual encodings:</strong> x-position (mail share %), y-position (mail volume), size (total votes), color (rule type). Scatterplots can encode 4+ dimensions.</li>
+            <li><code>d3.scaleSqrt()</code> for dot radius &mdash; use sqrt scale, not linear, for area-based encoding. A state with 4x the votes should have a dot with 4x the area, not 4x the radius (which would be 16x the area).</li>
+            <li><strong>Crosshair tooltip:</strong> Draw dashed lines from the hovered dot to both axes. Use <code>line</code> elements that update position on <code>mousemove</code>.</li>
+            <li><code>d3.format(",")</code> and <code>d3.format(".1f")</code> &mdash; D3's number formatting. Commas for thousands separators, <code>.1f</code> for one decimal place.</li>
+            <li><strong>Quadrant annotation:</strong> A dashed rectangle or shaded region highlighting the "high share + high volume" quadrant adds editorial meaning to the scatterplot.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A scatterplot reveals relationships between two variables. Each dot is a state plotted at (x, y). If dots cluster along a diagonal, the variables are correlated. Size adds a third dimension. Color adds a fourth. The "danger zone" quadrant is a journalistic annotation that tells the reader what pattern to look for.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief4">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers &amp; Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> EAVS 2024 data. Mail ballot volume and total turnout by state.</p>
+          <p><strong>Why a scatterplot:</strong> This chart answers a specific editorial question: "If mail voting were restricted, which states would be most affected?" States in the top-right quadrant have both high reliance (share) and high volume, meaning millions of voters use this method. California alone accounted for ~14.4M mail ballots in 2024.</p>
+          <p><strong>Bubble size:</strong> Encoded using <code>scaleSqrt</code> to ensure perceptually accurate area comparison. Domain based on total votes cast (smallest to largest state).</p>
+          <p><strong>Editorial note:</strong> This visualization intentionally frames mail voting access as a potential policy vulnerability. It does not take a position on whether restrictions are warranted.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 5: National Summary -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz5-section">
+      <div class="section-num">Section 05</div>
+      <h3>By the Numbers</h3>
+      <p class="viz-subtitle">The national view: how America's voting methods have shifted over three elections, and key stats that frame the mail voting debate.</p>
+
+      <div class="key-stat" id="summary-stats">
+        <div class="stat" style="transition-delay: 0s;">
+          <div class="number" style="color: #f97316;">~48M</div>
+          <div class="label">Mail ballots cast in 2024</div>
+        </div>
+        <div class="stat" style="transition-delay: 0.1s;">
+          <div class="number" style="color: #818cf8;">31%</div>
+          <div class="label">Average state mail vote share</div>
+        </div>
+        <div class="stat" style="transition-delay: 0.2s;">
+          <div class="number" style="color: #f472b6;">8+DC</div>
+          <div class="label">All-mail election states</div>
+        </div>
+        <div class="stat" style="transition-delay: 0.3s;">
+          <div class="number" style="color: #4ade80;">14</div>
+          <div class="label">Excuse-required states</div>
+        </div>
+      </div>
+
+      <div class="key-stat" id="summary-stats-2" style="margin-top:0;">
+        <div class="stat" style="transition-delay: 0.4s;">
+          <div class="number" style="color: #f97316; font-size:1.2rem;">OR, WA, CO, UT, HI</div>
+          <div class="label">Top 5 by mail vote share</div>
+        </div>
+        <div class="stat" style="transition-delay: 0.5s;">
+          <div class="number" style="color: #818cf8; font-size:1.2rem;">CA, WA, CO, AZ, FL</div>
+          <div class="label">Top 5 by mail ballot volume</div>
+        </div>
+      </div>
+
+      <div class="chart-container" id="viz5-stacked" style="margin-top:1.5rem;"></div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code5">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn5">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief5">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code5">
+        <div class="code-header"><span>viz5-national-summary.js</span><span>D3.js v7</span></div>
+        <pre id="code5-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn5">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><code>d3.stack()</code> &mdash; takes tabular data and computes baseline and topline values for each category. Returns arrays of [y0, y1] pairs that you feed to <code>d3.area()</code> or use for stacked bars.</li>
+            <li><strong>Stacked bar pattern:</strong> Each "layer" is a group of rectangles. The y-position of each rect is <code>d[0]</code> (baseline) and the height is <code>d[1] - d[0]</code> (the segment).</li>
+            <li><code>d3.scaleBand()</code> for the year axis (3 bars: 2016, 2020, 2024). <code>d3.scaleLinear()</code> for the percentage axis [0, 100].</li>
+            <li><strong>IntersectionObserver</strong> to trigger the stat card animations when they scroll into view. Each card has a <code>transition-delay</code> for staggered entrance.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A stacked bar chart shows part-to-whole relationships across categories. Each bar sums to 100%. The <code>d3.stack()</code> generator does the math of calculating where each segment starts and ends. Think of it as "stacking blocks" &mdash; D3 calculates the shelf height for each block.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief5">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers &amp; Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> National totals compiled from EAVS reports, EAC summaries, and MIT Election Lab. Voting method breakdown (mail, early in-person, Election Day) from EAVS surveys and CRS reports.</p>
+          <p><strong>Methodology:</strong> National breakdown percentages: 2016 (21% mail, 19% early, 60% Election Day), 2020 (42% mail, 26% early, 32% Election Day), 2024 (31% mail, 35% early, 34% Election Day). Early in-person and Election Day splits for 2024 are estimated from preliminary state reports.</p>
+          <p><strong>Key insight:</strong> The 2020 election saw mail voting double from 21% to 42%. By 2024, it partially reverted to 31%, but early in-person voting grew to 35%, suggesting voters who adopted non-Election Day voting in 2020 shifted methods rather than returning to traditional Election Day voting.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- DATA SOURCES -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="sources-section">
+      <h3>Data Sources</h3>
+      <ul>
+        <li><strong>U.S. Election Assistance Commission (EAVS)</strong> &mdash; Election Administration and Voting Survey, 2016, 2020, and 2024 reports</li>
+        <li><strong>National Conference of State Legislatures (NCSL)</strong> &mdash; Absentee and Mail Voting Policies by State, 2025 update</li>
+        <li><strong>States United Democracy Center</strong> &mdash; State voting law tracker</li>
+        <li><strong>MIT Election Data + Science Lab</strong> &mdash; Election performance data</li>
+        <li><strong>FiveThirtyEight</strong> &mdash; Historical election data and analysis</li>
+        <li><strong>Note:</strong> Some state data estimated from EAVS reports and news coverage. See methodology notes for each visualization.</li>
+      </ul>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- JOURNALIST NOTES -->
+    <!-- ================================================================ -->
+    <div class="notes-section" style="margin-top:2rem;">
+      <h3>What This Can and Cannot Tell You</h3>
+
+      <div class="note-group">
+        <h4 style="color:#4ade80;">What this data CAN show</h4>
+        <ul>
+          <li>How reliant each state is on mail/absentee voting as a share of total votes</li>
+          <li>How mail voting usage changed across the 2016, 2020, and 2024 elections</li>
+          <li>Which states have policies that encourage or restrict mail voting</li>
+          <li>The raw volume of voters who depend on this voting method</li>
+          <li>How the COVID-19 pandemic temporarily reshaped voting behavior</li>
+        </ul>
+      </div>
+
+      <div class="note-group">
+        <h4 style="color:#f97316;">What this data CANNOT show</h4>
+        <ul>
+          <li>Whether mail voting restrictions will pass in any given state legislature</li>
+          <li>Whether mail voting increases or decreases fraud (this data is about volume, not security)</li>
+          <li>How future turnout would change if mail voting were restricted</li>
+          <li>Partisan breakdown of mail voters (this data is method-only, not party affiliation)</li>
+          <li>Individual voter preferences or motivations for choosing mail over in-person</li>
+        </ul>
+      </div>
+
+      <div class="note-group">
+        <h4 style="color:#888;">Data limitations</h4>
+        <ul>
+          <li>EAVS data varies in completeness; not all states report all fields consistently</li>
+          <li>2024 data includes estimates where final certified results were not yet available</li>
+          <li>State law classifications can change between elections; NCSL categories shown are as of 2025</li>
+          <li>This dataset covers 36 states that represent the range of mail voting policies and volumes, not all 50+DC</li>
+        </ul>
+      </div>
+    </div>
+
+  </div><!-- end .content -->
+
+  <!-- ── D3 Script ── -->
+  <script type="module">
+    import * as d3 from "d3";
+    import * as topojson from "topojson-client";
+
+    (async () => {
+    // ────────────────────────────────────────────────────────
+    // DATA
+    // ────────────────────────────────────────────────────────
+    const stateData = [
+      { state: "Oregon", abbr: "OR", fips: "41", rule: "all-mail", y2016: { total: 2001336, mail: 1960000, mailPct: 97.9 }, y2020: { total: 2413843, mail: 2365000, mailPct: 98.0 }, y2024: { total: 2374000, mail: 2327000, mailPct: 98.0 } },
+      { state: "Washington", abbr: "WA", fips: "53", rule: "all-mail", y2016: { total: 3316996, mail: 3250000, mailPct: 98.0 }, y2020: { total: 4087631, mail: 4005000, mailPct: 98.0 }, y2024: { total: 4050000, mail: 3969000, mailPct: 98.0 } },
+      { state: "Colorado", abbr: "CO", fips: "08", rule: "all-mail", y2016: { total: 2780247, mail: 2641000, mailPct: 95.0 }, y2020: { total: 3256980, mail: 3127000, mailPct: 96.0 }, y2024: { total: 3200000, mail: 3040000, mailPct: 95.0 } },
+      { state: "Hawaii", abbr: "HI", fips: "15", rule: "all-mail", y2016: { total: 428937, mail: 124000, mailPct: 28.9 }, y2020: { total: 574469, mail: 517000, mailPct: 90.0 }, y2024: { total: 530000, mail: 488000, mailPct: 92.0 } },
+      { state: "Utah", abbr: "UT", fips: "49", rule: "all-mail", y2016: { total: 1131430, mail: 892000, mailPct: 78.8 }, y2020: { total: 1488289, mail: 1399000, mailPct: 94.0 }, y2024: { total: 1450000, mail: 1363000, mailPct: 94.0 } },
+      { state: "California", abbr: "CA", fips: "06", rule: "all-mail", y2016: { total: 14181595, mail: 8932000, mailPct: 63.0 }, y2020: { total: 17500881, mail: 14876000, mailPct: 85.0 }, y2024: { total: 16400000, mail: 14432000, mailPct: 88.0 } },
+      { state: "Nevada", abbr: "NV", fips: "32", rule: "all-mail", y2016: { total: 1125385, mail: 236000, mailPct: 21.0 }, y2020: { total: 1405376, mail: 954000, mailPct: 67.9 }, y2024: { total: 1450000, mail: 986000, mailPct: 68.0 } },
+      { state: "Vermont", abbr: "VT", fips: "50", rule: "all-mail", y2016: { total: 315067, mail: 53600, mailPct: 17.0 }, y2020: { total: 367428, mail: 264500, mailPct: 72.0 }, y2024: { total: 370000, mail: 296000, mailPct: 80.0 } },
+      { state: "Arizona", abbr: "AZ", fips: "04", rule: "no-excuse", y2016: { total: 2604657, mail: 1978000, mailPct: 75.9 }, y2020: { total: 3387326, mail: 2894000, mailPct: 85.4 }, y2024: { total: 3400000, mail: 2686000, mailPct: 79.0 } },
+      { state: "Montana", abbr: "MT", fips: "30", rule: "no-excuse", y2016: { total: 497147, mail: 358000, mailPct: 72.0 }, y2020: { total: 603640, mail: 459000, mailPct: 76.0 }, y2024: { total: 580000, mail: 412000, mailPct: 71.0 } },
+      { state: "Florida", abbr: "FL", fips: "12", rule: "no-excuse", y2016: { total: 9420039, mail: 2916000, mailPct: 30.9 }, y2020: { total: 11067456, mail: 4850000, mailPct: 43.8 }, y2024: { total: 10700000, mail: 3210000, mailPct: 30.0 } },
+      { state: "New Jersey", abbr: "NJ", fips: "34", rule: "no-excuse", y2016: { total: 3874046, mail: 271000, mailPct: 7.0 }, y2020: { total: 4549353, mail: 3912000, mailPct: 86.0 }, y2024: { total: 4300000, mail: 1290000, mailPct: 30.0 } },
+      { state: "Pennsylvania", abbr: "PA", fips: "42", rule: "no-excuse", y2016: { total: 6165478, mail: 554000, mailPct: 9.0 }, y2020: { total: 6936976, mail: 2628000, mailPct: 37.9 }, y2024: { total: 6900000, mail: 1794000, mailPct: 26.0 } },
+      { state: "Michigan", abbr: "MI", fips: "26", rule: "no-excuse", y2016: { total: 4799284, mail: 610000, mailPct: 12.7 }, y2020: { total: 5539302, mail: 3295000, mailPct: 59.5 }, y2024: { total: 5400000, mail: 1836000, mailPct: 34.0 } },
+      { state: "Georgia", abbr: "GA", fips: "13", rule: "no-excuse", y2016: { total: 4114732, mail: 247000, mailPct: 6.0 }, y2020: { total: 4999960, mail: 1316000, mailPct: 26.3 }, y2024: { total: 5100000, mail: 357000, mailPct: 7.0 } },
+      { state: "North Carolina", abbr: "NC", fips: "37", rule: "no-excuse", y2016: { total: 4741564, mail: 237000, mailPct: 5.0 }, y2020: { total: 5524804, mail: 1107000, mailPct: 20.0 }, y2024: { total: 5600000, mail: 504000, mailPct: 9.0 } },
+      { state: "Wisconsin", abbr: "WI", fips: "55", rule: "no-excuse", y2016: { total: 2976150, mail: 268000, mailPct: 9.0 }, y2020: { total: 3298041, mail: 1303000, mailPct: 39.5 }, y2024: { total: 3350000, mail: 637000, mailPct: 19.0 } },
+      { state: "Ohio", abbr: "OH", fips: "39", rule: "no-excuse", y2016: { total: 5496487, mail: 1319000, mailPct: 24.0 }, y2020: { total: 5922202, mail: 2073000, mailPct: 35.0 }, y2024: { total: 5800000, mail: 1218000, mailPct: 21.0 } },
+      { state: "Minnesota", abbr: "MN", fips: "27", rule: "no-excuse", y2016: { total: 2968281, mail: 534000, mailPct: 18.0 }, y2020: { total: 3277171, mail: 1670000, mailPct: 51.0 }, y2024: { total: 3200000, mail: 768000, mailPct: 24.0 } },
+      { state: "Virginia", abbr: "VA", fips: "51", rule: "no-excuse", y2016: { total: 3984631, mail: 279000, mailPct: 7.0 }, y2020: { total: 4460524, mail: 1161000, mailPct: 26.0 }, y2024: { total: 4400000, mail: 880000, mailPct: 20.0 } },
+      { state: "Iowa", abbr: "IA", fips: "19", rule: "no-excuse", y2016: { total: 1566031, mail: 626000, mailPct: 40.0 }, y2020: { total: 1690871, mail: 1015000, mailPct: 60.0 }, y2024: { total: 1600000, mail: 544000, mailPct: 34.0 } },
+      { state: "Kansas", abbr: "KS", fips: "20", rule: "no-excuse", y2016: { total: 1184402, mail: 355000, mailPct: 30.0 }, y2020: { total: 1372303, mail: 548000, mailPct: 40.0 }, y2024: { total: 1350000, mail: 405000, mailPct: 30.0 } },
+      { state: "New Mexico", abbr: "NM", fips: "35", rule: "no-excuse", y2016: { total: 798319, mail: 175000, mailPct: 21.9 }, y2020: { total: 923965, mail: 424000, mailPct: 45.9 }, y2024: { total: 900000, mail: 306000, mailPct: 34.0 } },
+      { state: "Nebraska", abbr: "NE", fips: "31", rule: "no-excuse", y2016: { total: 844227, mail: 219000, mailPct: 25.9 }, y2020: { total: 956383, mail: 364000, mailPct: 38.1 }, y2024: { total: 950000, mail: 285000, mailPct: 30.0 } },
+      { state: "Maryland", abbr: "MD", fips: "24", rule: "no-excuse", y2016: { total: 2781446, mail: 167000, mailPct: 6.0 }, y2020: { total: 3037030, mail: 1214000, mailPct: 40.0 }, y2024: { total: 2950000, mail: 590000, mailPct: 20.0 } },
+      { state: "Alaska", abbr: "AK", fips: "02", rule: "no-excuse", y2016: { total: 318608, mail: 86000, mailPct: 27.0 }, y2020: { total: 359530, mail: 126000, mailPct: 35.0 }, y2024: { total: 350000, mail: 105000, mailPct: 30.0 } },
+      { state: "Massachusetts", abbr: "MA", fips: "25", rule: "no-excuse", y2016: { total: 3325046, mail: 166000, mailPct: 5.0 }, y2020: { total: 3631402, mail: 1888000, mailPct: 52.0 }, y2024: { total: 3500000, mail: 875000, mailPct: 25.0 } },
+      { state: "New York", abbr: "NY", fips: "36", rule: "no-excuse", y2016: { total: 7721453, mail: 309000, mailPct: 4.0 }, y2020: { total: 8594826, mail: 3351000, mailPct: 39.0 }, y2024: { total: 8100000, mail: 1620000, mailPct: 20.0 } },
+      { state: "Illinois", abbr: "IL", fips: "17", rule: "no-excuse", y2016: { total: 5536424, mail: 443000, mailPct: 8.0 }, y2020: { total: 6033744, mail: 2594000, mailPct: 43.0 }, y2024: { total: 5800000, mail: 1160000, mailPct: 20.0 } },
+      { state: "Idaho", abbr: "ID", fips: "16", rule: "no-excuse", y2016: { total: 690255, mail: 228000, mailPct: 33.0 }, y2020: { total: 868014, mail: 399000, mailPct: 46.0 }, y2024: { total: 850000, mail: 297000, mailPct: 35.0 } },
+      { state: "Maine", abbr: "ME", fips: "23", rule: "no-excuse", y2016: { total: 747927, mail: 157000, mailPct: 21.0 }, y2020: { total: 824024, mail: 404000, mailPct: 49.0 }, y2024: { total: 810000, mail: 259000, mailPct: 32.0 } },
+      { state: "Oklahoma", abbr: "OK", fips: "40", rule: "no-excuse", y2016: { total: 1452992, mail: 44000, mailPct: 3.0 }, y2020: { total: 1560699, mail: 234000, mailPct: 15.0 }, y2024: { total: 1500000, mail: 120000, mailPct: 8.0 } },
+      { state: "North Dakota", abbr: "ND", fips: "38", rule: "no-excuse", y2016: { total: 344360, mail: 103000, mailPct: 30.0 }, y2020: { total: 361819, mail: 145000, mailPct: 40.0 }, y2024: { total: 360000, mail: 108000, mailPct: 30.0 } },
+      { state: "Rhode Island", abbr: "RI", fips: "44", rule: "no-excuse", y2016: { total: 464144, mail: 32000, mailPct: 7.0 }, y2020: { total: 517757, mail: 238000, mailPct: 46.0 }, y2024: { total: 500000, mail: 125000, mailPct: 25.0 } },
+      { state: "South Dakota", abbr: "SD", fips: "46", rule: "no-excuse", y2016: { total: 370093, mail: 107000, mailPct: 29.0 }, y2020: { total: 422609, mail: 169000, mailPct: 40.0 }, y2024: { total: 420000, mail: 126000, mailPct: 30.0 } },
+      { state: "Wyoming", abbr: "WY", fips: "56", rule: "no-excuse", y2016: { total: 255849, mail: 77000, mailPct: 30.0 }, y2020: { total: 278503, mail: 100000, mailPct: 36.0 }, y2024: { total: 275000, mail: 83000, mailPct: 30.0 } },
+      { state: "Texas", abbr: "TX", fips: "48", rule: "excuse-required", y2016: { total: 8969226, mail: 628000, mailPct: 7.0 }, y2020: { total: 11315056, mail: 1245000, mailPct: 11.0 }, y2024: { total: 11400000, mail: 912000, mailPct: 8.0 } },
+      { state: "Alabama", abbr: "AL", fips: "01", rule: "excuse-required", y2016: { total: 2123372, mail: 64000, mailPct: 3.0 }, y2020: { total: 2323282, mail: 186000, mailPct: 8.0 }, y2024: { total: 2300000, mail: 115000, mailPct: 5.0 } },
+      { state: "Mississippi", abbr: "MS", fips: "28", rule: "excuse-required", y2016: { total: 1209357, mail: 48000, mailPct: 4.0 }, y2020: { total: 1313759, mail: 131000, mailPct: 10.0 }, y2024: { total: 1250000, mail: 75000, mailPct: 6.0 } },
+      { state: "Tennessee", abbr: "TN", fips: "47", rule: "excuse-required", y2016: { total: 2508027, mail: 75000, mailPct: 3.0 }, y2020: { total: 3053851, mail: 336000, mailPct: 11.0 }, y2024: { total: 3050000, mail: 183000, mailPct: 6.0 } },
+      { state: "Indiana", abbr: "IN", fips: "18", rule: "excuse-required", y2016: { total: 2734958, mail: 219000, mailPct: 8.0 }, y2020: { total: 3034614, mail: 545000, mailPct: 18.0 }, y2024: { total: 2950000, mail: 236000, mailPct: 8.0 } },
+      { state: "Kentucky", abbr: "KY", fips: "21", rule: "excuse-required", y2016: { total: 1924149, mail: 58000, mailPct: 3.0 }, y2020: { total: 2136768, mail: 641000, mailPct: 30.0 }, y2024: { total: 2100000, mail: 147000, mailPct: 7.0 } },
+      { state: "Louisiana", abbr: "LA", fips: "22", rule: "excuse-required", y2016: { total: 2029032, mail: 61000, mailPct: 3.0 }, y2020: { total: 2148062, mail: 322000, mailPct: 15.0 }, y2024: { total: 2100000, mail: 126000, mailPct: 6.0 } },
+      { state: "Missouri", abbr: "MO", fips: "29", rule: "excuse-required", y2016: { total: 2808605, mail: 140000, mailPct: 5.0 }, y2020: { total: 3025962, mail: 756000, mailPct: 25.0 }, y2024: { total: 3000000, mail: 240000, mailPct: 8.0 } },
+      { state: "South Carolina", abbr: "SC", fips: "45", rule: "excuse-required", y2016: { total: 2103027, mail: 84000, mailPct: 4.0 }, y2020: { total: 2513329, mail: 377000, mailPct: 15.0 }, y2024: { total: 2600000, mail: 182000, mailPct: 7.0 } },
+      { state: "Arkansas", abbr: "AR", fips: "05", rule: "excuse-required", y2016: { total: 1130635, mail: 45000, mailPct: 4.0 }, y2020: { total: 1219069, mail: 171000, mailPct: 14.0 }, y2024: { total: 1200000, mail: 72000, mailPct: 6.0 } },
+      { state: "West Virginia", abbr: "WV", fips: "54", rule: "excuse-required", y2016: { total: 714423, mail: 29000, mailPct: 4.0 }, y2020: { total: 794731, mail: 127000, mailPct: 16.0 }, y2024: { total: 750000, mail: 53000, mailPct: 7.0 } },
+      { state: "Connecticut", abbr: "CT", fips: "09", rule: "excuse-required", y2016: { total: 1644920, mail: 82000, mailPct: 5.0 }, y2020: { total: 1823857, mail: 656000, mailPct: 36.0 }, y2024: { total: 1800000, mail: 270000, mailPct: 15.0 } },
+      { state: "Delaware", abbr: "DE", fips: "10", rule: "excuse-required", y2016: { total: 443814, mail: 27000, mailPct: 6.0 }, y2020: { total: 504346, mail: 171000, mailPct: 34.0 }, y2024: { total: 500000, mail: 80000, mailPct: 16.0 } },
+      { state: "New Hampshire", abbr: "NH", fips: "33", rule: "excuse-required", y2016: { total: 744296, mail: 30000, mailPct: 4.0 }, y2020: { total: 806205, mail: 258000, mailPct: 32.0 }, y2024: { total: 810000, mail: 113000, mailPct: 14.0 } },
+    ];
+
+    // FIPS lookup
+    const fipsToAbbr = new Map(stateData.map(d => [d.fips, d.abbr]));
+    const abbrToState = new Map(stateData.map(d => [d.abbr, d]));
+
+    // Rule type colors
+    const ruleColor = {
+      "all-mail": "#f472b6",
+      "no-excuse": "#818cf8",
+      "excuse-required": "#f97316"
+    };
+    const ruleLabel = {
+      "all-mail": "All-Mail",
+      "no-excuse": "No-Excuse Absentee",
+      "excuse-required": "Excuse Required"
+    };
+
+    // Current state
+    let currentYear = "y2024";
+    let currentFilter = "all";
+
+    // Color scale for map (mail vote share)
+    const mapColorScale = d3.scaleSequential()
+      .domain([0, 100])
+      .interpolator(d3.interpolateYlOrRd);
+
+    // ────────────────────────────────────────────────────────
+    // SHARED: Tooltip
+    // ────────────────────────────────────────────────────────
+    const tooltip = d3.select("#tooltip");
+
+    function showTooltip(event, html) {
+      tooltip.html(html)
+        .classed("visible", true)
+        .style("left", Math.min(event.clientX + 14, window.innerWidth - 310) + "px")
+        .style("top", (event.clientY - 10) + "px");
+    }
+    function hideTooltip() {
+      tooltip.classed("visible", false);
+    }
+
+    function stateTooltipHTML(d) {
+      const yr = d[currentYear];
+      return `<div class="tip-label">${d.state} (${d.abbr})</div>
+        <div class="tip-value">${d3.format(",")(yr.mail)} mail ballots of ${d3.format(",")(yr.total)} total</div>
+        <div class="tip-value"><strong>${yr.mailPct.toFixed(1)}%</strong> by mail</div>
+        <div class="tip-rule" style="color:${ruleColor[d.rule]}">${ruleLabel[d.rule]}</div>`;
+    }
+
+    // ────────────────────────────────────────────────────────
+    // SHARED: Linked highlighting
+    // ────────────────────────────────────────────────────────
+    let highlightedAbbr = null;
+
+    function highlightState(abbr) {
+      if (highlightedAbbr === abbr) return;
+      highlightedAbbr = abbr;
+
+      // Highlight on map
+      d3.selectAll(".state-path")
+        .classed("dimmed", d => {
+          const stFips = String(d.id).padStart(2, "0");
+          const stAbbr = fipsToAbbr.get(stFips);
+          return abbr && stAbbr !== abbr;
+        });
+
+      // Highlight on bar chart
+      d3.selectAll(".bar-group")
+        .classed("dimmed", function() {
+          const a = d3.select(this).attr("data-abbr");
+          return abbr && a !== abbr;
+        });
+    }
+
+    function clearHighlight() {
+      highlightedAbbr = null;
+      d3.selectAll(".state-path").classed("dimmed", false);
+      d3.selectAll(".bar-group").classed("dimmed", false);
+    }
+
+    // ────────────────────────────────────────────────────────
+    // SHARED: Toggle buttons
+    // ────────────────────────────────────────────────────────
+    document.querySelectorAll(".toggle-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.dataset.target;
+        const panel = document.getElementById(targetId);
+        if (!panel) return;
+        panel.classList.toggle("open");
+        btn.classList.toggle("active");
+      });
+    });
+
+    // ────────────────────────────────────────────────────────
+    // SHARED: IntersectionObserver for stat card animations
+    // ────────────────────────────────────────────────────────
+    const statObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const cards = entry.target.querySelectorAll(".stat");
+          cards.forEach(card => card.classList.add("visible"));
+          statObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+
+    document.querySelectorAll(".key-stat").forEach(el => statObserver.observe(el));
+
+    // ────────────────────────────────────────────────────────
+    // VIZ 1: CHOROPLETH MAP
+    // ────────────────────────────────────────────────────────
+    const mapWidth = 960, mapHeight = 600;
+    const mapSvg = d3.select("#viz1-map").append("svg")
+      .attr("viewBox", `0 0 ${mapWidth} ${mapHeight}`)
+      .attr("preserveAspectRatio", "xMidYMid meet");
+
+    const projection = d3.geoAlbersUsa()
+      .scale(1200)
+      .translate([mapWidth / 2, mapHeight / 2]);
+    const path = d3.geoPath().projection(projection);
+
+    // Map data lookup
+    function getMapLookup(yearKey) {
+      const m = new Map();
+      stateData.forEach(d => {
+        m.set(d.fips, d[yearKey].mailPct);
+      });
+      return m;
+    }
+
+    // Legend for map
+    (function buildMapLegend() {
+      const legendContainer = d3.select("#viz1-legend");
+      const steps = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+      steps.forEach((v, i) => {
+        if (i === steps.length - 1) return;
+        const item = legendContainer.append("div").attr("class", "legend-item");
+        item.append("div")
+          .attr("class", "legend-swatch")
+          .style("background", mapColorScale(v + 5));
+        item.append("span").text(`${v}-${steps[i+1]}%`);
+      });
+    })();
+
+    // Fetch TopoJSON and render map
+    const usData = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json");
+    const states = topojson.feature(usData, usData.objects.states);
+
+    // State borders
+    mapSvg.append("path")
+      .datum(topojson.mesh(usData, usData.objects.states, (a, b) => a !== b))
+      .attr("fill", "none")
+      .attr("stroke", "#333")
+      .attr("stroke-width", 0.5)
+      .attr("d", path);
+
+    // State fills
+    const statePaths = mapSvg.selectAll(".state-path")
+      .data(states.features)
+      .join("path")
+      .attr("class", "state-path")
+      .attr("d", path)
+      .attr("stroke", "#222")
+      .attr("stroke-width", 0.5)
+      .on("mouseenter", function(event, d) {
+        const fips = String(d.id).padStart(2, "0");
+        const abbr = fipsToAbbr.get(fips);
+        const st = abbrToState.get(abbr);
+        if (st) {
+          highlightState(abbr);
+          showTooltip(event, stateTooltipHTML(st));
+        }
+      })
+      .on("mousemove", function(event, d) {
+        const fips = String(d.id).padStart(2, "0");
+        const st = abbrToState.get(fipsToAbbr.get(fips));
+        if (st) showTooltip(event, stateTooltipHTML(st));
+      })
+      .on("mouseleave", function() {
+        clearHighlight();
+        hideTooltip();
+      });
+
+    function updateMapColors() {
+      const lookup = getMapLookup(currentYear);
+      statePaths.transition().duration(600)
+        .attr("fill", d => {
+          const fips = String(d.id).padStart(2, "0");
+          const val = lookup.get(fips);
+          return val !== undefined ? mapColorScale(val) : "#1a1a1a";
+        });
+    }
+    updateMapColors();
+
+    // Map annotations
+    function addMapAnnotations() {
+      mapSvg.selectAll(".map-annotation").remove();
+      const annotations = [
+        { abbr: "OR", text: "OR/WA: ~98% by mail", dx: -80, dy: -30 },
+        { abbr: "TX", text: "TX: 8% by mail", dx: 20, dy: 30 },
+      ];
+      annotations.forEach(a => {
+        const st = stateData.find(s => s.abbr === a.abbr);
+        if (!st) return;
+        const feature = states.features.find(f => String(f.id).padStart(2, "0") === st.fips);
+        if (!feature) return;
+        const centroid = path.centroid(feature);
+        if (!centroid || isNaN(centroid[0])) return;
+
+        const g = mapSvg.append("g").attr("class", "map-annotation");
+        g.append("line")
+          .attr("x1", centroid[0]).attr("y1", centroid[1])
+          .attr("x2", centroid[0] + a.dx).attr("y2", centroid[1] + a.dy)
+          .attr("stroke", "#888").attr("stroke-width", 1)
+          .attr("stroke-dasharray", "3,3");
+        g.append("text")
+          .attr("x", centroid[0] + a.dx)
+          .attr("y", centroid[1] + a.dy - 6)
+          .attr("fill", "#ccc")
+          .attr("font-size", "11px")
+          .attr("font-weight", "600")
+          .attr("text-anchor", a.dx < 0 ? "end" : "start")
+          .text(a.text);
+      });
+    }
+    addMapAnnotations();
+
+    // ────────────────────────────────────────────────────────
+    // VIZ 2: RANKED BAR CHART
+    // ────────────────────────────────────────────────────────
+    const barMargin = { top: 10, right: 60, bottom: 20, left: 110 };
+    const barFullW = 900;
+    let barData = [];
+    let barSvg, barX, barY, barChartW, barChartH;
+
+    function getFilteredSorted() {
+      let filtered = currentFilter === "all"
+        ? [...stateData]
+        : stateData.filter(d => d.rule === currentFilter);
+      filtered.sort((a, b) => b[currentYear].mailPct - a[currentYear].mailPct);
+      return filtered;
+    }
+
+    function buildBarChart() {
+      d3.select("#viz2-bars").selectAll("*").remove();
+
+      barData = getFilteredSorted();
+      const rowH = 22;
+      barChartH = barData.length * rowH;
+      barChartW = barFullW - barMargin.left - barMargin.right;
+
+      barSvg = d3.select("#viz2-bars").append("svg")
+        .attr("viewBox", `0 0 ${barFullW} ${barChartH + barMargin.top + barMargin.bottom}`)
+        .append("g")
+        .attr("transform", `translate(${barMargin.left},${barMargin.top})`);
+
+      barX = d3.scaleLinear().domain([0, 100]).range([0, barChartW]);
+      barY = d3.scaleBand()
+        .domain(barData.map(d => d.abbr))
+        .range([0, barChartH])
+        .padding(0.25);
+
+      // X axis
+      barSvg.append("g")
+        .attr("transform", `translate(0,${barChartH})`)
+        .call(d3.axisBottom(barX).ticks(5).tickFormat(d => d + "%"))
+        .call(g => g.select(".domain").remove())
+        .call(g => g.selectAll("text").attr("fill", "#888").attr("font-size", "10px"))
+        .call(g => g.selectAll("line").attr("stroke", "#333"));
+
+      // Grid lines
+      barSvg.selectAll(".grid-line")
+        .data(barX.ticks(5))
+        .join("line")
+        .attr("class", "grid-line")
+        .attr("x1", d => barX(d)).attr("x2", d => barX(d))
+        .attr("y1", 0).attr("y2", barChartH)
+        .attr("stroke", "#1a1a1a").attr("stroke-width", 1);
+
+      // Bar groups
+      const groups = barSvg.selectAll(".bar-group")
+        .data(barData, d => d.abbr)
+        .join("g")
+        .attr("class", "bar-group")
+        .attr("data-abbr", d => d.abbr)
+        .attr("transform", d => `translate(0,${barY(d.abbr)})`)
+        .on("mouseenter", function(event, d) {
+          highlightState(d.abbr);
+          showTooltip(event, stateTooltipHTML(d));
+        })
+        .on("mousemove", function(event, d) {
+          showTooltip(event, stateTooltipHTML(d));
+        })
+        .on("mouseleave", function() {
+          clearHighlight();
+          hideTooltip();
+        });
+
+      // Labels
+      groups.append("text")
+        .attr("x", -8)
+        .attr("y", barY.bandwidth() / 2)
+        .attr("dy", "0.35em")
+        .attr("text-anchor", "end")
+        .attr("fill", "#aaa")
+        .attr("font-size", "11px")
+        .text(d => d.abbr);
+
+      // Rule dot
+      groups.append("circle")
+        .attr("cx", -barMargin.left + 12)
+        .attr("cy", barY.bandwidth() / 2)
+        .attr("r", 4)
+        .attr("fill", d => ruleColor[d.rule]);
+
+      // Bars
+      groups.append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("height", barY.bandwidth())
+        .attr("rx", 3)
+        .attr("fill", d => ruleColor[d.rule])
+        .attr("opacity", 0.8)
+        .attr("width", 0)
+        .transition().duration(600).delay((d, i) => i * 15)
+        .attr("width", d => barX(d[currentYear].mailPct));
+
+      // Value labels
+      groups.append("text")
+        .attr("class", "bar-val")
+        .attr("x", d => barX(d[currentYear].mailPct) + 6)
+        .attr("y", barY.bandwidth() / 2)
+        .attr("dy", "0.35em")
+        .attr("fill", "#888")
+        .attr("font-size", "10px")
+        .text(d => d[currentYear].mailPct.toFixed(1) + "%")
+        .attr("opacity", 0)
+        .transition().duration(600).delay((d, i) => i * 15 + 300)
+        .attr("opacity", 1);
+    }
+
+    buildBarChart();
+
+    // ────────────────────────────────────────────────────────
+    // YEAR DROPDOWN SYNC (map + bar chart)
+    // ────────────────────────────────────────────────────────
+    const yearSelectMap = document.getElementById("year-select-map");
+    const yearSelectBar = document.getElementById("year-select-bar");
+
+    function onYearChange(newYear) {
+      currentYear = newYear;
+      yearSelectMap.value = newYear;
+      yearSelectBar.value = newYear;
+      updateMapColors();
+      buildBarChart();
+    }
+
+    yearSelectMap.addEventListener("change", e => onYearChange(e.target.value));
+    yearSelectBar.addEventListener("change", e => onYearChange(e.target.value));
+
+    // ────────────────────────────────────────────────────────
+    // FILTER BUTTONS
+    // ────────────────────────────────────────────────────────
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        buildBarChart();
+      });
+    });
+
+    // ────────────────────────────────────────────────────────
+    // VIZ 3: SLOPE CHART
+    // ────────────────────────────────────────────────────────
+    (function buildSlopeChart() {
+      const margin = { top: 40, right: 90, bottom: 40, left: 90 };
+      const width = 900 - margin.left - margin.right;
+      const height = 600 - margin.top - margin.bottom;
+
+      const svg = d3.select("#viz3-slope").append("svg")
+        .attr("viewBox", `0 0 900 600`)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const years = ["y2016", "y2020", "y2024"];
+      const yearLabels = { y2016: "2016", y2020: "2020", y2024: "2024" };
+
+      const x = d3.scalePoint()
+        .domain(years)
+        .range([0, width]);
+
+      const y = d3.scaleLinear()
+        .domain([0, 100])
+        .range([height, 0]);
+
+      // Grid
+      [0, 20, 40, 60, 80, 100].forEach(v => {
+        svg.append("line")
+          .attr("x1", 0).attr("x2", width)
+          .attr("y1", y(v)).attr("y2", y(v))
+          .attr("stroke", "#1a1a1a").attr("stroke-width", 1);
+        svg.append("text")
+          .attr("x", -10).attr("y", y(v))
+          .attr("dy", "0.35em").attr("text-anchor", "end")
+          .attr("fill", "#555").attr("font-size", "10px")
+          .text(v + "%");
+      });
+
+      // Year column labels
+      years.forEach(yr => {
+        svg.append("text")
+          .attr("x", x(yr)).attr("y", -18)
+          .attr("text-anchor", "middle")
+          .attr("fill", "#aaa").attr("font-size", "14px").attr("font-weight", "600")
+          .text(yearLabels[yr]);
+
+        svg.append("line")
+          .attr("x1", x(yr)).attr("x2", x(yr))
+          .attr("y1", 0).attr("y2", height)
+          .attr("stroke", "#222").attr("stroke-width", 1);
+      });
+
+      // Lines
+      const line = d3.line()
+        .x(d => x(d.year))
+        .y(d => y(d.pct));
+
+      stateData.forEach(d => {
+        const pts = years.map(yr => ({ year: yr, pct: d[yr].mailPct }));
+        const col = ruleColor[d.rule];
+
+        svg.append("path")
+          .datum(pts)
+          .attr("fill", "none")
+          .attr("stroke", col)
+          .attr("stroke-width", 1.5)
+          .attr("stroke-opacity", 0.35)
+          .attr("d", line)
+          .attr("class", "slope-line")
+          .attr("data-abbr", d.abbr)
+          .on("mouseenter", function(event) {
+            d3.select(this)
+              .attr("stroke-width", 3.5)
+              .attr("stroke-opacity", 1);
+            this.parentNode.appendChild(this);
+            showTooltip(event, `<div class="tip-label">${d.state}</div>
+              <div class="tip-value">2016: ${d.y2016.mailPct}% &rarr; 2020: ${d.y2020.mailPct}% &rarr; 2024: ${d.y2024.mailPct}%</div>
+              <div class="tip-rule" style="color:${col}">${ruleLabel[d.rule]}</div>`);
+          })
+          .on("mousemove", function(event) {
+            showTooltip(event, `<div class="tip-label">${d.state}</div>
+              <div class="tip-value">2016: ${d.y2016.mailPct}% &rarr; 2020: ${d.y2020.mailPct}% &rarr; 2024: ${d.y2024.mailPct}%</div>
+              <div class="tip-rule" style="color:${col}">${ruleLabel[d.rule]}</div>`);
+          })
+          .on("mouseleave", function() {
+            d3.select(this)
+              .attr("stroke-width", 1.5)
+              .attr("stroke-opacity", 0.35);
+            hideTooltip();
+          });
+      });
+
+      // Right-side labels for notable states
+      const labelStates = ["OR", "WA", "CO", "AZ", "NJ", "PA", "MI", "TX", "AL", "KY", "CA"];
+      const labelOffsets = {};
+      let lastY = -999;
+      const sorted = [...stateData]
+        .filter(d => labelStates.includes(d.abbr))
+        .sort((a, b) => b.y2024.mailPct - a.y2024.mailPct);
+
+      sorted.forEach(d => {
+        let posY = y(d.y2024.mailPct);
+        if (posY - lastY < 12) posY = lastY + 12;
+        labelOffsets[d.abbr] = posY;
+        lastY = posY;
+      });
+
+      sorted.forEach(d => {
+        svg.append("text")
+          .attr("x", width + 8)
+          .attr("y", labelOffsets[d.abbr])
+          .attr("dy", "0.35em")
+          .attr("fill", ruleColor[d.rule])
+          .attr("font-size", "10px")
+          .attr("font-weight", "600")
+          .text(d.abbr);
+      });
+
+      // Annotations
+      const annotationG = svg.append("g").attr("class", "slope-annotations");
+
+      // NJ spike annotation
+      const njPt = y(stateData.find(d => d.abbr === "NJ").y2020.mailPct);
+      annotationG.append("text")
+        .attr("x", x("y2020") + 8).attr("y", njPt - 10)
+        .attr("fill", "#818cf8").attr("font-size", "10px").attr("font-weight", 600)
+        .text("NJ spiked to 86%");
+      annotationG.append("text")
+        .attr("x", x("y2020") + 8).attr("y", njPt + 2)
+        .attr("fill", "#666").attr("font-size", "9px")
+        .text("then fell to 30%");
+
+      // TX flat annotation
+      const txPt = y(stateData.find(d => d.abbr === "TX").y2020.mailPct);
+      annotationG.append("text")
+        .attr("x", x("y2020") - 65).attr("y", txPt + 18)
+        .attr("fill", "#f97316").attr("font-size", "10px").attr("font-weight", 600)
+        .text("TX, AL, MS barely moved");
+    })();
+
+    // ────────────────────────────────────────────────────────
+    // VIZ 4: SCATTERPLOT
+    // ────────────────────────────────────────────────────────
+    (function buildScatterplot() {
+      const margin = { top: 30, right: 40, bottom: 60, left: 80 };
+      const width = 900 - margin.left - margin.right;
+      const height = 550 - margin.top - margin.bottom;
+
+      const svg = d3.select("#viz4-scatter").append("svg")
+        .attr("viewBox", `0 0 900 550`)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const data = stateData.map(d => ({
+        ...d,
+        mailPct: d.y2024.mailPct,
+        mailVol: d.y2024.mail,
+        totalVotes: d.y2024.total
+      }));
+
+      const x = d3.scaleLinear().domain([0, 100]).range([0, width]);
+      const y = d3.scaleLinear().domain([0, 15000000]).range([height, 0]);
+      const r = d3.scaleSqrt().domain([0, 16400000]).range([4, 40]);
+
+      // Axes
+      svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x).ticks(5).tickFormat(d => d + "%"))
+        .call(g => g.select(".domain").attr("stroke", "#333"))
+        .call(g => g.selectAll("text").attr("fill", "#888").attr("font-size", "11px"))
+        .call(g => g.selectAll("line").attr("stroke", "#333"));
+
+      svg.append("g")
+        .call(d3.axisLeft(y).ticks(5).tickFormat(d => d === 0 ? "0" : d3.format(".1s")(d)))
+        .call(g => g.select(".domain").attr("stroke", "#333"))
+        .call(g => g.selectAll("text").attr("fill", "#888").attr("font-size", "11px"))
+        .call(g => g.selectAll("line").attr("stroke", "#333"));
+
+      // Axis labels
+      svg.append("text")
+        .attr("x", width / 2).attr("y", height + 45)
+        .attr("text-anchor", "middle").attr("fill", "#888").attr("font-size", "12px")
+        .text("Mail Vote Share (%) — 2024");
+      svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2).attr("y", -60)
+        .attr("text-anchor", "middle").attr("fill", "#888").attr("font-size", "12px")
+        .text("Mail Ballots Cast (raw count)");
+
+      // Grid
+      svg.selectAll(".xgrid")
+        .data(x.ticks(5)).join("line")
+        .attr("x1", d => x(d)).attr("x2", d => x(d))
+        .attr("y1", 0).attr("y2", height)
+        .attr("stroke", "#1a1a1a");
+      svg.selectAll(".ygrid")
+        .data(y.ticks(5)).join("line")
+        .attr("x1", 0).attr("x2", width)
+        .attr("y1", d => y(d)).attr("y2", d => y(d))
+        .attr("stroke", "#1a1a1a");
+
+      // "Danger zone" quadrant
+      svg.append("rect")
+        .attr("x", x(50)).attr("y", y(15000000))
+        .attr("width", x(100) - x(50))
+        .attr("height", y(0) - y(15000000))
+        .attr("fill", "#f9731608")
+        .attr("stroke", "#f9731633")
+        .attr("stroke-dasharray", "6,4");
+      svg.append("text")
+        .attr("x", x(75)).attr("y", y(14000000))
+        .attr("text-anchor", "middle").attr("fill", "#f9731666").attr("font-size", "11px")
+        .attr("font-weight", 600)
+        .text("HIGH SHARE + HIGH VOLUME");
+
+      // Crosshair lines (hidden initially)
+      const crossH = svg.append("line").attr("stroke", "#555").attr("stroke-dasharray", "3,3").attr("opacity", 0);
+      const crossV = svg.append("line").attr("stroke", "#555").attr("stroke-dasharray", "3,3").attr("opacity", 0);
+
+      // Dots
+      svg.selectAll(".dot")
+        .data(data.sort((a, b) => b.totalVotes - a.totalVotes))
+        .join("circle")
+        .attr("class", "dot")
+        .attr("cx", d => x(d.mailPct))
+        .attr("cy", d => y(d.mailVol))
+        .attr("r", d => r(d.totalVotes))
+        .attr("fill", d => ruleColor[d.rule])
+        .attr("opacity", 0.7)
+        .attr("stroke", "#0a0a0a")
+        .attr("stroke-width", 1)
+        .on("mouseenter", function(event, d) {
+          d3.select(this).attr("opacity", 1).attr("stroke", "#fff").attr("stroke-width", 2);
+          crossH.attr("x1", 0).attr("x2", x(d.mailPct)).attr("y1", y(d.mailVol)).attr("y2", y(d.mailVol)).attr("opacity", 1);
+          crossV.attr("x1", x(d.mailPct)).attr("x2", x(d.mailPct)).attr("y1", y(d.mailVol)).attr("y2", height).attr("opacity", 1);
+          showTooltip(event, `<div class="tip-label">${d.state} (${d.abbr})</div>
+            <div class="tip-value">Mail share: <strong>${d.mailPct}%</strong></div>
+            <div class="tip-value">Mail ballots: <strong>${d3.format(",")(d.mailVol)}</strong></div>
+            <div class="tip-value">Total votes: ${d3.format(",")(d.totalVotes)}</div>
+            <div class="tip-rule" style="color:${ruleColor[d.rule]}">${ruleLabel[d.rule]}</div>`);
+        })
+        .on("mousemove", function(event, d) {
+          showTooltip(event, `<div class="tip-label">${d.state} (${d.abbr})</div>
+            <div class="tip-value">Mail share: <strong>${d.mailPct}%</strong></div>
+            <div class="tip-value">Mail ballots: <strong>${d3.format(",")(d.mailVol)}</strong></div>
+            <div class="tip-value">Total votes: ${d3.format(",")(d.totalVotes)}</div>
+            <div class="tip-rule" style="color:${ruleColor[d.rule]}">${ruleLabel[d.rule]}</div>`);
+        })
+        .on("mouseleave", function() {
+          d3.select(this).attr("opacity", 0.7).attr("stroke", "#0a0a0a").attr("stroke-width", 1);
+          crossH.attr("opacity", 0);
+          crossV.attr("opacity", 0);
+          hideTooltip();
+        });
+
+      // State labels for key states
+      const labelDots = ["CA", "OR", "WA", "TX", "AZ", "FL", "CO"];
+      data.filter(d => labelDots.includes(d.abbr)).forEach(d => {
+        const dx = d.abbr === "CA" ? -10 : d.abbr === "TX" ? 10 : 0;
+        const dy = d.abbr === "CA" ? -r(d.totalVotes) - 6 : d.abbr === "TX" ? r(d.totalVotes) + 14 : -r(d.totalVotes) - 6;
+        svg.append("text")
+          .attr("x", x(d.mailPct) + dx)
+          .attr("y", y(d.mailVol) + dy)
+          .attr("text-anchor", "middle")
+          .attr("fill", "#ccc")
+          .attr("font-size", "10px")
+          .attr("font-weight", 600)
+          .text(d.abbr);
+      });
+    })();
+
+    // ────────────────────────────────────────────────────────
+    // VIZ 5: STACKED BAR CHART (National Voting Method)
+    // ────────────────────────────────────────────────────────
+    (function buildStackedBars() {
+      const container = d3.select("#viz5-stacked");
+      container.append("p")
+        .style("color", "#888")
+        .style("font-size", "0.8rem")
+        .style("margin-bottom", "0.75rem")
+        .style("text-transform", "uppercase")
+        .style("letter-spacing", "0.08em")
+        .style("font-weight", "600")
+        .text("National Voting Method Breakdown");
+
+      const data = [
+        { year: "2016", mail: 21, early: 19, electionDay: 60 },
+        { year: "2020", mail: 42, early: 26, electionDay: 32 },
+        { year: "2024", mail: 31, early: 35, electionDay: 34 },
+      ];
+
+      const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+      const width = 860 - margin.left - margin.right;
+      const height = 300 - margin.top - margin.bottom;
+
+      const svg = container.append("svg")
+        .attr("viewBox", `0 0 860 300`)
+        .append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+      const keys = ["mail", "early", "electionDay"];
+      const colors = { mail: "#f97316", early: "#818cf8", electionDay: "#4ade80" };
+      const labels = { mail: "Mail/Absentee", early: "Early In-Person", electionDay: "Election Day" };
+
+      const x = d3.scaleBand()
+        .domain(data.map(d => d.year))
+        .range([0, width])
+        .padding(0.35);
+
+      const y = d3.scaleLinear()
+        .domain([0, 100])
+        .range([height, 0]);
+
+      // Y axis
+      svg.append("g")
+        .call(d3.axisLeft(y).ticks(5).tickFormat(d => d + "%"))
+        .call(g => g.select(".domain").remove())
+        .call(g => g.selectAll("text").attr("fill", "#888").attr("font-size", "11px"))
+        .call(g => g.selectAll("line").attr("stroke", "#333"));
+
+      // X axis
+      svg.append("g")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x))
+        .call(g => g.select(".domain").remove())
+        .call(g => g.selectAll("text").attr("fill", "#aaa").attr("font-size", "13px").attr("font-weight", 600))
+        .call(g => g.selectAll("line").remove());
+
+      // Grid
+      svg.selectAll(".ygrid")
+        .data(y.ticks(5)).join("line")
+        .attr("x1", 0).attr("x2", width)
+        .attr("y1", d => y(d)).attr("y2", d => y(d))
+        .attr("stroke", "#1a1a1a");
+
+      // Stack
+      const stack = d3.stack().keys(keys);
+      const series = stack(data);
+
+      // Bars
+      series.forEach((layer, li) => {
+        svg.selectAll(`.bar-${keys[li]}`)
+          .data(layer)
+          .join("rect")
+          .attr("x", d => x(d.data.year))
+          .attr("y", d => y(d[1]))
+          .attr("height", d => y(d[0]) - y(d[1]))
+          .attr("width", x.bandwidth())
+          .attr("fill", colors[keys[li]])
+          .attr("rx", li === 2 ? 0 : 0)
+          .attr("opacity", 0.85)
+          .on("mouseenter", function(event, d) {
+            const key = keys[li];
+            showTooltip(event, `<div class="tip-label">${d.data.year}</div>
+              <div class="tip-value">${labels[key]}: <strong>${d.data[key]}%</strong></div>`);
+          })
+          .on("mousemove", function(event, d) {
+            const key = keys[li];
+            showTooltip(event, `<div class="tip-label">${d.data.year}</div>
+              <div class="tip-value">${labels[key]}: <strong>${d.data[key]}%</strong></div>`);
+          })
+          .on("mouseleave", hideTooltip);
+
+        // Segment labels
+        layer.forEach(d => {
+          const segH = y(d[0]) - y(d[1]);
+          if (segH > 20) {
+            svg.append("text")
+              .attr("x", x(d.data.year) + x.bandwidth() / 2)
+              .attr("y", y(d[1]) + segH / 2)
+              .attr("dy", "0.35em")
+              .attr("text-anchor", "middle")
+              .attr("fill", "#000")
+              .attr("font-size", "12px")
+              .attr("font-weight", 700)
+              .text(d.data[keys[li]] + "%");
+          }
+        });
+      });
+
+      // Legend below chart
+      const leg = svg.append("g").attr("transform", `translate(0,${height + 28})`);
+      keys.forEach((key, i) => {
+        const g = leg.append("g").attr("transform", `translate(${i * 180},0)`);
+        g.append("rect").attr("width", 12).attr("height", 12).attr("rx", 2).attr("fill", colors[key]);
+        g.append("text").attr("x", 18).attr("y", 10).attr("fill", "#aaa").attr("font-size", "11px").text(labels[key]);
+      });
+    })();
+
+    // ────────────────────────────────────────────────────────
+    // CODE PANELS (representative code for each viz)
+    // ────────────────────────────────────────────────────────
+
+    // Viz 1 code
+    document.getElementById("code1-content").textContent = `// VIZ 1: US Choropleth Map — Mail Vote Share by State
+
+// 1. Set up projection and path generator
+const projection = d3.geoAlbersUsa()
+  .scale(1200)
+  .translate([width / 2, height / 2]);
+const path = d3.geoPath().projection(projection);
+
+// 2. Color scale: sequential yellow-orange-red
+const colorScale = d3.scaleSequential()
+  .domain([0, 100])
+  .interpolator(d3.interpolateYlOrRd);
+
+// 3. Create lookup: FIPS code -> mail vote %
+const lookup = new Map(
+  stateData.map(d => [d.fips, d[currentYear].mailPct])
+);
+
+// 4. Fetch TopoJSON, convert to GeoJSON, draw paths
+const us = await d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json");
+const states = topojson.feature(us, us.objects.states);
+
+svg.selectAll(".state-path")
+  .data(states.features)
+  .join("path")
+  .attr("class", "state-path")
+  .attr("d", path)
+  .attr("fill", d => {
+    const fips = String(d.id).padStart(2, "0");
+    const val = lookup.get(fips);
+    return val !== undefined ? colorScale(val) : "#1a1a1a";
+  })
+  .on("mouseenter", (event, d) => {
+    highlightState(fipsToAbbr.get(fips));
+    showTooltip(event, stateTooltipHTML(stateObj));
+  })
+  .on("mouseleave", () => {
+    clearHighlight();
+    hideTooltip();
+  });
+
+// 5. State borders overlay (mesh for shared edges)
+svg.append("path")
+  .datum(topojson.mesh(us, us.objects.states, (a, b) => a !== b))
+  .attr("fill", "none")
+  .attr("stroke", "#333")
+  .attr("d", path);`;
+
+    // Viz 2 code
+    document.getElementById("code2-content").textContent = `// VIZ 2: Ranked Horizontal Bar Chart — States by Mail Vote %
+
+// 1. Sort data by mail vote share (descending)
+const sorted = stateData
+  .filter(d => currentFilter === "all" || d.rule === currentFilter)
+  .sort((a, b) => b[currentYear].mailPct - a[currentYear].mailPct);
+
+// 2. Scales
+const x = d3.scaleLinear().domain([0, 100]).range([0, chartWidth]);
+const y = d3.scaleBand()
+  .domain(sorted.map(d => d.abbr))
+  .range([0, chartHeight])
+  .padding(0.25);
+
+// 3. Bar groups with linked highlighting
+const groups = svg.selectAll(".bar-group")
+  .data(sorted, d => d.abbr)
+  .join("g")
+  .attr("class", "bar-group")
+  .attr("transform", d => \`translate(0,\${y(d.abbr)})\`)
+  .on("mouseenter", (event, d) => {
+    highlightState(d.abbr);  // highlights on BOTH map and bars
+    showTooltip(event, stateTooltipHTML(d));
+  })
+  .on("mouseleave", () => {
+    clearHighlight();
+    hideTooltip();
+  });
+
+// 4. Draw bars with staggered animation
+groups.append("rect")
+  .attr("width", 0)
+  .attr("height", y.bandwidth())
+  .attr("fill", d => ruleColor[d.rule])
+  .transition().duration(600).delay((d, i) => i * 15)
+  .attr("width", d => x(d[currentYear].mailPct));
+
+// 5. Rule-type indicator dot
+groups.append("circle")
+  .attr("cx", -margin.left + 12)
+  .attr("cy", y.bandwidth() / 2)
+  .attr("r", 4)
+  .attr("fill", d => ruleColor[d.rule]);`;
+
+    // Viz 3 code
+    document.getElementById("code3-content").textContent = `// VIZ 3: Slope Chart — Mail Vote % Across 2016, 2020, 2024
+
+// 1. X axis: scalePoint for discrete year columns
+const x = d3.scalePoint()
+  .domain(["y2016", "y2020", "y2024"])
+  .range([0, width]);
+
+// 2. Y axis: 0-100% mail vote share
+const y = d3.scaleLinear().domain([0, 100]).range([height, 0]);
+
+// 3. Line generator
+const line = d3.line()
+  .x(d => x(d.year))
+  .y(d => y(d.pct));
+
+// 4. Draw one polyline per state
+stateData.forEach(d => {
+  const pts = ["y2016", "y2020", "y2024"].map(yr => ({
+    year: yr,
+    pct: d[yr].mailPct
+  }));
+
+  svg.append("path")
+    .datum(pts)
+    .attr("fill", "none")
+    .attr("stroke", ruleColor[d.rule])
+    .attr("stroke-width", 1.5)
+    .attr("stroke-opacity", 0.35)
+    .attr("d", line)
+    .on("mouseenter", function() {
+      d3.select(this)
+        .attr("stroke-width", 3.5)
+        .attr("stroke-opacity", 1);
+      // Bring to front
+      this.parentNode.appendChild(this);
+    })
+    .on("mouseleave", function() {
+      d3.select(this)
+        .attr("stroke-width", 1.5)
+        .attr("stroke-opacity", 0.35);
+    });
+});
+
+// 5. Annotations for key patterns
+// NJ: 7% -> 86% -> 30% (COVID spike)
+// TX: 7% -> 11% -> 8% (barely moved)`;
+
+    // Viz 4 code
+    document.getElementById("code4-content").textContent = `// VIZ 4: Scatterplot — Mail Share vs. Volume (2024)
+
+// 1. Three scales for three visual encodings
+const x = d3.scaleLinear().domain([0, 100]).range([0, width]);  // mail share %
+const y = d3.scaleLinear().domain([0, 15e6]).range([height, 0]); // mail volume
+const r = d3.scaleSqrt().domain([0, 16.4e6]).range([4, 40]);    // total votes
+
+// 2. "Danger zone" quadrant highlight
+svg.append("rect")
+  .attr("x", x(50)).attr("y", y(15e6))
+  .attr("width", x(100) - x(50))
+  .attr("height", y(0) - y(15e6))
+  .attr("fill", "#f9731608")
+  .attr("stroke", "#f9731633")
+  .attr("stroke-dasharray", "6,4");
+
+// 3. Crosshair lines (hidden until hover)
+const crossH = svg.append("line").attr("opacity", 0);
+const crossV = svg.append("line").attr("opacity", 0);
+
+// 4. Dots (sorted large-to-small so small dots are on top)
+svg.selectAll(".dot")
+  .data(data.sort((a, b) => b.totalVotes - a.totalVotes))
+  .join("circle")
+  .attr("cx", d => x(d.mailPct))
+  .attr("cy", d => y(d.mailVol))
+  .attr("r", d => r(d.totalVotes))
+  .attr("fill", d => ruleColor[d.rule])
+  .attr("opacity", 0.7)
+  .on("mouseenter", function(event, d) {
+    // Show crosshair lines from dot to axes
+    crossH.attr("x1", 0).attr("x2", x(d.mailPct))
+      .attr("y1", y(d.mailVol)).attr("y2", y(d.mailVol))
+      .attr("opacity", 1);
+    crossV.attr("x1", x(d.mailPct)).attr("x2", x(d.mailPct))
+      .attr("y1", y(d.mailVol)).attr("y2", height)
+      .attr("opacity", 1);
+  });
+
+// KEY INSIGHT: scaleSqrt for radius, NOT scaleLinear
+// Linear radius would make area grow quadratically (misleading)
+// sqrt radius ensures area grows linearly with the data value`;
+
+    // Viz 5 code
+    document.getElementById("code5-content").textContent = `// VIZ 5: Stacked Bar Chart — National Voting Method Breakdown
+
+const data = [
+  { year: "2016", mail: 21, early: 19, electionDay: 60 },
+  { year: "2020", mail: 42, early: 26, electionDay: 32 },
+  { year: "2024", mail: 31, early: 35, electionDay: 34 },
+];
+
+const keys = ["mail", "early", "electionDay"];
+const colors = { mail: "#f97316", early: "#818cf8", electionDay: "#4ade80" };
+
+// d3.stack() computes [y0, y1] for each segment
+const stack = d3.stack().keys(keys);
+const series = stack(data);
+
+// Each series entry is an array of [y0, y1] pairs
+// series[0] = mail layer:   [[0, 21], [0, 42], [0, 31]]
+// series[1] = early layer:  [[21, 40], [42, 68], [31, 66]]
+// series[2] = eDay layer:   [[40, 100], [68, 100], [66, 100]]
+
+series.forEach((layer, i) => {
+  svg.selectAll(\`.bar-\${keys[i]}\`)
+    .data(layer)
+    .join("rect")
+    .attr("x", d => x(d.data.year))
+    .attr("y", d => y(d[1]))           // top of segment
+    .attr("height", d => y(d[0]) - y(d[1]))  // segment height
+    .attr("width", x.bandwidth())
+    .attr("fill", colors[keys[i]]);
+});
+
+// KEY INSIGHT: d3.stack() does the math of "where does each
+// segment start?" so you don't have to manually accumulate.
+// d[0] is the baseline, d[1] is the topline.`;
+
+    })();
+  </script>
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

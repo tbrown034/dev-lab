@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 07 - Data Types & Constraints</title>
+  <link rel="icon" type="image/svg+xml" href="/sql/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #3b82f6; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #3b82f6; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #3b82f6; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #3b82f6; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .keyword { color: #3b82f6; }
+    .string { color: #4ade80; }
+    .number { color: #f472b6; }
+    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .demo h4 { color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .quiz { background: #0a0a1a; border: 1px solid #3b82f644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #3b82f6; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #3b82f6; color: #fff; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #3b82f6; text-decoration: none; }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #0a0a1a; border-left: 3px solid #3b82f6; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #93c5fd; }
+    .aha strong { color: #3b82f6; }
+    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
+    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th { text-align: left; color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
+    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
+    td code { font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>07</span> Data Types &amp; Constraints &mdash; Designing Bulletproof Schemas</h1>
+    <a href="/sql/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #3b82f6;">In Prisma, you pick <code>String</code>, <code>Int</code>, <code>Boolean</code> and call it a day.</strong> In raw SQL, you have a richer set of data types and constraints that give you finer control over what goes into your database. This lesson is about designing schemas that reject bad data before it ever becomes a problem.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model</h2>
+
+    <p>Think of data types and constraints as two layers of defense:</p>
+
+    <ul>
+      <li><strong>Data types</strong> are like TypeScript types &mdash; they define <em>what kind</em> of value a column can hold (number, text, date, etc.).</li>
+      <li><strong>Constraints</strong> are like validation rules &mdash; they define <em>which values</em> are valid (not null, unique, within a range, etc.).</li>
+    </ul>
+
+    <p>Together, they form a contract. Any data that violates the contract gets rejected at the database level, regardless of what your application code does. Even if your frontend validation has a bug, even if someone hits your API directly, the database is the last line of defense.</p>
+
+    <div class="aha">
+      <p><strong>Why this matters:</strong> In a Prisma/Next.js app, you might validate data in your API route and trust the ORM to enforce types. But what about direct database access? What about migrations that bypass your app? What about that one SQL script someone runs in production? Database-level constraints are the safety net that catches everything.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NUMERIC TYPES                                -->
+    <!-- ============================================ -->
+
+    <h2>Numeric Types</h2>
+
+    <p>JavaScript has one number type. PostgreSQL has several, each optimized for different use cases:</p>
+
+    <table>
+      <thead>
+        <tr><th>SQL Type</th><th>Range</th><th>Storage</th><th>Use Case</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>SMALLINT</code></td><td>-32,768 to 32,767</td><td>2 bytes</td><td>Status codes, small counts</td></tr>
+        <tr><td><code>INTEGER</code></td><td>-2.1B to 2.1B</td><td>4 bytes</td><td>Most IDs and counts</td></tr>
+        <tr><td><code>BIGINT</code></td><td>-9.2 quintillion to 9.2 quintillion</td><td>8 bytes</td><td>Twitter-scale IDs, large counts</td></tr>
+        <tr><td><code>SERIAL</code></td><td>Same as INTEGER, auto-increments</td><td>4 bytes</td><td>Auto-incrementing primary keys</td></tr>
+        <tr><td><code>NUMERIC(p,s)</code></td><td>Up to 131,072 digits</td><td>Variable</td><td>Money, precise calculations</td></tr>
+        <tr><td><code>REAL</code></td><td>6 decimal digits precision</td><td>4 bytes</td><td>Scientific data (imprecise)</td></tr>
+        <tr><td><code>DOUBLE PRECISION</code></td><td>15 decimal digits precision</td><td>8 bytes</td><td>Scientific data (imprecise)</td></tr>
+      </tbody>
+    </table>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma types</h5>
+        <pre><code>model Article {
+  id       Int     @id @default(autoincrement())
+  views    Int
+  rating   Float
+  revenue  Decimal
+  bigId    BigInt
+}</code></pre>
+      </div>
+      <div>
+        <h5>PostgreSQL types</h5>
+        <pre><code>CREATE TABLE articles (
+  id       SERIAL PRIMARY KEY,
+  views    INTEGER,
+  rating   DOUBLE PRECISION,
+  revenue  NUMERIC(10,2),
+  big_id   BIGINT
+);</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Never use FLOAT or REAL for money.</strong> Floating-point math introduces rounding errors: <code>0.1 + 0.2 = 0.30000000000000004</code>. Use <code>NUMERIC(10,2)</code> for money &mdash; it stores exact decimal values. <code>NUMERIC(10,2)</code> means up to 10 total digits with 2 after the decimal point: max value 99,999,999.99.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TEXT TYPES                                   -->
+    <!-- ============================================ -->
+
+    <h2>Text Types</h2>
+
+    <table>
+      <thead>
+        <tr><th>SQL Type</th><th>Description</th><th>When to Use</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>CHAR(n)</code></td><td>Fixed-length, padded with spaces</td><td>Fixed codes like <code>CHAR(2)</code> for state abbreviations</td></tr>
+        <tr><td><code>VARCHAR(n)</code></td><td>Variable-length with max limit</td><td>When you want to enforce a max length (titles, names)</td></tr>
+        <tr><td><code>TEXT</code></td><td>Variable-length, no limit</td><td>Article bodies, descriptions, any long text</td></tr>
+      </tbody>
+    </table>
+
+    <pre><code>CREATE TABLE articles (
+  id         SERIAL PRIMARY KEY,
+  slug       VARCHAR(100) NOT NULL,   -- URL slug: limited length
+  title      VARCHAR(255) NOT NULL,   -- Title: reasonable max
+  subtitle   VARCHAR(500),            -- Optional subtitle
+  body       TEXT NOT NULL,            -- Article body: no limit needed
+  state_code CHAR(2)                  -- Always exactly 2 characters
+);</code></pre>
+
+    <div class="callout">
+      <p><strong>In PostgreSQL, TEXT and VARCHAR perform identically.</strong> Unlike some other databases, PostgreSQL doesn't store TEXT less efficiently than VARCHAR. The only difference is VARCHAR(n) enforces a max length. Use VARCHAR(n) when you want that enforcement; use TEXT when you don't care about length.</p>
+    </div>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>model Article {
+  title String   // maps to TEXT by default
+  slug  String   @db.VarChar(100)
+  body  String
+}</code></pre>
+      </div>
+      <div>
+        <h5>PostgreSQL</h5>
+        <pre><code>-- Prisma's String maps to TEXT by default
+-- Use @db.VarChar(n) to get VARCHAR(n)
+title TEXT,
+slug  VARCHAR(100),
+body  TEXT</code></pre>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- BOOLEAN, DATE, AND TIMESTAMP                 -->
+    <!-- ============================================ -->
+
+    <h2>Boolean, Date, and Timestamp</h2>
+
+    <h3>BOOLEAN</h3>
+
+    <p>PostgreSQL booleans accept multiple representations, but they all store as true/false:</p>
+
+    <pre><code>-- All of these are valid
+INSERT INTO articles (published) VALUES (true);
+INSERT INTO articles (published) VALUES ('yes');
+INSERT INTO articles (published) VALUES ('t');
+INSERT INTO articles (published) VALUES (1);
+
+-- In queries, use true/false
+SELECT * FROM articles WHERE published = true;</code></pre>
+
+    <h3>DATE and TIMESTAMP</h3>
+
+    <table>
+      <thead>
+        <tr><th>SQL Type</th><th>Stores</th><th>Example</th><th>Prisma Type</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>DATE</code></td><td>Date only (no time)</td><td><code>'2024-03-15'</code></td><td><code>DateTime @db.Date</code></td></tr>
+        <tr><td><code>TIME</code></td><td>Time only (no date)</td><td><code>'14:30:00'</code></td><td>Not natively supported</td></tr>
+        <tr><td><code>TIMESTAMP</code></td><td>Date + time, no timezone</td><td><code>'2024-03-15 14:30:00'</code></td><td><code>DateTime</code></td></tr>
+        <tr><td><code>TIMESTAMPTZ</code></td><td>Date + time + timezone</td><td><code>'2024-03-15 14:30:00+00'</code></td><td><code>DateTime</code> (default)</td></tr>
+      </tbody>
+    </table>
+
+    <div class="aha">
+      <p><strong>Always use TIMESTAMPTZ</strong> (TIMESTAMP WITH TIME ZONE) for timestamps. Without the timezone, you'll run into bugs when your server, your database, and your users are in different timezones. Prisma's <code>DateTime</code> maps to <code>TIMESTAMPTZ</code> by default &mdash; they got this one right.</p>
+    </div>
+
+    <pre><code>CREATE TABLE articles (
+  id            SERIAL PRIMARY KEY,
+  title         VARCHAR(255) NOT NULL,
+  published_at  TIMESTAMPTZ,          -- when it went live (with timezone)
+  embargo_date  DATE,                  -- date only, no time needed
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);</code></pre>
+
+    <h3>Date arithmetic</h3>
+
+    <pre><code>-- Articles published in the last 7 days
+SELECT * FROM articles
+WHERE published_at > NOW() - INTERVAL '7 days';
+
+-- Articles published this year
+SELECT * FROM articles
+WHERE published_at >= DATE_TRUNC('year', NOW());
+
+-- How many days old is each article?
+SELECT title,
+  published_at,
+  NOW() - published_at AS age,
+  EXTRACT(DAY FROM NOW() - published_at) AS days_old
+FROM articles;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- UUID                                         -->
+    <!-- ============================================ -->
+
+    <h2>UUID &mdash; Universal Unique Identifiers</h2>
+
+    <p>A UUID is a 128-bit identifier that looks like <code>a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11</code>. Unlike SERIAL (auto-incrementing integers), UUIDs can be generated anywhere &mdash; client-side, server-side, across multiple databases &mdash; without conflicts.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SERIAL (auto-increment)</h5>
+        <pre><code>-- Pros: short, readable, ordered
+-- Cons: sequential (reveals count),
+--   can't generate outside the DB
+CREATE TABLE articles (
+  id SERIAL PRIMARY KEY
+);
+-- id: 1, 2, 3, 4, 5...</code></pre>
+      </div>
+      <div>
+        <h5>UUID</h5>
+        <pre><code>-- Pros: globally unique, no collisions,
+--   can generate client-side
+-- Cons: larger, not human-readable
+CREATE TABLE articles (
+  id UUID PRIMARY KEY
+    DEFAULT gen_random_uuid()
+);
+-- id: a0eebc99-9c0b-4ef8-...</code></pre>
+      </div>
+    </div>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma (UUID)</h5>
+        <pre><code>model Article {
+  id String @id @default(uuid())
+}</code></pre>
+      </div>
+      <div>
+        <h5>PostgreSQL (UUID)</h5>
+        <pre><code>CREATE TABLE articles (
+  id UUID PRIMARY KEY
+    DEFAULT gen_random_uuid()
+);</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>When to use UUID vs SERIAL:</strong> Use UUID when IDs are exposed in URLs (prevents enumeration attacks), when you need to generate IDs client-side before inserting, or in distributed systems. Use SERIAL when performance and simplicity matter most (UUID indexes are larger and slightly slower).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- JSONB                                        -->
+    <!-- ============================================ -->
+
+    <h2>JSONB &mdash; Structured Data Inside a Column</h2>
+
+    <p>PostgreSQL's <code>JSONB</code> (Binary JSON) lets you store JSON objects directly in a column. It's like embedding a NoSQL document inside a relational table.</p>
+
+    <pre><code>CREATE TABLE articles (
+  id       SERIAL PRIMARY KEY,
+  title    VARCHAR(255) NOT NULL,
+  metadata JSONB DEFAULT '{}'
+);
+
+-- Insert with JSONB data
+INSERT INTO articles (title, metadata) VALUES (
+  'Election Results',
+  '{"tags": ["politics", "election"], "word_count": 1200, "featured": true}'
+);
+
+-- Query JSONB fields
+SELECT title,
+  metadata->>'word_count' AS word_count,       -- ->> returns text
+  metadata->'tags' AS tags,                     -- -> returns JSON
+  (metadata->>'featured')::BOOLEAN AS featured  -- cast to boolean
+FROM articles
+WHERE metadata->>'featured' = 'true';</code></pre>
+
+    <p>The key operators for JSONB:</p>
+
+    <table>
+      <thead>
+        <tr><th>Operator</th><th>Returns</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>-></code></td><td>JSON element</td><td><code>metadata->'tags'</code> returns <code>["politics", "election"]</code></td></tr>
+        <tr><td><code>->></code></td><td>Text value</td><td><code>metadata->>'word_count'</code> returns <code>'1200'</code> (as text)</td></tr>
+        <tr><td><code>@></code></td><td>Contains check</td><td><code>metadata @> '{"featured": true}'</code></td></tr>
+        <tr><td><code>?</code></td><td>Key exists</td><td><code>metadata ? 'tags'</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma (JSON fields)</h5>
+        <pre><code>model Article {
+  id       Int  @id @default(autoincrement())
+  title    String
+  metadata Json @default("{}")
+}
+
+// Querying JSON in Prisma
+await prisma.article.findMany({
+  where: {
+    metadata: {
+      path: ['featured'],
+      equals: true,
+    },
+  },
+});</code></pre>
+      </div>
+      <div>
+        <h5>PostgreSQL (JSONB)</h5>
+        <pre><code>CREATE TABLE articles (
+  id       SERIAL PRIMARY KEY,
+  title    VARCHAR(255) NOT NULL,
+  metadata JSONB DEFAULT '{}'
+);
+
+-- Same query in raw SQL
+SELECT * FROM articles
+WHERE metadata @> '{"featured": true}';
+
+-- Or using the ->> operator
+SELECT * FROM articles
+WHERE metadata->>'featured' = 'true';</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>When to use JSONB vs separate columns:</strong> Use JSONB for flexible, schema-less data that varies between rows (metadata, settings, tags). Use regular columns for data you frequently query, filter, or join on. If you find yourself always querying the same JSONB key, it probably should be its own column.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NOT NULL AND DEFAULT                         -->
+    <!-- ============================================ -->
+
+    <h2>Constraints &mdash; NOT NULL and DEFAULT</h2>
+
+    <p>Now we move from data types (what kind of data) to constraints (what rules the data must follow).</p>
+
+    <h3>NOT NULL</h3>
+
+    <p><code>NOT NULL</code> means a column must have a value &mdash; you can't insert a row without providing it (unless there's a DEFAULT).</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma (required by default)</h5>
+        <pre><code>model Article {
+  title     String      // required (NOT NULL)
+  subtitle  String?     // optional (nullable)
+}</code></pre>
+      </div>
+      <div>
+        <h5>PostgreSQL (nullable by default)</h5>
+        <pre><code>CREATE TABLE articles (
+  title    VARCHAR(255) NOT NULL, -- required
+  subtitle VARCHAR(255)           -- nullable
+);</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Prisma and SQL have opposite defaults.</strong> In Prisma, fields are required by default; you add <code>?</code> to make them optional. In SQL, columns are nullable by default; you add <code>NOT NULL</code> to make them required. This is one of the biggest gotchas when going from Prisma to raw SQL.</p>
+    </div>
+
+    <h3>DEFAULT</h3>
+
+    <p><code>DEFAULT</code> provides a value when none is specified during INSERT:</p>
+
+    <pre><code>CREATE TABLE articles (
+  id           SERIAL PRIMARY KEY,
+  title        VARCHAR(255) NOT NULL,
+  published    BOOLEAN DEFAULT false,
+  views        INTEGER DEFAULT 0,
+  status       VARCHAR(20) DEFAULT 'draft',
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- These two INSERTs produce the same result:
+INSERT INTO articles (title) VALUES ('Breaking Story');
+INSERT INTO articles (title, published, views, status, created_at, updated_at)
+VALUES ('Breaking Story', false, 0, 'draft', NOW(), NOW());</code></pre>
+
+    <!-- ============================================ -->
+    <!-- UNIQUE AND CHECK                             -->
+    <!-- ============================================ -->
+
+    <h2>UNIQUE and CHECK Constraints</h2>
+
+    <h3>UNIQUE</h3>
+
+    <p><code>UNIQUE</code> ensures no two rows have the same value in that column. The database will reject any INSERT or UPDATE that would create a duplicate.</p>
+
+    <pre><code>CREATE TABLE users (
+  id    SERIAL PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,  -- no duplicate emails
+  slug  VARCHAR(100) NOT NULL UNIQUE   -- no duplicate URL slugs
+);
+
+-- This works:
+INSERT INTO users (email, slug) VALUES ('sarah@news.com', 'sarah-chen');
+
+-- This fails with an error:
+INSERT INTO users (email, slug) VALUES ('sarah@news.com', 'sarah-c');
+-- ERROR: duplicate key value violates unique constraint "users_email_key"</code></pre>
+
+    <h3>Composite UNIQUE</h3>
+
+    <p>You can enforce uniqueness across a combination of columns:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>model ArticleTag {
+  articleId Int
+  tagId     Int
+
+  @@unique([articleId, tagId])
+}</code></pre>
+      </div>
+      <div>
+        <h5>PostgreSQL</h5>
+        <pre><code>CREATE TABLE article_tags (
+  article_id INTEGER NOT NULL,
+  tag_id     INTEGER NOT NULL,
+  UNIQUE (article_id, tag_id)
+);</code></pre>
+      </div>
+    </div>
+
+    <h3>CHECK &mdash; Custom Validation</h3>
+
+    <p><code>CHECK</code> lets you define arbitrary conditions that must be true for every row. It's like adding validation rules at the database level.</p>
+
+    <pre><code>CREATE TABLE articles (
+  id         SERIAL PRIMARY KEY,
+  title      VARCHAR(255) NOT NULL,
+  word_count INTEGER CHECK (word_count > 0),
+  rating     NUMERIC(2,1) CHECK (rating >= 0 AND rating <= 5),
+  status     VARCHAR(20) CHECK (status IN ('draft', 'review', 'published', 'archived'))
+);
+
+-- This works:
+INSERT INTO articles (title, word_count, rating, status)
+VALUES ('Good Story', 500, 4.5, 'draft');
+
+-- These all fail:
+INSERT INTO articles (title, word_count) VALUES ('Bad', -10);
+-- ERROR: violates check constraint (word_count > 0)
+
+INSERT INTO articles (title, rating) VALUES ('Bad', 6.0);
+-- ERROR: violates check constraint (rating >= 0 AND rating <= 5)
+
+INSERT INTO articles (title, status) VALUES ('Bad', 'deleted');
+-- ERROR: violates check constraint (status IN (...))</code></pre>
+
+    <div class="aha">
+      <p><strong>CHECK is the database equivalent of Zod validation.</strong> In your Next.js app, you probably validate with Zod or similar at the API layer. CHECK constraints add the same rules at the database layer &mdash; defense in depth. Even if someone bypasses your API, the database rejects invalid data.</p>
+    </div>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Zod validation (API layer)</h5>
+        <pre><code>const articleSchema = z.object({
+  title: z.string().min(1),
+  wordCount: z.number().positive(),
+  rating: z.number().min(0).max(5),
+  status: z.enum([
+    'draft', 'review',
+    'published', 'archived'
+  ]),
+});</code></pre>
+      </div>
+      <div>
+        <h5>CHECK constraints (DB layer)</h5>
+        <pre><code>CREATE TABLE articles (
+  title VARCHAR(255) NOT NULL
+    CHECK (LENGTH(title) > 0),
+  word_count INTEGER
+    CHECK (word_count > 0),
+  rating NUMERIC(2,1)
+    CHECK (rating >= 0 AND rating <= 5),
+  status VARCHAR(20)
+    CHECK (status IN ('draft', 'review',
+      'published', 'archived'))
+);</code></pre>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRIMARY KEYS                                 -->
+    <!-- ============================================ -->
+
+    <h2>Primary Keys &mdash; SERIAL vs UUID</h2>
+
+    <p>Every table needs a primary key &mdash; a column (or combination of columns) that uniquely identifies each row. You've seen two approaches:</p>
+
+    <pre><code>-- Option 1: Auto-incrementing integer (most common)
+CREATE TABLE articles (
+  id SERIAL PRIMARY KEY
+);
+
+-- Option 2: UUID (globally unique)
+CREATE TABLE articles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+);
+
+-- Option 3: Composite primary key (for junction/join tables)
+CREATE TABLE article_tags (
+  article_id INTEGER NOT NULL,
+  tag_id     INTEGER NOT NULL,
+  PRIMARY KEY (article_id, tag_id)
+);</code></pre>
+
+    <p>A primary key automatically gets:</p>
+    <ul>
+      <li><strong>NOT NULL</strong> &mdash; can't be empty</li>
+      <li><strong>UNIQUE</strong> &mdash; can't be duplicated</li>
+      <li><strong>B-tree index</strong> &mdash; fast lookups</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- FOREIGN KEYS                                 -->
+    <!-- ============================================ -->
+
+    <h2>Foreign Keys &mdash; Referential Integrity</h2>
+
+    <p>A foreign key is a column that references the primary key of another table. It's how you create relationships between tables, and it's what makes relational databases <em>relational</em>.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma (relations)</h5>
+        <pre><code>model Article {
+  id       Int  @id @default(autoincrement())
+  title    String
+  authorId Int
+  author   User @relation(fields: [authorId],
+    references: [id])
+}
+
+model User {
+  id       Int       @id @default(autoincrement())
+  name     String
+  articles Article[]
+}</code></pre>
+      </div>
+      <div>
+        <h5>PostgreSQL (foreign keys)</h5>
+        <pre><code>CREATE TABLE users (
+  id   SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE articles (
+  id        SERIAL PRIMARY KEY,
+  title     VARCHAR(255) NOT NULL,
+  author_id INTEGER NOT NULL
+    REFERENCES users(id)
+);</code></pre>
+      </div>
+    </div>
+
+    <p>The foreign key constraint guarantees <strong>referential integrity</strong>: you can't insert an article with an <code>author_id</code> that doesn't exist in the <code>users</code> table.</p>
+
+    <pre><code>-- This works (user with id=1 exists):
+INSERT INTO articles (title, author_id) VALUES ('Breaking News', 1);
+
+-- This fails (no user with id=999):
+INSERT INTO articles (title, author_id) VALUES ('Ghost Story', 999);
+-- ERROR: insert or update on table "articles" violates foreign key constraint
+-- Key (author_id)=(999) is not present in table "users".</code></pre>
+
+    <div class="aha">
+      <p><strong>Prisma handles this for you.</strong> When you define a <code>@relation</code>, Prisma creates the foreign key constraint in the migration. But understanding the underlying SQL helps you debug constraint violation errors &mdash; which are among the most common errors you'll see in production.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CASCADE, SET NULL, RESTRICT                  -->
+    <!-- ============================================ -->
+
+    <h2>CASCADE, SET NULL, RESTRICT</h2>
+
+    <p>What happens when you delete a user who has articles? The foreign key constraint needs to know what to do with the orphaned articles. This is called the <strong>referential action</strong>.</p>
+
+    <table>
+      <thead>
+        <tr><th>Action</th><th>On DELETE</th><th>On UPDATE</th><th>When to Use</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>RESTRICT</code></td><td>Block the delete</td><td>Block the update</td><td>Default. Prevents accidental data loss.</td></tr>
+        <tr><td><code>CASCADE</code></td><td>Delete child rows too</td><td>Update child FK too</td><td>When children have no meaning without parent (comments on a deleted post).</td></tr>
+        <tr><td><code>SET NULL</code></td><td>Set FK to NULL</td><td>Set FK to NULL</td><td>When children can exist without parent (articles by a deleted user).</td></tr>
+        <tr><td><code>SET DEFAULT</code></td><td>Set FK to its default</td><td>Set FK to its default</td><td>Rare. When you want a fallback value.</td></tr>
+        <tr><td><code>NO ACTION</code></td><td>Same as RESTRICT (check deferred)</td><td>Same as RESTRICT</td><td>When using deferred constraints.</td></tr>
+      </tbody>
+    </table>
+
+    <pre><code>-- RESTRICT: can't delete a user who has articles
+CREATE TABLE articles (
+  id        SERIAL PRIMARY KEY,
+  author_id INTEGER REFERENCES users(id) ON DELETE RESTRICT
+);
+
+-- CASCADE: deleting a user deletes all their articles
+CREATE TABLE articles (
+  id        SERIAL PRIMARY KEY,
+  author_id INTEGER REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- SET NULL: deleting a user sets author_id to NULL
+CREATE TABLE articles (
+  id        SERIAL PRIMARY KEY,
+  author_id INTEGER REFERENCES users(id) ON DELETE SET NULL
+);</code></pre>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma (onDelete)</h5>
+        <pre><code>model Article {
+  id       Int  @id @default(autoincrement())
+  authorId Int?
+  author   User? @relation(
+    fields: [authorId],
+    references: [id],
+    onDelete: SetNull
+  )
+}
+// Options: Cascade, Restrict,
+// NoAction, SetNull, SetDefault</code></pre>
+      </div>
+      <div>
+        <h5>PostgreSQL</h5>
+        <pre><code>CREATE TABLE articles (
+  id        SERIAL PRIMARY KEY,
+  author_id INTEGER
+    REFERENCES users(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+);
+
+-- ON DELETE: what happens when
+--   the referenced row is deleted
+-- ON UPDATE: what happens when
+--   the referenced PK changes</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Be careful with CASCADE.</strong> <code>ON DELETE CASCADE</code> can create a chain reaction: deleting one row might delete thousands of related rows across multiple tables. Always know your cascade paths. In a newsroom schema, you probably want <code>SET NULL</code> for articles (keep the article, just clear the author) and <code>CASCADE</code> for comments (if the article goes, comments go too).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRACTICAL SCHEMA                             -->
+    <!-- ============================================ -->
+
+    <h2>Practical: Designing a Newsroom Schema</h2>
+
+    <p>Let's put it all together and design a properly typed and constrained schema for a newsroom CMS:</p>
+
+    <pre><code>-- Users / authors
+CREATE TABLE users (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email      VARCHAR(255) NOT NULL UNIQUE,
+  name       VARCHAR(255) NOT NULL,
+  role       VARCHAR(20) NOT NULL DEFAULT 'writer'
+             CHECK (role IN ('writer', 'editor', 'admin')),
+  bio        TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Sections (news, opinion, sports, etc.)
+CREATE TABLE sections (
+  id   SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  slug VARCHAR(100) NOT NULL UNIQUE
+);
+
+-- Articles
+CREATE TABLE articles (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title          VARCHAR(255) NOT NULL CHECK (LENGTH(title) > 0),
+  slug           VARCHAR(255) NOT NULL UNIQUE,
+  body           TEXT NOT NULL,
+  excerpt        VARCHAR(500),
+  author_id      UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  section_id     INTEGER NOT NULL REFERENCES sections(id) ON DELETE RESTRICT,
+  status         VARCHAR(20) NOT NULL DEFAULT 'draft'
+                 CHECK (status IN ('draft', 'review', 'published', 'archived')),
+  word_count     INTEGER CHECK (word_count >= 0),
+  views          INTEGER NOT NULL DEFAULT 0 CHECK (views >= 0),
+  featured       BOOLEAN NOT NULL DEFAULT false,
+  metadata       JSONB DEFAULT '{}',
+  published_at   TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Tags
+CREATE TABLE tags (
+  id   SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  slug VARCHAR(100) NOT NULL UNIQUE
+);
+
+-- Article-Tag junction table (many-to-many)
+CREATE TABLE article_tags (
+  article_id UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  tag_id     INTEGER NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+  PRIMARY KEY (article_id, tag_id)
+);
+
+-- Comments
+CREATE TABLE comments (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  body       TEXT NOT NULL CHECK (LENGTH(body) > 0),
+  article_id UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+  author_id  UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);</code></pre>
+
+    <p>Notice the design decisions:</p>
+    <ul>
+      <li><strong>UUIDs</strong> for user-facing IDs (articles, users, comments) &mdash; prevents enumeration</li>
+      <li><strong>SERIAL</strong> for internal IDs (sections, tags) &mdash; simpler and faster</li>
+      <li><strong>RESTRICT</strong> on articles-to-users &mdash; don't accidentally delete a journalist's work</li>
+      <li><strong>CASCADE</strong> on article_tags and comments &mdash; if the article goes, these go too</li>
+      <li><strong>SET NULL</strong> on comments.author_id &mdash; keep the comment even if the user is deleted</li>
+      <li><strong>CHECK constraints</strong> on status, word_count, views, title length &mdash; database-level validation</li>
+      <li><strong>JSONB metadata</strong> for flexible, per-article data that varies (SEO settings, social media info, etc.)</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Quick Check</h4>
+
+      <div class="question">
+        <p>1. In Prisma, fields are required by default. What's the default in PostgreSQL?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">In PostgreSQL, columns are <strong>nullable by default</strong>. You must explicitly add <code>NOT NULL</code> to make them required. This is the opposite of Prisma.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why should you never use <code>REAL</code> or <code>FLOAT</code> for money?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">Floating-point types introduce rounding errors (e.g., 0.1 + 0.2 = 0.30000000000000004). Use <code>NUMERIC(10,2)</code> for exact decimal storage. Same reason you'd use a Decimal library instead of JavaScript's Number for financial calculations.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What's the difference between <code>ON DELETE CASCADE</code> and <code>ON DELETE SET NULL</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>CASCADE</code> deletes the child rows (e.g., deleting an article deletes its comments). <code>SET NULL</code> keeps the child rows but sets the foreign key column to NULL (e.g., deleting a user sets the comment's author_id to NULL). Use CASCADE when children are meaningless without the parent; SET NULL when they can stand alone.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What does <code>JSONB</code>'s <code>->></code> operator return, and how is it different from <code>-></code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>-></code> returns the value as a JSON element (preserving its type). <code>->></code> returns the value as text. Use <code>->></code> when you want to compare or display the value; use <code>-></code> when you need to chain further JSON operations.</div>
+      </div>
+
+      <div class="question">
+        <p>5. Why use <code>TIMESTAMPTZ</code> instead of <code>TIMESTAMP</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>TIMESTAMPTZ</code> stores timezone information, so the same moment in time is represented correctly regardless of the server's timezone setting. <code>TIMESTAMP</code> (without TZ) can produce bugs when your server, database, or users are in different timezones.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Practice Exercise</h4>
+      <p>Design a schema for a simple newsroom CMS from scratch. Write the <code>CREATE TABLE</code> statements.</p>
+
+      <div class="question" style="margin-top: 1rem;">
+        <p><strong>A:</strong> Create a <code>journalists</code> table with: UUID id, required name, unique email, a role that must be 'reporter', 'editor', or 'photographer', and a created_at timestamp that defaults to now.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>CREATE TABLE journalists (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       VARCHAR(255) NOT NULL,
+  email      VARCHAR(255) NOT NULL UNIQUE,
+  role       VARCHAR(20) NOT NULL
+             CHECK (role IN ('reporter', 'editor', 'photographer')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>B:</strong> Create a <code>stories</code> table with: UUID id, required title (max 255 chars), required body (TEXT), a <code>word_count</code> that must be positive, a <code>status</code> defaulting to 'draft', a <code>journalist_id</code> foreign key that prevents deleting a journalist who has stories, and JSONB metadata.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>CREATE TABLE stories (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title         VARCHAR(255) NOT NULL,
+  body          TEXT NOT NULL,
+  word_count    INTEGER CHECK (word_count > 0),
+  status        VARCHAR(20) NOT NULL DEFAULT 'draft',
+  journalist_id UUID NOT NULL
+                REFERENCES journalists(id) ON DELETE RESTRICT,
+  metadata      JSONB DEFAULT '{}',
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>C:</strong> Create a <code>story_edits</code> table that tracks edit history. Include: auto-incrementing integer id, story_id (foreign key, CASCADE on delete), editor_id (foreign key, SET NULL on delete), required edit_note text, and a timestamp. Why CASCADE for story_id and SET NULL for editor_id?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>CREATE TABLE story_edits (
+  id        SERIAL PRIMARY KEY,
+  story_id  UUID NOT NULL
+            REFERENCES stories(id) ON DELETE CASCADE,
+  editor_id UUID
+            REFERENCES journalists(id) ON DELETE SET NULL,
+  edit_note TEXT NOT NULL,
+  edited_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- CASCADE on story_id: if the story is deleted, its edit
+-- history is meaningless, so delete the edits too.
+-- SET NULL on editor_id: if the editor leaves the org,
+-- we still want the edit history; we just lose who did it.</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>D:</strong> Write the Prisma schema equivalent of the <code>journalists</code> table from part A.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>model Journalist {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  role      String   // CHECK constraint not expressible in Prisma
+  createdAt DateTime @default(now())
+  stories   Story[]
+}
+
+// Note: Prisma can't express CHECK constraints.
+// You'd validate the role in your application code
+// (e.g., with Zod) and/or add a CHECK via raw SQL
+// in your migration file.</code></pre></div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHEAT SHEET                                  -->
+    <!-- ============================================ -->
+
+    <h2>Cheat Sheet</h2>
+
+    <pre><code>-- Numeric types
+INTEGER                          -- whole numbers (most common)
+SERIAL                           -- auto-incrementing integer
+BIGINT                           -- very large integers
+NUMERIC(10,2)                    -- exact decimal (money!)
+
+-- Text types
+VARCHAR(n)                       -- variable-length with max
+TEXT                             -- variable-length, no max
+CHAR(n)                          -- fixed-length
+
+-- Date/Time types
+DATE                             -- date only
+TIMESTAMPTZ                      -- date + time + timezone (use this!)
+INTERVAL                         -- duration
+
+-- Other types
+BOOLEAN                          -- true/false
+UUID                             -- universally unique ID
+JSONB                            -- binary JSON data
+
+-- Constraints
+NOT NULL                         -- column must have a value
+UNIQUE                           -- no duplicate values
+CHECK (condition)                -- custom validation rule
+DEFAULT value                    -- value when none provided
+PRIMARY KEY                      -- unique + not null + indexed
+REFERENCES table(col)            -- foreign key
+
+-- Foreign key actions
+ON DELETE RESTRICT               -- block delete (default)
+ON DELETE CASCADE                -- delete children too
+ON DELETE SET NULL               -- set FK to NULL
+ON UPDATE CASCADE                -- update FK when parent PK changes
+
+-- UUID generation
+DEFAULT gen_random_uuid()        -- PostgreSQL 13+
+
+-- JSONB operators
+column->'key'                    -- get JSON element
+column->>'key'                   -- get as text
+column @> '{"key": "val"}'      -- contains check
+column ? 'key'                   -- key exists</code></pre>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/sql/lessons/06-window-functions/">&larr; Lesson 06: Window Functions</a>
+      <a href="/sql/lessons/08-indexes-performance/">Lesson 08: Indexes &amp; Performance &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

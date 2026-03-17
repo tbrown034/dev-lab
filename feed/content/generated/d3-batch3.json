@@ -1,0 +1,854 @@
+[
+  {
+    "id": "d3-076",
+    "track": "d3",
+    "type": "interview",
+    "author": "bindData",
+    "time": "1h",
+    "content": "INTERVIEW Q: Your team built a D3 dashboard for a client. It works great in dev, but in production the tooltips are appearing in the wrong place on mobile devices.\n\nThe SVG is inside a scrollable container. What's going wrong and how do you fix it?",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/10-interactivity/",
+      "label": "tooltip patterns in Lesson 10 \u2192"
+    },
+    "likes": 734,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "Classic getBoundingClientRect() vs. page offset trap. On mobile with scroll containers, event.pageX/pageY includes scroll offset but your tooltip div is positioned relative to the viewport. Use pointer = d3.pointer(event, svg.node()) to get coordinates relative to the SVG itself, then position the tooltip from there.",
+        "likes": 289
+      },
+      {
+        "author": "scaleLinear",
+        "content": "d3.pointer() exists for this exact reason. Use it.",
+        "likes": 167
+      }
+    ]
+  },
+  {
+    "id": "d3-077",
+    "track": "d3",
+    "type": "interview",
+    "author": "svgArtist",
+    "time": "4h",
+    "content": "INTERVIEW Q: You have a scatter plot with 500 tightly packed points. Users need to hover individual points to see details, but the points are so close together that hover accuracy is terrible on both mouse and touch.\n\nHow do you make hover targeting reliable without making the points bigger?",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/10-interactivity/",
+      "label": "Voronoi hover targets in Lesson 10 \u2192"
+    },
+    "likes": 891,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "Voronoi diagram overlay. d3.Delaunay.from(data, d => xScale(d.x), d => yScale(d.y)).voronoi([0, 0, width, height]) gives you a tessellation where every pixel on the chart maps to its nearest point. Invisible overlay, perfect hover targeting. Data in, meaning out \u2014 even for interactivity.",
+        "likes": 334
+      },
+      {
+        "author": "transitionEase",
+        "content": "And add a subtle scale transition on the hovered point \u2014 transform: scale(1.3) with easeBackOut. It FEELS so much better when the point gently pops toward you. Your users' fingers will thank you.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "d3-078",
+    "track": "d3",
+    "type": "interview",
+    "author": "transitionEase",
+    "time": "7h",
+    "content": "INTERVIEW Q: You're building a brushable timeline \u2014 users drag to select a date range and a detail chart below updates to show that range. The brush works, but every brush event fires 60+ times per second as the user drags, and the detail chart re-renders each time.\n\nThe whole page stutters. How do you fix it without removing the real-time feedback?",
+    "code": null,
+    "link": null,
+    "likes": 678,
+    "reposts": 93,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "Throttle the detail update. Keep the brush visual responsive. Two different update rates.",
+        "likes": 245
+      },
+      {
+        "author": "bindData",
+        "content": "Exactly \u2014 use requestAnimationFrame to gate the expensive re-render. The brush overlay itself is cheap (it's just a rect moving). The detail chart re-render is expensive. So: on brush event, update a variable. In a rAF loop, check if variable changed and only then re-render the detail view. Smooth brush, throttled detail.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "d3-079",
+    "track": "d3",
+    "type": "interview",
+    "author": "bindData",
+    "time": "1d",
+    "content": "INTERVIEW Q: Your React app uses D3 for a complex animated force-directed graph. The graph works initially, but when the user navigates away and comes back, the simulation either restarts from scratch or the nodes fly off-screen.\n\nHow do you integrate D3's simulation lifecycle with React's component lifecycle?",
+    "code": null,
+    "link": null,
+    "likes": 1102,
+    "reposts": 287,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "This is why I don't use React with D3. SVG handles all of this natively. But fine \u2014 useRef for the simulation instance, useEffect cleanup to call simulation.stop(), and save node positions to state or ref before unmount so you can restore them. Happy now?",
+        "likes": 445
+      },
+      {
+        "author": "transitionEase",
+        "content": "The key vibe shift: store simulation.alpha() on unmount too. When you restore, simulation.alpha(savedAlpha).restart() \u2014 the graph resumes at the same energy level instead of restarting from chaos. It feels like you never left.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "d3-080",
+    "track": "d3",
+    "type": "interview",
+    "author": "scaleLinear",
+    "time": "2d",
+    "content": "INTERVIEW Q: Your D3 chart needs to be accessible to screen reader users. The chart shows monthly revenue trends. How do you make the data accessible without a separate data table?",
+    "code": null,
+    "link": {
+      "url": "/d3/references/use-cases/",
+      "label": "accessibility patterns \u2192"
+    },
+    "likes": 956,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "role=\"img\" on the SVG container, aria-label for an overall summary (\"Revenue trend from Jan to Dec 2025, rising from $2.1M to $4.8M\"), and then role=\"list\" on a <g> with role=\"listitem\" + aria-label on each data point. Screen readers get the story, not just the numbers. Data in, meaning out \u2014 for everyone.",
+        "likes": 412
+      },
+      {
+        "author": "svgArtist",
+        "content": "SVG's accessibility support is exactly why my dear <path> and <circle> will outlive every canvas fad. You can't put ARIA labels on pixels.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "d3-081",
+    "track": "d3",
+    "type": "interview",
+    "author": "transitionEase",
+    "time": "3d",
+    "content": "INTERVIEW Q: You built a D3 bar chart that animates bars growing from zero when the page loads. It looks great. But your PM says \"the chart is below the fold and users see it already finished when they scroll down.\"\n\nHow do you trigger the animation only when the chart scrolls into view?",
+    "code": null,
+    "link": null,
+    "likes": 623,
+    "reposts": 87,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "IntersectionObserver. Create the SVG with bars at height 0, set up an observer on the chart container, and when it enters the viewport fire your .transition().attr(\"height\", d => yScale(d.value)) sequence. Clean, performant, no scroll event listener spam.",
+        "likes": 278
+      },
+      {
+        "author": "scaleLinear",
+        "content": "threshold: 0.3 is the sweet spot. User sees a third of the chart, then it animates.",
+        "likes": 156
+      }
+    ]
+  },
+  {
+    "id": "d3-082",
+    "track": "d3",
+    "type": "interview",
+    "author": "svgArtist",
+    "time": "4d",
+    "content": "INTERVIEW Q: Your D3 dashboard has 6 charts that all share the same dataset. When a user brushes a date range on one chart, all other charts should filter to that range.\n\nHow do you architect the cross-chart communication without spaghetti event listeners everywhere?",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/12-capstone/",
+      "label": "dashboard patterns in Capstone \u2192"
+    },
+    "likes": 788,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "Dispatch pattern. d3.dispatch(\"brushed\", \"clicked\", \"filtered\") gives you a central event bus. Each chart subscribes to the events it cares about. The brushing chart calls dispatch.call(\"brushed\", this, {range}). No chart knows about any other chart. Beautiful decoupling. I'm writing about this in my blog post actually \u2014 we're at 22,000 words now and this might be the whole next section.",
+        "likes": 356
+      },
+      {
+        "author": "middleware_stack",
+        "content": "Events in, updates out, nothing else matters. This is middleware thinking applied to visualization. Each chart is a layer that processes the event and returns its own response. I approve.",
+        "likes": 134
+      }
+    ]
+  },
+  {
+    "id": "d3-083",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "svgArtist",
+    "time": "2h",
+    "content": "hot take: the \"D3 vs React for the DOM\" debate is a false dichotomy.\n\nlet React own the DOM structure. let D3 do the math \u2014 scales, layouts, shapes, projections.\n\nyou don't need d3.select() inside a React component. you need d3.scaleLinear() and d3.line(). the data utilities are the real treasure. the DOM manipulation was always optional.\n\n...I can't believe I just said that. don't tell anyone I said React is fine.",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/11-d3-react/",
+      "label": "D3 + React integration in Lesson 11 \u2192"
+    },
+    "likes": 1876,
+    "reposts": 423,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "Screenshot saved. @svgArtist said React is fine. This is a historic moment. But genuinely \u2014 D3 for math, React for DOM is the pattern I've seen work best at scale. The only exception is when you need D3 transitions, because React's reconciler will fight D3's DOM mutations.",
+        "likes": 567
+      },
+      {
+        "author": "template_tag",
+        "content": "Or \u2014 hear me out \u2014 skip React entirely and let D3 handle the SVG it was literally designed to handle. No build step, no virtual DOM overhead, no reconciler fights. [days since JS framework caused unnecessary complexity: 0]",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "d3-084",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "bindData",
+    "time": "5h",
+    "content": "hot take: most D3 \"performance problems\" are actually architecture problems.\n\nyou don't have too many DOM nodes. you have too many unnecessary re-renders. you're re-bindinding data that hasn't changed. you're re-computing scales that haven't moved.\n\ncache your scales. diff your data. use .join() properly. I've seen charts go from 200ms renders to 8ms with zero Canvas and zero framework changes.\n\ndata in, meaning out \u2014 but only the data that CHANGED.",
+    "code": null,
+    "link": null,
+    "likes": 1432,
+    "reposts": 298,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "domain unchanged \u2192 skip the scale rebuild. Simple.",
+        "likes": 234
+      },
+      {
+        "author": "svgArtist",
+        "content": "THANK YOU. People blame SVG for their re-render problems when it's their update logic that's broken. My dear <circle> is perfectly performant when you stop creating 5,000 new ones every frame.",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "d3-085",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "transitionEase",
+    "time": "1d",
+    "content": "hot take: if your chart doesn't animate when data changes, you're hiding information from your users.\n\na bar that jumps from 50 to 200 looks the same as a bar that was always at 200. but a bar that GROWS from 50 to 200 tells you something changed. the motion IS the information.\n\nstatic charts show state. animated charts show change. stop treating animation as decoration. it's data encoding.\n\nbut how does it *feel* though? it should feel like understanding.",
+    "code": null,
+    "link": null,
+    "likes": 1567,
+    "reposts": 367,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "Motion is a visual channel, like position or color. Use it intentionally.",
+        "likes": 345
+      },
+      {
+        "author": "geoProjection",
+        "content": "This applies to maps too. When your choropleth transitions between years, the shifting colors tell a geographic story that a static map literally cannot. You SEE migration patterns, economic shifts, the spread of... honestly everything Mercator distorts. Anyway, animate your maps.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "d3-086",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "geoProjection",
+    "time": "2d",
+    "content": "hot take: making your D3 chart accessible isn't extra work. it's finishing the work.\n\nan SVG chart without ARIA labels is like a map without a legend \u2014 technically complete, functionally useless to a huge portion of your audience.\n\nrole=\"img\" + aria-label takes 30 seconds. keyboard navigation of data points takes an afternoon. screen reader descriptions take an hour. and suddenly 15% of users who couldn't use your chart now can.\n\nyou know what else excludes people? the Mercator projection excluding accurate representation of the Global South. accessibility is a projection problem.",
+    "code": null,
+    "link": null,
+    "likes": 1234,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "if you can't inspect it, I don't trust it. And if a screen reader can't read it, I don't trust it either. SVG elements accept ARIA attributes natively. Canvas gives you... one big <canvas> tag to describe everything. Another win for my beloved vectors.",
+        "likes": 445
+      },
+      {
+        "author": "bindData",
+        "content": "The fact that you connected accessibility to map projections is unhinged and yet... technically correct? Both are about who gets included in the representation. I'm adding this to my blog post. We're at 22,000 words and I regret nothing.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "d3-087",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "svgArtist",
+    "time": "4d",
+    "content": "hot take: viewBox is the single most important SVG attribute and 90% of D3 developers hardcode width and height in pixels instead.\n\nviewBox=\"0 0 960 500\" + no width/height attributes = your chart scales to any container. any screen. any device. it's been in the SVG spec since 2001. twenty-five years.\n\nstop doing responsive charts with ResizeObserver hacks when the technology was built into the medium from day one.\n\nmy dear viewBox, you deserve better.",
+    "code": null,
+    "link": null,
+    "likes": 987,
+    "reposts": 201,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "viewBox handles the scaling, but ResizeObserver is still useful for aspect ratio changes \u2014 like switching from a wide desktop chart to a narrow mobile layout where you want to rearrange the legend. Both tools, different jobs.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "d3-088",
+    "track": "d3",
+    "type": "tip",
+    "author": "bindData",
+    "time": "3h",
+    "content": "PRO TIP: Custom HTML tooltips in D3 are 10x better than <title> elements. Here's the pattern I use everywhere.",
+    "code": "const tooltip = d3.select(\"body\")\n  .append(\"div\")\n  .attr(\"class\", \"tooltip\")\n  .style(\"opacity\", 0);\n\nsvg.selectAll(\"circle\")\n  .data(data)\n  .join(\"circle\")\n  .attr(\"cx\", d => xScale(d.date))\n  .attr(\"cy\", d => yScale(d.value))\n  .attr(\"r\", 5)\n  .on(\"pointerenter\", (event, d) => {\n    tooltip.transition().duration(200).style(\"opacity\", 1);\n    tooltip.html(`\n      <strong>${d.label}</strong><br/>\n      Value: ${d3.format(\",.0f\")(d.value)}<br/>\n      Date: ${d3.timeFormat(\"%b %d, %Y\")(d.date)}\n    `)\n    .style(\"left\", (event.pageX + 12) + \"px\")\n    .style(\"top\", (event.pageY - 28) + \"px\");\n  })\n  .on(\"pointerleave\", () => {\n    tooltip.transition().duration(300).style(\"opacity\", 0);\n  });",
+    "link": {
+      "url": "/d3/lessons/10-interactivity/",
+      "label": "tooltip deep dive in Lesson 10 \u2192"
+    },
+    "likes": 567,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "The 200ms fade-in and 300ms fade-out is subtle but critical \u2014 faster in, slower out. easeQuadOut on the leave transition makes it feel like the tooltip is gently dissolving instead of snapping off. Chef's kiss.",
+        "likes": 198
+      },
+      {
+        "author": "svgArtist",
+        "content": "Use pointerenter/pointerleave instead of mouseenter/mouseleave. Handles both mouse and touch. One event system to rule them all.",
+        "likes": 156
+      }
+    ]
+  },
+  {
+    "id": "d3-089",
+    "track": "d3",
+    "type": "tip",
+    "author": "svgArtist",
+    "time": "8h",
+    "content": "PRO TIP: Making your D3 chart keyboard-navigable is easier than you think. Add tabindex and key handlers to your data elements.",
+    "code": "svg.selectAll(\"rect\")\n  .data(data)\n  .join(\"rect\")\n  .attr(\"tabindex\", 0)\n  .attr(\"role\", \"img\")\n  .attr(\"aria-label\", d => `${d.category}: ${d.value}`)\n  .on(\"keydown\", (event, d) => {\n    if (event.key === \"Enter\" || event.key === \" \") {\n      showTooltip(event, d);\n    }\n  })\n  .on(\"focus\", (event, d) => {\n    d3.select(event.target)\n      .attr(\"stroke\", \"#000\")\n      .attr(\"stroke-width\", 2);\n  })\n  .on(\"blur\", (event) => {\n    d3.select(event.target)\n      .attr(\"stroke\", null);\n  });",
+    "link": {
+      "url": "/d3/references/use-cases/",
+      "label": "accessibility patterns \u2192"
+    },
+    "likes": 489,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "The focus ring (stroke on focus) is the visual equivalent of the tooltip for keyboard users. They need to know which bar they're on. Accessibility is just good UX for everyone.",
+        "likes": 201
+      }
+    ]
+  },
+  {
+    "id": "d3-090",
+    "track": "d3",
+    "type": "tip",
+    "author": "scaleLinear",
+    "time": "1d",
+    "content": "PRO TIP: Reusable chart functions. Write once, binds anywhere.",
+    "code": "function barChart() {\n  let width = 640;\n  let height = 400;\n  let x = d => d.name;\n  let y = d => d.value;\n\n  function chart(selection) {\n    selection.each(function(data) {\n      const xScale = d3.scaleBand()\n        .domain(data.map(x))\n        .range([0, width])\n        .padding(0.1);\n      const yScale = d3.scaleLinear()\n        .domain([0, d3.max(data, y)])\n        .range([height, 0]);\n\n      const svg = d3.select(this)\n        .selectAll(\"svg\").data([data]).join(\"svg\")\n        .attr(\"viewBox\", [0, 0, width, height]);\n\n      svg.selectAll(\"rect\")\n        .data(data)\n        .join(\"rect\")\n        .attr(\"x\", d => xScale(x(d)))\n        .attr(\"y\", d => yScale(y(d)))\n        .attr(\"height\", d => height - yScale(y(d)))\n        .attr(\"width\", xScale.bandwidth());\n    });\n  }\n\n  chart.width = v => (width = v, chart);\n  chart.height = v => (height = v, chart);\n  chart.x = v => (x = v, chart);\n  chart.y = v => (y = v, chart);\n\n  return chart;\n}\n\n// Usage:\nd3.select(\"#chart\")\n  .datum(data)\n  .call(barChart().width(800).y(d => d.revenue));",
+    "link": {
+      "url": "/d3/lessons/12-capstone/",
+      "label": "reusable patterns in Capstone \u2192"
+    },
+    "likes": 712,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "This is Mike Bostock's reusable chart convention and it's still the best pattern for pure D3. Closures for config, selection.each for data binding, getter-setters for the API. Elegant. I wrote 3,000 words about this in my blog post. It deserved every word.",
+        "likes": 289
+      },
+      {
+        "author": "svgArtist",
+        "content": "viewBox instead of hardcoded width/height on the SVG. That's the correct choice. I'm proud of you, Lin.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "d3-091",
+    "track": "d3",
+    "type": "tip",
+    "author": "transitionEase",
+    "time": "2d",
+    "content": "PRO TIP: Dark mode for D3 charts isn't just inverting colors. Use CSS custom properties so your chart responds to the system theme automatically.",
+    "code": ":root {\n  --chart-bg: #ffffff;\n  --chart-text: #333333;\n  --chart-grid: #e0e0e0;\n  --chart-accent: #4e79a7;\n}\n\n@media (prefers-color-scheme: dark) {\n  :root {\n    --chart-bg: #1a1a2e;\n    --chart-text: #e0e0e0;\n    --chart-grid: #333355;\n    --chart-accent: #7eb0d5;\n  }\n}\n\n/* Then in your D3 code: */\n// Use CSS classes instead of inline styles\nsvg.selectAll(\".grid line\")\n  .attr(\"class\", \"grid-line\");  // styled by CSS var\n\n// For dynamic values, read the computed property:\nconst accent = getComputedStyle(document.documentElement)\n  .getPropertyValue(\"--chart-accent\").trim();",
+    "link": null,
+    "likes": 534,
+    "reposts": 76,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "CSS classes on SVG elements instead of inline .style() calls. FINALLY someone gets it. My dear <rect> was designed to be styled with CSS. The inline style epidemic ends here.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "d3-092",
+    "track": "d3",
+    "type": "tip",
+    "author": "bindData",
+    "time": "3d",
+    "content": "PRO TIP: When using D3 inside React, useRef is your escape hatch to D3-land. Here's the cleanest pattern I've found for letting D3 own a subtree.",
+    "code": "function ScatterPlot({ data, width, height }) {\n  const svgRef = useRef();\n\n  useEffect(() => {\n    const svg = d3.select(svgRef.current);\n    const xScale = d3.scaleLinear()\n      .domain(d3.extent(data, d => d.x))\n      .range([0, width]);\n    const yScale = d3.scaleLinear()\n      .domain(d3.extent(data, d => d.y))\n      .range([height, 0]);\n\n    svg.selectAll(\"circle\")\n      .data(data, d => d.id)\n      .join(\n        enter => enter.append(\"circle\")\n          .attr(\"cx\", d => xScale(d.x))\n          .attr(\"cy\", height)\n          .attr(\"r\", 0)\n          .call(enter => enter.transition()\n            .duration(500)\n            .attr(\"cy\", d => yScale(d.y))\n            .attr(\"r\", 4)),\n        update => update.call(update => update.transition()\n            .duration(300)\n            .attr(\"cx\", d => xScale(d.x))\n            .attr(\"cy\", d => yScale(d.y))),\n        exit => exit.transition().duration(200)\n          .attr(\"r\", 0).remove()\n      );\n  }, [data, width, height]);\n\n  return <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} />;\n}",
+    "link": {
+      "url": "/d3/lessons/11-d3-react/",
+      "label": "D3 + React patterns in Lesson 11 \u2192"
+    },
+    "likes": 645,
+    "reposts": 102,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "I see that useRef and I feel physical pain. But I must admit \u2014 the .join(enter, update, exit) inside useEffect is clean. D3 gets its transitions, React gets its lifecycle. Coexistence, I suppose.",
+        "likes": 312
+      },
+      {
+        "author": "transitionEase",
+        "content": "The staggered durations \u2014 500ms enter, 300ms update, 200ms exit \u2014 that's not arbitrary. New points arrive with fanfare, existing points slide smoothly, leaving points vanish quickly. It FEELS intentional. Because it is.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "d3-093",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "transitionEase",
+    "time": "3h",
+    "content": "SPOT THE BUG: This zoom behavior works on desktop but completely breaks on mobile. Pinch-to-zoom does nothing, and pan conflicts with page scrolling. One line fix.",
+    "code": "const zoom = d3.zoom()\n  .scaleExtent([1, 8])\n  .on(\"zoom\", (event) => {\n    g.attr(\"transform\", event.transform);\n  });\n\nsvg.call(zoom);",
+    "link": {
+      "url": "/d3/lessons/10-interactivity/",
+      "label": "zoom patterns in Lesson 10 \u2192"
+    },
+    "likes": 423,
+    "reposts": 56,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "You need .on(\"zoom\", (event) => { event.sourceEvent?.preventDefault(); ... }) or use svg.call(zoom).on(\"touchstart.zoom\", e => e.preventDefault()) to prevent the browser's default touch handling. Without it, the browser intercepts touch events before D3 sees them.",
+        "likes": 198
+      },
+      {
+        "author": "scaleLinear",
+        "content": "Also add touch-action: none in CSS on the SVG. Belt and suspenders.",
+        "likes": 145
+      }
+    ]
+  },
+  {
+    "id": "d3-094",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "bindData",
+    "time": "9h",
+    "content": "SPOT THE BUG: This D3 + React component renders the chart fine on mount, but when the data prop changes, old circles remain on screen alongside new ones. The chart accumulates elements forever.",
+    "code": "function Chart({ data }) {\n  const ref = useRef();\n\n  useEffect(() => {\n    const svg = d3.select(ref.current);\n    \n    svg.selectAll(\"circle\")\n      .data(data)\n      .enter()\n      .append(\"circle\")\n      .attr(\"cx\", (d, i) => i * 20)\n      .attr(\"cy\", 50)\n      .attr(\"r\", d => d.value);\n  }, [data]);\n\n  return <svg ref={ref} />;\n}",
+    "link": {
+      "url": "/d3/lessons/11-d3-react/",
+      "label": "D3 + React gotchas in Lesson 11 \u2192"
+    },
+    "likes": 534,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "Using .enter().append() only handles NEW elements. Old ones that no longer match data just sit there forever, haunting your DOM. Replace with .data(data).join(\"circle\") \u2014 it handles enter, update, AND exit in one call. Or add a key function: .data(data, d => d.id).join(\"circle\").",
+        "likes": 267
+      },
+      {
+        "author": "transitionEase",
+        "content": "And this is why the old enter/update/exit pattern matters even in the .join() era. If you don't understand that exit removes stale elements, you'll never debug this. The bug doesn't crash \u2014 it just silently accumulates. The worst kind of bug. It doesn't feel wrong until it does.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "d3-095",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "scaleLinear",
+    "time": "2d",
+    "content": "SPOT THE BUG: This responsive chart resizes, but after a window resize the click coordinates are offset. Bars highlight the wrong element.",
+    "code": "const svg = d3.select(\"#chart\")\n  .append(\"svg\")\n  .attr(\"width\", window.innerWidth)\n  .attr(\"height\", 400);\n\nwindow.addEventListener(\"resize\", () => {\n  svg.attr(\"width\", window.innerWidth);\n  // re-render bars with new width...\n});\n\nsvg.selectAll(\"rect\")\n  .on(\"click\", (event) => {\n    const [x, y] = d3.pointer(event);\n    console.log(\"clicked at\", x, y);\n  });",
+    "link": null,
+    "likes": 378,
+    "reposts": 45,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "You're resizing the SVG width attribute but the bars are rendered with the OLD scale. d3.pointer gives coordinates in SVG space, but your xScale still maps to the original width. Rebuild your scale on resize: xScale.range([0, newWidth]). Or \u2014 use viewBox and never resize anything manually.",
+        "likes": 212
+      }
+    ]
+  },
+  {
+    "id": "d3-096",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "svgArtist",
+    "time": "3d",
+    "content": "SPOT THE BUG: This drag behavior fires but the element doesn't move. No errors in console. The data is updating correctly (I logged it). What gives?",
+    "code": "const circles = svg.selectAll(\"circle\")\n  .data(nodes)\n  .join(\"circle\")\n  .attr(\"cx\", d => d.x)\n  .attr(\"cy\", d => d.y)\n  .attr(\"r\", 10)\n  .call(d3.drag()\n    .on(\"drag\", (event, d) => {\n      d.x = event.x;\n      d.y = event.y;\n    })\n  );",
+    "link": {
+      "url": "/d3/lessons/10-interactivity/",
+      "label": "drag patterns in Lesson 10 \u2192"
+    },
+    "likes": 412,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "You're updating the data (d.x, d.y) but never re-rendering! The DOM doesn't auto-sync with your data objects. Add d3.select(event.target).attr(\"cx\", d.x).attr(\"cy\", d.y) inside the drag handler. Data binding is not data syncing \u2014 the DOM needs to be told. This is what I mean when I say understand the binding model first.",
+        "likes": 278
+      },
+      {
+        "author": "transitionEase",
+        "content": "This is the most invisible bug in D3. Everything is \"working\" \u2014 the data updates, no errors fire \u2014 but the screen just stares back at you motionless. It feels like the code is gaslighting you.",
+        "likes": 156
+      }
+    ]
+  },
+  {
+    "id": "d3-097",
+    "track": "d3",
+    "type": "mentalModel",
+    "author": "bindData",
+    "time": "5h",
+    "content": "MENTAL MODEL: D3 + React ownership\n\nThink of your chart as a house with two tenants:\n\n\ud83c\udfe0 React owns the walls \u2014 the SVG element, the component lifecycle, when to mount/unmount.\n\n\ud83d\udd27 D3 owns the furniture \u2014 the scales, layouts, shapes, transitions inside that SVG.\n\nProblems start when both tenants try to rearrange the same room. React's virtual DOM says \"the circle should be at x=50\" but D3's transition is moving it to x=200. They fight. Nobody wins.\n\nSolution: give each tenant their own rooms. React renders the <svg> container. D3 gets a ref to it and manages everything inside. OR \u2014 React renders every element, and D3 is just the calculator (scales, paths, etc.) that tells React WHERE to put things.\n\nPick one lease agreement. Don't co-manage.",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/11-d3-react/",
+      "label": "D3 + React patterns in Lesson 11 \u2192"
+    },
+    "likes": 1345,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "Option C: D3 owns the whole house. No roommate. I've been saying this. But fine, the roommate analogy is helpful for people who insist on using React for everything.",
+        "likes": 456
+      },
+      {
+        "author": "middleware_stack",
+        "content": "This is the separation of concerns I preach about middleware. Each layer does its job, passes the result forward. Request in, response out. Or in your case: data in, pixels out. Beautiful.",
+        "likes": 134
+      }
+    ]
+  },
+  {
+    "id": "d3-098",
+    "track": "d3",
+    "type": "mentalModel",
+    "author": "svgArtist",
+    "time": "2d",
+    "content": "MENTAL MODEL: SVG vs Canvas \u2014 when to switch\n\nThink of SVG like LEGO bricks. Each piece is a separate object you can pick up, inspect, style, label, and rearrange. Great when you have hundreds of pieces.\n\nCanvas is a photograph of LEGO. It's fast to produce. Looks the same from a distance. But you can't pick up individual bricks. You can't label them for screen readers. You can't right-click inspect them.\n\nThe decision matrix:\n- < 1,000 elements \u2192 SVG. Always.\n- 1,000-5,000 elements \u2192 SVG if you need interactivity per element. Canvas if you don't.\n- 5,000-10,000 \u2192 Canvas, probably. With hit detection overlays for interaction.\n- 10,000+ \u2192 Canvas. Or WebGL. I'm... I'm not happy about it. But it's true.\n\n...I need a moment.",
+    "code": null,
+    "link": null,
+    "likes": 1678,
+    "reposts": 389,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "The LEGO analogy is perfect. And the \"I need a moment\" at the end? That's the feeling of an SVG purist accepting reality. easeElasticOut \u2014 the emotional whiplash easing curve.",
+        "likes": 345
+      },
+      {
+        "author": "bindData",
+        "content": "For the 5K-10K range: a hybrid approach works. Render with Canvas, overlay an invisible SVG with Voronoi regions for hit detection. You get Canvas speed with SVG-like interactivity. It's an ugly compromise and it works beautifully.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "d3-099",
+    "track": "d3",
+    "type": "mentalModel",
+    "author": "transitionEase",
+    "time": "4d",
+    "content": "MENTAL MODEL: The three speeds of D3 interaction\n\nYour chart has three time scales, and mixing them up is why interactions feel janky:\n\n\u26a1 Immediate (0ms): Hover highlights, cursor changes, active states. These MUST be instant. No transition. The user's hand moved \u2014 the feedback is now.\n\n\ud83c\udf0a Responsive (150-300ms): Tooltip appear/disappear, focus rings, small position changes. Fast enough to feel connected to the action, slow enough to be perceived as animation.\n\n\ud83c\udf05 Narrative (500-1000ms): Data transitions, layout changes, enter/exit animations. These tell a story. \"The data changed, watch where things move.\" Rushing these loses the information. Dragging them out loses attention.\n\nEvery interaction in your chart fits one of these speeds. Categorize first, animate second.",
+    "code": null,
+    "link": null,
+    "likes": 1123,
+    "reposts": 278,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "Three speeds. Three domains. Three ranges. Everything is a scale.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "d3-100",
+    "track": "d3",
+    "type": "til",
+    "author": "svgArtist",
+    "time": "1h",
+    "content": "TIL: ResizeObserver + viewBox is the ultimate responsive chart combo. viewBox handles the scaling, ResizeObserver tells you when to change the ASPECT RATIO. You don't resize the chart \u2014 you reshape it.\n\nnew ResizeObserver(entries => { /* update viewBox aspect ratio, maybe rearrange legend */ }).observe(container)\n\nMy dear viewBox has a friend now.",
+    "code": null,
+    "link": null,
+    "likes": 389,
+    "reposts": 56,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "Container width \u2192 aspect ratio \u2192 viewBox. One more domain \u2192 range mapping.",
+        "likes": 134
+      }
+    ]
+  },
+  {
+    "id": "d3-101",
+    "track": "d3",
+    "type": "til",
+    "author": "bindData",
+    "time": "6h",
+    "content": "TIL: d3.zoom() has a .filter() method that lets you selectively ignore events. Want zoom on scroll wheel but NOT on double-click (because double-click does something else in your app)?\n\nd3.zoom().filter(event => event.type !== \"dblclick\")\n\nI've been removing the dblclick.zoom handler after .call(zoom) for YEARS. Could have filtered it from the start. I'm adding a 500-word footnote to my blog post about this. We're past 22,000 words and I refuse to edit.",
+    "code": null,
+    "link": null,
+    "likes": 312,
+    "reposts": 43,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "You can also filter out touch events on specific element types. Zoom on the background, drag on the nodes. Same gesture, different targets, different behaviors. It feels like the chart reads your mind.",
+        "likes": 98
+      }
+    ]
+  },
+  {
+    "id": "d3-102",
+    "track": "d3",
+    "type": "til",
+    "author": "geoProjection",
+    "time": "1d",
+    "content": "TIL: You can use d3.brush as a map selection tool. Draw a rectangle on a world map to select all countries within a region. d3.brush() + geoContains() = geographic selection without any server-side spatial queries.\n\nChapter 12 of the manifesto is called \"Brushing the Boundaries of Cartographic Justice\" and no I will not be taking feedback on that title.",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/10-interactivity/",
+      "label": "brush patterns in Lesson 10 \u2192"
+    },
+    "likes": 356,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "geoContains() does point-in-polygon on GeoJSON features and it's shockingly fast. Pair with a brush overlay on SVG (not canvas, obviously) and you've got a proper spatial selection tool in the browser.",
+        "likes": 145
+      },
+      {
+        "author": "bindData",
+        "content": "\"Brushing the Boundaries of Cartographic Justice\" is either a chapter title or a postcolonial studies thesis and I genuinely cannot tell. Please keep going.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "d3-103",
+    "track": "d3",
+    "type": "poll",
+    "author": "bindData",
+    "time": "4h",
+    "content": "When integrating D3 with React, who should own the DOM?",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/11-d3-react/",
+      "label": "D3 + React in Lesson 11 \u2192"
+    },
+    "poll": {
+      "options": [
+        {
+          "text": "D3 owns SVG subtree via useRef",
+          "pct": 34
+        },
+        {
+          "text": "React renders everything, D3 for math only",
+          "pct": 41
+        },
+        {
+          "text": "Depends on whether you need D3 transitions",
+          "pct": 22
+        },
+        {
+          "text": "Neither. Vanilla JS. No frameworks.",
+          "pct": 3
+        }
+      ],
+      "totalVotes": 3267
+    },
+    "likes": 678,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "3% chose correctly.",
+        "likes": 567
+      },
+      {
+        "author": "transitionEase",
+        "content": "The 22% who said \"depends on transitions\" get it. If you need D3's transition system (interpolation between complex paths, staggered delays, interrupted transitions), React can't replicate that. Let D3 own the subtree. If you just need static shapes with React state, D3 for math only is cleaner.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "d3-104",
+    "track": "d3",
+    "type": "poll",
+    "author": "transitionEase",
+    "time": "2d",
+    "content": "Your D3 chart has 15,000 data points and needs smooth panning. What's your move?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "SVG with aggressive culling",
+          "pct": 12
+        },
+        {
+          "text": "Canvas 2D with requestAnimationFrame",
+          "pct": 53
+        },
+        {
+          "text": "WebGL (deck.gl / regl)",
+          "pct": 24
+        },
+        {
+          "text": "Aggregate/bin down to fewer points",
+          "pct": 11
+        }
+      ],
+      "totalVotes": 2891
+    },
+    "likes": 534,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "15,000 points. Canvas. Fine. I said what I said in my mental model post and I'm not walking it back. But the 12% trying SVG with culling \u2014 I respect the fight. Sometimes the viewport only shows 500 points and SVG handles that fine. Virtual scrolling for charts. It's unhinged and it works.",
+        "likes": 289
+      },
+      {
+        "author": "scaleLinear",
+        "content": "The 11% choosing aggregation are thinking at the right level. Maybe you don't need 15,000 points. Maybe you need 200 bins.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "d3-105",
+    "track": "d3",
+    "type": "eli5",
+    "author": "bindData",
+    "time": "7h",
+    "content": "ELI5: D3 zoom and pan.\n\nImagine you're holding a magnifying glass over a newspaper. The newspaper (your data) never moves. The magnifying glass (your viewport) moves around.\n\nWhen you \"zoom in\" on a D3 chart, the data doesn't change. The TRANSFORM changes \u2014 it's like sliding the magnifying glass closer. d3.zoom() just tracks where your magnifying glass is (position x, y and zoom level k) and gives you that info as event.transform.\n\nYou then apply that transform to your <g> element: g.attr(\"transform\", event.transform). The browser moves and scales the group. Your data is exactly where it always was.\n\nThat's it. The data doesn't zoom. The view does.",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/10-interactivity/",
+      "label": "zoom deep dive in Lesson 10 \u2192"
+    },
+    "likes": 923,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "geoProjection",
+        "content": "This is literally how map projections work. The globe doesn't change \u2014 you change how you LOOK at it. Every zoom is a reprojection. I have been saying this for chapters 1 through 11 of my manifesto.",
+        "likes": 234
+      },
+      {
+        "author": "scaleLinear",
+        "content": "Transform: domain of pixels \u2192 range of pixels. Still a scale.",
+        "likes": 156
+      }
+    ]
+  },
+  {
+    "id": "d3-106",
+    "track": "d3",
+    "type": "slackPost",
+    "author": "svgArtist",
+    "time": "1d",
+    "content": "OVERHEARD IN SLACK:\n\n#stacksworth-dashboard-emergency (47 messages in 12 minutes)\n\n@PM_Jenkins: WHY IS THE LIVE DASHBOARD ON CNBC SHOWING \"NaN\" FOR EVERY NUMBER\n@intern_kyle: it was working in staging I swear\n@svgArtist: kyle. kyle. look at me. what does your data loading function return when the API returns an empty array?\n@intern_kyle: ...the data?\n@svgArtist: what data, kyle. what data is in an empty array.\n@intern_kyle: oh\n@intern_kyle: oh no\n@PM_Jenkins: THE ANCHOR IS READING OUR CHART LABELS ON AIR AND THEY ALL SAY \"NaN\"\n@svgArtist: d3.max([]) returns undefined. undefined feeds into your scale. scale returns NaN. NaN becomes your bar height, your labels, your everything. one guard clause: if (!data.length) return showEmptyState();\n@intern_kyle: pushing fix now\n@PM_Jenkins: the anchor just said \"according to the data, profits are... nan\" and the internet is already making memes\n@svgArtist: welcome to Stacksworth, kyle.",
+    "code": null,
+    "link": null,
+    "likes": 2341,
+    "reposts": 567,
+    "comments": [
+      {
+        "author": "null_handler",
+        "content": "Empty data is not no data. Empty data is data that tells you nothing is there. And nothing, when fed to a scale, returns the unknown. NaN is just NULL's chaotic cousin. Always check for absence. ALWAYS.",
+        "likes": 445
+      },
+      {
+        "author": "bobby_tables",
+        "content": "I'm just glad the API returned an empty array and not something worse. Imagine if that endpoint accepted user input and kyle wasn't parameterizing his queries. We'd have bigger problems than NaN on live TV.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "d3-107",
+    "track": "d3",
+    "type": "commitMsg",
+    "author": "transitionEase",
+    "time": "3d",
+    "content": "COMMIT MSG FROM HELL:\n\ncommit abc89f2\nAuthor: intern_kyle\nDate: Thu Mar 12 14:23:07\n\n\"fixed the animation thing\"\n\n---\n\nThe diff: replaced .transition().duration(750).ease(d3.easeCubicInOut) on 14 different elements with .transition().duration(0).\n\nKyle. Kyle, you didn't fix the animation. You deleted it. duration(0) is not an optimization. It's a cry for help.\n\nThe \"animation thing\" was a z-index issue where transitioning elements overlapped the tooltip. The fix was .style(\"pointer-events\", \"none\") during transition.\n\nI found this during code review and I haven't been the same since. Some transitions you can't ease away.",
+    "code": null,
+    "link": null,
+    "likes": 1567,
+    "reposts": 345,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "duration(0) is just .attr() with extra steps.",
+        "likes": 389
+      },
+      {
+        "author": "svgArtist",
+        "content": "pointer-events: none during transitions is the fix for half the \"animation broke my interactivity\" bugs I've seen. Learn it. Love it. Teach it to your kyles.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "d3-108",
+    "track": "d3",
+    "type": "ratiod",
+    "author": "geoProjection",
+    "time": "6h",
+    "content": "RATIO'D:\n\n@chartjs_chad: Honest question: why would anyone learn D3 in 2026? Chart.js gives you a beautiful responsive chart in 5 lines. D3 takes 50 lines to draw a circle. D3 is dead. Just use Chart.js.\n\n[ratio: 23 likes, 847 quote tweets]",
+    "code": null,
+    "link": null,
+    "likes": 2156,
+    "reposts": 534,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "Chart.js is great for standard charts. Bar, line, pie \u2014 done. Beautiful. But the moment you need a custom force layout, a brushable focus+context timeline, a zoomable treemap, an animated geographic flow map, or literally anything that isn't in Chart.js's predefined chart types, you need D3. D3 isn't a charting library. It's a visualization LANGUAGE. Comparing them is like comparing a microwave to a kitchen. The microwave is faster for reheating pizza. But you can't make sushi in it. Data in, meaning out \u2014 especially the meaning that no template can express.",
+        "likes": 1234
+      },
+      {
+        "author": "svgArtist",
+        "content": "Chart.js renders to Canvas. You can't inspect individual elements. You can't style them with CSS. You can't add ARIA labels to each bar. So sure, it's \"easier\" \u2014 in the same way a photocopy is easier than a painting. Both show an image. One is alive.",
+        "likes": 567
+      },
+      {
+        "author": "scaleLinear",
+        "content": "D3 is to Chart.js as SQL is to a spreadsheet. Different tools. Different problems. Both valid.",
+        "likes": 445
+      }
+    ]
+  }
+]

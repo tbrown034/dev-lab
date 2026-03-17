@@ -1,0 +1,167 @@
+============================================================
+SECTION 1: SOURCE DOCUMENT FOR NOTEBOOKLM
+============================================================
+
+LESSON: 11 - Auth, Testing & Deployment — Ship It Like Production
+TRACK: Django / Python (12-lesson curriculum)
+
+------------------------------------------------------------
+CONTEXT FOR HOSTS
+------------------------------------------------------------
+
+Where this lesson fits:
+Lesson 11 of 12. Lessons 6-10 covered the full Django development stack — models, views, templates, forms, and REST APIs. This lesson covers the three things you need to go from "it works on my machine" to production: authentication (who can access what), testing (does it actually work), and deployment (putting it on the internet). Lesson 12 is the capstone project.
+
+Who Trevor is:
+Trevor uses NextAuth for authentication, Jest for testing, and Vercel for deployment. He needs each of these mapped to Django equivalents. The key revelation: Django ships auth and testing built-in — no npm installs needed. Deployment is slightly more manual than Vercel but follows the same git-push-to-deploy pattern on modern platforms.
+
+Key Next.js-to-Django translations:
+- NextAuth -> django.contrib.auth (built in, zero config)
+- NextAuth providers -> Login/logout views (built in)
+- Middleware for route protection -> @login_required decorator
+- useSession() -> request.user (always available)
+- Jest -> pytest-django (or built-in unittest)
+- describe/it blocks -> test_ functions with @pytest.mark.django_db
+- beforeEach -> pytest fixtures (more powerful, composable)
+- expect().toBe() -> assert ... (Python keyword)
+- Vercel -> Railway, Render, Fly.io (same git-push workflow)
+- npm run build -> python manage.py collectstatic
+- next dev -> runserver (dev only!)
+- next start -> gunicorn (production)
+- .env.local -> .env with python-decouple
+- vercel.json -> Procfile
+
+Mental models:
+1. Django auth is pre-installed NextAuth — User model, login/logout, sessions, permissions all built in
+2. @login_required is one-line route protection — no middleware file needed
+3. pytest-django is Jest for Django — same concepts, slightly different syntax
+4. Deployment is "git push + env vars + gunicorn" — same as Vercel, just different tool names
+
+------------------------------------------------------------
+LESSON CONTENT
+------------------------------------------------------------
+
+DJANGO AUTH — BUILT-IN AUTHENTICATION
+
+Django includes a complete auth system out of the box: users, login, logout, passwords, permissions, groups. NextAuth requires ~100+ lines of setup. Django auth requires ~10 lines.
+
+The User model: Django's built-in User has username, password, email, first_name, last_name, is_active, is_staff, is_superuser, date_joined, last_login. Create users with User.objects.create_user(). Check authentication in views with request.user.is_authenticated.
+
+Custom User models: For real projects, always create a custom User model before your first migration. Extend AbstractUser to add fields. Changing the User model after migrations exist is painful.
+
+Login & logout views: Django provides built-in views — just point them at your templates. LoginView.as_view(template_name='login.html') and LogoutView.as_view(). Password change and reset views are also included.
+
+@login_required: One decorator, one line, route protection done. If the user isn't authenticated, Django redirects to LOGIN_URL. After login, it redirects back to the original page automatically. No separate middleware file needed.
+
+Permissions & groups: Django auto-creates permissions for every model: add, change, delete, view. @permission_required('blog.add_article') restricts access. Groups bundle permissions — like roles. Create an "Editors" group with edit/publish permissions and assign users to groups.
+
+TESTING WITH PYTEST-DJANGO
+
+Django ships with its own test framework, but most teams use pytest-django for cleaner syntax.
+
+The test Client simulates HTTP requests directly to your views without starting a server. It's like if Jest could call your Next.js API routes directly. Each test uses a fresh database that's destroyed after — no test pollution.
+
+Testing models: Create objects, assert values, test __str__, test custom methods. Mark tests with @pytest.mark.django_db to enable database access.
+
+Testing views: client.get('/blog/') returns a response with status_code, content, context (template variables), and templates (which templates were rendered). client.post('/blog/create/', {...}) tests form submissions. client.login() and client.force_login() test protected views.
+
+pytest fixtures vs Jest beforeEach: In Jest, beforeEach runs setup for every test. pytest fixtures are declared as function parameters — each test explicitly requests what it needs. More explicit, more composable.
+
+Factories (factory_boy): Like Jest mock factories. UserFactory() creates test users with auto-generated data. ArticleFactory.create_batch(5) creates 5 test articles.
+
+What to test: Models (validation, methods, __str__), views (status codes, redirects, context), forms (validation, clean methods), templates (correct content), integration (full request/response). Don't test Django's built-in functionality — test YOUR custom logic.
+
+DEPLOYMENT — FROM DEV TO PRODUCTION
+
+WSGI & ASGI: WSGI is to Django what Node.js is to Next.js — the server that runs your Python code. Development: runserver. Production: Gunicorn (like PM2 for Node). ASGI for async: Uvicorn. Never use runserver in production.
+
+Static files: In development, Django serves static files automatically. In production, run collectstatic to gather all CSS/JS/images into one directory. Serve with WhiteNoise (simplest — serves from Python process), nginx, or S3/CDN.
+
+Environment variables: Use python-decouple (like dotenv). SECRET_KEY, DEBUG=False, DATABASE_URL, ALLOWED_HOSTS — all from environment variables. Never commit secrets.
+
+Database: Use PostgreSQL in production, not SQLite. pip install psycopg2-binary dj-database-url. Configure with DATABASE_URL environment variable.
+
+Production checklist: DEBUG=False. Real SECRET_KEY. Set ALLOWED_HOSTS. PostgreSQL. Run python manage.py check --deploy for security audit.
+
+Deployment platforms: Railway (closest to Vercel experience, auto-detects Django), Render (free tier, managed Postgres), Fly.io (Docker-based, global edge), Heroku (classic but no free tier), DigitalOcean (more control).
+
+Railway quickstart: pip freeze > requirements.txt. Create Procfile: web: gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT. Connect GitHub repo. Set env vars. Railway auto-deploys on push.
+
+Production settings pattern: Split settings into base.py, development.py, production.py. Production adds SECURE_SSL_REDIRECT, SESSION_COOKIE_SECURE, CSRF_COOKIE_SECURE, SECURE_HSTS_SECONDS. Like having .env.local and .env.production.
+
+------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+------------------------------------------------------------
+
+1. Django auth is built in — User model, login/logout, sessions, permissions, groups. No npm install needed.
+2. @login_required is one-decorator route protection — simpler than middleware files.
+3. The test Client calls views directly — no server needed, fast, with access to template context.
+4. Never use runserver in production — Gunicorn is Django's "next start."
+5. Deploy like Vercel — git push, env vars, auto-deploy. Railway/Render make it easy.
+
+------------------------------------------------------------
+COMMON PITFALLS FOR JS DEVELOPERS
+------------------------------------------------------------
+
+- Not creating a custom User model before the first migration
+- Using runserver in production (use Gunicorn)
+- Forgetting DEBUG=False in production (exposes stack traces!)
+- Leaving SECRET_KEY hardcoded in settings.py (use environment variables)
+- Not running collectstatic before deployment
+- Using SQLite in production (use PostgreSQL)
+- Testing Django's built-in functionality instead of custom logic
+- Not setting ALLOWED_HOSTS in production (Django rejects all requests)
+- Forgetting to add WhiteNoise middleware for static file serving
+
+------------------------------------------------------------
+REAL-WORLD CONNECTION
+------------------------------------------------------------
+
+At a broadcast TV network, auth controls who does what: reporters create and edit stories, editors publish and manage the workflow, producers access ratings data, admins manage users. Django's group-based permissions map perfectly to newsroom roles. Testing ensures the editorial workflow doesn't break — can reporters submit stories? Can only editors publish? Does the search actually return results? Deployment to Railway or Render gives the team a production URL in minutes. The split settings pattern means developers work with SQLite locally while production uses PostgreSQL. WhiteNoise serves the CSS and images. Gunicorn handles concurrent requests from the newsroom staff. This is the last mile — from "it works on my laptop" to "the newsroom uses it daily."
+
+
+============================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS FOR NOTEBOOKLM
+============================================================
+
+This episode should feel like "completing the journey" — from local development to production. Three distinct sections, each with its own aha moment: auth is built in, testing doesn't need a server, deployment is just git push.
+
+Specific mental models for THIS lesson:
+- "Auth is already installed" — Django's auth is like if NextAuth came pre-configured with your framework
+- "@login_required = one line" — no middleware.ts file, no session provider wrapper
+- "Test Client = API call without a server" — faster than Jest API testing, plus access to template context
+- "Gunicorn is next start" — runserver is next dev (dev only), Gunicorn is next start (production)
+- "Railway is Django's Vercel" — git push to deploy, auto-detect, env vars in dashboard
+
+JS/React/Next.js equivalents to reference:
+- NextAuth -> django.contrib.auth (built in)
+- useSession() -> request.user
+- Middleware -> @login_required
+- Jest -> pytest-django
+- describe/it -> test_ functions
+- beforeEach -> pytest fixtures
+- expect().toBe() -> assert
+- Vercel -> Railway/Render
+- npm run build -> collectstatic
+- next start -> gunicorn
+- .env.local -> .env + python-decouple
+
+Connect back to lesson 6: "Remember when we said Django is 'batteries included'? Auth is the ultimate battery. You've been using it since lesson 6 — every time you ran createsuperuser, you were using Django's auth system."
+
+Connect back to lesson 8: "Remember @require_http_methods? @login_required is the same pattern — a decorator that adds behavior to your view. Decorators from lesson 3 keep paying off."
+
+Connect back to lesson 10: "DRF permission classes from lesson 10 build on Django's auth system. IsAuthenticated checks request.user.is_authenticated — the same property you'd check in a regular view."
+
+Tease lesson 12: "The capstone project combines EVERYTHING — models, views, templates, forms, auth, API, testing, deployment. You'll build a real Newsroom Data Dashboard that you could demo in an interview."
+
+Trevor's journalism background: "Permissions in Django are like newsroom hierarchy. Reporters can write and submit stories. Editors can approve, publish, and reassign. Producers can access ratings data. Admins manage the system. Django's groups-and-permissions model maps exactly to how a real newsroom operates. And testing is like fact-checking your code — you verify every claim before it goes to publication."
+
+Memorization techniques:
+- "Auth is built in, not bolted on" — it's in INSTALLED_APPS by default
+- "@login_required = bouncer at the door" — checks credentials, redirects if not authorized
+- "test Client = direct call" — no server, no network, just function calls
+- "runserver = dev, gunicorn = prod" — never use runserver in production
+- "collectstatic = gather assets" — copies all CSS/JS/images to one directory
+- "check --deploy = security audit" — Django tells you what's wrong before you deploy
+
+Tone: Auth should feel like a relief — "this is ALL built in?" Testing should feel practical, not theoretical — real examples of testing views and models. Deployment should feel achievable — "it's just git push with different tools." The overall arc is: "You've learned Django. Now you know how to secure it, test it, and ship it."

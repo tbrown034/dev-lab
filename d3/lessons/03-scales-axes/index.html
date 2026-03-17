@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 03 - D3 Selections Deep Dive</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #f97316; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #f97316; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #f97316; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #f97316; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .demo h4 { color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .demo svg { background: #1a1a1a; border-radius: 4px; display: block; }
+    .demo button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 0.25rem; font-weight: 600; }
+    .demo button:hover { background: #fb923c; }
+    .demo button.secondary { background: #818cf8; color: #000; }
+    .demo button.secondary:hover { background: #a5b4fc; }
+    .demo button.green { background: #4ade80; color: #000; }
+    .demo button.green:hover { background: #86efac; }
+    .demo .controls { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .quiz { background: #1a1500; border: 1px solid #f9731644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #f97316; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #f97316; text-decoration: none; }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #1a0a00; border-left: 3px solid #f97316; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #fdba74; }
+    .aha strong { color: #f97316; }
+    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
+    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
+    .try-it { background: #0a0a1a; border: 1px solid #818cf844; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .try-it h4 { color: #818cf8; margin-bottom: 0.75rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th { text-align: left; color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
+    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
+    td code { font-size: 0.8rem; }
+    #log-output { background: #0a0a0a; border: 1px solid #222; border-radius: 4px; padding: 0.75rem; margin-top: 0.75rem; font-family: monospace; font-size: 0.8rem; color: #4ade80; max-height: 120px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>03</span> D3 Selections Deep Dive</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #f97316;">Mental Model:</strong> D3 selections are like jQuery but for SVG. If you ever used <code>$(".class").css("color", "red")</code>, you already understand the core idea. D3 just does the same thing for SVG attributes.</p>
+
+    <!-- ============================================ -->
+    <!-- THE CONCEPT                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Core Idea</h2>
+
+    <p>In React, you describe what the UI should look like and React figures out how to update the DOM. D3 is the opposite: <strong>you directly tell the DOM what to do, step by step.</strong></p>
+
+    <p>A <strong>selection</strong> is a wrapper around one or more DOM elements that gives you a chainable API for manipulating them. Think of it as a "handle" you grab onto elements with.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>jQuery (you know this)</h5>
+        <pre><code>$("circle")
+  .css("fill", "orange")
+  .attr("r", 20);</code></pre>
+      </div>
+      <div>
+        <h5>D3 (same pattern)</h5>
+        <pre><code>d3.selectAll("circle")
+  .style("fill", "orange")
+  .attr("r", 20);</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Every D3 method returns the selection itself.</strong> That is how method chaining works. <code>.attr()</code> sets the attribute AND returns the selection so you can call <code>.style()</code> next. This is the same pattern as jQuery, Lodash chains, or even array methods like <code>.filter().map()</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SELECT vs SELECTALL                          -->
+    <!-- ============================================ -->
+
+    <h2>d3.select() vs d3.selectAll()</h2>
+
+    <pre><code><span class="comment">// Select ONE element (first match)</span>
+d3.select("#my-chart")      <span class="comment">// by ID</span>
+d3.select("svg")            <span class="comment">// first SVG on the page</span>
+d3.select(".highlight")     <span class="comment">// first element with class</span>
+
+<span class="comment">// Select ALL matching elements</span>
+d3.selectAll("circle")      <span class="comment">// every circle in the SVG</span>
+d3.selectAll(".bar")        <span class="comment">// every element with class "bar"</span>
+d3.selectAll("rect, circle")<span class="comment">// CSS multi-selector</span></code></pre>
+
+    <p>These use standard CSS selectors, exactly like <code>document.querySelector()</code> and <code>document.querySelectorAll()</code>. The difference is that D3 wraps the result in a selection object with its chainable API.</p>
+
+    <h3>Scoped selections</h3>
+    <p>You can chain selections to scope them, just like <code>element.querySelector()</code>:</p>
+
+    <pre><code><span class="comment">// Select circles inside #chart only</span>
+d3.select("#chart").selectAll("circle")
+
+<span class="comment">// This is equivalent to:</span>
+document.querySelectorAll("#chart circle")</code></pre>
+
+    <!-- ============================================ -->
+    <!-- THE METHODS                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Essential Methods</h2>
+
+    <h3>.attr() &mdash; Set SVG attributes</h3>
+    <p>This is the workhorse of D3. SVG elements are controlled by attributes.</p>
+    <pre><code>d3.select("rect")
+  .attr("x", 10)
+  .attr("y", 20)
+  .attr("width", 200)
+  .attr("height", 50)
+  .attr("fill", "#f97316")
+  .attr("rx", 4);           <span class="comment">// corner radius</span></code></pre>
+
+    <h3>.style() &mdash; Set CSS styles</h3>
+    <pre><code>d3.select("rect")
+  .style("opacity", 0.8)
+  .style("cursor", "pointer");</code></pre>
+
+    <div class="callout">
+      <p><strong>.attr("fill") vs .style("fill"):</strong> Both work for properties like fill and stroke, but <code>.attr()</code> sets the SVG attribute directly (appears in the markup), while <code>.style()</code> sets an inline CSS style (appears in the <code>style=""</code> attribute). CSS styles override SVG attributes. For SVG-specific properties like <code>x</code>, <code>width</code>, <code>r</code>, <code>d</code>, you must use <code>.attr()</code>. For CSS-only properties like <code>cursor</code>, <code>opacity</code>, use <code>.style()</code>. When in doubt, use <code>.attr()</code> for SVG.</p>
+    </div>
+
+    <div class="try-it">
+      <h4>Play with it: .attr() and .style() in action</h4>
+      <p style="color: #a5b4fc; font-size: 0.85rem; margin-bottom: 0.75rem;">Drag the sliders to change attributes and styles on three text labels in real time. This is what .attr() and .style() do under the hood.</p>
+      <div id="playground-attr-style"></div>
+    </div>
+
+    <h3>.text() and .html()</h3>
+    <pre><code>d3.select("text").text("Hello");       <span class="comment">// set text content</span>
+d3.select("div").html("&lt;b&gt;Bold&lt;/b&gt;"); <span class="comment">// set inner HTML (divs only, not SVG)</span></code></pre>
+
+    <h3>.property() &mdash; for form elements</h3>
+    <pre><code>d3.select("input").property("value", "42");
+d3.select("input").property("checked", true);</code></pre>
+
+    <h3>.classed() &mdash; toggle CSS classes</h3>
+    <pre><code>d3.select("rect").classed("active", true);   <span class="comment">// add class</span>
+d3.select("rect").classed("active", false);  <span class="comment">// remove class</span>
+
+<span class="comment">// Toggle based on condition</span>
+d3.selectAll("rect").classed("highlighted", d => d.value > 50);</code></pre>
+
+    <h3>.append() and .remove()</h3>
+    <pre><code><span class="comment">// Add a new element as the last child</span>
+const circle = d3.select("svg")
+  .append("circle")         <span class="comment">// creates &lt;circle&gt; inside the SVG</span>
+  .attr("cx", 100)
+  .attr("cy", 50)
+  .attr("r", 20);
+
+<span class="comment">// Remove elements</span>
+d3.selectAll(".old").remove();</code></pre>
+
+    <h3>.each() &mdash; side effects</h3>
+    <pre><code>d3.selectAll("circle").each(function(d, i) {
+  console.log(i, this);  <span class="comment">// index, DOM node</span>
+  <span class="comment">// "this" is the raw DOM element</span>
+});</code></pre>
+
+    <h3>Inspection methods</h3>
+    <pre><code>const sel = d3.selectAll("circle");
+sel.empty()    <span class="comment">// true if no elements matched</span>
+sel.size()     <span class="comment">// number of elements in selection</span>
+sel.node()     <span class="comment">// first raw DOM element</span>
+sel.nodes()    <span class="comment">// array of all raw DOM elements</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- REFERENCE TABLE                              -->
+    <!-- ============================================ -->
+
+    <h2>Quick Reference</h2>
+
+    <table>
+      <tr><th>Method</th><th>Purpose</th><th>Returns</th></tr>
+      <tr><td><code>.attr(name, value)</code></td><td>Set SVG attribute</td><td>selection</td></tr>
+      <tr><td><code>.style(name, value)</code></td><td>Set CSS style</td><td>selection</td></tr>
+      <tr><td><code>.text(value)</code></td><td>Set text content</td><td>selection</td></tr>
+      <tr><td><code>.html(value)</code></td><td>Set inner HTML</td><td>selection</td></tr>
+      <tr><td><code>.property(name, val)</code></td><td>Set DOM property</td><td>selection</td></tr>
+      <tr><td><code>.classed(name, bool)</code></td><td>Add/remove CSS class</td><td>selection</td></tr>
+      <tr><td><code>.append(tag)</code></td><td>Append child element</td><td>new selection (child)</td></tr>
+      <tr><td><code>.remove()</code></td><td>Remove elements</td><td>removed selection</td></tr>
+      <tr><td><code>.each(fn)</code></td><td>Run function per element</td><td>selection</td></tr>
+      <tr><td><code>.empty()</code></td><td>Is selection empty?</td><td>boolean</td></tr>
+      <tr><td><code>.size()</code></td><td>Count of elements</td><td>number</td></tr>
+      <tr><td><code>.node()</code></td><td>First DOM element</td><td>Element</td></tr>
+      <tr><td><code>.nodes()</code></td><td>All DOM elements</td><td>Array</td></tr>
+    </table>
+
+    <div class="aha">
+      <p><strong>Notice how almost every method returns the selection.</strong> That is the entire design principle. You grab elements, then chain method after method. The only methods that break the chain are the inspection ones: <code>.empty()</code>, <code>.size()</code>, <code>.node()</code>, <code>.nodes()</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 1: INTERACTIVE SHAPE BUILDER            -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Interactive Shape Builder</h2>
+    <p>Click the buttons to trigger D3 selection methods in real time. Watch the SVG update.</p>
+
+    <div class="demo">
+      <h4>Live: Build shapes with selection methods</h4>
+      <div class="controls" id="shape-controls">
+        <button onclick="addRect()">append("rect")</button>
+        <button onclick="addCircle()" class="secondary">append("circle")</button>
+        <button onclick="addText()" class="green">append("text")</button>
+        <button onclick="colorAll()">selectAll &rarr; fill orange</button>
+        <button onclick="scaleUp()">selectAll("rect") &rarr; bigger</button>
+        <button onclick="removeLast()" style="background: #ef4444;">remove() last</button>
+        <button onclick="clearAll()" style="background: #666;">clear all</button>
+      </div>
+      <svg id="shape-canvas" viewBox="0 0 700 200"></svg>
+      <div id="log-output">// Actions will appear here...</div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 2: ATTR vs STYLE                        -->
+    <!-- ============================================ -->
+
+    <h2>Demo: .attr() vs .style()</h2>
+    <p>Both can set <code>fill</code>, but they work differently. Inspect the elements to see where the values end up.</p>
+
+    <div class="demo">
+      <h4>Live: attr vs style comparison</h4>
+      <div class="controls">
+        <button id="btn-attr-fill">Set fill with .attr()</button>
+        <button id="btn-style-fill" class="secondary">Override with .style()</button>
+        <button id="btn-reset-fill" style="background: #666;">Reset</button>
+      </div>
+      <svg id="attr-style-demo" viewBox="0 0 700 120"></svg>
+      <p style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">Right-click the rectangles and "Inspect" to see the difference in the markup.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What is the difference between <code>d3.select()</code> and <code>d3.selectAll()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>d3.select()</code> selects the <strong>first</strong> matching element. <code>d3.selectAll()</code> selects <strong>all</strong> matching elements. Both use CSS selectors. Think of it as <code>querySelector</code> vs <code>querySelectorAll</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why does method chaining work in D3?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because almost every selection method (<code>.attr()</code>, <code>.style()</code>, <code>.text()</code>, etc.) returns the selection itself after modifying it. This lets you write <code>sel.attr("x", 10).attr("y", 20).style("fill", "red")</code> instead of calling each method on a separate line.</div>
+      </div>
+
+      <div class="question">
+        <p>3. When should you use <code>.attr("fill", "red")</code> vs <code>.style("fill", "red")</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>.attr()</code> sets the SVG attribute directly in the element's markup. <code>.style()</code> sets an inline CSS style. CSS styles override SVG attributes, so if both are set, the <code>.style()</code> wins. For SVG-only attributes like <code>x</code>, <code>width</code>, <code>r</code>, <code>d</code>, you must use <code>.attr()</code>. In practice, most D3 code uses <code>.attr()</code> for SVG drawing properties.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What does <code>.append("circle")</code> return?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A new selection containing the newly created <code>&lt;circle&gt;</code> element. This is important: after <code>.append()</code>, subsequent chained methods operate on the <strong>new child element</strong>, not the parent. So <code>svg.append("circle").attr("r", 10)</code> sets the radius on the new circle, not on the SVG.</div>
+      </div>
+
+      <div class="question">
+        <p>5. How do you check if a selection matched any elements?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use <code>selection.empty()</code>. It returns <code>true</code> if the selection contains no elements. You can also use <code>selection.size()</code> to get the count. These are inspection methods that return values instead of the selection, so they break the chain.</div>
+      </div>
+
+      <div class="question">
+        <p>6. You need to add a CSS class to all rects with a value above 50. How?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>d3.selectAll("rect").classed("high-value", d => d.value > 50)</code>. The <code>.classed()</code> method can take a function as the second argument. When the function returns <code>true</code>, the class is added; when <code>false</code>, it is removed. This works because each rect has data bound to it (which we will learn in the next lesson).</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Manipulate a Pre-Built SVG</h4>
+      <p>Open your browser console on this page and practice using D3 selections to manipulate the shape builder SVG above. Try these:</p>
+      <ol>
+        <li><code>d3.selectAll("#shape-canvas circle").attr("fill", "hotpink")</code></li>
+        <li><code>d3.select("#shape-canvas").append("rect").attr("x",300).attr("y",50).attr("width",100).attr("height",50).attr("fill","cyan")</code></li>
+        <li><code>d3.selectAll("#shape-canvas rect").style("opacity", 0.5)</code></li>
+        <li><code>d3.selectAll("#shape-canvas *").attr("transform", "translate(20,0)")</code></li>
+        <li>Use <code>.each()</code> to log the tag name of every shape in the SVG</li>
+        <li>Use <code>.size()</code> to count all elements, then <code>.remove()</code> to clear them</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">The goal: get comfortable calling D3 selection methods from memory. These are the building blocks for everything that follows.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- RECAP                                        -->
+    <!-- ============================================ -->
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Selections wrap DOM elements</strong> with a chainable API</li>
+      <li><strong>d3.select()</strong> = first match, <strong>d3.selectAll()</strong> = all matches</li>
+      <li><strong>.attr()</strong> for SVG attributes, <strong>.style()</strong> for CSS properties</li>
+      <li><strong>.append()</strong> creates children, <strong>.remove()</strong> destroys elements</li>
+      <li><strong>Method chaining works</strong> because every method returns the selection</li>
+      <li><strong>.classed()</strong> for toggling CSS classes</li>
+      <li><strong>.empty(), .size(), .node(), .nodes()</strong> for inspecting selections</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/02-selections-data/">&larr; Lesson 02: Scales &amp; Axes</a>
+      <a href="/d3/lessons/04-shapes-bindings/">Lesson 04: Data Binding &rarr;</a>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+
+    // =============================================
+    // Demo 1: Interactive Shape Builder
+    // =============================================
+    const canvas = d3.select("#shape-canvas");
+    const logEl = document.getElementById("log-output");
+    let shapeCount = 0;
+
+    function log(msg) {
+      logEl.textContent = msg + "\n" + logEl.textContent;
+    }
+
+    window.addRect = function() {
+      const x = 20 + (shapeCount % 10) * 65;
+      const y = 20 + Math.floor(shapeCount / 10) * 70;
+      canvas.append("rect")
+        .attr("x", x).attr("y", y)
+        .attr("width", 55).attr("height", 40)
+        .attr("fill", "#f97316").attr("rx", 4)
+        .attr("opacity", 0)
+        .transition().duration(300)
+        .attr("opacity", 1);
+      shapeCount++;
+      log(`append("rect") at (${x}, ${y}) — ${canvas.selectAll("*").size()} shapes total`);
+    };
+
+    window.addCircle = function() {
+      const cx = 45 + (shapeCount % 10) * 65;
+      const cy = 40 + Math.floor(shapeCount / 10) * 70;
+      canvas.append("circle")
+        .attr("cx", cx).attr("cy", cy)
+        .attr("r", 0).attr("fill", "#818cf8")
+        .transition().duration(300)
+        .attr("r", 22);
+      shapeCount++;
+      log(`append("circle") at (${cx}, ${cy}) — ${canvas.selectAll("*").size()} shapes total`);
+    };
+
+    window.addText = function() {
+      const x = 45 + (shapeCount % 10) * 65;
+      const y = 48 + Math.floor(shapeCount / 10) * 70;
+      canvas.append("text")
+        .attr("x", x).attr("y", y)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#4ade80")
+        .attr("font-size", "12px")
+        .attr("font-weight", "bold")
+        .text(`#${shapeCount}`);
+      shapeCount++;
+      log(`append("text") "#${shapeCount - 1}" — ${canvas.selectAll("*").size()} shapes total`);
+    };
+
+    window.colorAll = function() {
+      const n = canvas.selectAll("rect, circle").size();
+      canvas.selectAll("rect, circle")
+        .transition().duration(400)
+        .attr("fill", "#f97316");
+      log(`selectAll("rect, circle").attr("fill", "#f97316") — colored ${n} shapes`);
+    };
+
+    window.scaleUp = function() {
+      const rects = canvas.selectAll("rect");
+      rects.transition().duration(300)
+        .attr("width", function() { return +d3.select(this).attr("width") + 10; })
+        .attr("height", function() { return +d3.select(this).attr("height") + 5; });
+      log(`selectAll("rect") made ${rects.size()} rects bigger`);
+    };
+
+    window.removeLast = function() {
+      const all = canvas.selectAll("*");
+      if (!all.empty()) {
+        const last = all.nodes().pop();
+        d3.select(last).transition().duration(200)
+          .attr("opacity", 0).remove();
+        shapeCount = Math.max(0, shapeCount - 1);
+        log(`remove() — removed last element, ${all.size() - 1} remain`);
+      }
+    };
+
+    window.clearAll = function() {
+      canvas.selectAll("*")
+        .transition().duration(200)
+        .attr("opacity", 0)
+        .remove();
+      shapeCount = 0;
+      log("selectAll('*').remove() — cleared all shapes");
+    };
+
+    // =============================================
+    // Demo 2: .attr() vs .style()
+    // =============================================
+    const asDemoSvg = d3.select("#attr-style-demo");
+
+    // Create two rects
+    asDemoSvg.append("rect")
+      .attr("x", 50).attr("y", 20)
+      .attr("width", 250).attr("height", 70)
+      .attr("fill", "#333").attr("rx", 6)
+      .attr("class", "demo-rect");
+
+    asDemoSvg.append("text")
+      .attr("x", 175).attr("y", 60)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#888").attr("font-size", "12")
+      .text("fill set via .attr()");
+
+    asDemoSvg.append("rect")
+      .attr("x", 400).attr("y", 20)
+      .attr("width", 250).attr("height", 70)
+      .attr("fill", "#333").attr("rx", 6)
+      .attr("class", "demo-rect");
+
+    asDemoSvg.append("text")
+      .attr("x", 525).attr("y", 60)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#888").attr("font-size", "12")
+      .text("fill set via .style()");
+
+    d3.select("#btn-attr-fill").on("click", () => {
+      const rects = asDemoSvg.selectAll(".demo-rect");
+      rects.attr("fill", "#f97316").style("fill", null);
+      asDemoSvg.selectAll("text").filter((d, i) => i === 0).text("fill=\"#f97316\" (SVG attr)");
+      asDemoSvg.selectAll("text").filter((d, i) => i === 1).text("fill=\"#f97316\" (SVG attr)");
+    });
+
+    d3.select("#btn-style-fill").on("click", () => {
+      const rects = asDemoSvg.selectAll(".demo-rect");
+      // First rect: attr only
+      rects.filter((d, i) => i === 0).attr("fill", "#f97316").style("fill", null);
+      // Second rect: style override (wins over attr)
+      rects.filter((d, i) => i === 1).attr("fill", "#f97316").style("fill", "#818cf8");
+      asDemoSvg.selectAll("text").filter((d, i) => i === 0).text("attr fill=\"#f97316\"");
+      asDemoSvg.selectAll("text").filter((d, i) => i === 1).text("style=\"fill:#818cf8\" WINS");
+    });
+
+    d3.select("#btn-reset-fill").on("click", () => {
+      asDemoSvg.selectAll(".demo-rect").attr("fill", "#333").style("fill", null);
+      asDemoSvg.selectAll("text").filter((d, i) => i === 0).text("fill set via .attr()");
+      asDemoSvg.selectAll("text").filter((d, i) => i === 1).text("fill set via .style()");
+    });
+  </script>
+
+  <script type="module">
+    import * as d3 from 'd3';
+    import { createPlayground } from '/components/interactive-playground.js';
+
+    createPlayground('playground-attr-style', {
+      width: 450,
+      height: 200,
+      controls: [
+        { name: 'opacity', min: 10, max: 100, value: 80, label: 'Fill opacity (%)' },
+        { name: 'fontSize', min: 10, max: 36, value: 18, label: 'Font size (px)' },
+        { name: 'xPos', min: 20, max: 350, value: 60, label: 'X position' },
+      ],
+      render(svg, values) {
+        svg.selectAll('*').remove();
+        const colors = ['#f97316', '#818cf8', '#4ade80'];
+        const labels = ['Hello', 'World', 'D3!'];
+
+        labels.forEach((text, i) => {
+          const y = 50 + i * 55;
+          svg.append('text')
+            .attr('x', values.xPos)
+            .attr('y', y)
+            .attr('fill', colors[i])
+            .attr('font-size', values.fontSize + 'px')
+            .attr('font-weight', 'bold')
+            .attr('font-family', 'system-ui, sans-serif')
+            .style('opacity', values.opacity / 100)
+            .text(text);
+
+          // Show the attr/style annotations
+          svg.append('text')
+            .attr('x', 435)
+            .attr('y', y)
+            .attr('text-anchor', 'end')
+            .attr('fill', '#555')
+            .attr('font-size', '9')
+            .attr('font-family', 'monospace')
+            .text(`x=${values.xPos} font-size=${values.fontSize} opacity=${(values.opacity / 100).toFixed(2)}`);
+        });
+
+        // Guide line showing x position
+        svg.append('line')
+          .attr('x1', values.xPos).attr('x2', values.xPos)
+          .attr('y1', 10).attr('y2', 190)
+          .attr('stroke', '#f472b6').attr('stroke-dasharray', '3').attr('opacity', 0.4);
+      }
+    });
+  </script>
+</body>
+</html>

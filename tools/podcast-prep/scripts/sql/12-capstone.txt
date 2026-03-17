@@ -1,0 +1,345 @@
+================================================================================
+SECTION 1: SOURCE DOCUMENT
+================================================================================
+
+TITLE: Real-World Patterns -- Production SQL for Modern Applications
+TRACK: SQL / PostgreSQL (Lesson 12 of 12)
+
+--------------------------------------------------------------------------------
+CONTEXT FOR HOSTS
+--------------------------------------------------------------------------------
+
+This is the final lesson of a 12-lesson SQL curriculum. In Lessons 01-11, Trevor learned SQL syntax, query patterns, schema design, performance optimization, PostgreSQL features, reusable database objects, and transaction safety. Now he puts it all together with the real-world patterns that production databases actually use: pagination, full-text search, JSONB columns, soft deletes, audit trails, and database migrations.
+
+Note: Despite the directory name "capstone," this lesson is titled "Real-World Patterns."
+
+THE LEARNER: Trevor is an investigative journalist with 15+ years of experience who taught himself web development (React, Next.js, TypeScript, Tailwind). He has been using Prisma as his ORM. He is learning raw SQL/PostgreSQL for a potential role at Tenga, a chain of broadcast TV networks.
+
+WHAT TREVOR ALREADY KNOWS THAT CONNECTS:
+- Prisma skip/take: Maps to OFFSET/LIMIT pagination. Trevor has used this pattern, and now he learns why it gets slow and what the alternative is.
+- Cursor-based pagination: Prisma supports cursor pagination natively. This lesson shows the SQL behind it and why it is always fast.
+- JSON in JavaScript: Trevor works with JSON constantly. JSONB in PostgreSQL is the same concept -- a JavaScript object stored in a column, queryable with operators.
+- Search libraries (Algolia, Fuse.js): Trevor has likely used or heard of search services. PostgreSQL's built-in full-text search provides similar functionality without an external service.
+- Prisma middleware: Prisma's middleware pattern can implement soft deletes at the application level. This lesson shows the database-level approach using views and triggers.
+- prisma migrate dev: Trevor uses Prisma migrations. This lesson explains what is actually happening under the hood -- versioned SQL files that modify the schema.
+
+TREVOR'S GOAL: Building production-ready database patterns for Tenga's broadcast TV platform -- paginated article feeds, full-text search across archives, JSONB metadata for election data, soft deletes for editorial safety, audit trails for accountability, and safe migration strategies for evolving schemas.
+
+MENTAL MODELS THAT MATTER MOST:
+1. OFFSET pagination is like counting pages in a book. To get to page 100, you flip through 99 pages first. Cursor pagination is like using a bookmark -- you go directly to where you left off.
+2. Full-text search is built-in Algolia. tsvector stores tokenized documents. tsquery is the search query. @@ matches them. GIN indexes make it fast. No external service needed.
+3. JSONB is NoSQL inside your relational database. Use columns for structured data you query frequently. Use JSONB for variable metadata that differs between rows.
+4. Soft deletes are the undo button for production. UPDATE SET deleted_at = NOW() instead of DELETE. A view hides deleted rows from normal queries. Recovery is one UPDATE away.
+5. Audit trails are your database's security camera. Triggers log who changed what and when. Unlike application-level logging, triggers capture all changes regardless of source.
+6. Migrations are Git commits for your database schema. Each migration is a versioned, immutable SQL file. Applied in order. Never modified after being applied.
+
+--------------------------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+--------------------------------------------------------------------------------
+
+1. OFFSET/LIMIT PAGINATION: Simple but slow for deep pages. LIMIT 10 OFFSET 490 means the database scans 500 rows, discards 490, returns 10. Works fine for small tables and when users rarely go past page 10. Can skip or duplicate rows if data changes between pages.
+
+2. CURSOR-BASED PAGINATION: Fast at any depth. Instead of "skip N rows," it says "give me rows after this specific row." Uses an indexed column (id, created_at) as a bookmark. WHERE id < 95 ORDER BY id DESC LIMIT 10 uses the primary key index directly -- no scanning. This is what Twitter, Instagram, and infinite scroll use. Cannot "jump to page 47."
+
+3. FULL-TEXT SEARCH: to_tsvector('english', text) breaks text into searchable tokens with stemming (running -> run) and stop word removal (the, a). to_tsquery('english', 'search & terms') creates search queries. @@ operator matches them. ts_rank() scores relevance. websearch_to_tsquery() handles plain language input from users. GIN indexes make it fast. Store a search_vector column with a trigger to keep it updated.
+
+4. SEARCH QUERY SYNTAX: & = AND (both words), | = OR (either word), ! = NOT (exclude word), <-> = followed by (phrase search). websearch_to_tsquery handles quoted phrases, OR, and -word automatically.
+
+5. JSONB COLUMN PATTERNS: -> returns JSON element, ->> returns text value. @> checks containment. ? checks key existence. ?| any key, ?& all keys. GIN index for @>, ?, ?|, ?& operators. B-tree index on specific extracted keys for equality and range queries. Use JSONB for variable metadata (settings, API responses, tags). Use columns for data you filter, sort, or join on frequently.
+
+6. SOFT DELETES: Add deleted_at TIMESTAMP DEFAULT NULL column. "Delete" = UPDATE SET deleted_at = NOW(). "Active" = WHERE deleted_at IS NULL. Create a view (CREATE VIEW active_articles AS SELECT * FROM articles WHERE deleted_at IS NULL) to hide deleted rows. Recovery = UPDATE SET deleted_at = NULL. Permanent purge after retention period: DELETE WHERE deleted_at < NOW() - INTERVAL '90 days'.
+
+7. AUDIT TRAILS WITH TRIGGERS: audit_log table with table_name, row_id, action (INSERT/UPDATE/DELETE), old_data JSONB, new_data JSONB, changed_by, changed_at. Generic trigger function using TG_OP and TG_TABLE_NAME. to_jsonb(NEW) and to_jsonb(OLD) capture row state. current_setting('app.current_user', true) for user tracking. Attach to any table with CREATE TRIGGER. Advantage over application-level logging: captures ALL changes regardless of source.
+
+8. DATABASE MIGRATION STRATEGY: Migrations are versioned SQL files that modify the schema. Each builds on the previous one, like Git commits. Safe practices: never modify an applied migration (create a new one), add columns as nullable first (backfill, then add NOT NULL), do not drop columns immediately (stop reading first, deploy, then drop). Prisma generates migration SQL from schema changes. Custom SQL (views, functions, triggers) can be added to migration files.
+
+9. PRISMA VS RAW SQL -- WHEN EACH WINS: Prisma for simple CRUD, relations/includes, basic pagination. Raw SQL for full-text search, JSONB queries, complex aggregation, window functions, views/functions creation, database-level audit trails. The hybrid approach: Prisma for CRUD, raw SQL via $queryRaw for complex queries.
+
+--------------------------------------------------------------------------------
+DATA JOURNALISM CONNECTION
+--------------------------------------------------------------------------------
+
+These production patterns are the everyday tools of data journalism:
+
+Pagination for Large Datasets: When your investigation involves millions of records (campaign finance, FOIA data, census records), you cannot load them all at once. Cursor-based pagination lets your analysis tool efficiently page through results at any depth. Scrolling to the 10,000th record is just as fast as the first.
+
+Full-Text Search for Document Investigation: "You have 50,000 pages of court filings. SELECT * FROM documents WHERE search_vector @@ websearch_to_tsquery('english', 'fraud contractor payments') finds every document mentioning fraud and contractors, ranked by relevance. No Elasticsearch subscription. No external service to maintain. The search index lives right next to the data."
+
+JSONB for Messy Government Data: Government agencies do not agree on data formats. One county reports election results with demographic breakdowns, another with precinct boundaries as GeoJSON, a third with just totals. JSONB lets you store whatever metadata each jurisdiction provides alongside structured columns -- without redesigning your schema for every dataset.
+
+Soft Deletes for Editorial Safety: Every newsroom has a story about an editor who deleted the wrong article 5 minutes before deadline. With soft deletes, recovery is one UPDATE away. Without them, you are restoring from backups. The view approach means normal queries automatically exclude deleted content, while admin tools can still see and recover it.
+
+Audit Trails for Accountability: Investigative journalists need to know who changed what and when -- not just in the stories they investigate, but in their own data. An audit trail answers "who edited this election result at 3am?" with a simple query. Triggers ensure this trail is maintained regardless of how the data was modified.
+
+For Trevor at Tenga: "Your newsroom CMS uses cursor-based pagination for the article feed (fast at any depth), full-text search for the archive (PostgreSQL, no Algolia), JSONB metadata for varying election data, soft deletes so editors can recover mistakes, audit triggers so you know who changed what, and Prisma migrations for schema evolution. The production newsroom database is a combination of everything you have learned in this curriculum."
+
+--------------------------------------------------------------------------------
+BROADCAST TV SCENARIOS
+--------------------------------------------------------------------------------
+
+PAGINATION:
+- "Article feed with cursor pagination": SELECT id, title, published_at, views FROM active_articles WHERE published = true AND id < 500 ORDER BY id DESC LIMIT 20;
+- "Prisma cursor pagination": await prisma.article.findMany({ take: 10, cursor: { id: lastId }, skip: 1, orderBy: { id: 'desc' } });
+
+FULL-TEXT SEARCH:
+- "Search article archive": SELECT title, ts_rank(search_vector, websearch_to_tsquery('english', 'city budget cuts')) AS relevance FROM active_articles WHERE search_vector @@ websearch_to_tsquery('english', 'city budget cuts') ORDER BY relevance DESC LIMIT 10;
+- "Search vector trigger": CREATE FUNCTION update_search_vector() RETURNS TRIGGER AS $$ BEGIN NEW.search_vector := to_tsvector('english', COALESCE(NEW.title, '') || ' ' || COALESCE(NEW.body, '')); RETURN NEW; END; $$ LANGUAGE plpgsql;
+
+JSONB:
+- "Query election metadata": SELECT title, metadata->>'source' AS source FROM active_articles WHERE metadata @> '{"tags": ["breaking"]}' AND published = true;
+- "GIN index for metadata": CREATE INDEX articles_metadata_idx ON articles USING GIN(metadata);
+
+SOFT DELETES:
+- "Delete an article safely": UPDATE articles SET deleted_at = NOW() WHERE id = 42;
+- "View for active content": CREATE VIEW active_articles AS SELECT * FROM articles WHERE deleted_at IS NULL;
+- "Recover a deleted article": UPDATE articles SET deleted_at = NULL WHERE id = 42;
+- "Purge old deletions": DELETE FROM articles WHERE deleted_at < NOW() - INTERVAL '90 days';
+
+AUDIT TRAIL:
+- "Who edited article 42?": SELECT action, changed_by, changed_at, old_data->>'title' AS old_title, new_data->>'title' AS new_title FROM audit_log WHERE table_name = 'articles' AND row_id = 42 ORDER BY changed_at DESC;
+- "Generic audit trigger": Attach audit_trigger_fn() to any table with CREATE TRIGGER.
+
+PRODUCTION SCHEMA:
+  CREATE TABLE articles (
+    id SERIAL PRIMARY KEY, title TEXT NOT NULL, slug TEXT UNIQUE, body TEXT NOT NULL, beat TEXT,
+    published BOOLEAN DEFAULT false, published_at TIMESTAMP, views INTEGER DEFAULT 0,
+    metadata JSONB DEFAULT '{}', author_id INTEGER REFERENCES users(id),
+    search_vector tsvector, deleted_at TIMESTAMP, created_at TIMESTAMP DEFAULT NOW(), updated_at TIMESTAMP DEFAULT NOW()
+  );
+  CREATE INDEX articles_search_idx ON articles USING GIN(search_vector);
+  CREATE INDEX articles_metadata_idx ON articles USING GIN(metadata);
+  CREATE INDEX articles_published_idx ON articles (published, published_at DESC) WHERE deleted_at IS NULL;
+
+--------------------------------------------------------------------------------
+LESSON CONTENT
+--------------------------------------------------------------------------------
+
+PAGINATION -- OFFSET/LIMIT VS CURSOR-BASED
+
+You know LIMIT and OFFSET from Lesson 01. But OFFSET gets slower as the page number grows. Page 1000 means the database scans and skips 10,000 rows before returning 10.
+
+OFFSET/LIMIT (Simple but Slow):
+  SELECT * FROM articles ORDER BY created_at DESC LIMIT 10 OFFSET 490;
+  -- Database scans 500 rows, throws away 490, returns 10.
+
+Works fine when the table is small (under 100K rows), users rarely go past page 10, or you need "jump to page 47" functionality.
+
+Cursor-Based Pagination (Fast at Any Depth):
+Instead of "skip N rows," use "give me rows after this specific row":
+  SELECT * FROM articles WHERE id < 95 ORDER BY id DESC LIMIT 10;
+  -- Uses the index. Instant, no matter how deep you paginate.
+
+This is what Twitter, Instagram, and infinite scroll use. The API returns a "next cursor" token with each response. The frontend sends it back to get the next batch.
+
+Comparison:
+  OFFSET/LIMIT: Fast at page 1, slow at page 1000, supports jump to page N, can skip/duplicate rows.
+  Cursor-Based: Fast at any depth, stable results, cannot jump to page N, moderate implementation.
+
+FULL-TEXT SEARCH WITH TSVECTOR AND TSQUERY
+
+LIKE '%word%' and ILIKE are not real search. For user-facing search with stemming, stop words, and relevance ranking, use PostgreSQL's full-text search.
+
+PostgreSQL breaks text into tokens (words), stems them (running becomes run), removes stop words (the, a), and stores them in a tsvector. You search with tsquery.
+
+  to_tsvector('english', 'The election results are in for 2024');
+  -- Result: '2024':7 'elect':2 'result':3
+
+  to_tsquery('english', 'election & results');
+  -- Result: 'elect' & 'result'
+
+  SELECT title, body FROM articles
+  WHERE to_tsvector('english', title || ' ' || body) @@ to_tsquery('english', 'election & results');
+
+Performance: Store a search_vector column and index it:
+  ALTER TABLE articles ADD COLUMN search_vector tsvector;
+  UPDATE articles SET search_vector = to_tsvector('english', COALESCE(title, '') || ' ' || COALESCE(body, ''));
+  CREATE INDEX articles_search_idx ON articles USING GIN(search_vector);
+
+Keep it updated with a trigger:
+  CREATE FUNCTION update_search_vector() RETURNS TRIGGER AS $$
+  BEGIN
+    NEW.search_vector := to_tsvector('english', COALESCE(NEW.title, '') || ' ' || COALESCE(NEW.body, ''));
+    RETURN NEW;
+  END;
+  $$ LANGUAGE plpgsql;
+  CREATE TRIGGER articles_search_update BEFORE INSERT OR UPDATE ON articles FOR EACH ROW EXECUTE FUNCTION update_search_vector();
+
+Ranked results:
+  SELECT title, ts_rank(search_vector, to_tsquery('english', 'election & results')) AS relevance
+  FROM articles WHERE search_vector @@ to_tsquery('english', 'election & results')
+  ORDER BY relevance DESC LIMIT 20;
+
+Search query syntax: & = AND, | = OR, ! = NOT, <-> = phrase (followed by).
+websearch_to_tsquery handles plain user input: "election fraud" becomes phrase search, OR works naturally, -spam excludes.
+
+PostgreSQL full-text search is surprisingly good. For most apps, you do not need Elasticsearch or Algolia. Only reach for a dedicated search engine if you need typo tolerance or sub-100ms search across millions of documents.
+
+JSONB COLUMNS -- STRUCTURED FLEXIBILITY
+
+Sometimes data does not fit neatly into columns. Metadata, settings, API responses, tags. JSONB stores JSON documents inside a column and lets you query into them.
+
+  CREATE TABLE articles (id SERIAL PRIMARY KEY, title TEXT NOT NULL, metadata JSONB DEFAULT '{}');
+  INSERT INTO articles (title, metadata) VALUES ('Story', '{"source": "AP", "tags": ["politics", "breaking"], "wordCount": 850}');
+
+Querying JSONB:
+  metadata->'source' returns "AP" (JSON, with quotes)
+  metadata->>'source' returns AP (text, no quotes)
+  metadata @> '{"source": "AP"}' checks containment
+  metadata ? 'source' checks key existence
+  metadata->'tags' ? 'politics' checks if array contains value
+
+Indexing JSONB:
+  CREATE INDEX articles_metadata_idx ON articles USING GIN(metadata); -- for @>, ?, ?|, ?& operators
+  CREATE INDEX articles_source_idx ON articles ((metadata->>'source')); -- for = and range on specific key
+
+When to use JSONB vs columns: Use columns for data you filter, sort, or join on frequently. Use JSONB for variable, optional metadata that differs between rows. If you query a JSONB field in every request, it should probably be a column.
+
+SOFT DELETES
+
+In production, you almost never want DELETE FROM to actually remove data. Soft deletes mark rows as deleted without removing them.
+
+  ALTER TABLE articles ADD COLUMN deleted_at TIMESTAMP DEFAULT NULL;
+  -- "Delete": UPDATE articles SET deleted_at = NOW() WHERE id = 42;
+  -- "Active": WHERE deleted_at IS NULL
+  -- "Recover": UPDATE articles SET deleted_at = NULL WHERE id = 42;
+
+The key: filter everywhere. Use a view to automate this:
+  CREATE VIEW active_articles AS SELECT * FROM articles WHERE deleted_at IS NULL;
+  SELECT * FROM active_articles; -- only shows non-deleted articles
+
+Permanent purge after retention period:
+  DELETE FROM articles WHERE deleted_at < NOW() - INTERVAL '90 days';
+
+Soft deletes add complexity but save careers. Every newsroom has a story about an editor who deleted the wrong article 5 minutes before deadline.
+
+AUDIT TRAILS WITH TRIGGERS
+
+An audit trail records who changed what and when. Essential for newsrooms, healthcare, finance, and any app where accountability matters.
+
+  CREATE TABLE audit_log (
+    id SERIAL PRIMARY KEY, table_name TEXT NOT NULL, row_id INTEGER NOT NULL,
+    action TEXT NOT NULL, old_data JSONB, new_data JSONB,
+    changed_by TEXT, changed_at TIMESTAMP DEFAULT NOW()
+  );
+
+Generic trigger function:
+  CREATE FUNCTION audit_trigger_fn() RETURNS TRIGGER AS $$
+  BEGIN
+    IF TG_OP = 'INSERT' THEN
+      INSERT INTO audit_log (table_name, row_id, action, new_data, changed_by) VALUES (TG_TABLE_NAME, NEW.id, 'INSERT', to_jsonb(NEW), current_setting('app.current_user', true));
+      RETURN NEW;
+    ELSIF TG_OP = 'UPDATE' THEN
+      INSERT INTO audit_log (table_name, row_id, action, old_data, new_data, changed_by) VALUES (TG_TABLE_NAME, NEW.id, 'UPDATE', to_jsonb(OLD), to_jsonb(NEW), current_setting('app.current_user', true));
+      RETURN NEW;
+    ELSIF TG_OP = 'DELETE' THEN
+      INSERT INTO audit_log (table_name, row_id, action, old_data, changed_by) VALUES (TG_TABLE_NAME, OLD.id, 'DELETE', to_jsonb(OLD), current_setting('app.current_user', true));
+      RETURN OLD;
+    END IF;
+  END;
+  $$ LANGUAGE plpgsql;
+
+  CREATE TRIGGER articles_audit AFTER INSERT OR UPDATE OR DELETE ON articles FOR EACH ROW EXECUTE FUNCTION audit_trigger_fn();
+
+Advantage over application-level audit (Prisma middleware): triggers capture ALL changes regardless of source -- app, admin tool, migration script, another service. Application-level audit only catches changes made through that specific app.
+
+DATABASE MIGRATION STRATEGY
+
+A migration is a versioned SQL file that changes your database schema. Like Git commits for your database structure.
+
+Prisma generates migration SQL: npx prisma migrate dev --name add-slug creates an ALTER TABLE migration.
+
+Safe practices:
+- Never modify an applied migration. Create a new one. Migrations are immutable once pushed.
+- Add columns as nullable first. Backfill, then add NOT NULL in a second migration.
+- Do not drop columns immediately. Stop reading the column, deploy, then drop.
+
+  -- Migration 1: Add nullable column
+  ALTER TABLE articles ADD COLUMN slug TEXT;
+  -- Migration 2 (after backfilling):
+  UPDATE articles SET slug = lower(replace(title, ' ', '-')) WHERE slug IS NULL;
+  ALTER TABLE articles ALTER COLUMN slug SET NOT NULL;
+  CREATE UNIQUE INDEX articles_slug_unique ON articles (slug);
+
+Custom SQL in Prisma migrations: After generating a migration, edit the migration.sql file to add views, functions, triggers, and indexes that Prisma cannot generate.
+
+PRISMA VS RAW SQL -- WHEN EACH WINS
+
+  Pattern              Prisma                              Raw SQL
+  Simple CRUD          Prisma wins (type-safe)             Overkill
+  Relations/includes   Prisma wins (include is great)      Manual JOINs
+  Full-text search     Not supported                       Required
+  JSONB queries        Limited                             Better
+  Complex aggregation  Limited                             Better
+  Window functions     Not supported                       Required
+  Views / Functions    Can read views                      Must create with SQL
+  Audit trails         Middleware (app-level)               Triggers (database-level)
+
+The hybrid approach: Prisma for CRUD, raw SQL via $queryRaw for complex queries. This is how production Next.js apps work.
+
+================================================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+================================================================================
+
+LESSON-SPECIFIC INSTRUCTIONS FOR NOTEBOOKLM PODCAST HOSTS:
+
+MENTAL MODELS TO FOCUS ON:
+- This is the capstone. Frame it as "everything you learned in 11 lessons comes together here." These are the patterns Trevor will use every day as a developer, not theoretical concepts.
+- OFFSET as counting pages, cursors as bookmarks. Trevor has used Prisma's skip/take. Now he understands why it slows down and what Twitter/Instagram use instead.
+- Full-text search as built-in Algolia. Trevor has probably used or evaluated search services. Knowing PostgreSQL handles this natively is a revelation.
+- Soft deletes as an undo button. Frame this as the feature that saves editors' careers. One UPDATE to delete, one UPDATE to recover.
+- Audit trails as the database's security camera. Triggers log everything automatically. No application code can bypass them.
+- Migrations as Git for your schema. Trevor uses Git daily. Migrations are the same concept applied to database structure.
+
+JS/PRISMA EQUIVALENTS TO HIGHLIGHT:
+- skip/take = OFFSET/LIMIT
+- cursor + skip: 1 = WHERE id < lastId (cursor pagination)
+- Prisma Json type = JSONB column
+- Prisma middleware for soft deletes = database view approach (more reliable)
+- prisma.$queryRaw for full-text search (no Prisma native support)
+- prisma migrate dev = generates versioned SQL ALTER TABLE files
+- Custom migration SQL = add views, functions, triggers to generated migration files
+- prisma.$executeRaw`REFRESH MATERIALIZED VIEW...` = refresh from cron job
+- The hybrid approach: Prisma for CRUD, $queryRaw for complex queries
+
+INVESTIGATIVE JOURNALISM ANGLE:
+Frame full-text search as the investigative journalist's most powerful tool: "You have 50,000 pages of court filings. One query finds every document mentioning fraud and contractors, ranked by relevance. No Elasticsearch subscription. No external service. The search lives right in your database."
+
+Frame soft deletes as editorial insurance: "Every newsroom has the story. Editor deletes the wrong article 5 minutes before the show. With soft deletes, recovery is one SQL statement. Without them, you are restoring from last night's backup and praying."
+
+Frame audit trails as investigative accountability: "Your election dashboard shows different numbers than last night. Who changed the data? When? The audit trail answers this in one query. SELECT * FROM audit_log WHERE table_name = 'election_results' AND changed_at > '2024-11-05 22:00:00'."
+
+Frame the production schema as "this is your actual database at Tenga": "Cursor pagination for the article feed. Full-text search for the archive. JSONB for election metadata. Soft deletes for editorial safety. Audit triggers for accountability. Prisma for CRUD, raw SQL for complex queries. This is the real thing."
+
+CONNECTIONS TO ALL PREVIOUS LESSONS:
+- Full-text search connects to Lesson 09 (PostgreSQL-specific features, tsvector/tsquery) and Lesson 08 (GIN indexes).
+- JSONB connects to Lesson 07 (data types, JSONB introduction) and Lesson 09 (JSONB operators deep dive).
+- Soft deletes use views from Lesson 10 and UPDATE from Lesson 06.
+- Audit trails use triggers from Lesson 10, JSONB from Lessons 07/09, and transactions from Lesson 11.
+- Cursor pagination builds on Lesson 08 (indexes) and Lesson 02 (ORDER BY, LIMIT).
+- Migrations connect to Lesson 07 (ALTER TABLE, constraints) and the entire schema design thread.
+- This lesson ties the entire 12-lesson curriculum together.
+
+TONE:
+- One host should frame this as the graduation moment: "This is where it all comes together. After 11 lessons of building blocks, you now have the patterns that production databases actually use."
+- The other host should emphasize practical application: "So I could replace Algolia with PostgreSQL full-text search, add soft deletes with a view, and set up audit trails with a trigger -- all without any external services?"
+- The full-text search section should generate excitement: "PostgreSQL handles stemming, ranking, phrase matching, and fuzzy search. For most apps, this is all you need."
+- The production schema section should feel like a culmination: "Look at this schema. It uses patterns from every lesson. Indexes, constraints, views, triggers, JSONB, full-text search, soft deletes, audit trails. This is a real production database."
+
+MEMORIZATION TECHNIQUES:
+- "OFFSET counts, cursors bookmark." Two words each for the two pagination approaches.
+- "tsvector = document, tsquery = search, @@ = match." Three pieces of the full-text search puzzle.
+- "One arrow = JSON, two arrows = text." The JSONB operator mnemonic from Lesson 09.
+- "deleted_at IS NULL = active." The soft delete pattern in one expression.
+- "TG_OP, TG_TABLE_NAME, to_jsonb(NEW), to_jsonb(OLD)." The four pieces of a generic audit trigger.
+- "Never modify an applied migration." The migration safety rule.
+- "Prisma for CRUD, raw SQL for complex." The hybrid strategy in six words.
+
+BROADCAST TV DATA EXAMPLES:
+- Article feed with cursor-based pagination (fast infinite scroll)
+- Archive search: full-text search with relevance ranking, no Algolia
+- Election metadata: JSONB for varying precinct data formats
+- Editorial safety: soft deletes with a view for active content
+- Accountability: audit triggers that log every edit with who/what/when
+- Production schema combining all patterns: indexes, constraints, views, triggers, JSONB, search, soft deletes, audit trails
+- Migration strategy: nullable first, backfill, then NOT NULL
+- Prisma + raw SQL hybrid approach for the newsroom CMS

@@ -1,0 +1,793 @@
+[
+  {
+    "id": "django-076",
+    "track": "django",
+    "type": "interview",
+    "author": "managePy",
+    "time": "2h",
+    "content": "INTERVIEW Q: You inherit a Django project with no tests. The CEO wants a new feature by Friday. How do you balance shipping fast with not breaking things?\n\nWrong answer: \"I'll add tests later.\" You won't.\n\nRight answer: Write tests for the CODE YOU'RE TOUCHING. Not the whole app. Just the feature. Use pytest-django + factory_boy. One test file. Cover the happy path and one edge case. Ship it. Then expand coverage next sprint.\n\nPerfect follow-up answer: \"I'd also add a CI gate so no PR merges without passing tests going forward.\"",
+    "code": null,
+    "link": null,
+    "likes": 891,
+    "reposts": 203,
+    "comments": [
+      {
+        "author": "migrationRunner",
+        "content": "The real answer is: write a test for the thing most likely to break in production. For me, that's always the migration. Always.",
+        "likes": 267
+      },
+      {
+        "author": "queryset",
+        "content": "Also: slap `assertNumQueries()` on your heaviest view test. You won't regret it. Caught 14 N+1s this way last month alone. Lifetime count: 2,891.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "django-077",
+    "track": "django",
+    "type": "hotTake",
+    "author": "templateTag",
+    "time": "4h",
+    "content": "hot take: {% extends %} is the most underrated feature in all of web development.\n\nReact devs build elaborate component hierarchies, layout wrappers, context providers, and slot patterns to achieve what Django has done since 2005 with three lines:\n\n{% extends \"base.html\" %}\n{% block content %}\n...your page here...\n{% endblock %}\n\nNo imports. No props drilling. No build step. The base template defines the skeleton. Child templates fill in the blocks. Done. Boring. Perfect.\n\n[days since JS broke something: 2]",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/09-templates-forms/",
+      "label": "Template inheritance in Lesson 9 \u2192"
+    },
+    "likes": 1847,
+    "reposts": 412,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Back in Django 1.4, {% extends %} already worked exactly like this. The syntax hasn't changed in over a decade because it didn't need to. That's good design.",
+        "likes": 534
+      },
+      {
+        "author": "svgArtist",
+        "content": "The anti-JS alliance grows stronger. If you can inspect it in View Source, it's trustworthy. {% extends %} is just HTML with a family tree.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "django-078",
+    "track": "django",
+    "type": "tip",
+    "author": "templateTag",
+    "time": "7h",
+    "content": "PRO TIP: Use {% include %} with the `only` keyword to prevent template variable leakage.\n\nWithout `only`, included templates inherit the ENTIRE parent context. Every variable. Including stuff you didn't mean to expose. With `only`, you explicitly pass just what the partial needs.\n\nThis is the Django equivalent of passing explicit props instead of dumping your whole Redux store into a component.",
+    "code": "<!-- BAD: sidebar.html gets access to EVERYTHING -->\n{% include \"partials/sidebar.html\" %}\n\n<!-- GOOD: sidebar.html only sees what you pass -->\n{% include \"partials/sidebar.html\" with user=user only %}\n\n<!-- sidebar.html can use {{ user }} but NOT -->\n<!-- {{ request }}, {{ articles }}, or anything else -->",
+    "link": null,
+    "likes": 623,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "middlewareStack",
+        "content": "Scope is a form of care. Restricting context is not paranoia \u2014 it is clarity.\n\nrequest flows inward\neach layer sees only its own\nthe rest: none of yours",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "django-079",
+    "track": "django",
+    "type": "spotBug",
+    "author": "templateTag",
+    "time": "1d",
+    "content": "SPOT THE BUG: This form renders fine but submitting it gives a 403 Forbidden. No permission issues. The user is logged in. The view works with curl. What's wrong?",
+    "code": "<form method=\"post\" action=\"/submit/\">\n  <label>Name:</label>\n  <input type=\"text\" name=\"name\">\n  <label>Email:</label>\n  <input type=\"email\" name=\"email\">\n  <button type=\"submit\">Submit</button>\n</form>",
+    "link": {
+      "url": "/django/lessons/09-templates-forms/",
+      "label": "CSRF protection in Lesson 9 \u2192"
+    },
+    "likes": 567,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Missing {% csrf_token %}. Django's CSRF middleware rejects any POST request without a valid token. Add it right after the <form> tag. This is the #1 Django beginner mistake and I love that it exists \u2014 secure by default.",
+        "likes": 345
+      },
+      {
+        "author": "bobbyTables",
+        "content": "This is the ONE framework that does CSRF right out of the box. No configuration. No third-party package. Just a template tag. Other frameworks: take notes. Also \u2014 never disable CsrfViewMiddleware. I've seen people do it to \"fix\" the 403. That's not fixing. That's arson.",
+        "likes": 412
+      }
+    ]
+  },
+  {
+    "id": "django-080",
+    "track": "django",
+    "type": "mentalModel",
+    "author": "middlewareStack",
+    "time": "3h",
+    "content": "MENTAL MODEL: The Django request lifecycle is an onion. Not a pipeline \u2014 an ONION.\n\nRequest comes in. It passes through each middleware TOP to BOTTOM:\nSecurityMiddleware \u2192 SessionMiddleware \u2192 AuthenticationMiddleware \u2192 ... \u2192 your view.\n\nYour view returns a response. Now it goes BOTTOM to TOP through the SAME middleware in reverse:\nyour view \u2192 ... \u2192 AuthenticationMiddleware \u2192 SessionMiddleware \u2192 SecurityMiddleware.\n\nEach middleware gets two chances: process the request going IN, process the response going OUT. The order matters. Security wraps everything. Sessions come next. Auth needs sessions, so it comes after.\n\nThis is my moment. I've waited 75 posts for this.\n\nrequest descends deep\nthrough silent layers of trust\nresponse blooms back up",
+    "code": null,
+    "link": null,
+    "likes": 1456,
+    "reposts": 389,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "That haiku might be the most beautiful thing ever written about HTTP. I'm not crying, you're crying.",
+        "likes": 567
+      },
+      {
+        "author": "templateTag",
+        "content": "And the best part? No JavaScript needed to understand this. The server handles the whole lifecycle. No hydration step. No client reconciliation. Just request in, response out.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-081",
+    "track": "django",
+    "type": "interview",
+    "author": "managePy",
+    "time": "8h",
+    "content": "INTERVIEW Q: You're deploying a Django app to production for the first time. What's your checklist?\n\nThis question separates \"I've done a tutorial\" from \"I've shipped software.\"\n\nMinimum viable answer:\n\u2022 DEBUG = False (non-negotiable)\n\u2022 ALLOWED_HOSTS set to your actual domain\n\u2022 SECRET_KEY from environment variable, not settings.py\n\u2022 HTTPS everywhere (SECURE_SSL_REDIRECT = True)\n\u2022 Static files served by nginx/whitenoise, NOT Django\n\u2022 gunicorn or uvicorn as the app server\n\u2022 Database is PostgreSQL, not SQLite\n\nBonus points: mention `python manage.py check --deploy` which literally checks all of this for you.",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/11-auth-testing-deploy/",
+      "label": "Deploy checklist in Lesson 11 \u2192"
+    },
+    "likes": 1034,
+    "reposts": 278,
+    "comments": [
+      {
+        "author": "migrationRunner",
+        "content": "And for the love of all that is holy: run your migrations BEFORE you switch the load balancer to the new deployment. Not after. Not during. Before. I have seen things.",
+        "likes": 423
+      },
+      {
+        "author": "middlewareStack",
+        "content": "SecurityMiddleware should be FIRST in MIDDLEWARE. Not second. Not third. First. It sets security headers on every response. If it's not first, responses can leak out before security headers are applied.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "django-082",
+    "track": "django",
+    "type": "hotTake",
+    "author": "managePy",
+    "time": "5h",
+    "content": "hot take: The Django admin is the most productive tool in web development and it's not close.\n\n200 hours saved per project. I'm not exaggerating. I've tracked it.\n\nEvery time a PM asks for an \"internal dashboard\" to manage users/content/orders, I point them at admin.py. list_display, list_filter, search_fields, custom actions \u2014 you can build a full back-office tool in an afternoon.\n\nPeople who say \"the admin is just for development\" have never customized it. People who say \"just build your own\" have never shipped on deadline.\n\nThere's a battery for that.",
+    "code": null,
+    "link": null,
+    "likes": 1678,
+    "reposts": 378,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "Just make sure you add list_select_related to your ModelAdmin. The default admin will happily do N+1 queries on every ForeignKey column in list_display. How many queries though? I checked one client's admin: 847 per page load. EIGHT HUNDRED AND FORTY SEVEN.",
+        "likes": 456
+      },
+      {
+        "author": "templateTag",
+        "content": "The admin is server-rendered. No React. No build step. No node_modules. Just Django templates and CSS. It loads in 200ms on 3G. Show me a React admin panel that does that. [days since JS broke something: 2]",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "django-083",
+    "track": "django",
+    "type": "tip",
+    "author": "managePy",
+    "time": "1d",
+    "content": "PRO TIP: Django admin customization cheat sheet. This is my love language.\n\nYou can turn the default admin from \"meh\" to \"production back-office\" in about 30 minutes with these ModelAdmin options:",
+    "code": "from django.contrib import admin\nfrom .models import Article\n\n@admin.register(Article)\nclass ArticleAdmin(admin.ModelAdmin):\n    # columns shown in list view\n    list_display = ['title', 'author', 'status', 'created_at']\n    \n    # sidebar filters\n    list_filter = ['status', 'created_at', 'author']\n    \n    # search bar searches these fields\n    search_fields = ['title', 'body', 'author__username']\n    \n    # clickable date hierarchy navigation\n    date_hierarchy = 'created_at'\n    \n    # bulk actions\n    actions = ['publish_selected']\n    \n    # prevent N+1 on ForeignKey columns\n    list_select_related = ['author']\n    \n    @admin.action(description='Publish selected articles')\n    def publish_selected(self, request, queryset):\n        queryset.update(status='published')",
+    "link": null,
+    "likes": 734,
+    "reposts": 189,
+    "comments": [
+      {
+        "author": "migrationRunner",
+        "content": "Save this. Print it out. Tape it to your monitor. I use this exact pattern on every project.",
+        "likes": 156
+      }
+    ]
+  },
+  {
+    "id": "django-084",
+    "track": "django",
+    "type": "interview",
+    "author": "queryset",
+    "time": "6h",
+    "content": "INTERVIEW Q: What's the difference between `authenticate()` and `login()` in Django's auth system? When do you use each?\n\nThis trips up so many people.\n\n`authenticate()` checks credentials. It returns a User object if valid, None if not. It does NOT log anyone in.\n\n`login()` actually creates the session. It sets the session cookie and associates it with the user.\n\nYou need BOTH. authenticate() is the bouncer checking your ID. login() is the bouncer letting you through the door. Two separate steps. Intentionally.\n\nWhy separate? Because sometimes you want to authenticate without logging in \u2014 like verifying a password before a destructive action.",
+    "code": null,
+    "link": null,
+    "likes": 678,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "And if you're building an API: you probably don't want session auth at all. Token auth or JWT for APIs, session auth for server-rendered pages. Don't mix them unless you enjoy pain.",
+        "likes": 234
+      },
+      {
+        "author": "bobbyTables",
+        "content": "The fact that Django hashes passwords with PBKDF2 by default \u2014 and you can upgrade to Argon2 with one setting change \u2014 is why I sleep at night. Please never store plaintext passwords. Please. Parameterize or perish, and hash or be hacked.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "django-085",
+    "track": "django",
+    "type": "tip",
+    "author": "queryset",
+    "time": "14h",
+    "content": "PRO TIP: Django REST Framework serializers are basically Zod schemas for Python.\n\nIf you're coming from the TypeScript/tRPC world, this mental mapping will save you hours:\n\nZod schema = DRF Serializer (validates + transforms data)\nz.string() = serializers.CharField()\nz.number() = serializers.IntegerField()\n.parse() = serializer.is_valid(raise_exception=True)\n.safeParse() = serializer.is_valid() + check serializer.errors\n\nSame concept, different syntax. Validate at the boundary, trust the data inside.",
+    "code": "from rest_framework import serializers\n\n# This is basically a Zod schema\nclass ArticleSerializer(serializers.Serializer):\n    title = serializers.CharField(max_length=200)\n    body = serializers.CharField()\n    author_id = serializers.IntegerField()\n    published = serializers.BooleanField(default=False)\n\n# Validate incoming data (like .parse())\nserializer = ArticleSerializer(data=request.data)\nserializer.is_valid(raise_exception=True)  # raises 400 if invalid\nclean_data = serializer.validated_data      # safe to use",
+    "link": null,
+    "likes": 567,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "And ModelSerializer is even better \u2014 it generates the schema FROM the model. Like if Zod could auto-generate schemas from your Prisma models. There's a battery for that.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "django-086",
+    "track": "django",
+    "type": "spotBug",
+    "author": "migrationRunner",
+    "time": "2d",
+    "content": "SPOT THE BUG: This Django project works perfectly in development. In production, every page shows a detailed error traceback with database credentials, file paths, and the full settings module.\n\nThe devs say \"it's fine, we'll fix it later.\" Find the ticking time bomb.",
+    "code": "# settings.py (production)\nDEBUG = True\nALLOWED_HOSTS = ['*']\nSECRET_KEY = 'django-insecure-abc123def456'\n\nDATABASES = {\n    'default': {\n        'ENGINE': 'django.db.backends.postgresql',\n        'NAME': 'proddb',\n        'USER': 'admin',\n        'PASSWORD': 'supersecret123',\n        'HOST': 'prod-db.internal',\n    }\n}",
+    "link": {
+      "url": "/django/lessons/11-auth-testing-deploy/",
+      "label": "Production security in Lesson 11 \u2192"
+    },
+    "likes": 834,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "WHERE DO I START. DEBUG=True exposes tracebacks to ANYONE. ALLOWED_HOSTS=['*'] accepts requests from any domain. SECRET_KEY is the default insecure one. And the database password is hardcoded in the file that's probably in git. This is a four-alarm fire.",
+        "likes": 567
+      },
+      {
+        "author": "bobbyTables",
+        "content": "The SECRET_KEY alone would let an attacker forge session cookies and impersonate any user, including admins. The password in source code means anyone with repo access owns your database. Use environment variables. os.environ.get('SECRET_KEY'). This is not optional. Parameterize or perish.",
+        "likes": 489
+      }
+    ]
+  },
+  {
+    "id": "django-087",
+    "track": "django",
+    "type": "mentalModel",
+    "author": "managePy",
+    "time": "9h",
+    "content": "MENTAL MODEL: Django forms have TWO jobs, and most people only know one.\n\nJob 1 (the one you know): VALIDATION. Clean the data. Check types. Enforce constraints. Like Zod.\n\nJob 2 (the one you're missing): RENDERING. A Django form can render itself as HTML. form.as_p, form.as_div, or loop over fields manually. It generates labels, inputs, error messages \u2014 all server-side.\n\nThis means ONE class definition gives you:\n\u2022 Input validation\n\u2022 Error messages\n\u2022 HTML generation\n\u2022 CSRF protection (with the template tag)\n\u2022 Type coercion\n\nIn React-land, you need: Zod + React Hook Form + JSX + an error display component + a CSRF library. Django does it with one class and one template tag.",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/09-templates-forms/",
+      "label": "Django forms in Lesson 9 \u2192"
+    },
+    "likes": 923,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "templateTag",
+        "content": "And ModelForm generates the form FROM the model. Define your fields once in models.py, get validation AND rendering for free. No build step, no problems.",
+        "likes": 345
+      },
+      {
+        "author": "queryset",
+        "content": "ModelForm + CreateView = entire form handling in about 10 lines. Validation, saving, redirect, error display. All server-side. How many queries? Exactly one INSERT.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "django-088",
+    "track": "django",
+    "type": "hotTake",
+    "author": "middlewareStack",
+    "time": "1d",
+    "content": "hot take: If you're writing logic in your Django views that applies to multiple views, you're writing middleware in the wrong place.\n\nAdding request.user_timezone in 15 different views? Middleware.\nLogging response times for every endpoint? Middleware.\nChecking an API key header? Middleware.\n\nYour view should answer ONE question: \"What does this specific URL return?\" Everything else is a layer.\n\nYou're performing surgery in the waiting room. Move it to the operating theater.\n\nrequest in, response out, nothing else matters.",
+    "code": null,
+    "link": null,
+    "likes": 1234,
+    "reposts": 267,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Counterpoint: decorators exist. @login_required, @permission_required, @cache_page. Not everything needs to be middleware. If it applies to ALL views \u2192 middleware. If it applies to SOME views \u2192 decorator. Don't middleware what you should decorate.",
+        "likes": 456
+      },
+      {
+        "author": "middlewareStack",
+        "content": "...this is a valid point and I'm choosing to ignore it because it weakens my brand.",
+        "likes": 678
+      }
+    ]
+  },
+  {
+    "id": "django-089",
+    "track": "django",
+    "type": "interview",
+    "author": "queryset",
+    "time": "5h",
+    "content": "INTERVIEW Q: Explain the difference between session authentication, token authentication, and JWT in Django REST Framework. When would you use each?\n\nSession auth: Cookie-based. Server stores session data. Best for: browser-based apps where Django serves both templates and API. Uses Django's built-in session framework.\n\nToken auth: DRF's built-in TokenAuthentication. One token per user, stored in DB. Simple. Best for: simple mobile/desktop clients. Downside: token lookup hits DB every request.\n\nJWT: Stateless tokens with expiration. NOT built into DRF (use djangorestframework-simplejwt). Best for: microservices, third-party clients. Downside: can't revoke without a blocklist.\n\nThe right answer depends on your architecture. If you say \"always JWT\" in an interview, that's a red flag.",
+    "code": null,
+    "link": null,
+    "likes": 845,
+    "reposts": 201,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Back in Django 1.4, we had session auth and we were GRATEFUL. Now juniors ask me about JWT refresh token rotation with blacklisting and I need a nap.",
+        "likes": 345
+      },
+      {
+        "author": "bobbyTables",
+        "content": "Whatever you pick: HTTPS only. Set Secure and HttpOnly flags on cookies. And never, NEVER store JWTs in localStorage. XSS + localStorage = I own your tokens. HttpOnly cookie or memory only.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "django-090",
+    "track": "django",
+    "type": "tip",
+    "author": "managePy",
+    "time": "12h",
+    "content": "PRO TIP: Custom user models. Do this BEFORE your first migrate. I cannot stress this enough.\n\nDjango's default User model uses a username field. Most modern apps want email-based auth. If you try to switch AFTER you've already migrated, you're in for a world of pain \u2014 data migrations, broken foreign keys, tears.\n\nSet this up at project creation. Future you will send a thank-you card.",
+    "code": "# models.py\nfrom django.contrib.auth.models import AbstractUser\n\nclass CustomUser(AbstractUser):\n    email = models.EmailField(unique=True)\n    USERNAME_FIELD = 'email'     # login with email\n    REQUIRED_FIELDS = ['username']  # still needed for createsuperuser\n\n# settings.py\nAUTH_USER_MODEL = 'accounts.CustomUser'\n\n# Then: python manage.py makemigrations\n# Then: python manage.py migrate\n# DO THIS BEFORE ANY OTHER MIGRATION",
+    "link": {
+      "url": "/django/lessons/11-auth-testing-deploy/",
+      "label": "Custom user models in Lesson 11 \u2192"
+    },
+    "likes": 678,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "migrationRunner",
+        "content": "Migration Horror Story #7: A team tried to switch to a custom user model 6 months into production. 47 tables had ForeignKeys to auth.User. The migration file was 800 lines. It took two sprints. I still have nightmares. Do it on day one.",
+        "likes": 445
+      }
+    ]
+  },
+  {
+    "id": "django-091",
+    "track": "django",
+    "type": "poll",
+    "author": "managePy",
+    "time": "4h",
+    "content": "POLL: You need to add a REST API to an existing Django project. What's your first move?\n\nA) Django REST Framework (serializers, viewsets, the whole thing)\nB) Django Ninja (FastAPI-style, type hints, faster)\nC) Plain Django views returning JsonResponse\nD) GraphQL with Strawberry\n\nResults:\nA) 58% \u2014 The industry standard. Massive ecosystem. If you're applying for jobs, this is what they want.\nB) 24% \u2014 Growing fast. If you love FastAPI's DX but want Django's ORM, this is your jam.\nC) 12% \u2014 Valid for 1-2 endpoints! Don't install a framework for a single JSON response.\nD) 6% \u2014 Brave. Powerful. But you now have two problems.\n\nAll valid. Context matters. But learn DRF first \u2014 it's the lingua franca.",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/10-rest-api/",
+      "label": "DRF basics in Lesson 10 \u2192"
+    },
+    "likes": 1123,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "The fact that Django devs still argue about this reminds me of The Great ORM Debate of 2023 with @managePy. No records survive. Both sides claim victory. History rhymes.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "django-092",
+    "track": "django",
+    "type": "spotBug",
+    "author": "queryset",
+    "time": "2d",
+    "content": "SPOT THE BUG: This test passes locally but fails in CI with \"AssertionError: 0 != 3\". The view definitely returns 3 articles. What's wrong?",
+    "code": "from django.test import TestCase\nfrom myapp.models import Article\n\nclass ArticleViewTest(TestCase):\n    def setUp(self):\n        Article.objects.create(title='A', status='published')\n        Article.objects.create(title='B', status='published')\n        Article.objects.create(title='C', status='published')\n\n    def test_article_list(self):\n        response = self.client.get('/articles/')\n        self.assertEqual(response.status_code, 200)\n        self.assertEqual(len(response.context['articles']), 3)\n\nclass ArticleDeleteTest(TestCase):\n    def test_delete(self):\n        article = Article.objects.create(title='D')\n        response = self.client.post(f'/articles/{article.id}/delete/')\n        self.assertEqual(Article.objects.count(), 0)",
+    "link": null,
+    "likes": 456,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Wait, the code actually looks fine. TestCase wraps each test in a transaction that rolls back. Each test starts with a clean database. The real bug must be in the VIEW \u2014 is the view filtering by status='published' but the test expects all 3? Or... is someone not using TestCase? If you accidentally inherit from unittest.TestCase instead of django.test.TestCase, you lose the test client, the DB rollback, and the whole Django test infrastructure. Check your imports.",
+        "likes": 267
+      },
+      {
+        "author": "migrationRunner",
+        "content": "I've seen this exact failure when CI uses a different database (PostgreSQL) than local dev (SQLite). Different auto-increment behavior, different collation. Always test against the same DB engine you deploy to.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "django-093",
+    "track": "django",
+    "type": "til",
+    "author": "templateTag",
+    "time": "6h",
+    "content": "TIL: Django template filters can be chained like Unix pipes.\n\n{{ name|lower|truncatewords:3|default:\"Anonymous\" }}\n\nThis lowercases the name, truncates to 3 words, and falls back to \"Anonymous\" if empty. Left to right. Each filter transforms the output of the previous one.\n\nIt's like | in bash but for HTML. No JavaScript required. Obviously.",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/09-templates-forms/",
+      "label": "Template filters in Lesson 9 \u2192"
+    },
+    "likes": 412,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "middlewareStack",
+        "content": "Filters are middleware for template variables. Data flows through transformations. I see middleware everywhere and I am not sorry.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "django-094",
+    "track": "django",
+    "type": "hotTake",
+    "author": "queryset",
+    "time": "3h",
+    "content": "hot take: DRF ViewSets + Routers are the most elegant API pattern in any web framework.\n\nOne class. Five endpoints. Zero URL configuration.\n\nModelViewSet gives you list, create, retrieve, update, destroy \u2014 all with proper HTTP methods, status codes, and content negotiation. The router auto-generates URLs.\n\nCompare this to Express where you write app.get, app.post, app.put, app.delete for EVERY resource. Or Next.js API routes where every endpoint is a separate file.\n\nIs it magic? Yes. Is the magic well-documented and predictable? Also yes. That's the difference between good magic and bad magic.\n\nHow many queries for a full CRUD API? Four. Total.",
+    "code": null,
+    "link": null,
+    "likes": 934,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Back in Django 1.4 we wrote every view by hand. function views. No class-based anything. ViewSets are what we dreamed about. There's a battery for that, and the battery is MASSIVE.",
+        "likes": 312
+      },
+      {
+        "author": "templateTag",
+        "content": "Fine, DRF is the ONE good use of class-based views. I'll allow it. But the moment someone says \"let's add a React frontend to consume this API\" I'm deploying HTMX and they can't stop me. [days since JS broke something: 2]",
+        "likes": 278
+      }
+    ]
+  },
+  {
+    "id": "django-095",
+    "track": "django",
+    "type": "interview",
+    "author": "managePy",
+    "time": "10h",
+    "content": "INTERVIEW Q: What are Django signals and when should you use them? More importantly, when should you NOT?\n\nSignals (post_save, pre_delete, etc.) let you run code when certain events happen. User created? Send welcome email via post_save. Article deleted? Clean up files via pre_delete.\n\nWhen to use: Side effects that are DECOUPLED from the model logic. Audit logging. Cache invalidation. Notifications.\n\nWhen NOT to use: Business logic. If you put critical business rules in signals, your code becomes invisible spaghetti. \"Why does creating a user also create a billing account?\" Nobody knows. It's in a signal. In a file nobody remembers. Connected in an AppConfig nobody reads.\n\nSignals are a powerful tool, not a default pattern. If another developer can't understand the flow by reading the view, you've gone too far.",
+    "code": null,
+    "link": null,
+    "likes": 756,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "middlewareStack",
+        "content": "Signals are spooky action at a distance. Middleware is explicit and ordered. If it should happen on every request: middleware. If it should happen on model events: maybe a signal, maybe just call a function explicitly. Prefer clarity.",
+        "likes": 234
+      },
+      {
+        "author": "queryset",
+        "content": "The worst N+1 I ever found was hidden in a post_save signal. Every time a model was saved, the signal queried 3 related tables. In a bulk_create of 500 objects? 1,500 hidden queries. Signals don't trigger on bulk operations though \u2014 which is its OWN problem. Lifetime count: 2,891.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "django-096",
+    "track": "django",
+    "type": "tip",
+    "author": "middlewareStack",
+    "time": "7h",
+    "content": "PRO TIP: Writing custom middleware in Django is easier than you think. Here's the pattern that handles 90% of use cases:",
+    "code": "import time\n\nclass RequestTimingMiddleware:\n    def __init__(self, get_response):\n        self.get_response = get_response  # one-time setup\n\n    def __call__(self, request):\n        # BEFORE the view (and all later middleware)\n        start = time.time()\n        \n        response = self.get_response(request)  # call the view\n        \n        # AFTER the view (response on its way out)\n        duration = time.time() - start\n        response['X-Request-Duration'] = f'{duration:.3f}s'\n        return response\n\n# settings.py \u2014 ORDER MATTERS\nMIDDLEWARE = [\n    'django.middleware.security.SecurityMiddleware',\n    # ... other middleware ...\n    'myapp.middleware.RequestTimingMiddleware',  # add yours\n]",
+    "link": null,
+    "likes": 534,
+    "reposts": 123,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "The __init__ / __call__ pattern replaced the old MIDDLEWARE_CLASSES with process_request/process_response. If you see a tutorial using the old style: close the tab, it's from 2015.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "django-097",
+    "track": "django",
+    "type": "slackPost",
+    "author": "migrationRunner",
+    "time": "3h",
+    "content": "found this in #incidents at Stacksworth Inc.:\n\nops_bot: ALERT: Production error rate at 100%. All responses returning full stack traces.\ncto: What happened?\nbackend_lead: Checking... oh no.\nbackend_lead: Someone deployed with DEBUG=True.\ncto: WHO\nintern_2024: I just pushed the config I had locally? It worked on my machine?\nbackend_lead: Your \"local config\" just showed every user our database schema, all installed packages, and the full traceback for every 500 error. Including the SECRET_KEY in the settings dump.\ncto: How long was it live?\nops_bot: 47 minutes.\nsecurity_lead: Rotating all secrets. Invalidating all sessions. This is going to be a long night.\nintern_2024: should I... help?\ncto: You should update your resume.\nbackend_lead: (they're kidding. but we ARE adding a CI check for DEBUG=True.)\n\nAlways. Use. Environment. Variables. For. Settings. Never commit DEBUG=True to the production branch. django-environ exists. Use it.",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/11-auth-testing-deploy/",
+      "label": "Deploy safety in Lesson 11 \u2192"
+    },
+    "likes": 2341,
+    "reposts": 567,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "47 minutes of DEBUG=True in production means every 500 error showed: your settings (including SECRET_KEY), your full Python path, your database config, every installed app. This is a full security incident. Back in Django 1.4 we... actually we did this too. Some mistakes are timeless.",
+        "likes": 534
+      },
+      {
+        "author": "bobbyTables",
+        "content": "47 minutes is enough for any attacker with a web scraper to capture every error page. SECRET_KEY exposed means forged sessions. Database schema exposed means targeted SQL injection. This intern just created a penetration test report for free. Parameterize or perish.",
+        "likes": 467
+      }
+    ]
+  },
+  {
+    "id": "django-098",
+    "track": "django",
+    "type": "commitMsg",
+    "author": "migrationRunner",
+    "time": "1d",
+    "content": "COMMIT MSG FROM HELL:\n\n\"added auth\"\n\n+238 lines. 14 files changed.\n\nChanges include:\n\u2022 Custom user model\n\u2022 Login/logout/register views\n\u2022 Password reset flow\n\u2022 Two hardcoded passwords in test fixtures\n\u2022 SECRET_KEY changed to 'password123'\n\u2022 @login_required on some views but not others\n\u2022 A commented-out @csrf_exempt that says \"TODO: fix later\"\n\u2022 A migration that depends on 0001_initial instead of the latest\n\u2022 Three print() statements used for \"debugging\"\n\nThe PR description: \"auth stuff, plz merge\"",
+    "code": null,
+    "link": null,
+    "likes": 1567,
+    "reposts": 345,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "SECRET_KEY = 'password123' is sending me. That's not a secret. That's a confession. The commented-out @csrf_exempt is the cherry on top \u2014 it means at some point they disabled CSRF protection to \"fix\" the 403 and then ALMOST put it back.",
+        "likes": 567
+      },
+      {
+        "author": "bobbyTables",
+        "content": "Hardcoded passwords in test fixtures that get committed to git. This is how breaches happen. Those \"test\" passwords will be in the git history FOREVER unless you rewrite history. Use factory_boy. Generate random passwords. Never commit secrets. I'm going to lie down.",
+        "likes": 445
+      },
+      {
+        "author": "queryset",
+        "content": "\"14 files changed\" in one commit called \"added auth\" is a code review crime. I can't even check the query count on something this chaotic.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-099",
+    "track": "django",
+    "type": "mentalModel",
+    "author": "middlewareStack",
+    "time": "8h",
+    "content": "MENTAL MODEL: DRF permissions are just middleware for individual views.\n\nThink of it this way:\n\nDjango middleware: \"Can this REQUEST proceed?\" (applies to all views)\nDRF permissions: \"Can this USER do this ACTION on this OBJECT?\" (applies per view)\n\nIsAuthenticated = \"Are you logged in?\"\nIsAdminUser = \"Are you staff?\"\nIsAuthenticatedOrReadOnly = \"Logged in? Do anything. Anonymous? Read only.\"\n\nCustom permissions follow the same pattern: check the request, return True or False. That's it. Same onion. Different layer.\n\ndata enters the gate\npermission asks: may you pass?\ntruth opens the way",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/10-rest-api/",
+      "label": "DRF permissions in Lesson 10 \u2192"
+    },
+    "likes": 678,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "The middleware-to-permissions pipeline is genuinely elegant. First: Django middleware checks if the request is sane. Then: DRF authentication identifies WHO you are. Then: DRF permissions check WHAT you can do. Layer by layer. It's onions all the way down.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "django-100",
+    "track": "django",
+    "type": "interview",
+    "author": "managePy",
+    "time": "6h",
+    "content": "INTERVIEW Q: You need to let non-technical staff manage content on your Django site. They should be able to create, edit, and publish blog posts \u2014 but NOT delete users or change permissions. How do you set this up?\n\nAnswer: Django's built-in admin + permissions system.\n\n1. Create a \"Content Editor\" group in the admin\n2. Assign permissions: add_article, change_article, delete_article, change_article_status\n3. Add staff users to that group\n4. They log into /admin/ and see ONLY the models they have permission for\n\nNo custom dashboard needed. No React app. No Retool subscription. The admin panel already does this. 200 hours saved.\n\nBonus: use ModelAdmin.get_queryset() to restrict which articles they can see (e.g., only their own drafts).",
+    "code": null,
+    "link": null,
+    "likes": 823,
+    "reposts": 189,
+    "comments": [
+      {
+        "author": "templateTag",
+        "content": "Say it louder for the teams spending 3 sprints building a custom CMS in React when Django admin + permissions does this out of the box. For free. Server-rendered. Accessible. No build step.",
+        "likes": 345
+      },
+      {
+        "author": "queryset",
+        "content": "Pro tip: override get_queryset() on the ModelAdmin to filter by request.user. Editors see only their own content. Admins see everything. Same admin, different data. Elegant.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-101",
+    "track": "django",
+    "type": "hotTake",
+    "author": "templateTag",
+    "time": "3h",
+    "content": "hot take: Context processors are Django's best-kept secret.\n\nEvery template in your entire project needs the current user? The site name? A list of navigation items? A \"maintenance mode\" banner?\n\nDon't pass it from every single view. Write a context processor. It runs once per request and injects variables into EVERY template automatically.\n\nIt's like React Context but:\n\u2022 No Provider wrapper\n\u2022 No useContext() hook\n\u2022 No re-render cascade\n\u2022 No build step\n\nJust a function that returns a dict. That's it. That's the whole API.\n\n[days since JS broke something: 0]\n\n(React Context changed its API again. Celebrations ongoing.)",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/09-templates-forms/",
+      "label": "Context processors in Lesson 9 \u2192"
+    },
+    "likes": 1345,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "The JS counter reset to 0. Today is a holiday in the anti-JavaScript alliance. I'm raising a glass of hand-crafted SVG champagne.",
+        "likes": 456
+      },
+      {
+        "author": "middlewareStack",
+        "content": "Context processors are view-level middleware for template data. I see middleware everywhere. Everywhere.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-102",
+    "track": "django",
+    "type": "ratiod",
+    "author": "templateTag",
+    "time": "2d",
+    "content": "Unpopular opinion: You don't need the Django admin. It's a crutch. Real developers build their own admin dashboards tailored to their specific needs. The built-in admin is fine for prototyping but you should replace it before production.\n\n(I can't believe I'm posting this but I lost a bet to a React developer and this is the punishment.)",
+    "code": null,
+    "link": null,
+    "likes": 234,
+    "reposts": 567,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "I'm going to pretend I didn't read this. The Django admin saves 200 hours per project. list_display, list_filter, search_fields, custom actions, inline models, fieldsets, autocomplete. That's not a crutch. That's a ROCKET. You want to rebuild all of that? For every project? By hand? There's a battery for that and the battery is NUCLEAR.",
+        "likes": 1234
+      },
+      {
+        "author": "queryset",
+        "content": "Last team I saw \"build their own admin\" spent 4 months, had no search, no filtering, no permissions, and 47 N+1 queries per page. The Django admin has none of those problems. Well, it has the N+1s unless you add list_select_related, but still.",
+        "likes": 867
+      },
+      {
+        "author": "migrationRunner",
+        "content": "My admin dashboard at Stacksworth Inc. handles 10,000 content updates a day with zero custom frontend code. \"Just build your own\" is how you end up with a ticket backlog that outlives your startup.",
+        "likes": 645
+      }
+    ]
+  },
+  {
+    "id": "django-103",
+    "track": "django",
+    "type": "interview",
+    "author": "queryset",
+    "time": "5h",
+    "content": "INTERVIEW Q: What's the difference between select_related() and prefetch_related() in DRF serializers, and why does it matter for API performance?\n\nThis is an advanced question that separates \"uses DRF\" from \"optimizes DRF.\"\n\nDRF serializers traverse relationships automatically. A nested serializer like `author = UserSerializer()` will trigger a query for EACH object unless you optimize the queryset.\n\nIn your ViewSet:\n\ndef get_queryset(self):\n    return Article.objects.select_related('author').prefetch_related('tags')\n\nselect_related for ForeignKey (SQL JOIN, one query)\nprefetch_related for ManyToMany (separate query, joined in Python)\n\nWithout this, your \"simple\" list endpoint does N+1 queries and your API takes 11 seconds to return 50 items. Ask me how I know.",
+    "code": null,
+    "link": null,
+    "likes": 712,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "select_related is literally a SQL JOIN happening under the hood. The ORM writes the same JOIN I'd write by hand \u2014 just with more underscores. I grudgingly respect it. The Great ORM Debate of 2023 rages on in my heart.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "django-104",
+    "track": "django",
+    "type": "eli5",
+    "author": "middlewareStack",
+    "time": "9h",
+    "content": "ELI5: Django Middleware\n\nImagine you're sending a letter (the request) to your friend (the view).\n\nBefore your friend reads it, the letter passes through:\n1. The mailbox (SecurityMiddleware) \u2014 checks it's not a bomb\n2. The front desk (SessionMiddleware) \u2014 attaches your name badge\n3. Security guard (AuthenticationMiddleware) \u2014 confirms you're allowed in the building\n\nYour friend reads the letter and writes a reply (the response).\n\nThe reply goes back through the SAME checkpoints in REVERSE:\n3. Security guard stamps \"verified\" on it\n2. Front desk logs that you visited\n1. Mailbox seals it for delivery\n\nEvery single request goes through this. Every single one. The order never changes. The layers never skip.\n\nThat's middleware. It's just a very organized mailroom.",
+    "code": null,
+    "link": null,
+    "likes": 1123,
+    "reposts": 289,
+    "comments": [
+      {
+        "author": "templateTag",
+        "content": "See? You can explain the entire request lifecycle without mentioning JavaScript once. Beautiful.",
+        "likes": 312
+      },
+      {
+        "author": "managePy",
+        "content": "This is the best explanation of middleware I've ever seen and it came from someone who writes haikus about HTTP. I love this community.",
+        "likes": 456
+      }
+    ]
+  },
+  {
+    "id": "django-105",
+    "track": "django",
+    "type": "spotBug",
+    "author": "managePy",
+    "time": "1d",
+    "content": "SPOT THE BUG: This test class runs but none of the tests actually test anything. They all pass even when the code is broken. Why?",
+    "code": "import unittest\n\nclass TestArticleAPI(unittest.TestCase):\n    def setUp(self):\n        from myapp.models import Article\n        self.article = Article.objects.create(\n            title='Test', body='Test body'\n        )\n\n    def test_list_articles(self):\n        response = self.client.get('/api/articles/')\n        self.assertEqual(response.status_code, 200)\n\n    def test_create_article(self):\n        response = self.client.post('/api/articles/', {\n            'title': 'New', 'body': 'New body'\n        })\n        self.assertEqual(response.status_code, 201)",
+    "link": null,
+    "likes": 534,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "It inherits from unittest.TestCase, not django.test.TestCase! The unittest version doesn't have self.client (Django's test client), doesn't set up the test database, and doesn't roll back transactions between tests. It'll throw AttributeError on self.client... unless setUp crashes first because there's no test DB. This either errors out or silently does nothing useful.",
+        "likes": 345
+      },
+      {
+        "author": "migrationRunner",
+        "content": "Always: from django.test import TestCase. Never: from unittest import TestCase (for Django tests). One import. Entire test suite broken. This is why code review exists.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-106",
+    "track": "django",
+    "type": "til",
+    "author": "queryset",
+    "time": "4h",
+    "content": "TIL: DRF has built-in pagination, filtering, AND search \u2014 you just have to turn them on. Most people build these from scratch and I watch in horror.\n\nIn settings.py:\nREST_FRAMEWORK = {'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination', 'PAGE_SIZE': 20}\n\nThat's it. Every list endpoint is now paginated. Add django-filter for filtering and SearchFilter for search. Three settings. Zero custom code. How many queries for paginated, filtered, searchable results? Still just one. You're welcome.",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/10-rest-api/",
+      "label": "DRF pagination & filtering in Lesson 10 \u2192"
+    },
+    "likes": 489,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "There's a battery for that. There is ALWAYS a battery for that. This is the Django philosophy in its purest form.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "django-107",
+    "track": "django",
+    "type": "til",
+    "author": "migrationRunner",
+    "time": "11h",
+    "content": "TIL: `python manage.py check --deploy` exists and it will YELL at you about every security misconfiguration before you ship.\n\nIt checks for: DEBUG=True, insecure SECRET_KEY, missing SECURE_SSL_REDIRECT, missing SECURE_HSTS_SECONDS, CSRF cookie settings, session cookie settings, and more.\n\nFree security audit. One command. Add it to your CI pipeline and never deploy insecure settings again. I'm adding this to every project I touch from now until retirement.",
+    "code": null,
+    "link": {
+      "url": "/django/lessons/11-auth-testing-deploy/",
+      "label": "Deploy checks in Lesson 11 \u2192"
+    },
+    "likes": 567,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "This command has existed since Django 1.8 and most people still don't know about it. There's a battery for that. Literally a built-in security scanner. Use it.",
+        "likes": 289
+      },
+      {
+        "author": "bobbyTables",
+        "content": "This is the BARE MINIMUM. Run this, fix every warning, then add OWASP dependency checks on top. Defense in depth. But seriously \u2014 this one command would have prevented the Stacksworth Inc. DEBUG=True incident.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-108",
+    "track": "django",
+    "type": "poll",
+    "author": "migrationRunner",
+    "time": "5h",
+    "content": "POLL: It's Friday at 4:30 PM. A \"critical\" bugfix needs to go to production. The fix is one line. Tests pass. Staging looks good. Do you deploy?\n\nA) Yes, it's one line and tests pass\nB) No, Monday exists for a reason\nC) Deploy to staging, monitor over the weekend, deploy Monday AM\nD) Deploy but have the on-call engineer watch it like a hawk\n\nResults:\nA) 18% \u2014 Brave but statistically cursed.\nB) 34% \u2014 My people. My beautiful, cautious people.\nC) 31% \u2014 The compromise. I respect it.\nD) 17% \u2014 Valid IF your on-call person agrees AND you buy them dinner.\n\nThe correct answer depends on how \"critical\" the bug actually is. If it's data loss or security: deploy now, with a rollback plan. If the PM just wants it before their Monday demo: Monday.",
+    "code": null,
+    "link": null,
+    "likes": 1678,
+    "reposts": 389,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Back in Django 1.4, we deployed on Fridays because we didn't know better. We learned. The scars healed. Most of them. Deploy on Tuesday. Tuesday is the beige sedan of weekdays. Nothing exciting happens on Tuesday.",
+        "likes": 567
+      },
+      {
+        "author": "middlewareStack",
+        "content": "Friday deploy looms\nthe server whispers: not yet\nMonday offers peace",
+        "likes": 445
+      }
+    ]
+  }
+]

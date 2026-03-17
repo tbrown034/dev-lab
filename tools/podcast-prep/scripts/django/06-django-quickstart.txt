@@ -1,0 +1,197 @@
+============================================================
+SECTION 1: SOURCE DOCUMENT FOR NOTEBOOKLM
+============================================================
+
+LESSON: 06 - Django Quickstart — Next.js to Django
+TRACK: Django / Python (12-lesson curriculum)
+
+------------------------------------------------------------
+CONTEXT FOR HOSTS
+------------------------------------------------------------
+
+Where this lesson fits:
+Lesson 6 of 12. Lessons 1-5 covered Python fundamentals. This is the FIRST Django lesson — the gateway from "I know Python" to "I can build with Django." It maps the entire Django project structure, views, URL routing, templates, and settings to Next.js equivalents. Lessons 7-12 go deep on each component. This lesson is the 30,000-foot overview that makes everything that follows make sense.
+
+Who Trevor is:
+Trevor is a JS/React/Next.js/TypeScript developer who thinks in file-based routing, API routes, JSX components, and Prisma. He needs the entire Django architecture mapped to his existing mental model of Next.js. He doesn't need to learn "what is a web framework" — he needs "how does Django's version of routing/views/templates differ from what I already know."
+
+Key Next.js-to-Django translations:
+- npx create-next-app -> django-admin startproject
+- npm run dev -> python manage.py runserver
+- app/ directory (file-based routing) -> urls.py (explicit routing)
+- route.ts (API route) -> views.py (view function)
+- page.tsx (page component) -> views.py + template.html
+- layout.tsx ({children}) -> base.html ({% block content %})
+- next.config.js + .env -> settings.py
+- Prisma schema -> models.py
+- prisma migrate -> makemigrations + migrate
+- Prisma Studio -> Django Admin (built-in, way more powerful)
+- package.json scripts -> manage.py commands
+- Route groups ((blog)/, (auth)/) -> Django "apps" (blog/, accounts/)
+- No equivalent -> admin.py (free CRUD dashboard!)
+
+Mental models:
+1. Django is "batteries included Next.js" — ORM, auth, admin panel, forms all built in
+2. Project/app split — the project is your whole site, apps are feature modules
+3. Views are just route handlers — request in, response out
+4. URL routing is explicit, not file-based — you wire views to URLs in urls.py
+
+------------------------------------------------------------
+LESSON CONTENT
+------------------------------------------------------------
+
+WHAT IS DJANGO?
+
+Django is a "batteries included" Python web framework. It gives you routing, an ORM (database layer), templates, authentication, an admin panel, form handling, and more — all built-in.
+
+If Next.js is "React + routing + API routes + SSR," Django is "Python + routing + ORM + templates + auth + admin + forms + ..." It ships with even MORE built-in features than Next.js.
+
+The mental model: Django is like if Next.js came with Prisma, NextAuth, React Hook Form, and an auto-generated admin dashboard all baked in. The tradeoff? You get more out of the box, but you follow Django's patterns (not your own).
+
+PROJECT VS APP
+
+Django has a unique concept that Next.js doesn't: the project/app split.
+
+Project = the entire website. Like your Next.js app. Contains settings, root URL config.
+App = a feature module within the project. Like a route group in Next.js (e.g., (blog)/, (auth)/, (dashboard)/).
+
+A single Django project usually has 3-10 apps. Each app has its own models, views, URLs, and templates — nicely isolated.
+
+Creating: django-admin startproject mysite (like npx create-next-app). Then inside: python manage.py startapp blog (creates a feature module).
+
+FILE STRUCTURE
+
+manage.py — CLI tool, like package.json scripts
+mysite/settings.py — next.config.js + .env combined (all configuration)
+mysite/urls.py — root router, like app/layout.tsx routing
+blog/models.py — Prisma schema equivalent
+blog/views.py — API routes / page handlers
+blog/urls.py — app-level routes (you create this)
+blog/admin.py — admin panel config (no Next.js equivalent!)
+blog/migrations/ — database migrations (like prisma/migrations/)
+
+The admin panel is Django's secret weapon. Register a model and Django auto-generates a full CRUD interface — create, read, update, delete — with search, filters, pagination. It's like getting a free Retool/Forest Admin for every model.
+
+YOUR FIRST VIEW
+
+A Django "view" is a function that takes a request and returns a response. If you've written a Next.js API route, you already understand this.
+
+Next.js: export async function GET(request: Request) { return NextResponse.json({message: 'Hello'}) }
+Django: def hello(request): return JsonResponse({'message': 'Hello'})
+
+They're structurally identical: a function that receives a request object and returns a response. The difference is how you connect them to URLs.
+
+For HTML pages: Next.js combines logic and template in a component (page.tsx). Django separates them: the view handles logic and the template handles HTML. This is the classic MVT pattern — Model, View, Template.
+
+URL ROUTING
+
+Next.js uses file-based routing — the file path IS the URL. Django uses explicit routing — you define URL patterns in urls.py files.
+
+Django typically uses two-level routing:
+1. Root urls.py — delegates to each app (like app/layout.tsx that includes all route groups)
+2. App urls.py — handles routes within that prefix (you create this file)
+
+URL parameters: Next.js uses [slug] in file names. Django uses <slug:slug> in the URL pattern. Same concept — capturing a dynamic segment. Django also has <int:id>, <str:name>, <uuid:pk> with built-in type validation.
+
+TEMPLATES
+
+Django templates are HTML files with special tags for dynamic content. Think of them as JSX but server-rendered, with different syntax.
+
+Syntax map: JSX {variable} -> Django {{ variable }}. JSX {condition && ...} -> Django {% if condition %}...{% endif %}. JSX {arr.map(...)} -> Django {% for item in arr %}...{% endfor %}. Double curly braces for values, curly-percent for logic.
+
+Template inheritance works like layouts: Next.js layout.tsx with {children} -> Django base.html with {% block content %}{% endblock %}. Child pages use {% extends "base.html" %} instead of being auto-wrapped.
+
+SETTINGS
+
+settings.py is the nerve center of your Django project. It combines what Next.js splits between next.config.js, .env, and various config files.
+
+Key settings: DEBUG (like NODE_ENV), ALLOWED_HOSTS (like allowed origins), INSTALLED_APPS (registered feature modules — you MUST add new apps here!), DATABASES (like DATABASE_URL), SECRET_KEY (like NEXTAUTH_SECRET), TEMPLATES (where templates live).
+
+Important: INSTALLED_APPS is a concept Next.js doesn't have. When you create a new app, you MUST add it to INSTALLED_APPS. This is the #1 mistake beginners make.
+
+THE DEV SERVER AND MANAGE.PY
+
+manage.py is your Swiss Army knife — like package.json scripts, npx prisma, and node REPL combined.
+
+npm run dev -> python manage.py runserver
+npx prisma migrate dev -> python manage.py makemigrations + migrate
+node REPL -> python manage.py shell (can import models, run queries!)
+npm test -> python manage.py test
+npm run build (static) -> python manage.py collectstatic
+
+THE REQUEST/RESPONSE CYCLE
+
+When someone visits a URL: Request comes in -> URL routing (urls.py) -> Middleware runs (CSRF, sessions, auth) -> View executes (queries database, prepares data) -> Template renders (data inserted into HTML) -> Response returns.
+
+Django's flow is: URL -> View -> Template -> Response. Next.js's flow is: URL -> Route -> Component -> HTML. Same steps, same order, different names.
+
+------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+------------------------------------------------------------
+
+1. Django is "batteries included" — ORM, auth, admin, forms are built in. You don't npm install half your stack.
+2. Project/app split — think of apps as feature modules or route groups. Each app is self-contained with its own models, views, URLs.
+3. Views are route handlers — request in, response out. If you can write a Next.js API route, you can write a Django view.
+4. URLs are explicit — you wire views to URLs in urls.py, not via file structure. More verbose but more control.
+5. The admin panel is free — register a model, get a full CRUD dashboard. This alone saves weeks of development.
+
+------------------------------------------------------------
+COMMON PITFALLS FOR JS DEVELOPERS
+------------------------------------------------------------
+
+- Forgetting to add new apps to INSTALLED_APPS in settings.py
+- Looking for file-based routing (Django uses explicit urls.py)
+- Expecting JSX-like template syntax (use {{ }} for variables, {% %} for logic)
+- Forgetting to run both makemigrations AND migrate (two separate steps)
+- Not creating a urls.py file inside new apps (startapp doesn't create one)
+- Trying to use npm-style commands (it's pip, not npm; venv, not node_modules)
+- Expecting the dev server to restart automatically on model changes (it does for code, not for database schema)
+- Not running python manage.py createsuperuser to access the admin panel
+
+------------------------------------------------------------
+REAL-WORLD CONNECTION
+------------------------------------------------------------
+
+At a broadcast TV network like Tenga, Django's "batteries included" philosophy is a perfect fit. You need authentication (role-based: reporters, editors, producers), an admin panel (for non-technical staff to manage content), a database ORM (for shows, episodes, ratings, schedules), and an API (for the website, mobile apps, and on-air graphics systems). Django gives you all of this out of the box. A Next.js equivalent would require Prisma + NextAuth + a custom admin dashboard + API routes — four separate tools doing what Django handles natively. The admin panel alone would save weeks of development for an internal newsroom tool.
+
+
+============================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS FOR NOTEBOOKLM
+============================================================
+
+This episode should feel like a "grand tour" of Django through a Next.js developer's eyes. The big revelation: Django ships with everything. The tone should be "wait, this is ALL built in?"
+
+Specific mental models for THIS lesson:
+- "Batteries included" — Django is Next.js with Prisma, NextAuth, React Hook Form, and Retool all pre-installed
+- "Apps are route groups" — think of Django apps like Next.js route groups: (blog)/, (auth)/, (dashboard)/
+- "Views are just route handlers" — request in, response out, same as Next.js API routes
+- "urls.py is your router" — explicit routing vs. file-based, but the same concept
+
+JS/React/Next.js equivalents to reference:
+- npx create-next-app -> django-admin startproject
+- npm run dev -> python manage.py runserver
+- route.ts -> views.py
+- page.tsx -> views.py + template
+- layout.tsx + {children} -> base.html + {% block content %}
+- next.config.js + .env -> settings.py
+- Prisma schema -> models.py
+- Prisma Studio -> Django Admin (free, way more powerful)
+- NextAuth -> django.contrib.auth (built in)
+- package.json scripts -> manage.py commands
+
+Connect back to lessons 1-5: "All that Python you learned — classes, functions, decorators, file handling — comes together now. Django models are Python classes (lesson 4). Django views are Python functions (lesson 3). Django decorators like @login_required are real decorators (lesson 3). Django settings use pathlib (lesson 5)."
+
+Tease lesson 7: "Next lesson goes deep on Django models and the ORM — that's where class Article(models.Model) creates a database table. You'll see how Prisma's schema.prisma becomes Python classes in models.py."
+
+Tease the admin panel: "When you see the Django admin panel for the first time, it's going to blow your mind. Register a model with 3 lines of code and you get a full CRUD interface with search, filters, and pagination. No custom UI needed."
+
+Trevor's journalism background: "Think of the project/app split like a news organization. The project is the entire network — settings, branding, infrastructure. Each app is a department: news, sports, weather, investigations. Each department manages its own stories, data, and workflows, but they share the same infrastructure. That's Django's architecture."
+
+Memorization techniques:
+- "startproject once, startapp many" — one project, many feature apps
+- "views.py = your route handlers" — every view is request in, response out
+- "urls.py = your router" — explicit wiring, not file-based magic
+- "settings.py = your entire config" — next.config.js + .env + everything else
+- "manage.py = your Swiss Army knife" — runserver, migrate, shell, test, all in one
+
+Tone: This should be an exciting "new chapter" moment. The Python fundamentals are done; now we're building web apps. The JS host should have genuine "oh, this is like what I already know" moments. The admin panel reveal should generate a "wait, that's FREE?" reaction. The batteries-included philosophy should make the JS host slightly jealous of not having to install 15 npm packages.

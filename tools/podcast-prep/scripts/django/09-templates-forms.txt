@@ -1,0 +1,186 @@
+============================================================
+SECTION 1: SOURCE DOCUMENT FOR NOTEBOOKLM
+============================================================
+
+LESSON: 09 - Templates & Forms — JSX to DTL, React Forms to Django Forms
+TRACK: Django / Python (12-lesson curriculum)
+
+------------------------------------------------------------
+CONTEXT FOR HOSTS
+------------------------------------------------------------
+
+Where this lesson fits:
+Lesson 9 of 12. Lessons 7-8 covered models (M) and views (V). This lesson completes the MVT triangle with templates (T) and adds Django's powerful form system. Templates are Django's answer to JSX. Forms are Django's answer to React state management + Zod validation + form rendering — all in one class. Lesson 10 covers REST APIs with DRF.
+
+Who Trevor is:
+Trevor writes JSX daily — components, props, conditional rendering, .map() for lists, layout files. He uses React Hook Form or useState for form state, and Zod for validation. He needs Django's template language (DTL) mapped to JSX patterns, and Django's form system mapped to his React + Zod workflow. The key shift: everything is server-rendered in Django — no client-side JavaScript needed.
+
+Key JSX-to-DTL translations:
+- {variable} -> {{ variable }}
+- {condition && <p>...</p>} -> {% if condition %}<p>...</p>{% endif %}
+- {items.map(i => ...)} -> {% for i in items %}...{% endfor %}
+- layout.tsx + {children} -> {% extends "base.html" %} + {% block content %}
+- <Component /> -> {% include "component.html" %}
+- props -> context dict (from view) or {% include ... with var=val %}
+- {title.toUpperCase()} -> {{ title|upper }}
+- {title || 'default'} -> {{ title|default:"default" }}
+- dangerouslySetInnerHTML -> {{ content|safe }}
+- <Link href="/blog"> -> <a href="{% url 'blog-index' %}">
+
+Key React-Forms-to-Django translations:
+- useState + onChange -> Django Form class handles state
+- Zod schema -> Form field definitions (CharField, EmailField)
+- Zod .refine() -> clean_fieldname() method
+- Zod .superRefine() -> clean() method
+- onSubmit handler -> view function with request.method == "POST"
+- Manual error display -> {{ form.field.errors }} (automatic!)
+- CSRF token (manual) -> {% csrf_token %} (one line)
+- ~50-100 lines per React form -> ~10-20 lines per Django form
+
+Mental models:
+1. DTL is JSX for server-side rendering — {{ }} for values, {% %} for logic
+2. Template inheritance = layouts — {% extends %} + {% block %} = layout.tsx + {children}
+3. Django Forms = Zod + React Hook Form + JSX in one class — define once, get validation + rendering + error handling
+4. ModelForm reads your database model and auto-generates the form — like if Prisma generated your Zod schemas AND form components
+
+------------------------------------------------------------
+LESSON CONTENT
+------------------------------------------------------------
+
+DJANGO TEMPLATE LANGUAGE (DTL) OVERVIEW
+
+DTL is Django's built-in way to generate HTML dynamically. If JSX lets you write HTML inside JavaScript, DTL lets you write Python-like logic inside HTML. The big difference: DTL runs entirely on the server — no JavaScript ships to the browser.
+
+Double curly braces {{ }} output values (like JSX's single curly braces). Curly-percent {% %} runs logic (like JSX's ternaries and .map calls). Everything renders on the server before the browser sees it.
+
+VARIABLES & FILTERS
+
+Variables come from the context dictionary your view passes to the template. Filters transform them — like piping through utility functions.
+
+{{ title|upper }} — uppercase. {{ title|length }} — count. {{ created|date:"M d, Y" }} — format date. {{ description|default:"No description" }} — fallback. {{ body|safe }} — render raw HTML (like dangerouslySetInnerHTML). {{ list|join:", " }} — join. {{ body|truncatewords:30 }} — truncate. {{ title|slugify }} — URL-safe slug.
+
+Security note: Django auto-escapes all {{ }} output to prevent XSS attacks. The |safe filter turns that off. Only use |safe on content you trust.
+
+TEMPLATE TAGS — LOGIC IN TEMPLATES
+
+Conditionals: {% if user.is_authenticated %}...{% else %}...{% endif %}
+Loops: {% for post in posts %}...{% empty %}...{% endfor %}
+
+forloop magic variables: Inside {% for %}, Django gives you forloop.counter (1-indexed), forloop.counter0 (0-indexed), forloop.first, forloop.last. The {% empty %} block handles empty lists — no need for a separate conditional.
+
+TEMPLATE INHERITANCE — LAYOUTS IN DJANGO
+
+{% extends "base.html" %} = "wrap me in the layout." {% block content %}...{% endblock %} = "this is where {children} goes." You can have multiple blocks (title, content, sidebar, extra_js) — like having multiple {children} slots, which React doesn't natively support.
+
+{% include %} — REUSABLE COMPONENTS
+
+{% include "components/post_card.html" with post=post %} — the "with" keyword passes variables (like props), and "only" restricts scope. This is Django's version of reusable React components.
+
+THE {% url %} TAG — TYPE-SAFE LINKS
+
+{% url 'blog-detail' post.slug %} generates URLs from route names. If you rename a URL pattern, all links update automatically. Next.js has no equivalent — you hardcode paths.
+
+DJANGO FORMS — THE BIG PICTURE
+
+In React, forms require: state management (useState), change handlers (onChange), validation (Zod/Yup), CSRF protection (custom), and rendering. Django handles all of this in one class. ~10-20 lines vs ~50-100 lines per form.
+
+A Django Form class is like combining your Zod schema, your React component's form JSX, and your onChange handlers into ONE thing. Define the fields once; Django generates the HTML inputs, validates the data, and reports errors.
+
+MODELFORM — FORMS FROM MODELS
+
+ModelForm generates a form directly from your database model. It reads your model's field types and automatically creates the right HTML input. CharField becomes <input type="text">, BooleanField becomes a checkbox, ForeignKey becomes a <select> dropdown. All validation constraints from the model are inherited.
+
+RENDERING FORMS IN TEMPLATES
+
+{{ form.as_p }} renders the entire form automatically. {{ form.field_name }} renders a single field for custom layout. {{ form.title.errors }} displays field errors. Never forget {% csrf_token %}! Every POST form needs it — Django rejects submissions without it (403 error).
+
+VALIDATION — clean() METHODS
+
+Three layers of validation:
+1. Field-type validation (automatic) — CharField checks it's a string, EmailField validates email format
+2. clean_fieldname() methods — per-field custom logic (like Zod .refine())
+3. clean() method — cross-field validation (like Zod .superRefine())
+
+All errors auto-attach to fields and render in the template automatically.
+
+THE VIEW PATTERN — HANDLING FORM SUBMISSIONS
+
+One view handles both displaying the form (GET) and processing the submission (POST). On GET, create an empty form. On POST, bind the submitted data. If validation fails, the same template re-renders with errors pre-filled. After a successful save, always redirect() instead of rendering (PRG pattern — Post/Redirect/Get).
+
+FILE UPLOADS
+
+Django handles file uploads natively. Two things to remember: the template form must include enctype="multipart/form-data", and the view must pass request.FILES to the form constructor.
+
+WIDGETS
+
+Widgets control how a field renders as HTML. In React, you write <input type="date" className="form-control" />. In Django, you configure the same thing via the widget's attrs dictionary.
+
+------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+------------------------------------------------------------
+
+1. {{ }} for values, {% %} for logic — this is the entire DTL syntax in two symbols.
+2. Template inheritance is layouts — {% extends %} + {% block %} = layout.tsx + {children}, but with multiple named slots.
+3. Django Forms = Zod + React Hook Form in one — define fields once, get validation + HTML + error handling.
+4. ModelForm is the ultimate shortcut — auto-generates forms from your database model with inherited validation.
+5. {% csrf_token %} is non-negotiable — every POST form needs it. Django's built-in security for free.
+
+------------------------------------------------------------
+COMMON PITFALLS FOR JS DEVELOPERS
+------------------------------------------------------------
+
+- Using single curly braces {var} instead of double {{ var }} in templates
+- Forgetting {% endif %} or {% endfor %} (block tags must be closed)
+- Forgetting {% csrf_token %} in POST forms (results in 403 error)
+- Not passing request.FILES for file upload forms
+- Forgetting enctype="multipart/form-data" on file upload form tags
+- Trying to write JavaScript logic in templates (DTL is server-side Python-like, not JS)
+- Not using {% url 'name' %} for links (hardcoding URLs breaks when routes change)
+- Expecting React-style component state in templates (templates are stateless, server-rendered)
+
+------------------------------------------------------------
+REAL-WORLD CONNECTION
+------------------------------------------------------------
+
+At a broadcast TV network, templates display the public-facing pages: story listings, article detail pages, reporter profiles, dataset previews. Template inheritance keeps the site consistent — one base.html with nav, footer, and branding. Forms power the internal workflow: reporters submit stories through a StoryForm, editors approve them through a status change form, researchers upload datasets through a file upload form. The admin panel handles the rest. ModelForm generates these forms from the database models you already defined — no duplicate schema definitions. CSRF protection is automatic for every form. This is the "full stack" in action: models define data, views process logic, templates display results, forms collect input.
+
+
+============================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS FOR NOTEBOOKLM
+============================================================
+
+This episode should have two big aha moments: (1) templates are just server-rendered JSX with different syntax, and (2) Django Forms combine Zod + React Hook Form + JSX rendering into one class.
+
+Specific mental models for THIS lesson:
+- "Double curly = output, curly-percent = logic" — that's the entire template syntax
+- "extends + block = layout + children" — template inheritance is Next.js layouts, explicit instead of automatic
+- "Form class = Zod + Hook Form + JSX" — one class generates validation, HTML inputs, AND error messages
+- "ModelForm reads your model" — like if Prisma could auto-generate your Zod schema AND your form component
+
+JS/React/Next.js equivalents to reference:
+- JSX {variable} -> {{ variable }}
+- {items.map(...)} -> {% for item in items %}...{% endfor %}
+- {show && <div>} -> {% if show %}<div>{% endif %}
+- layout.tsx + {children} -> base.html + {% block content %}
+- <PostCard post={post} /> -> {% include "post_card.html" with post=post %}
+- <Link href="/blog"> -> <a href="{% url 'blog-index' %}">
+- useState + onChange -> Django Form class
+- Zod schema -> Form field definitions
+- Zod .refine() -> clean_fieldname()
+
+Connect back to lesson 8: "Remember the context dict you pass to render()? That's what template variables come from. Context = props. Views pass data to templates like components receive props."
+
+Connect back to lesson 7: "ModelForm reads the model you defined in lesson 7. CharField max_length=200 automatically becomes a text input with max_length validation. No duplicate definitions."
+
+Tease lesson 10: "Next lesson covers REST APIs with Django REST Framework — that's where you build JSON APIs for your React frontend. Serializers are like Zod for APIs, and ViewSets auto-generate all your CRUD endpoints."
+
+Trevor's journalism background: "Think of template inheritance like a newspaper layout. The base.html is the newspaper's masthead, navigation, and footer — the consistent shell. Each section (stories, datasets, accounts) fills in the content block with their specific content, but the branding stays consistent. {% include %} components are like reusable story card layouts that appear on every listing page."
+
+Memorization techniques:
+- "Double curly = display, curly-percent = do" — {{ shows }}, {% does %}
+- "extends means 'wrap me'" — {% extends "base.html" %} = wrap this page in the layout
+- "block means 'fill here'" — {% block content %} = this is where child content goes
+- "csrf token on every POST" — just put it right after <form method="post">
+- "clean for custom, Model for auto" — clean_fieldname() for custom rules, ModelForm for auto-generated forms
+
+Tone: The template syntax comparison should feel like a quick "oh, I just need different brackets." The Form class revelation should be genuinely impressive — "wait, ONE class handles validation, rendering, AND error messages?" ModelForm should feel like magic — "it reads my model and generates the whole form?" The CSRF token should be presented as a security win, not a burden.

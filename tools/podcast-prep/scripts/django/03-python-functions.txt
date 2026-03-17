@@ -1,0 +1,220 @@
+============================================================
+SECTION 1: SOURCE DOCUMENT FOR NOTEBOOKLM
+============================================================
+
+LESSON: 03 - Python Functions & Modules
+TRACK: Django / Python (12-lesson curriculum)
+
+------------------------------------------------------------
+CONTEXT FOR HOSTS
+------------------------------------------------------------
+
+Where this lesson fits:
+Lesson 3 of 12. Lessons 1-2 covered syntax, types, collections, and loops. This lesson covers functions (def, lambda, args/kwargs, decorators) and the module/import system (pip, virtual environments). Lesson 4 is OOP. Functions and modules are critical infrastructure — every Django view is a function, every Django app is a module, and decorators are used everywhere in Django (@login_required, @csrf_exempt, @api_view).
+
+Who Trevor is:
+Trevor is a JS/React/Next.js/TypeScript developer who is very comfortable with arrow functions, rest/spread, ES modules, npm, and higher-order functions. He needs to map all of these to Python equivalents. He's particularly comfortable with TypeScript type annotations, which maps nicely to Python type hints.
+
+Key JS-to-Python translations the hosts should highlight:
+- function/arrow functions -> def (one syntax for everything)
+- Arrow function one-liners -> lambda (but much more limited)
+- ...rest (array) -> *args (tuple). ...rest (object) -> **kwargs (dict)
+- fn(...arr) spread -> fn(*list). fn({...obj}) -> fn(**dict)
+- export/import -> no exports needed, just import
+- index.js -> __init__.py
+- npm/node_modules -> pip/venv
+- package.json -> requirements.txt
+- require.main === module -> if __name__ == "__main__":
+- JSDoc comments -> docstrings (accessible at runtime!)
+- TypeScript annotations -> Python type hints (similar syntax, same "optional" philosophy)
+- Higher-order functions/wrappers -> decorators (@decorator syntax)
+
+Mental models that matter most:
+1. Python doesn't need arrow functions because it doesn't have "this" binding issues
+2. Keyword arguments solve the "skip a default parameter" problem elegantly
+3. The mutable default argument trap is Python's most infamous gotcha
+4. Decorators are just higher-order functions with @syntax sugar
+5. Virtual environments are Python's node_modules — project-isolated dependencies
+
+------------------------------------------------------------
+LESSON CONTENT
+------------------------------------------------------------
+
+DEF VS FUNCTION / CONST ARROW
+
+JavaScript gives you three ways to define functions (function declarations, arrow functions, method shorthand). Python gives you one: def. That's it.
+
+def greet(name):
+    return f"Hello, {name}!"
+
+Why one syntax? Python doesn't need arrow functions because it doesn't have "this"-binding issues. In JS, arrow functions exist largely to solve "this" scoping problems. Python uses explicit "self" parameters, so that problem never arises.
+
+Functions are first-class objects in both languages. You can assign them to variables, pass them as arguments, return them from other functions.
+
+DEFAULT ARGUMENTS
+
+Both languages support default parameter values. The syntax is nearly identical.
+
+Python's superpower: keyword arguments. In JS, to skip a middle default parameter, you pass undefined. In Python, you name the argument: create_user("Trevor", active=False) skips the role parameter.
+
+THE MUTABLE DEFAULT ARGUMENT TRAP:
+NEVER use a mutable value (list, dict) as a default argument. Python evaluates defaults once at function definition, not on each call.
+
+WRONG: def add_item(item, items=[]): — all calls share the same list!
+RIGHT: def add_item(item, items=None): then if items is None: items = []
+
+This is the single most common Python gotcha for ALL beginners.
+
+*ARGS AND **KWARGS — Rest & Spread
+
+Python splits JavaScript's ...rest into two concepts:
+- *args for positional arguments (collected as a tuple) — like ...rest on an array
+- **kwargs for keyword arguments (collected as a dict) — like ...rest on an object
+
+The full argument order: def func(positional, default="val", *args, **kwargs)
+
+Translation rules:
+- ...rest (array) -> *args (tuple)
+- ...rest (object) -> **kwargs (dict)
+- fn(...arr) -> fn(*list) — spread into call
+- fn({...obj}) -> fn(**dict) — spread dict into call
+One star for sequences, two stars for key-value pairs. Always.
+
+LAMBDA — One-Line Arrow Functions
+
+Python's lambda is a limited version of JS arrow functions. Single expression only — no statements, no multi-line logic.
+
+const double = (n) => n * 2; -> double = lambda n: n * 2
+
+In practice, Pythonistas rarely use lambda with map() and filter() because list comprehensions are more readable. The main use for lambda is in sort(key=lambda ...) and callback arguments.
+
+DOCSTRINGS — Built-in Documentation
+
+Python has first-class function documentation. The first string in a function body becomes its docstring — accessible at runtime via help() and your editor's intellisense.
+
+Unlike JSDoc (which is just a comment), Python docstrings are real strings attached to the function object. Django uses them for admin documentation.
+
+TYPE HINTS — Python's TypeScript
+
+Python has optional type annotations, just like TypeScript. They don't enforce anything at runtime but give you editor autocomplete and error checking.
+
+string -> str. number -> int or float. boolean -> bool. null -> None.
+T[] -> list[T]. Return type : -> ->.
+str | int for union types (Python 3.10+).
+
+Key difference: TypeScript types are enforced at compile time. Python type hints are completely ignored at runtime — use mypy to check them. Django and FastAPI use them heavily for auto-generating forms and API docs.
+
+THE IMPORT SYSTEM
+
+Python's import maps to JavaScript's import/export:
+- import os — imports entire module (like import * as os from 'os')
+- from datetime import datetime — named import (like import { datetime } from 'datetime')
+- import numpy as np — alias (like import ... as np)
+- from . import utils — relative import within a package
+
+NO default exports! Python has no concept of export default. Every name is a named import.
+
+Module Organization:
+- index.js -> __init__.py (marks a folder as importable)
+- A folder with __init__.py is a Python "package"
+- __init__.py can re-export names (barrel pattern)
+
+PIP & VIRTUAL ENVIRONMENTS
+
+Package manager: npm -> pip
+Install: npm install express -> pip install django
+Lock file: npm ci -> pip install -r requirements.txt
+Save deps: automatic in package.json -> pip freeze > requirements.txt (manual)
+Local packages: node_modules/ -> venv/
+.gitignore: node_modules/ -> venv/
+
+Virtual environment workflow:
+1. python -m venv venv (create, once per project)
+2. source venv/bin/activate (activate, every terminal session)
+3. pip install django requests (install packages)
+4. pip freeze > requirements.txt (save deps)
+5. deactivate (when done)
+
+A venv is an isolated copy of Python with its own packages. Without one, pip install goes global (like npm install -g for everything).
+
+__NAME__ == "__MAIN__"
+
+When Python runs a file directly, __name__ = "__main__". When imported, __name__ = module name. The guard if __name__ == "__main__": means "only run this if I'm the entry point." Like Node's require.main === module.
+
+FIRST-CLASS FUNCTIONS
+
+Same as JS — pass functions around, return them, store in data structures. Key closure difference: Python closures can read outer variables but can't reassign them without the nonlocal keyword.
+
+DECORATORS — A Preview
+
+Decorators are heavily used in Django. They're functions that wrap other functions. @decorator above a function is syntactic sugar for fn = decorator(fn).
+
+In Django you'll see @login_required, @csrf_exempt, @api_view — they all work this way. The @ symbol is not magic; it's just calling a function.
+
+Think of decorators like React higher-order components (HOCs): a function that takes a component/function, wraps it with extra behavior, and returns the enhanced version.
+
+------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+------------------------------------------------------------
+
+1. Keyword arguments are a superpower — they solve the "skip a default" problem and make function calls self-documenting. You'll use them constantly in Django: render(request, template, context).
+2. The mutable default trap — this gotcha has bitten every Python developer. Always use None as default for lists/dicts, then create inside the function.
+3. Decorators = higher-order functions with @ syntax — understanding this unlocks Django. @login_required, @api_view, @property are all decorators.
+4. *args/**kwargs = rest/spread, split in two — one star for sequences, two stars for dicts. This pattern appears everywhere in Django.
+5. Virtual environments are non-negotiable — like node_modules but you must explicitly activate them. Always use one.
+
+------------------------------------------------------------
+COMMON PITFALLS FOR JS DEVELOPERS
+------------------------------------------------------------
+
+- Using mutable default arguments (def f(items=[]) — shared across calls!)
+- Forgetting that lambda can only contain a single expression (no blocks)
+- Using three dots (...) instead of star (*) for rest/spread
+- Trying to use export/export default — Python has no exports, just imports
+- Forgetting to activate the virtual environment before pip install
+- Writing require() instead of import
+- Confusing *args (tuple) with **kwargs (dict)
+- Not creating __init__.py in package directories
+- Typing => instead of lambda or def
+
+------------------------------------------------------------
+REAL-WORLD CONNECTION
+------------------------------------------------------------
+
+Functions and modules are the organizational backbone of any Django project. Every Django view is a function (or class method). Every Django app is a Python package with __init__.py. Decorators like @login_required protect views — exactly the pattern you'd use for an editor-only page in a broadcast newsroom app. The *args/**kwargs pattern appears in Django's ORM: Article.objects.filter(**search_params) lets you dynamically build database queries from a dict of search criteria — perfect for building a flexible search interface for a TV station's content archive.
+
+
+============================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS FOR NOTEBOOKLM
+============================================================
+
+This episode should be structured around three big "aha" moments: (1) keyword arguments solve real problems, (2) the mutable default trap, and (3) decorators are just function wrappers.
+
+Specific mental models for THIS lesson:
+- "One function syntax to rule them all" — Python doesn't need arrow functions because it solved the "this" problem differently (explicit self)
+- "Stars replace dots" — *args is ...rest for arrays, **kwargs is ...rest for objects
+- "@ is just syntactic sugar" — @decorator is fn = decorator(fn), nothing more
+
+JS/React equivalents to reference:
+- Arrow function -> def (or lambda for one-liners)
+- ...rest / ...spread -> * and ** (one star for sequences, two for dicts)
+- HOCs (withAuth(Component)) -> @decorators (@login_required)
+- npm + node_modules -> pip + venv
+- package.json -> requirements.txt
+- index.js barrel exports -> __init__.py re-exports
+- TypeScript annotations -> type hints (str, int, list[str], -> return type)
+
+Connect back to lessons 1-2: "Remember list comprehensions? Lambda is mostly used with sort(key=lambda...) because comprehensions handle the map/filter cases better."
+
+Tease lesson 4: "Next up is OOP — classes, inheritance, and dunder methods. That's where self (Python's 'this') finally makes sense, and you'll see why Python doesn't need arrow functions."
+
+Trevor's journalism background: "Think of decorators like editorial oversight. The @login_required decorator is like the editor who checks your press credentials before letting you into the story meeting. The function still does its job — the decorator just adds a security check at the door."
+
+Memorization techniques for THIS lesson:
+- "One star = one dimension (list), two stars = two dimensions (key-value)" for *args/**kwargs
+- "None is the safe default" — for any mutable parameter default, use None
+- "activate before install" — always source venv/bin/activate before pip install
+- "f prefix for f-strings, r prefix for raw strings, @ prefix for decorators" — Python loves prefixes
+- "dunder = double under = __init__, __name__, __main__"
+
+Tone: The mutable default argument trap should be presented as a war story / cautionary tale. Both hosts should react with "oh no" energy. The decorator section should be a satisfying "oh, THAT'S what @ does" moment. The keyword arguments section should make the JS host jealous.

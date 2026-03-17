@@ -1,0 +1,184 @@
+============================================================
+SECTION 1: SOURCE DOCUMENT FOR NOTEBOOKLM
+============================================================
+
+LESSON: 12 - Capstone — Newsroom Data Dashboard
+TRACK: Django / Python (12-lesson curriculum)
+
+------------------------------------------------------------
+CONTEXT FOR HOSTS
+------------------------------------------------------------
+
+Where this lesson fits:
+Lesson 12 of 12. The final lesson. This is a full capstone project that combines EVERY Django concept from the course into a real application: a Newsroom Data Dashboard. It's the kind of internal tool a broadcast TV network would actually build and use daily. This lesson walks through the entire build — from project setup to models, views, forms, templates, auth, API, and admin configuration.
+
+Who Trevor is:
+Trevor has completed 11 lessons of Python and Django. He knows the full stack: Python fundamentals, OOP, data handling, Django models/ORM, views/URLs, templates/forms, REST APIs, auth, testing, and deployment. This capstone proves he can put it all together into a cohesive, production-quality application. His journalism background makes this project personally relevant — it's the tool he'd want in a real newsroom.
+
+What the project demonstrates:
+- Models with relationships (ForeignKey, ManyToMany) — from lesson 7
+- Class-based and function-based views — from lesson 8
+- Templates with inheritance and includes — from lesson 9
+- Forms and ModelForms with custom validation — from lesson 9
+- Auth, permissions, and role-based groups — from lesson 11
+- REST API with DRF ViewSets — from lesson 10
+- File uploads, search, pagination — from lessons 5, 8
+- Admin panel configuration — from lesson 6
+- Django management commands — from lesson 5
+
+The project:
+A Newsroom Data Dashboard where reporters submit stories, upload datasets (CSV, spreadsheets), track sources, and editors manage everything with role-based permissions. Four Django apps: stories, datasets, accounts, api.
+
+------------------------------------------------------------
+LESSON CONTENT
+------------------------------------------------------------
+
+PROJECT OVERVIEW
+
+You're building an internal newsroom dashboard where reporters can submit stories, upload datasets, track sources, and editors can manage everything with role-based permissions.
+
+Features: Story submission and management. Dataset upload and preview. Source tracking and verification. Reporter profiles and assignments. Editor dashboard with permissions. Search across stories and datasets. REST API for external tools.
+
+Django concepts used: Models with relationships (FK, M2M). Class-based and function-based views. Templates with inheritance. Forms and ModelForms. Auth, permissions, groups. Django REST Framework. File uploads, search, pagination.
+
+PHASE 1 — PROJECT SETUP
+
+Create the project and four apps: django-admin startproject newsroom, then startapp for stories, datasets, accounts, api. Register all apps in INSTALLED_APPS. Set AUTH_USER_MODEL before the first migration — changing the User model later requires a database reset.
+
+PHASE 2 — MODELS
+
+Reporter Model (Custom User): Extends AbstractUser with role (reporter/editor/admin), beat (e.g., Politics, Weather), bio, and phone. The @property is_editor checks role for permission logic.
+
+Story Model: title, slug (auto-generated from title using slugify), body, summary, status (draft/review/published/killed), author (ForeignKey to Reporter), sources (ManyToManyField), timestamps. Meta ordering by -created_at. Custom save() method auto-generates slug.
+
+Source Model: name, title, organization, contact_info, is_verified, created_by. The __str__ method shows name with organization.
+
+Dataset Model: name, description, file (FileField with date-based upload path), file_format (csv/xlsx/json/geojson), row_count, source_url, uploaded_by, stories (ManyToMany). The @property file_size_display formats file size for humans.
+
+Key relationships: ForeignKey = one-to-many (Story has one author). ManyToManyField = many-to-many (Story can have many Sources, Source can appear in many Stories). related_name enables reverse queries: reporter.stories.all().
+
+PHASE 3 — VIEWS
+
+Story list: Filter published stories, paginate with Paginator, select_related('author') for performance.
+
+Story detail: get_object_or_404(Story, slug=slug, status='published').
+
+Story create: @login_required. GET shows empty form, POST validates and saves with form.save(commit=False) to set author, then form.save_m2m() for ManyToMany fields.
+
+Story search: Q objects combine OR conditions. Q(title__icontains=query) | Q(body__icontains=query) | Q(author__first_name__icontains=query).
+
+Editor dashboard: @login_required + @user_passes_test(is_editor). Shows stories in review, recent drafts, published today.
+
+Dataset upload: Handles file uploads with request.FILES. Counts CSV rows on upload. Uses form.save(commit=False) to set uploaded_by.
+
+Dataset preview: Reads first 50 rows of CSV using the csv module and displays in a template table.
+
+PHASE 4 — FORMS
+
+StoryForm (ModelForm): Custom widgets for title, body, summary. CheckboxSelectMultiple for sources ManyToMany. Custom clean_title validates minimum length. Custom clean_status prevents reporters from publishing directly.
+
+DatasetUploadForm (ModelForm): File upload with clean_file validating max file size (50MB). CheckboxSelectMultiple for linking to stories.
+
+PHASE 5 — TEMPLATES
+
+Base template with nav, {% block content %}, footer. Template pattern: loop over form fields for consistent styling — each field has .label, .help_text, .errors, .id_for_label. Key templates: story list with pagination, story detail with sources and datasets, story create form, editor dashboard, dataset upload, dataset preview table.
+
+PHASE 6 — URL CONFIGURATION
+
+Root urls.py delegates to each app. stories/urls.py has list, search, create, dashboard, detail routes. datasets/urls.py has list, upload, detail, preview. Serve media files in development with static(settings.MEDIA_URL).
+
+PHASE 7 — AUTH & PERMISSIONS
+
+Django's built-in auth views for login/logout. Management command to set up permission groups: Reporters get add/change/view story and add/view dataset. Editors get all reporter permissions plus delete story, change/delete dataset.
+
+PHASE 8 — REST API WITH DRF
+
+StorySerializer with computed author_name field. StoryViewSet with permission_classes, filter/search backends, get_queryset that returns all stories for authenticated users and only published for anonymous. perform_create sets the author. DefaultRouter auto-generates all CRUD endpoints plus search.
+
+PHASE 9 — ADMIN CONFIGURATION
+
+StoryAdmin with list_display, list_filter, search_fields, prepopulated_fields for slug, date_hierarchy, list_editable for inline status changes. SourceAdmin with verified filter. ~15 lines of code for a full CMS interface.
+
+WHAT TO SHOW IN AN INTERVIEW
+
+Technical depth: Model relationships, both FBV and CBV, custom validation, custom user model, ViewSets, select_related, Q objects.
+
+Production awareness: CSRF, permissions, input validation, select_related for performance, tests, env vars, Gunicorn.
+
+The "why" matters more than the "what": Explain decisions. "I used select_related because the list page was N+1 querying." "I chose a custom user model from the start because changing it later requires a database reset." Show you think about tradeoffs.
+
+Don't apologize for using Django's built-in features. "I just used ModelForm" isn't a weakness — it's a strength. Using the framework's tools effectively is exactly what a senior developer does.
+
+Stretch goals: Django Channels (WebSocket notifications), D3.js frontend charts, PostgreSQL full-text search, Celery background tasks, Docker Compose, GitHub Actions CI/CD.
+
+------------------------------------------------------------
+KEY CONCEPTS TO EMPHASIZE
+------------------------------------------------------------
+
+1. Everything connects — models define data, views process logic, templates display results, forms collect input, auth controls access, the API serves external clients.
+2. Django's architecture scales — the project/app split, admin panel, and ORM handle growing complexity.
+3. Use the framework — ModelForm, ViewSets, auth decorators, the admin panel. Using built-in tools effectively IS the skill.
+4. Think about production from the start — custom User model, select_related, environment variables, security settings.
+5. Your background is your edge — a journalist who can build data tools is rare and valuable.
+
+------------------------------------------------------------
+COMMON PITFALLS FOR THIS CAPSTONE
+------------------------------------------------------------
+
+- Not setting AUTH_USER_MODEL before the first migration
+- Forgetting form.save_m2m() after commit=False with ManyToMany fields
+- Not using select_related on list views (causes N+1 queries)
+- Not using Q objects for OR conditions in search
+- Forgetting enctype="multipart/form-data" on file upload forms
+- Not resetting the file pointer after reading (file.seek(0))
+- Hardcoding URLs instead of using {% url %} tags
+- Not registering models in admin.py (missing the free CMS)
+- Forgetting {% csrf_token %} in POST forms
+
+------------------------------------------------------------
+REAL-WORLD CONNECTION
+------------------------------------------------------------
+
+This is not a tutorial project — it's the kind of tool that broadcast TV networks actually need. Election results, weather data, census figures, court records — newsrooms ingest data constantly. Reporters need to submit stories and link them to datasets. Editors need to review, approve, and publish. Producers need to search the archive. External systems need API access. The Django admin gives editors a CMS without custom UI work. The REST API feeds the website and mobile apps. The permission system maps to real newsroom hierarchy. When Trevor interviews at Tenga, he can demo this project and say: "I built the tool I'd want in a real newsroom. Here's why I made each technical decision."
+
+
+============================================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS FOR NOTEBOOKLM
+============================================================
+
+This episode should feel like a "victory lap" — looking back at everything learned and seeing it all work together. The tone should be celebratory but practical, with an eye toward the interview.
+
+Specific mental models for THIS lesson:
+- "Everything connects" — models -> views -> templates -> forms -> auth -> API. Each lesson built on the last.
+- "Use the framework" — using ModelForm, ViewSets, admin panel effectively IS the skill. Don't reinvent wheels.
+- "Your background is your edge" — a journalist who can build data tools is a rare combination
+- "The 'why' matters" — in an interview, explaining decisions is more impressive than showing features
+
+JS/React/Next.js equivalents for the capstone:
+- The entire capstone is equivalent to: Next.js + Prisma + NextAuth + Zod + React Hook Form + custom admin dashboard + API routes. Django does it all with built-in tools.
+- The project/app structure is like: Next.js project with route groups (stories)/, (datasets)/, (accounts)/, (api)/
+- The admin panel is like getting a free Retool instance for every database table
+- The DRF API is like if all your API routes wrote themselves from your Prisma schema
+
+Connect back to EVERY lesson:
+- Lesson 1-2: Python syntax, collections, loops — the language foundation
+- Lesson 3: Functions, decorators — @login_required, @user_passes_test are decorators
+- Lesson 4: OOP, classes — every model is a class, every view can be a class
+- Lesson 5: File I/O, CSV, JSON — dataset upload reads CSV, counts rows
+- Lesson 6: Django architecture — project/app split, settings, admin panel
+- Lesson 7: Models, ORM — Story, Source, Dataset, Reporter models with relationships
+- Lesson 8: Views, URLs — function views, class views, URL patterns, redirects
+- Lesson 9: Templates, forms — inheritance, ModelForms, validation, CSRF
+- Lesson 10: REST API — ViewSets, serializers, routers, filtering
+- Lesson 11: Auth, testing, deployment — permissions, groups, production settings
+
+Tease what's next: "This is your portfolio piece. Deploy it, link it on your resume, and walk into that interview with a real application, not a to-do list tutorial."
+
+Trevor's journalism background: "This project IS your journalism background turned into code. You built a tool that manages stories, tracks sources, processes data files, and controls editorial workflow. When Tenga asks 'Can you build our internal tools?', you show them this and say 'I already built one.' Your 15 years of journalism experience is embedded in the domain model — the story statuses (draft, review, published, killed), the source verification flags, the beat assignments. No bootcamp grad has that domain knowledge."
+
+Memorization techniques for the interview:
+- "Three things to demo" — admin panel (free CMS), API browsable docs (free API explorer), search with Q objects (real-world querying)
+- "Three decisions to explain" — custom User model (prevents migration headaches), select_related (prevents N+1), permission groups (maps to newsroom roles)
+- "Three 'why Django'" answers — batteries included (auth, admin, ORM), Python ecosystem (data science, ML), proven at scale (Instagram, Washington Post, Pinterest)
+
+Tone: Celebratory but grounded. "You did it — you learned a full web framework in 12 lessons." The interview advice should be practical and confidence-building. The connection to Trevor's journalism background should feel personal and powerful. End on the note that this is not just a learning project — it's a real, deployable, demo-able application that proves Django competence.

@@ -1,0 +1,156 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+LESSON TITLE: Lesson 07 - Enter / Update / Exit: The Deep Dive
+TRACK: D3.js (12-lesson curriculum)
+
+--- CONTEXT FOR HOSTS ---
+
+Curriculum Position: Lesson 7 of 12. In Lesson 04, Trevor used .join("rect") and it "just worked." This lesson reveals what happens under the hood: the enter/update/exit pattern. This is what enables animations, smooth transitions, and dynamic data changes -- the difference between a static chart and a polished, broadcast-ready one.
+
+What came before: Lesson 04 introduced data binding with .join("rect") as shorthand. Lesson 06 completed the chart-building toolkit. Now we open the hood.
+
+What's coming next: Lesson 08 covers line and area charts (d3.line(), d3.area()), Lesson 09 covers arcs and pies.
+
+What Trevor already knows: React's reconciliation (virtual DOM diffing), React's key prop for list items, the concept of creating/updating/removing DOM elements.
+
+Learner's goal: Broadcast TV dashboards that update SMOOTHLY as data changes -- bars that grow, shrink, appear, and disappear with animation.
+
+Specific analogies for THIS lesson:
+- Enter/update/exit is like a wedding seating chart: new guests arrive (need seats), seated guests may move, leaving guests clear their seats
+- Key functions are EXACTLY like React's key prop -- identity tracking through changes
+- .join("rect") is shorthand, .join(enter, update, exit) gives full control
+- The "general update pattern" is like a React component that re-renders when props change
+
+Key mental models:
+- Three groups: Enter (new data, create elements), Update (existing data, modify elements), Exit (removed data, delete elements)
+- Key functions match by IDENTITY, not by INDEX (like React keys)
+- .join(enter, update, exit) gives you animation control over each group
+- The general update pattern: one function handles all data changes
+
+--- LESSON CONTENT ---
+
+Why This Matters
+
+In Lesson 04, .join("rect") handled everything automatically. But what happens under the hood when data changes? Understanding enter/update/exit gives you control over animations, transitions, and complex data updates -- the difference between a basic chart and a polished one.
+
+The Three Groups
+
+When you call .data(newData), D3 compares the new data to existing elements and sorts everything into three groups:
+
+Enter: Data items that have no matching element. Need to create new elements. (Green flash -- new items appearing)
+
+Update: Data items that match an existing element. May need to change attributes. (Orange -- existing items repositioning)
+
+Exit: Elements that have no matching data item. Need to be removed. (Red flash -- items disappearing)
+
+.join() with Three Callbacks
+
+svg.selectAll("rect")
+  .data(newData, d => d.id)     // key function!
+  .join(
+    enter => enter.append("rect")
+      .attr("fill", "#4ade80")   // green for new
+      .attr("y", height).attr("height", 0)  // start from bottom
+      .call(el => el.transition().duration(500)
+        .attr("y", d => y(d.value))
+        .attr("height", d => height - y(d.value))),
+
+    update => update
+      .attr("fill", "#f97316")   // orange for existing
+      .call(el => el.transition().duration(500)
+        .attr("y", d => y(d.value))
+        .attr("height", d => height - y(d.value))),
+
+    exit => exit
+      .attr("fill", "#ef4444")   // red for leaving
+      .call(el => el.transition().duration(300)
+        .attr("y", height).attr("height", 0).remove())
+  );
+
+Key Functions: Name Tags for Data
+
+By default, D3 matches data to elements by index (position). First data item goes with first element. This works for static charts but breaks for animations.
+
+Without key: .data(newData) matches by index. If you remove the first item, D3 thinks EVERY element changed (indices shifted).
+
+With key: .data(newData, d => d.id) matches by identity. D3 knows each element is the same item, just in a new position. This enables smooth, meaningful animations.
+
+Keys are like React's key prop. Without keys, both D3 and React default to matching by position. With keys, both can track individual items through data changes.
+
+.join("rect") vs .join(enter, update, exit)
+
+The string form .join("rect") is shorthand: enter appends the element, update does nothing special, exit removes immediately. The three-callback form gives full control: animate entering elements, transition updates, fade out exiting elements.
+
+The General Update Pattern
+
+Write one function that handles any data change: filtering, sorting, adding, removing. Call it whenever data changes. The enter/update/exit pattern handles DOM updates automatically. Buttons, sliders, and filters all just call the update function with new data.
+
+The lesson demonstrates a filterable, sortable bar chart where you can filter by region (South, West, Northeast) and sort by value or alphabetically. Same update function handles everything.
+
+--- KEY CONCEPTS TO EMPHASIZE ---
+
+1. Enter = new data needs new elements, Update = existing data may change, Exit = old elements need removal
+2. Key functions (d => d.id) match by identity, not position -- like React's key prop
+3. .join(enter, update, exit) gives full animation control over each transition group
+4. The general update pattern: one reusable function handles all data changes
+5. Always remove exit elements to prevent memory leaks
+
+--- COMMON PITFALLS ---
+
+- Not using key functions and getting jumbled animations when items are reordered
+- Forgetting to call .remove() on exit elements (they stay in the DOM as invisible orphans)
+- Using .join("rect") when you need animation control (it skips to the three-callback form)
+- Not understanding that .join() returns the MERGED enter + update selection
+- Mixing up which callback is which (enter = new, update = existing, exit = leaving)
+
+--- BROADCAST TV CONNECTION ---
+
+- Election night: new precincts report in (enter), existing precincts update their counts (update), invalidated results disappear (exit) -- all with smooth animations
+- Weather dashboards: forecast cities appear and disappear as the user pans the map
+- Breaking-news bar charts that smoothly animate as new data points arrive
+- The filter-and-sort demo is exactly what a broadcast data team builds: filter states by region, sort by population, and the bars animate into their new positions
+- Key functions ensure that when you reorder bars (sort by value vs. alphabetically), each bar slides to its new position rather than morphing into a different state
+
+
+========================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+========================================
+
+PODCAST CUSTOMIZATION FOR LESSON 07: Enter / Update / Exit
+
+TARGET MENTAL MODELS:
+- Wedding seating chart: Enter (new guests arrive), Update (seated guests may move), Exit (leaving guests clear their seats)
+- Key functions as "name tags" -- D3 can track who's who through changes
+- .join(enter, update, exit) as "three hooks for three situations"
+- The general update pattern as "one function, many data sources"
+
+SPECIFIC ANALOGIES TO USE:
+- "This is like React's reconciliation but you can SEE it. In React, the virtual DOM diff is invisible. In D3, you literally write code for each case: when data arrives, when it changes, when it leaves."
+- "Key functions are React's key prop, period. React key={item.id} = D3 .data(data, d => d.id). Same concept, same purpose, same bugs when you forget them."
+- "Think of the general update pattern like a React component that accepts different props. The component renders appropriately regardless of what data you pass in. Same here: one updateChart(data) function, pass in different data, the chart handles it."
+- "For a broadcast newsroom: imagine a producer feeding new data into the system during a live show. The update function handles it -- bars animate, new bars appear, old bars fade out. No page reload, no rebuild."
+
+CONNECTIONS TO OTHER LESSONS:
+- Connect to Lesson 04: ".join('rect') was the shorthand. Now you see the three callbacks it was hiding. Enter for creation, update for modification, exit for removal."
+- Connect to Lesson 06: "Your complete chart pattern from Lesson 06 now gets dynamic data changes. The bars aren't static anymore."
+- Tease Lesson 08: "Next, you'll apply this same pattern to line and area charts. The data binding works the same way, just with different shape generators."
+- Connect to Lesson 11: "Transitions and easing functions will polish these animations further. Right now you're learning WHAT to animate; Lesson 11 teaches you HOW to make it feel smooth."
+
+TREVOR'S BACKGROUND TO REFERENCE:
+- React reconciliation: "You know how React's diffing algorithm figures out which components to add, update, or remove? D3's enter/update/exit is the explicit, manual version. You write the logic yourself, which gives you more control but more responsibility."
+- React key prop: "You've probably been bitten by the missing-key warning in React. D3 has the same issue -- without key functions, data gets matched by index and animations go haywire."
+- Journalism: "On deadline, a producer updates data and the dashboard updates live. This is the pattern that makes that possible -- one function, new data in, smooth chart update out."
+
+MEMORIZATION TECHNIQUES:
+- "Enter = green (new), Update = orange (changed), Exit = red (leaving)" -- traffic light metaphor
+- "Key functions = React key prop" -- direct equivalence
+- "The general update pattern: function updateChart(data) { ... } -- call it from any button, filter, or data source"
+- "Always .remove() on exit" -- exits that don't remove are memory leaks
+
+TONE:
+- This is the "power" episode. The React-dev host should be impressed: "So I can write ONE function and it handles any data change? Adding states, removing states, reordering? And each case gets its own animation?"
+- D3-expert: "That's the entire point. On election night, data flows in constantly. You don't rebuild the dashboard. You call updateChart(newData) and D3 handles the visual transitions."
+- Make the key function point strongly: "Without keys, your sort animation turns into a blender. With keys, each bar slides gracefully to its new position. Keys are non-negotiable for any interactive chart."
+- End with the practical payoff: "The filterable bar chart demo -- filter by region, sort by value or name -- is exactly what you'd build for a broadcast data dashboard."

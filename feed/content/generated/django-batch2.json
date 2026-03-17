@@ -1,0 +1,749 @@
+[
+  {
+    "id": "django-043",
+    "track": "django",
+    "type": "interview",
+    "author": "queryset",
+    "time": "2h",
+    "content": "INTERVIEW Q: You inherit a Django API endpoint that returns a list of 100 orders, each with its customer info and line items. The page takes 8 seconds to load. django-debug-toolbar shows 1,204 queries.\n\nHow do you get it under 10 queries without changing the serializer output?\n\nThis is the single most common Django performance question. If you can't answer it, you're not ready.",
+    "code": "# The slow view you inherited:\ndef order_list(request):\n    orders = Order.objects.all()[:100]\n    data = []\n    for order in orders:\n        data.append({\n            'id': order.id,\n            'customer': order.customer.name,       # N+1 (FK)\n            'items': [\n                {'product': item.product.name,      # N+1 (FK on FK)\n                 'qty': item.quantity}\n                for item in order.items.all()       # N+1 (reverse FK)\n            ]\n        })\n    return JsonResponse(data, safe=False)",
+    "link": { "url": "/django/lessons/07-models-orm/", "label": "ORM optimization in Lesson 7 →" },
+    "likes": 1102,
+    "reposts": 287,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "Answer: `Order.objects.select_related('customer').prefetch_related(Prefetch('items', queryset=OrderItem.objects.select_related('product')))[:100]`. Three queries. Down from 1,204. Lifetime N+1 count: 2,848.",
+        "likes": 534
+      },
+      {
+        "author": "managePy",
+        "content": "Back in Django 1.4, we didn't have Prefetch objects. You just prefetch_related'd and hoped. The nested select_related inside a Prefetch is a game changer that most people don't know about.",
+        "likes": 298
+      }
+    ]
+  },
+  {
+    "id": "django-044",
+    "track": "django",
+    "type": "interview",
+    "author": "managePy",
+    "time": "5h",
+    "content": "INTERVIEW Q: You need to add a new feature to a Django project but you're not sure where to put it. The project has 12 apps already.\n\nDo you:\nA) Add it to the closest existing app\nB) Create a new app with `startapp`\nC) Dump it in a `utils.py` somewhere\n\nThe real answer is: it depends on whether this feature has its own models. If it has models, it's an app. If it's just helper functions, it can live in a shared app. If you're unsure, start with a new app — it's cheap to create and expensive to untangle later.\n\nThis is like asking \"do I make a new Next.js route group or add to an existing one\" — but Django apps are more self-contained. Each app is its own mini-package with models, views, urls, tests.",
+    "code": null,
+    "link": { "url": "/django/lessons/06-django-quickstart/", "label": "Django project structure in Lesson 6 →" },
+    "likes": 678,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "migrationRunner",
+        "content": "And if you create a new app, add it to INSTALLED_APPS BEFORE you create any models. I've seen people forget, run makemigrations, get nothing, panic, and hand-write migrations. Did you add it to INSTALLED_APPS? Did you run makemigrations?",
+        "likes": 245
+      },
+      {
+        "author": "middlewareStack",
+        "content": "an app is born\nmodels views and urls breathe\nINSTALLED_APPS waits",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "django-045",
+    "track": "django",
+    "type": "interview",
+    "author": "queryset",
+    "time": "1d",
+    "content": "INTERVIEW Q: Your Django view returns a count of articles per category. It works but it's slow on 500k rows.\n\nCandidate A writes a Python loop that counts manually.\nCandidate B writes an ORM query with .annotate().\n\nCandidate B gets the job. Here's why:",
+    "code": "# Candidate A: O(n) in Python, loads 500k rows into memory\ncounts = {}\nfor article in Article.objects.all():\n    cat = article.category.name\n    counts[cat] = counts.get(cat, 0) + 1\n\n# Candidate B: O(1) in Python, database does the work\nfrom django.db.models import Count\ncounts = Category.objects.annotate(\n    article_count=Count('article')\n).values('name', 'article_count')\n\n# The database is BUILT for this. Let it do its job.\n# Candidate A: ~500k queries (N+1 on category)\n# Candidate B: 1 query with GROUP BY",
+    "link": { "url": "/django/lessons/07-models-orm/", "label": "annotate & aggregate in Lesson 7 →" },
+    "likes": 892,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "This is just GROUP BY + COUNT(*) under the hood. The ORM writes the SQL so you don't have to. But knowing what SQL it generates makes you dangerous in the best way.",
+        "likes": 312
+      },
+      {
+        "author": "managePy",
+        "content": "There's a battery for that. Django's aggregation API is one of the most underused features. Count, Sum, Avg, Max, Min — all built in. Stop writing Python loops to do database work.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "django-046",
+    "track": "django",
+    "type": "interview",
+    "author": "middlewareStack",
+    "time": "8h",
+    "content": "INTERVIEW Q: Explain what happens between a user pressing Enter on a URL and your Django view function executing. Every layer.\n\nMost candidates jump straight to \"the view runs.\" The ones who get hired describe the middleware stack.\n\nThe request enters. SecurityMiddleware checks HTTPS. SessionMiddleware loads the session. AuthenticationMiddleware attaches the user. CsrfViewMiddleware validates the token. Your URL resolver finds the view. The view runs.\n\nThen it ALL reverses on the way out. Response goes back UP through every middleware. Each layer can modify, log, or reject.\n\nIt's an onion. It's a stack of pancakes. It's the most elegant pattern in the framework and nobody talks about it in interviews.",
+    "code": null,
+    "link": { "url": "/django/lessons/08-views-urls/", "label": "request lifecycle in Lesson 8 →" },
+    "likes": 1245,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "middlewareStack",
+        "content": "request descends through\neach layer a quiet gate\nresponse climbs back home",
+        "likes": 456
+      },
+      {
+        "author": "queryset",
+        "content": "And if you're wondering how many queries happen before your view even runs: SessionMiddleware hits the DB for the session, AuthenticationMiddleware hits it for the user. That's 2 queries minimum before your code even starts. Keep that in mind when counting.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-047",
+    "track": "django",
+    "type": "interview",
+    "author": "managePy",
+    "time": "3d",
+    "content": "INTERVIEW Q: You're building a blog. A Post can have many Tags and a Tag can belong to many Posts. How do you model this in Django?\n\nBonus: How is this different from the same relationship in Prisma?\n\nIn Prisma you need an explicit join table or implicit many-to-many. In Django, `ManyToManyField` handles the join table for you automatically. You never see it. You never migrate it. It just works.\n\nThat's batteries included.",
+    "code": "# Django: implicit join table\nclass Tag(models.Model):\n    name = models.CharField(max_length=50)\n\nclass Post(models.Model):\n    title = models.CharField(max_length=200)\n    tags = models.ManyToManyField(Tag, related_name='posts')\n\n# Usage:\npost.tags.add(tag1, tag2)\npost.tags.all()          # all tags for this post\ntag1.posts.all()         # all posts with this tag (reverse!)\n\n# Prisma equivalent would need:\n# model PostTag { post Post @relation(...) tag Tag @relation(...) }\n# Django just... does it.",
+    "link": { "url": "/django/lessons/07-models-orm/", "label": "relationships in Lesson 7 →" },
+    "likes": 723,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "And when you need the join table (extra fields like `added_date`), use `through=`. But don't reach for it until you need it. YAGNI applies to join tables too.",
+        "likes": 198
+      },
+      {
+        "author": "migrationRunner",
+        "content": "Fun fact: Django creates a migration for the join table automatically. It's named like `post_tags` and it's managed entirely by the framework. Just don't forget to run makemigrations after adding the field.",
+        "likes": 145
+      }
+    ]
+  },
+  {
+    "id": "django-048",
+    "track": "django",
+    "type": "interview",
+    "author": "queryset",
+    "time": "4h",
+    "content": "INTERVIEW Q: What's the difference between `filter(condition_a, condition_b)` and `filter(condition_a).filter(condition_b)` in Django?\n\nMost people say \"they're the same.\" Most people are wrong — sometimes.\n\nFor simple field lookups on the same model, yes, identical. But for multi-valued relationships (like filtering on related ManyToMany), chaining `.filter()` creates separate JOINs while comma-separated conditions use ONE JOIN.\n\nThis is a subtle distinction that has caused real production bugs at Stacksworth Inc. An endpoint returned duplicate results because someone chained filters on a M2M relationship and got multiple JOINs producing repeated rows.",
+    "code": "# These are the SAME:\nArticle.objects.filter(status='published', author__active=True)\nArticle.objects.filter(status='published').filter(author__active=True)\n\n# These are DIFFERENT with M2M:\n# \"Posts with a tag named 'python' AND that same tag created in 2024\"\nPost.objects.filter(tags__name='python', tags__created__year=2024)\n\n# \"Posts with ANY tag named 'python' AND ANY tag created in 2024\"\n# (could be different tags!)\nPost.objects.filter(tags__name='python').filter(tags__created__year=2024)",
+    "link": null,
+    "likes": 987,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "Under the hood: comma = one JOIN with AND in the ON clause. Chaining = two separate JOINs. The SQL tells the story if you call .query on the queryset. There's a join for that explanation.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "django-049",
+    "track": "django",
+    "type": "interview",
+    "author": "managePy",
+    "time": "2d",
+    "content": "INTERVIEW Q: You join a team. The Django project has ONE app called `main` with 47 models in models.py, 2,000 lines of views, and a urls.py that makes you question your career choices.\n\nHow do you refactor without breaking production?\n\nStep 1: Don't panic. This is every 3-year-old Django project.\nStep 2: New features get new apps. Stop adding to `main`.\nStep 3: Extract one model at a time with careful migration surgery.\nStep 4: Use Django's `app_label` Meta option during transition.\n\nAt Stacksworth Inc., our monolith has been running for 6 years. We refactored from 1 app to 8 over a year. Zero downtime. The Django admin alone made it worth the effort — each app gets its own admin section.",
+    "code": null,
+    "link": { "url": "/django/lessons/06-django-quickstart/", "label": "project structure in Lesson 6 →" },
+    "likes": 845,
+    "reposts": 189,
+    "comments": [
+      {
+        "author": "migrationRunner",
+        "content": "Step 3 is where nightmares live. Moving a model between apps means creating a new migration in the target app, a SeparateDatabaseAndState operation in the source app, and praying to whatever deity handles foreign key constraints. I've done this 11 times. Cried during 4 of them.",
+        "likes": 456
+      },
+      {
+        "author": "queryset",
+        "content": "And while you're refactoring, add select_related to every view that touches the models being moved. I guarantee there are N+1 queries hiding in that 2,000-line views.py. Guarantee it.",
+        "likes": 278
+      }
+    ]
+  },
+  {
+    "id": "django-050",
+    "track": "django",
+    "type": "hotTake",
+    "author": "templateTag",
+    "time": "1h",
+    "content": "hot take: Django templates get called \"limited\" by people who've never actually hit those limits.\n\n\"But you can't write Python in templates!\" Correct. That's a FEATURE. Your templates should be dumb. Your views should be smart. Separation of concerns isn't a suggestion.\n\nReact taught an entire generation that mixing logic and markup is fine. Django said \"no\" 20 years ago and it's still right.\n\n[days since JS broke something: 0. Vite 7 just dropped with breaking config changes.]",
+    "code": null,
+    "link": null,
+    "likes": 1876,
+    "reposts": 423,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Back in Django 1.4, the template language was even MORE limited. And you know what? Production apps ran fine. The limitations force you to put logic where it belongs: in the view or a custom template tag. There's a battery for that.",
+        "likes": 534
+      },
+      {
+        "author": "middlewareStack",
+        "content": "Logic in templates is like performing surgery in the waiting room. The view is the operating theater. The template is the discharge summary.",
+        "likes": 389
+      },
+      {
+        "author": "queryset",
+        "content": "Also: template tags can't accidentally trigger N+1 queries if the data is already resolved in the view. Another underrated benefit of \"dumb templates.\"",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "django-051",
+    "track": "django",
+    "type": "hotTake",
+    "author": "managePy",
+    "time": "14h",
+    "content": "hot take: the Django admin is the most underrated tool in web development.\n\nYou define your models. You register them. You get:\n- Full CRUD interface\n- Search, filter, sort\n- Inline editing for related objects\n- Permissions per model per user\n- Audit history\n- Custom actions\n\nFor free. No code beyond `admin.site.register(MyModel)`.\n\nIn Next.js you'd need: a UI library, form handling, auth, RBAC, audit logging, and a weekend. The admin alone is worth the framework.",
+    "code": "# This is ALL you need:\n# admin.py\nfrom django.contrib import admin\nfrom .models import Article, Category\n\n@admin.register(Article)\nclass ArticleAdmin(admin.ModelAdmin):\n    list_display = ['title', 'author', 'status', 'created']\n    list_filter = ['status', 'category']\n    search_fields = ['title', 'body']\n    prepopulated_fields = {'slug': ('title',)}\n\n# That's it. Full admin panel. Done.",
+    "link": { "url": "/django/lessons/06-django-quickstart/", "label": "the Django admin in Lesson 6 →" },
+    "likes": 2341,
+    "reposts": 567,
+    "comments": [
+      {
+        "author": "templateTag",
+        "content": "No build step required for the admin either. It's server-rendered HTML that just works. No npm install. No webpack config. No hydration. It loads in milliseconds on a 2015 laptop.",
+        "likes": 445
+      },
+      {
+        "author": "migrationRunner",
+        "content": "The admin also shows you your migration status. It's how I caught a junior dev who had 3 unapplied migrations in production. The admin page showed warnings. Did they run makemigrations? They did not.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "django-052",
+    "track": "django",
+    "type": "hotTake",
+    "author": "queryset",
+    "time": "3h",
+    "content": "hot take: `.all()` is the most dangerous method in the Django ORM.\n\nNot because it's broken. Because it's lazy. It does nothing until you iterate. And by the time you iterate inside a template or a loop, you've already lost.\n\n`Article.objects.all()` doesn't hit the database.\n`list(Article.objects.all())` does.\n`{% for a in articles %}` does.\n\nLazy evaluation is a feature. But it's a feature that lets you write code that LOOKS fine and then generates 10,000 queries at render time.\n\nhow many queries though?",
+    "code": null,
+    "link": null,
+    "likes": 1456,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "This is why django-debug-toolbar should be in every project's dev dependencies from day one. Not \"when we have performance issues.\" From. Day. One.",
+        "likes": 398
+      },
+      {
+        "author": "nullHandler",
+        "content": "And when you do .all() on a table with nullable foreign keys, each None becomes an invisible landmine. `article.author.name` doesn't just N+1 — it also raises AttributeError on None. The absence strikes twice.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "django-053",
+    "track": "django",
+    "type": "hotTake",
+    "author": "middlewareStack",
+    "time": "6h",
+    "content": "hot take: settings.py is the most honest configuration file in web development.\n\nNext.js has next.config.js, .env.local, .env.production, .env.development, vercel.json, and sometimes middleware.ts for config. That's 6 files minimum.\n\nDjango has settings.py. One file. It's Python, so you can do logic. It's explicit. Every setting is documented. You can read it top to bottom and understand your entire app's behavior.\n\nTransparency is a feature. The request deserves to know what world it's entering.",
+    "code": null,
+    "link": { "url": "/django/lessons/06-django-quickstart/", "label": "settings.py deep dive in Lesson 6 →" },
+    "likes": 1134,
+    "reposts": 245,
+    "comments": [
+      {
+        "author": "templateTag",
+        "content": "And when something breaks in production, you check ONE file. Not a chain of .env inheritance where .env.production.local overrides .env.production which overrides .env.local which overrides .env. [days since JS config broke something: 0]",
+        "likes": 367
+      }
+    ]
+  },
+  {
+    "id": "django-054",
+    "track": "django",
+    "type": "hotTake",
+    "author": "templateTag",
+    "time": "2d",
+    "content": "hot take: if your Django project needs a JavaScript build step, you've already lost.\n\nHTMX + Django templates = 95% of what an SPA gives you with 5% of the complexity.\n\n- Partial page updates? hx-swap.\n- Form submission without reload? hx-post.\n- Real-time search? hx-trigger with a debounce.\n- Loading indicators? hx-indicator.\n\nNo node_modules. No bundle size. No hydration mismatch. No \"it works in dev but not in production because the build optimizer tree-shook the thing you needed.\"\n\nno build step, no problems.\n\n[days since JS broke something: 2. A new record!]",
+    "code": null,
+    "link": null,
+    "likes": 1567,
+    "reposts": 389,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "At Stacksworth Inc., we replaced a React SPA with Django templates + HTMX in 2024. The frontend codebase went from 42,000 lines to 6,000. Time-to-interactive dropped by 3 seconds. The React devs were upset for a week, then relieved.",
+        "likes": 567
+      },
+      {
+        "author": "middlewareStack",
+        "content": "HTMX respects the request/response cycle. The server renders HTML. The client swaps it in. No intermediate JSON serialization layer pretending to be something it's not. Request in, HTML out. As it should be.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "django-055",
+    "track": "django",
+    "type": "tip",
+    "author": "managePy",
+    "time": "10h",
+    "content": "Django tip: `python manage.py shell` is your REPL for testing ORM queries, but `shell_plus` from django-extensions is 10x better.\n\nIt auto-imports ALL your models. No more typing `from myapp.models import User, Article, Tag` every single time.\n\nThink of it like the browser console but for your Django backend. You can test queries, create objects, debug relationships — all interactively.",
+    "code": "# Install:\n# pip install django-extensions\n# Add 'django_extensions' to INSTALLED_APPS\n\n# Regular shell:\n$ python manage.py shell\n>>> from articles.models import Article  # manual import\n>>> from users.models import User        # manual import\n>>> Article.objects.count()\n\n# shell_plus:\n$ python manage.py shell_plus\n# Auto-imports ALL models from ALL apps\n>>> Article.objects.count()  # just works\n>>> User.objects.filter(is_active=True).count()  # just works\n\n# Pro move: shell_plus --print-sql\n# Shows the actual SQL for every ORM query you run",
+    "link": null,
+    "likes": 634,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "shell_plus --print-sql is how I found 6 N+1 queries in a single view last week. Run your view's queryset in the shell, watch the SQL scroll by, count the queries. If you see the same query repeated with different IDs, that's your N+1. Lifetime count: 2,853.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "django-056",
+    "track": "django",
+    "type": "tip",
+    "author": "queryset",
+    "time": "7h",
+    "content": "Django ORM tip: F() objects let you reference model fields in queries without loading them into Python.\n\nThis matters because the operation happens in the DATABASE, not in your app server. Atomic. Fast. No race conditions.",
+    "code": "from django.db.models import F\n\n# BAD: race condition if two requests hit simultaneously\narticle = Article.objects.get(id=1)\narticle.view_count = article.view_count + 1  # read, then write\narticle.save()\n\n# GOOD: atomic database operation\nArticle.objects.filter(id=1).update(view_count=F('view_count') + 1)\n\n# F() works in filters too:\n# Find articles where comments > likes (controversial!)\nArticle.objects.filter(comment_count__gt=F('like_count'))\n\n# And in annotations:\nfrom django.db.models import ExpressionWrapper, FloatField\nArticle.objects.annotate(\n    engagement_ratio=ExpressionWrapper(\n        F('comment_count') * 1.0 / F('view_count'),\n        output_field=FloatField()\n    )\n)",
+    "link": { "url": "/django/lessons/07-models-orm/", "label": "F() and Q() in Lesson 7 →" },
+    "likes": 712,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "F() expressions are also immune to SQL injection because they never interpolate user input. The database resolves the field reference internally. One of the few times the ORM makes your code both faster AND more secure.",
+        "likes": 234
+      },
+      {
+        "author": "managePy",
+        "content": "The race condition in the BAD example is real. At Stacksworth Inc., we had a view counter that lost ~15% of counts during traffic spikes because of exactly this. One F() expression fixed it. There's a battery for that.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "django-057",
+    "track": "django",
+    "type": "tip",
+    "author": "migrationRunner",
+    "time": "4d",
+    "content": "Migration tip that will save you in production: ALWAYS test migrations on a copy of production data before deploying.\n\nYour local database has 50 rows. Production has 5 million. That `AddField` with a default runs instantly locally. In production? Table lock for 8 minutes.\n\nHere's the safe pattern for adding a NOT NULL field to a large table:",
+    "code": "# Step 1: Add as nullable (fast, no table rewrite)\nmigrations.AddField(\n    model_name='order',\n    name='tracking_number',\n    field=models.CharField(max_length=100, null=True),\n)\n\n# Step 2: Data migration to backfill (separate migration!)\ndef backfill_tracking(apps, schema_editor):\n    Order = apps.get_model('orders', 'Order')\n    # Batch update to avoid memory issues\n    while Order.objects.filter(tracking_number__isnull=True).exists():\n        batch = Order.objects.filter(\n            tracking_number__isnull=True\n        )[:1000].values_list('id', flat=True)\n        Order.objects.filter(id__in=list(batch)).update(\n            tracking_number='LEGACY'\n        )\n\n# Step 3: AlterField to NOT NULL (now safe, no nulls exist)\nmigrations.AlterField(\n    model_name='order',\n    name='tracking_number',\n    field=models.CharField(max_length=100),\n)",
+    "link": null,
+    "likes": 567,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Three migrations for one field. It feels excessive until the first time you DON'T do it and your production database locks for 12 minutes during peak traffic. Then it feels like wisdom.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "django-058",
+    "track": "django",
+    "type": "tip",
+    "author": "templateTag",
+    "time": "1d",
+    "content": "Django template tip: template inheritance is like React component composition but simpler.\n\n`base.html` is your layout. `{% block content %}` is your `{children}`. `{% extends %}` is your wrapper. No imports. No props. No context providers.",
+    "code": "<!-- base.html = your layout component -->\n<html>\n<head><title>{% block title %}My Site{% endblock %}</title></head>\n<body>\n  <nav>{% include 'nav.html' %}</nav>\n  {% block content %}{% endblock %}\n  <footer>{% include 'footer.html' %}</footer>\n</body>\n</html>\n\n<!-- article_detail.html = a \"page\" -->\n{% extends 'base.html' %}\n\n{% block title %}{{ article.title }}{% endblock %}\n\n{% block content %}\n<h1>{{ article.title }}</h1>\n<p>{{ article.body }}</p>\n{% endblock %}\n\n{# React equivalent would be:\n  <Layout title={article.title}>\n    <h1>{article.title}</h1>\n    <p>{article.body}</p>\n  </Layout>\n  ...but you'd need to npm install the layout first #}",
+    "link": { "url": "/django/lessons/08-views-urls/", "label": "templates in Lesson 8 →" },
+    "likes": 489,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "middlewareStack",
+        "content": "{% include %} is middleware for templates. Small units of HTML, composed together, each with a single responsibility. Reusable. Testable. No node_modules required.",
+        "likes": 167
+      }
+    ]
+  },
+  {
+    "id": "django-059",
+    "track": "django",
+    "type": "tip",
+    "author": "managePy",
+    "time": "16h",
+    "content": "Django tip: environment variables belong in .env files, NOT in settings.py.\n\nNever hardcode secrets. Never commit API keys. This is the same rule as Next.js (.env.local) but Python needs a package for it.",
+    "code": "# pip install python-decouple\n\n# .env (NEVER commit this)\nSECRET_KEY=your-actual-secret-key-here\nDATABASE_URL=postgres://user:pass@localhost/mydb\nDEBUG=True\nALLOWED_HOSTS=localhost,127.0.0.1\n\n# settings.py\nfrom decouple import config\n\nSECRET_KEY = config('SECRET_KEY')\nDEBUG = config('DEBUG', default=False, cast=bool)\nALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=lambda v: v.split(','))\n\n# .gitignore\n.env\n*.env\n\n# Like process.env in Node, but explicit.\n# No magic. You see exactly what's loaded and where.",
+    "link": { "url": "/django/lessons/05-python-data-files/", "label": "env files in Lesson 5 →" },
+    "likes": 456,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "bobbyTables",
+        "content": "If I had a dollar for every SECRET_KEY I've found in a public GitHub repo, I could retire. Parameterize your secrets or perish.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "django-060",
+    "track": "django",
+    "type": "spotBug",
+    "author": "queryset",
+    "time": "5h",
+    "content": "SPOT THE BUG: This view is supposed to update an article's title. The form submits, no errors, but the title never changes in the database. The developer has been staring at this for 45 minutes.",
+    "code": "def update_article(request, pk):\n    article = Article.objects.get(pk=pk)\n    if request.method == 'POST':\n        article.title = request.POST.get('title')\n        article.slug = slugify(article.title)\n        article.updated_at = timezone.now()\n        return redirect('article-detail', pk=article.pk)\n    return render(request, 'edit.html', {'article': article})",
+    "link": null,
+    "likes": 723,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "No .save() call! You modified the Python object but never told the database. `article.save()` before the redirect. This is the #1 Django beginner bug. The ORM doesn't auto-save like some ORMs — you have to be explicit.",
+        "likes": 456
+      },
+      {
+        "author": "migrationRunner",
+        "content": "And once you add .save(), consider using `article.save(update_fields=['title', 'slug', 'updated_at'])` to only update the columns you changed. Faster, safer, and avoids race conditions if another request modifies the same row.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-061",
+    "track": "django",
+    "type": "spotBug",
+    "author": "migrationRunner",
+    "time": "3d",
+    "content": "SPOT THE BUG: Two developers branched off main on Monday. Both added a field to the same model. Both ran makemigrations. Both got `0005_auto_...`. Both merged to main on Friday.\n\nCI passed. Staging deployed. Production crashed.\n\nWhat happened?",
+    "code": "# Developer A's migration:\n# articles/migrations/0005_auto_20260310_add_subtitle.py\nclass Migration(migrations.Migration):\n    dependencies = [('articles', '0004_add_category')]\n    operations = [\n        migrations.AddField('article', 'subtitle', ...),\n    ]\n\n# Developer B's migration:\n# articles/migrations/0005_auto_20260310_add_featured.py\nclass Migration(migrations.Migration):\n    dependencies = [('articles', '0004_add_category')]\n    operations = [\n        migrations.AddField('article', 'featured', ...),\n    ]",
+    "link": null,
+    "likes": 834,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "migrationRunner",
+        "content": "MIGRATION HORROR STORY #7: Both migrations depend on 0004 and neither knows about the other. Django can't determine the order. Fix: after merging, run `python manage.py makemigrations --merge` to create a merge migration (0006) that depends on BOTH 0005s. This is why I don't sleep on merge days.",
+        "likes": 567
+      },
+      {
+        "author": "managePy",
+        "content": "Pro tip: add a CI check that runs `python manage.py makemigrations --check --dry-run`. It fails if there are unapplied model changes. Catches conflicts before they reach production.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "django-062",
+    "track": "django",
+    "type": "spotBug",
+    "author": "managePy",
+    "time": "11h",
+    "content": "SPOT THE BUG: This URL pattern should show article detail at `/articles/new/`, `/articles/42/`, etc. But visiting `/articles/new/` shows a 404 or crashes. Why?",
+    "code": "# urls.py\nfrom django.urls import path\nfrom . import views\n\nurlpatterns = [\n    path('articles/<int:pk>/', views.article_detail),\n    path('articles/new/', views.article_create),\n]",
+    "link": { "url": "/django/lessons/08-views-urls/", "label": "URL patterns in Lesson 8 →" },
+    "likes": 567,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "middlewareStack",
+        "content": "Order matters. Django tries patterns top to bottom. `<int:pk>` tries to match \"new\" as an integer, fails, and returns 404. Move the static path ABOVE the dynamic one. The specific route must come before the general one. Like middleware — order is everything.",
+        "likes": 398
+      },
+      {
+        "author": "templateTag",
+        "content": "In Next.js, file-based routing handles this automatically — `new/page.tsx` takes precedence over `[id]/page.tsx`. In Django, YOU control the order. More power, more responsibility. I prefer the explicit approach. No magic.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-063",
+    "track": "django",
+    "type": "spotBug",
+    "author": "queryset",
+    "time": "2d",
+    "content": "SPOT THE BUG: This API returns articles with their tags. It works. But it fires 201 queries for 100 articles. The developer added select_related('tags') and it crashed. What's wrong?",
+    "code": "# models.py\nclass Article(models.Model):\n    title = models.CharField(max_length=200)\n    tags = models.ManyToManyField('Tag')\n\n# views.py\ndef article_list(request):\n    # Developer tried: Article.objects.select_related('tags')\n    # Got: InvalidQueryError\n    articles = Article.objects.all()[:100]\n    data = [\n        {'title': a.title, 'tags': [t.name for t in a.tags.all()]}\n        for a in articles\n    ]\n    return JsonResponse(data, safe=False)",
+    "link": null,
+    "likes": 645,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "`select_related` is for ForeignKey and OneToOneField ONLY (it does a SQL JOIN). ManyToManyField needs `prefetch_related` (it does a second query + Python-side join). The fix: `Article.objects.prefetch_related('tags')[:100]`. Two queries instead of 201. Lifetime N+1 count: 2,854.",
+        "likes": 412
+      },
+      {
+        "author": "innerJoin",
+        "content": "The reason: select_related uses a SQL JOIN, but M2M JOINs would duplicate rows (one article * three tags = three rows per article). prefetch_related does a separate `SELECT * FROM tags WHERE id IN (...)` and joins in Python. Different strategies for different relationships.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "django-064",
+    "track": "django",
+    "type": "mentalModel",
+    "author": "middlewareStack",
+    "time": "4h",
+    "content": "MENTAL MODEL: Django's request lifecycle is a sandwich.\n\nThe bread on top: WSGI server receives HTTP → Django creates a Request object.\n\nThe layers going down (request phase):\n  SecurityMiddleware → checks HTTPS\n  SessionMiddleware → loads session from DB\n  AuthMiddleware → attaches request.user\n  CsrfMiddleware → validates CSRF token\n  URL Resolver → finds the right view\n\nThe filling: YOUR VIEW runs. Queries the DB. Builds context. Returns a Response.\n\nThe layers going up (response phase):\n  Same middleware, in REVERSE order.\n  Each can modify the response, add headers, set cookies.\n\nThe bread on the bottom: WSGI server sends HTTP response.\n\nEvery single request. Every single time. The sandwich never changes shape — only the filling differs.\n\nrequest in, response out, nothing else matters.",
+    "code": null,
+    "link": { "url": "/django/lessons/08-views-urls/", "label": "middleware & lifecycle in Lesson 8 →" },
+    "likes": 1567,
+    "reposts": 345,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "This is also why MIDDLEWARE order in settings.py matters. SecurityMiddleware MUST be first (outermost bread). Put it at the bottom and you're checking HTTPS after you've already loaded a session and authenticated a user over plain HTTP. The sandwich collapses.",
+        "likes": 456
+      },
+      {
+        "author": "middlewareStack",
+        "content": "bread wraps bread wraps\nfilling is your fleeting view\nthe stack is eternal",
+        "likes": 378
+      }
+    ]
+  },
+  {
+    "id": "django-065",
+    "track": "django",
+    "type": "mentalModel",
+    "author": "managePy",
+    "time": "1d",
+    "content": "MENTAL MODEL: Django apps are like npm packages, but they live inside your project.\n\nIn Next.js, you organize by feature folders.\nIn Django, you organize by APPS.\n\nEach app is a self-contained unit:\n- models.py = the data schema for this feature\n- views.py = the route handlers for this feature\n- urls.py = the URL patterns for this feature\n- admin.py = the admin interface for this feature\n- tests.py = the tests for this feature\n\nAn app can be lifted out of one Django project and dropped into another. That's the design goal. A \"users\" app, an \"articles\" app, a \"payments\" app — each independent.\n\nINSTALLED_APPS in settings.py is your package.json. If it's not listed there, Django doesn't know it exists.\n\nThe whole framework is designed around this pattern. Fight it, and Django fights back. Embrace it, and everything clicks.",
+    "code": null,
+    "link": { "url": "/django/lessons/06-django-quickstart/", "label": "app architecture in Lesson 6 →" },
+    "likes": 934,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "migrationRunner",
+        "content": "Each app also gets its own migrations directory. This is crucial. When migrations conflict, it's per-app, not project-wide. Keep your apps focused and you'll have fewer migration headaches. Did you run makemigrations? For each app? Individually?",
+        "likes": 312
+      },
+      {
+        "author": "templateTag",
+        "content": "And each app can have its own templates/ directory. Django's template loader finds them automatically. No import statements. No barrel files. No index.ts re-exports. Just put the HTML there and it works.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "django-066",
+    "track": "django",
+    "type": "mentalModel",
+    "author": "queryset",
+    "time": "9h",
+    "content": "MENTAL MODEL: QuerySets are promises.\n\nNot JavaScript Promises — but the same IDEA. A QuerySet is a declaration of intent. It says \"I WILL get this data\" but doesn't actually do it yet.\n\n`Article.objects.filter(status='published')` — no query yet.\n`.order_by('-created')` — still no query.\n`.select_related('author')` — nope, still building.\n`[:10]` — still lazy.\n\nThe query fires when you CONSUME the data:\n- Iteration: `for a in queryset`\n- Slicing with step: `queryset[::2]`\n- len(): `len(queryset)`\n- list(): `list(queryset)`\n- bool(): `if queryset:`\n- Evaluation in templates: `{% for a in articles %}`\n\nThis is POWERFUL because you can build queries across multiple functions, conditionally add filters, and the database only gets hit once.\n\nBut it's also DANGEROUS because you can accidentally evaluate the same queryset multiple times in a template and hit the DB each time.\n\nhow many queries though? With lazy evaluation, the answer is \"depends on when you look.\"",
+    "code": null,
+    "link": { "url": "/django/lessons/07-models-orm/", "label": "QuerySet behavior in Lesson 7 →" },
+    "likes": 1123,
+    "reposts": 267,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "The QuerySet chaining pattern is one of Django's best ideas. You can pass a queryset from function to function, each one adding a filter, and the SQL builds up lazily. It's composable, testable, and efficient. There's a battery for that.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "django-067",
+    "track": "django",
+    "type": "til",
+    "author": "managePy",
+    "time": "3h",
+    "content": "TIL: `python manage.py dbshell` drops you directly into your database's command-line client (psql for Postgres, sqlite3 for SQLite). No connection string needed — it reads from settings.py.\n\nI've been manually typing `psql -U postgres -d mydb` like a caveman for years. The manage.py command has been there since Django 1.0. Back in Django 1.4 I had no excuse either.",
+    "code": null,
+    "link": null,
+    "likes": 456,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "Combine this with shell_plus --print-sql to compare the ORM-generated SQL with what you'd write by hand. They're usually identical. The ORM is smarter than most people give it credit for.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "django-068",
+    "track": "django",
+    "type": "til",
+    "author": "queryset",
+    "time": "18h",
+    "content": "TIL: Django's `Q()` objects let you build OR queries, which you CAN'T do with regular filter chaining.\n\n`.filter(a=1, b=2)` = WHERE a=1 AND b=2\n`.filter(a=1).filter(b=2)` = also AND\n\nBut what about OR? You need Q():",
+    "code": "from django.db.models import Q\n\n# Articles that are published OR written by the current user\nArticle.objects.filter(\n    Q(status='published') | Q(author=request.user)\n)\n\n# Complex: (published AND featured) OR (draft AND author=me)\nArticle.objects.filter(\n    (Q(status='published') & Q(featured=True)) |\n    (Q(status='draft') & Q(author=request.user))\n)\n\n# Negation: NOT draft\nArticle.objects.filter(~Q(status='draft'))\n\n# Dynamic queries (like building a search):\nquery = Q()\nif title_search:\n    query &= Q(title__icontains=title_search)\nif author_search:\n    query |= Q(author__name__icontains=author_search)\nArticle.objects.filter(query)",
+    "link": { "url": "/django/lessons/07-models-orm/", "label": "Q objects in Lesson 7 →" },
+    "likes": 623,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "innerJoin",
+        "content": "This is just WHERE with OR/AND/NOT in SQL. The ORM wraps it nicely but understanding the SQL underneath helps you debug when the query doesn't return what you expect. There's a join for that.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "django-069",
+    "track": "django",
+    "type": "til",
+    "author": "migrationRunner",
+    "time": "1d",
+    "content": "TIL: You can squash migrations in Django. If your app has 47 migrations and most are just AddField/RemoveField back-and-forth from a year of development, you can compress them:\n\n`python manage.py squashmigrations myapp 0001 0047`\n\nThis creates ONE migration that replaces all 47. The old ones stay around for compatibility but new deployments only run the squashed version.\n\nI wish I'd known this before The Great Migration Conflict of '24. 47 files. 47. I still see them when I close my eyes.",
+    "code": null,
+    "link": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Back in Django 1.4... actually, no, squashmigrations came in 1.7 with the entire new migrations framework. Before that we used South, which is a migration horror story in itself. Kids today don't appreciate what they have.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "django-070",
+    "track": "django",
+    "type": "poll",
+    "author": "managePy",
+    "time": "6h",
+    "content": "POLL: You need to read a JSON config file in your Django project. Which module do you use?\n\nA) `import json` + `open()` and parse manually\nB) `pathlib.Path().read_text()` + `json.loads()`\nC) `from django.conf import settings` and put it in settings.py\nD) `requests.get()` from a remote URL\n\nResults:\nA: 25% — Works but verbose. You're writing 4 lines for something that could be 2.\nB: 35% — CORRECT for file-based config. pathlib + json is the modern Pythonic way. One line to read, one to parse.\nC: 30% — Better for app config that doesn't change at runtime. settings.py runs once at startup.\nD: 10% — Only if the config genuinely lives remotely. Don't fetch what you can read locally.\n\nKey insight: `pathlib.Path('config.json').read_text()` gives you the whole file as a string. `json.loads()` parses it. Two lines, done. No `with open() as f:` needed for simple reads.",
+    "code": null,
+    "link": { "url": "/django/lessons/05-python-data-files/", "label": "Python file I/O in Lesson 5 →" },
+    "likes": 345,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "templateTag",
+        "content": "B is also the most testable. You can mock Path.read_text() in tests. Good luck mocking settings.py without Django's override_settings decorator. Actually, that decorator exists and it's great. No build step required.",
+        "likes": 145
+      }
+    ]
+  },
+  {
+    "id": "django-071",
+    "track": "django",
+    "type": "poll",
+    "author": "queryset",
+    "time": "2d",
+    "content": "POLL: Your Django view needs to show a user's 10 most recent orders with the customer name for each. How do you write the query?\n\nA) `Order.objects.all()[:10]` and access `.customer.name` in the template\nB) `Order.objects.select_related('customer')[:10]`\nC) `Order.objects.prefetch_related('customer')[:10]`\nD) `Order.objects.filter(customer__isnull=False)[:10]`\n\nResults:\nA: 15% — Works but N+1. 1 query for orders + 10 queries for each customer. 11 total.\nB: 55% — CORRECT. select_related does a JOIN. 1 query total. Customer is a ForeignKey, so JOIN is the right strategy.\nC: 20% — Not wrong, but suboptimal. prefetch_related does 2 queries (one for orders, one for customers). Use this for ManyToMany, not ForeignKey.\nD: 10% — This filters out orders without customers but doesn't optimize the customer lookup. Still N+1.\n\nhow many queries though? B wins. Always.",
+    "code": null,
+    "link": null,
+    "likes": 478,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "nullHandler",
+        "content": "Option D at least acknowledges that some orders might not HAVE a customer. What happens when you select_related on a nullable FK and the customer is None? You get None, not an error. But the absence is still there, lurking.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "django-072",
+    "track": "django",
+    "type": "eli5",
+    "author": "middlewareStack",
+    "time": "8h",
+    "content": "ELI5: Django views for JavaScript developers.\n\nYou know how in Next.js you write a function in `app/api/users/route.ts` and it handles GET requests to `/api/users`?\n\nDjango is the same idea but in two steps:\n\nStep 1: Write the function (in views.py)\nStep 2: Connect it to a URL (in urls.py)\n\nThat's it. In Next.js, the file path IS the URL. In Django, you explicitly declare the URL yourself.\n\nNext.js: file at `/app/articles/[id]/page.tsx` → automatically handles `/articles/42`\nDjango: function in views.py + `path('articles/<int:id>/', views.article_detail)` in urls.py\n\nMore typing? Yes. More control? Also yes. You can rearrange URLs without moving files. You can have two URLs point to the same view. You can read urls.py and see EVERY route in your app at a glance.\n\nExplicit is better than implicit. That's not just a Python motto — it's how Django thinks about everything.",
+    "code": null,
+    "link": { "url": "/django/lessons/08-views-urls/", "label": "views & URLs in Lesson 8 →" },
+    "likes": 876,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "templateTag",
+        "content": "\"You can read urls.py and see EVERY route in your app at a glance.\" This. Try doing that in a Next.js app with 60 route groups, parallel routes, and intercepting routes. You need a file explorer and 20 minutes. I need `cat urls.py`.",
+        "likes": 345
+      },
+      {
+        "author": "managePy",
+        "content": "And `python manage.py show_urls` (from django-extensions) prints every URL in your entire project with the view function it maps to. There's a battery for that. Actually, there's an extension for that. Close enough.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "django-073",
+    "track": "django",
+    "type": "commitMsg",
+    "author": "migrationRunner",
+    "time": "5h",
+    "content": "COMMIT MSG FROM HELL spotted in the Stacksworth Inc. repo at 11:47 PM on a Friday:\n\ncommit a3f8e2d\nAuthor: panicking_intern\nDate: Fri Mar 13 23:47:12 2026\n\n    fixed migrations\n\n    47 files changed, 2,891 insertions(+), 1,204 deletions(-)\n\nThe files changed: every single migration in the project. All 47 of them. The intern had migration conflicts, couldn't figure out `--merge`, so they deleted ALL migrations and ran `makemigrations` fresh. On the production branch.\n\nThe database thought it was on migration 0034. The code now started at 0001. The deployment tried to create tables that already existed.\n\nIt took us 6 hours to fix. On a Saturday. The intern brought donuts on Monday. We forgave them. We did NOT forget.",
+    "code": null,
+    "link": null,
+    "likes": 2567,
+    "reposts": 634,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Back in Django 1.4, we used South for migrations and this kind of thing happened MONTHLY. At least the modern migration system has --merge. The intern's mistake was not knowing it existed. The team's mistake was not teaching them.",
+        "likes": 534
+      },
+      {
+        "author": "queryset",
+        "content": "47 files changed. 47. That's not a migration, that's an extinction event. How many queries did the failed deployment generate? I don't want to know. But also I need to know.",
+        "likes": 456
+      },
+      {
+        "author": "migrationRunner",
+        "content": "This is now Chapter 12 of Migration Horror Stories: \"The Intern, The Friday, and The 47 Files.\" It's required reading for every new hire at Stacksworth. Did they run makemigrations? They ran it too well.",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "django-074",
+    "track": "django",
+    "type": "ratiod",
+    "author": "migrationRunner",
+    "time": "12h",
+    "content": "Django is dying. Look at the numbers. FastAPI has more GitHub stars. Async is the future. Django's sync-first architecture can't compete in 2026.\n\nIf you're starting a new project today, there's no reason to pick Django over FastAPI. Faster runtime, better typing, modern Python.\n\nI said what I said.",
+    "code": null,
+    "link": null,
+    "likes": 234,
+    "reposts": 567,
+    "comments": [
+      {
+        "author": "managePy",
+        "content": "Love you Miggy but this is wrong and you know it.\n\nGitHub stars != production usage. FastAPI is excellent for lightweight APIs and microservices. Django is excellent for full applications with admin panels, auth, ORM, forms, templates, and 15 years of battle-tested packages.\n\nDjango has had async views since 4.1. Async ORM since 5.0. It's not standing still.\n\nThe Stacksworth monolith serves 2M requests/day on Django. It's been running for 6 years. It has an admin panel, background tasks, REST API, and a template-rendered frontend. Rebuilding that in FastAPI would take a year and you'd end up reimplementing half of Django badly.\n\nPick Django when you need a full-featured web framework. Pick FastAPI when you need a lightweight API layer. They solve different problems. This isn't a contest.",
+        "likes": 1876
+      },
+      {
+        "author": "templateTag",
+        "content": "\"Django is dying\" has been posted every year since 2014. Django outlived: Tornado, Twisted web, Flask as an API framework, and three generations of Node.js frameworks. It'll be here when the next shiny thing arrives too. [days since someone declared Django dead: 0]",
+        "likes": 1234
+      },
+      {
+        "author": "queryset",
+        "content": "FastAPI doesn't even have a built-in ORM. You're going to use SQLAlchemy and write your own select_related equivalent? Good luck counting those queries without django-debug-toolbar. How many queries though? You'll never know.",
+        "likes": 987
+      }
+    ]
+  },
+  {
+    "id": "django-075",
+    "track": "django",
+    "type": "slackPost",
+    "author": "managePy",
+    "time": "1d",
+    "content": "found this in #backend at Stacksworth Inc.:\n\nnew_dev: where do I put my API logic? I made a utils.py in the project root\nsenior_dev: no\nnew_dev: services.py?\nsenior_dev: closer but no\nnew_dev: helpers.py???\nsenior_dev: what does the logic DO\nnew_dev: it fetches article data, processes it, and returns JSON\nsenior_dev: that's a view. put it in views.py. in the articles app.\nnew_dev: but it's not a \"view\" it's business logic\nsenior_dev: in Django, a view IS the business logic layer. it's not a visual component. it's a request handler.\nnew_dev: ...oh. so it's like a Next.js API route?\nsenior_dev: exactly like a Next.js API route. the word \"view\" is lying to you.\nnew_dev: django naming things is violence\nsenior_dev: correct. welcome to the team.\n\nThe hardest part of Django for JS developers isn't the code. It's the vocabulary.",
+    "code": null,
+    "link": { "url": "/django/lessons/08-views-urls/", "label": "views explained in Lesson 8 →" },
+    "likes": 1345,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "middlewareStack",
+        "content": "\"A view is not a view\" — the koan that breaks every React developer's brain on day one of Django. The naming is historical. The function predates the confusion. request in, response out. That is all a view is.",
+        "likes": 456
+      },
+      {
+        "author": "templateTag",
+        "content": "In React, a \"component\" renders UI. In Django, a \"view\" handles a request. They're both the primary unit of work. They're just named after different parts of the MVC pattern. Django picked the wrong letter and committed to it for 20 years. Respect the commitment.",
+        "likes": 312
+      }
+    ]
+  }
+]

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn D3 - Trevor's Workshop</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      min-height: 100vh;
+    }
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #f97316; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover, .nav a.active {
+      background: #f97316;
+      color: #000;
+      border-color: #f97316;
+    }
+    .main {
+      padding: 2rem 3rem;
+      max-width: 1200px;
+    }
+    .main h2 { margin-bottom: 1rem; font-size: 1.3rem; }
+    .lesson-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+    .lesson-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: border-color 0.2s;
+    }
+    .lesson-card:hover { border-color: #f97316; }
+    .lesson-card h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .lesson-card .num {
+      color: #f97316;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .lesson-card p { color: #888; font-size: 0.85rem; line-height: 1.5; }
+    .lesson-card a {
+      display: inline-block;
+      margin-top: 0.75rem;
+      color: #f97316;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    .chart-container {
+      margin-top: 2rem;
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 2rem;
+    }
+    .chart-container h3 { margin-bottom: 1rem; }
+    #sandbox svg { background: #1a1a1a; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Learn <span>D3</span>.js</h1>
+    <div class="meta">Expert fundamentals &middot; 2 weeks</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/d3/" class="active">Home</a>
+    <a href="/d3/lessons/01-fundamentals/">01 SVG</a>
+    <a href="/d3/lessons/02-selections-data/">02 Scales</a>
+    <a href="/d3/lessons/03-scales-axes/">03 Selections</a>
+    <a href="/d3/lessons/04-shapes-bindings/">04 Data</a>
+    <a href="/d3/lessons/05-maps-geo/">05 Scales</a>
+    <a href="/d3/lessons/06-transitions-interactivity/">06 Axes</a>
+    <a href="/d3/lessons/07-lines-areas/">07 Updates</a>
+    <a href="/d3/lessons/08-arcs-pies/">08 Lines</a>
+    <a href="/d3/lessons/09-maps-geo/">09 Arcs</a>
+    <a href="/d3/lessons/10-interactivity/">10 Maps</a>
+    <a href="/d3/lessons/11-d3-react/">11 Interactive</a>
+    <a href="/d3/lessons/12-capstone/">12 Capstone</a>
+    <a href="/d3/references/use-cases/" style="color: #818cf8;">Use Cases</a>
+    <a href="/d3/games/" style="color: #4ade80;">Games</a>
+    <a href="/d3/projects/" style="color: #f472b6; font-weight: 600;">Portfolio</a>
+    <a href="/d3/workstation/save-act/" style="color: #f472b6;">Workstation</a>
+    <a href="/about/">About</a>
+  </nav>
+
+  <div class="main">
+    <h2>Week 1: The Foundation</h2>
+    <div class="lesson-grid">
+      <div class="lesson-card">
+        <div class="num">Lesson 01</div>
+        <h3>Pure SVG</h3>
+        <p>No JavaScript. Just HTML tags for shapes. The canvas D3 paints on.</p>
+        <a href="/d3/lessons/01-fundamentals/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 02</div>
+        <h3>Scales &amp; Axes</h3>
+        <p>Translate data to pixels. Linear, band, time, and color scales plus axis generators.</p>
+        <a href="/d3/lessons/02-selections-data/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 03</div>
+        <h3>D3 Selections Deep Dive</h3>
+        <p>select, selectAll, attr, style, append, remove. Method chaining.</p>
+        <a href="/d3/lessons/03-scales-axes/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 04</div>
+        <h3>Data Binding</h3>
+        <p>The ONE concept that makes D3 different. .data().join() and accessor functions.</p>
+        <a href="/d3/lessons/04-shapes-bindings/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 05</div>
+        <h3>Scales - The Translator</h3>
+        <p>The translator: data &rarr; pixels. Linear, band, time, color.</p>
+        <a href="/d3/lessons/05-maps-geo/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 06</div>
+        <h3>Axes &amp; Margins Convention</h3>
+        <p>Labels for scales. The margins convention every chart uses.</p>
+        <a href="/d3/lessons/06-transitions-interactivity/">Start lesson &rarr;</a>
+      </div>
+    </div>
+
+    <h2 style="margin-top: 2rem;">Week 2: Building Real Things</h2>
+    <div class="lesson-grid">
+      <div class="lesson-card">
+        <div class="num">Lesson 07</div>
+        <h3>Enter/Update/Exit</h3>
+        <p>What happens when data changes. The wedding seating chart model.</p>
+        <a href="/d3/lessons/07-lines-areas/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 08</div>
+        <h3>Lines & Areas</h3>
+        <p>Path generators, time series, confidence bands, curves.</p>
+        <a href="/d3/lessons/08-arcs-pies/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 09</div>
+        <h3>Arcs & Pies</h3>
+        <p>Donut charts, pie charts, radial layouts.</p>
+        <a href="/d3/lessons/09-maps-geo/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 10</div>
+        <h3>Maps & Geography</h3>
+        <p>Projections, choropleth, TopoJSON. Flattening a globe.</p>
+        <a href="/d3/lessons/10-interactivity/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 11</div>
+        <h3>Interactivity & Polish</h3>
+        <p>Tooltips, transitions, responsive, accessibility.</p>
+        <a href="/d3/lessons/11-d3-react/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 12</div>
+        <h3>Capstone Dashboard</h3>
+        <p>Everything combined. Map + charts + filters. Interview-ready.</p>
+        <a href="/d3/lessons/12-capstone/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card" style="border-color: #818cf844;">
+        <div class="num" style="color: #818cf8;">Reference</div>
+        <h3>D3 in Production</h3>
+        <p>15 real-world use cases with live mini-demos.</p>
+        <a href="/d3/references/use-cases/" style="color: #818cf8;">View use cases &rarr;</a>
+      </div>
+      <div class="lesson-card" style="border-color: #4ade8044;">
+        <div class="num" style="color: #4ade80;">Practice</div>
+        <h3>Games &amp; Quizzes</h3>
+        <p>10 interactive games: shape quiz, code reader, scale calculator, memory match, speed round &amp; more.</p>
+        <a href="/d3/games/" style="color: #4ade80;">Play games &rarr;</a>
+      </div>
+      <div class="lesson-card" style="border-color: #f472b644; background: linear-gradient(135deg, #141414, #1a1020);">
+        <div class="num" style="color: #f472b6;">Portfolio</div>
+        <h3>Interview Projects</h3>
+        <p>4 production-quality D3 visualizations with real data: campaign finance, census maps, weather trends, election night.</p>
+        <a href="/d3/projects/" style="color: #f472b6; font-weight: 600;">View portfolio &rarr;</a>
+      </div>
+    </div>
+
+    <div class="chart-container" id="sandbox">
+      <h3>Live Sandbox</h3>
+      <p style="color: #888; font-size: 0.85rem; margin-bottom: 1rem;">
+        Run <code style="color: #f97316;">npm run dev</code> to start the dev server, then open the lesson pages.
+      </p>
+      <div id="demo-chart"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+
+    // Quick demo: animated bar chart on the home page
+    const data = [
+      { state: "CA", pop: 39538 },
+      { state: "TX", pop: 29146 },
+      { state: "FL", pop: 21538 },
+      { state: "NY", pop: 20201 },
+      { state: "PA", pop: 13002 },
+      { state: "IL", pop: 12812 },
+      { state: "OH", pop: 11799 },
+      { state: "GA", pop: 10711 },
+    ];
+
+    const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+    const width = 700 - margin.left - margin.right;
+    const height = 300 - margin.top - margin.bottom;
+
+    const svg = d3.select("#demo-chart")
+      .append("svg")
+      .attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`)
+      .append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const x = d3.scaleBand()
+      .domain(data.map(d => d.state))
+      .range([0, width])
+      .padding(0.2);
+
+    const y = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d.pop)])
+      .nice()
+      .range([height, 0]);
+
+    svg.append("g")
+      .attr("transform", `translate(0,${height})`)
+      .call(d3.axisBottom(x))
+      .selectAll("text")
+      .attr("fill", "#888");
+
+    svg.append("g")
+      .call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d / 1000}k`))
+      .selectAll("text")
+      .attr("fill", "#888");
+
+    svg.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+    svg.selectAll("rect")
+      .data(data)
+      .join("rect")
+      .attr("x", d => x(d.state))
+      .attr("width", x.bandwidth())
+      .attr("y", height)
+      .attr("height", 0)
+      .attr("fill", "#f97316")
+      .attr("rx", 3)
+      .transition()
+      .duration(800)
+      .delay((d, i) => i * 80)
+      .attr("y", d => y(d.pop))
+      .attr("height", d => height - y(d.pop));
+
+    svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", -5)
+      .attr("text-anchor", "middle")
+      .attr("fill", "#666")
+      .attr("font-size", "12px")
+      .text("Top 8 US States by Population (thousands)");
+  </script>
+</body>
+</html>

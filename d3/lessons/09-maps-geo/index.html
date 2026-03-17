@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 09 - Arcs, Pies & Radial Charts</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #f97316; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #f97316; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #f97316; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #f97316; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .demo h4 { color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .demo svg { background: #1a1a1a; border-radius: 4px; display: block; }
+    .quiz { background: #1a1500; border: 1px solid #f9731644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #f97316; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #f97316; text-decoration: none; }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #1a0a00; border-left: 3px solid #f97316; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #fdba74; }
+    .aha strong { color: #f97316; }
+    .legend-item { display: inline-flex; align-items: center; gap: 0.4rem; margin-right: 1rem; font-size: 0.8rem; color: #888; }
+    .legend-item span.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>09</span> Arcs, Pies &amp; Radial Charts</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #f97316;">Mental Model:</strong> Two tools, two jobs. <code>d3.pie()</code> computes the angles (divides the circle). <code>d3.arc()</code> draws the slices (generates path strings from angles). They always work together.</p>
+
+    <h2>The Two-Step Process</h2>
+
+    <pre><code><span class="comment">// Step 1: pie() transforms data into angles</span>
+const pie = d3.pie()
+  .value(d => d.amount)    <span class="comment">// which field to use for proportions</span>
+  .sort(null);             <span class="comment">// keep original order (don't re-sort)</span>
+
+const arcsData = pie(data);
+<span class="comment">// Each item now has: { startAngle, endAngle, data, value }</span>
+
+<span class="comment">// Step 2: arc() generates SVG path strings from angles</span>
+const arc = d3.arc()
+  .innerRadius(0)          <span class="comment">// 0 = pie, > 0 = donut</span>
+  .outerRadius(150);
+
+<span class="comment">// Step 3: Combine them</span>
+svg.selectAll("path")
+  .data(arcsData)          <span class="comment">// data is the pie-computed angles</span>
+  .join("path")
+  .attr("d", arc)          <span class="comment">// arc() reads startAngle/endAngle</span>
+  .attr("fill", (d, i) => colors[i]);</code></pre>
+
+    <div class="aha">
+      <p><strong>pie() does NOT draw anything.</strong> It only computes angles. arc() does NOT know about your data. It only reads angles. Separating computation from drawing is a D3 design principle &mdash; it gives you full control over layout and appearance independently.</p>
+    </div>
+
+    <h3>Donut vs Pie</h3>
+    <pre><code><span class="comment">// Pie chart: innerRadius = 0</span>
+d3.arc().innerRadius(0).outerRadius(150)
+
+<span class="comment">// Donut chart: innerRadius > 0</span>
+d3.arc().innerRadius(70).outerRadius(150)
+
+<span class="comment">// The center space is great for summary text</span></code></pre>
+
+    <h3>Centroid for Labels</h3>
+    <pre><code><span class="comment">// arc.centroid() returns [x, y] of the midpoint of the arc</span>
+<span class="comment">// Perfect for positioning labels</span>
+const labelArc = d3.arc()
+  .innerRadius(outerRadius * 0.7)
+  .outerRadius(outerRadius * 0.7);
+
+svg.selectAll("text")
+  .data(arcsData)
+  .join("text")
+  .attr("transform", d => `translate(${labelArc.centroid(d)})`)
+  .text(d => d.data.label);</code></pre>
+
+    <!-- ============================================ -->
+    <!-- DEMO 1: CAMPAIGN FINANCE DONUT               -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Campaign Finance Donut Chart</h2>
+
+    <div class="demo">
+      <h4>Live: Congressional campaign funding sources</h4>
+      <div id="donut-chart" style="text-align: center;"></div>
+      <div id="donut-legend" style="margin-top: 1rem; text-align: center;"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 2: ANIMATED ARC ENTRANCE                -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Animated Arc Entrance</h2>
+    <p>Arcs tween from 0 to their final angle using D3's <code>attrTween</code>.</p>
+
+    <div class="demo">
+      <h4>Live: Budget breakdown with animated entrance</h4>
+      <div id="animated-donut" style="text-align: center;"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What does <code>d3.pie()</code> return when you call it with data?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">An array of objects, each with <code>startAngle</code>, <code>endAngle</code>, <code>data</code> (original datum), <code>value</code>, <code>index</code>, and <code>padAngle</code>. The angles are in radians and sum to 2*pi. These angle objects are what <code>d3.arc()</code> reads to draw slices.</div>
+      </div>
+
+      <div class="question">
+        <p>2. How do you make a donut chart instead of a pie chart?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Set <code>innerRadius</code> to a value greater than 0 in the arc generator: <code>d3.arc().innerRadius(70).outerRadius(150)</code>. When innerRadius = 0, you get a full pie. When it is > 0, you get a donut with a hole in the center.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why pass <code>.sort(null)</code> to <code>d3.pie()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">By default, <code>d3.pie()</code> sorts slices by descending value. <code>.sort(null)</code> tells it to keep the original data order. This is important when the data has a meaningful order (e.g., chronological, or matching a legend) or when you want consistent positioning across updates.</div>
+      </div>
+
+      <div class="question">
+        <p>4. How do you position labels at the center of each arc slice?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use <code>arc.centroid(d)</code> which returns an [x, y] array for the midpoint of the arc. Create a label-specific arc generator with radius set to where you want labels (e.g., 70% of outer radius), then use <code>translate(${labelArc.centroid(d)})</code> to position text elements.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What does <code>.padAngle(0.02)</code> do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It adds a small gap (in radians) between adjacent slices, making them visually distinct. Combined with <code>.cornerRadius(4)</code>, it gives the donut chart a polished, modern look. The padding is subtracted from each slice proportionally.</div>
+      </div>
+
+      <div class="question">
+        <p>6. How do you animate arcs growing from 0 to their final angle?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use <code>attrTween("d", ...)</code> with a custom interpolator. Start each arc's <code>endAngle</code> at its <code>startAngle</code> (0 size), then interpolate to the final <code>endAngle</code>. The arc generator is called at each frame of the transition to produce the intermediate path string.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Donut Chart from Donation Data</h4>
+      <p>Create a donut chart showing campaign donation sources:</p>
+      <pre><code>const donations = [
+  { source: "Individual &lt;$200", amount: 1_250_000 },
+  { source: "Individual $200-$2900", amount: 2_800_000 },
+  { source: "PAC", amount: 950_000 },
+  { source: "Party Committee", amount: 400_000 },
+  { source: "Self-Funded", amount: 500_000 },
+];</code></pre>
+      <ol>
+        <li>Use <code>d3.pie().value(d => d.amount)</code> to compute angles</li>
+        <li>Use <code>d3.arc()</code> with innerRadius > 0 for donut style</li>
+        <li>Add percentage labels using arc centroid positioning</li>
+        <li>Put the total raised amount in the center</li>
+        <li>Add a legend below the chart</li>
+        <li>Animate the arcs appearing one by one with delay</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>d3.pie()</strong> computes angles from data values</li>
+      <li><strong>d3.arc()</strong> draws SVG paths from angles</li>
+      <li><strong>innerRadius = 0</strong> is pie, <strong>&gt; 0</strong> is donut</li>
+      <li><strong>arc.centroid()</strong> gives the midpoint for label positioning</li>
+      <li><strong>.padAngle()</strong> and <strong>.cornerRadius()</strong> for polish</li>
+      <li><strong>attrTween</strong> enables smooth arc animations</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/08-arcs-pies/">&larr; Lesson 08: Lines &amp; Areas</a>
+      <a href="/d3/lessons/10-interactivity/">Lesson 10: Maps &amp; Geography &rarr;</a>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+
+    // =============================================
+    // Demo 1: Campaign Finance Donut
+    // =============================================
+    (() => {
+      const data = [
+        { source: "Individual ($200+)", amount: 2_850_000, color: "#f97316" },
+        { source: "Small Dollar (<$200)", amount: 1_420_000, color: "#fbbf24" },
+        { source: "PAC Contributions", amount: 980_000, color: "#818cf8" },
+        { source: "Party Committees", amount: 450_000, color: "#4ade80" },
+        { source: "Self-Funded", amount: 750_000, color: "#f472b6" },
+        { source: "Other", amount: 180_000, color: "#64748b" },
+      ];
+
+      const size = 420;
+      const outerR = size / 2 - 30;
+      const innerR = outerR * 0.55;
+
+      const svg = d3.select("#donut-chart").append("svg")
+        .attr("viewBox", `0 0 ${size} ${size}`)
+        .style("max-width", "420px")
+        .append("g").attr("transform", `translate(${size/2},${size/2})`);
+
+      const pie = d3.pie().value(d => d.amount).sort(null).padAngle(0.02);
+      const arc = d3.arc().innerRadius(innerR).outerRadius(outerR).cornerRadius(4);
+      const labelArc = d3.arc().innerRadius(outerR * 0.75).outerRadius(outerR * 0.75);
+
+      const total = d3.sum(data, d => d.amount);
+
+      // Slices with staggered entrance
+      svg.selectAll("path").data(pie(data)).join("path")
+        .attr("d", arc).attr("fill", d => d.data.color)
+        .attr("stroke", "#141414").attr("stroke-width", 1)
+        .style("opacity", 0)
+        .transition().duration(500).delay((d, i) => i * 100)
+        .style("opacity", 1);
+
+      // Percentage labels
+      svg.selectAll(".pct").data(pie(data)).join("text")
+        .attr("class", "pct")
+        .attr("transform", d => `translate(${labelArc.centroid(d)})`)
+        .attr("text-anchor", "middle").attr("dominant-baseline", "middle")
+        .attr("fill", "#fff").attr("font-size", "11").attr("font-weight", "bold")
+        .text(d => {
+          const pct = d.data.amount / total * 100;
+          return pct > 5 ? `${pct.toFixed(0)}%` : "";
+        });
+
+      // Center text
+      svg.append("text").attr("text-anchor", "middle").attr("dominant-baseline", "middle")
+        .attr("fill", "#e5e5e5").attr("font-size", "18").attr("font-weight", "bold")
+        .text(d3.format("$,.2s")(total));
+      svg.append("text").attr("text-anchor", "middle").attr("y", 22)
+        .attr("fill", "#888").attr("font-size", "11").text("Total Raised");
+
+      // Legend
+      const legend = d3.select("#donut-legend");
+      data.forEach(d => {
+        const item = legend.append("span").attr("class", "legend-item");
+        item.append("span").attr("class", "swatch").style("background", d.color);
+        item.append("span").text(`${d.source}: ${d3.format("$,.0f")(d.amount)}`);
+      });
+    })();
+
+    // =============================================
+    // Demo 2: Animated arc entrance
+    // =============================================
+    (() => {
+      const data = [
+        { dept: "Public Safety", amount: 45.2, color: "#ef4444" },
+        { dept: "Education", amount: 38.5, color: "#3b82f6" },
+        { dept: "Infrastructure", amount: 22.1, color: "#f97316" },
+        { dept: "Healthcare", amount: 18.7, color: "#4ade80" },
+        { dept: "Housing", amount: 15.8, color: "#a78bfa" },
+        { dept: "Transit", amount: 12.3, color: "#fbbf24" },
+      ];
+
+      const size = 380;
+      const outerR = size / 2 - 30;
+      const innerR = outerR * 0.5;
+
+      const svg = d3.select("#animated-donut").append("svg")
+        .attr("viewBox", `0 0 ${size} ${size}`)
+        .style("max-width", "380px")
+        .append("g").attr("transform", `translate(${size/2},${size/2})`);
+
+      const pie = d3.pie().value(d => d.amount).sort(null).padAngle(0.015);
+      const arc = d3.arc().innerRadius(innerR).outerRadius(outerR).cornerRadius(3);
+
+      // Animated entrance: arcs grow from 0
+      svg.selectAll("path").data(pie(data)).join("path")
+        .attr("fill", d => d.data.color)
+        .attr("stroke", "#141414").attr("stroke-width", 1)
+        .each(function(d) { this._current = { ...d, endAngle: d.startAngle }; })
+        .transition().duration(800).delay((d, i) => i * 120)
+        .attrTween("d", function(d) {
+          const interpolate = d3.interpolate(this._current, d);
+          this._current = interpolate(1);
+          return t => arc(interpolate(t));
+        });
+
+      // Labels appear after animation
+      const labelArc = d3.arc().innerRadius(outerR * 0.75).outerRadius(outerR * 0.75);
+      svg.selectAll(".label").data(pie(data)).join("text")
+        .attr("class", "label")
+        .attr("transform", d => `translate(${labelArc.centroid(d)})`)
+        .attr("text-anchor", "middle").attr("dominant-baseline", "middle")
+        .attr("fill", "#fff").attr("font-size", "10").attr("font-weight", "bold")
+        .attr("opacity", 0)
+        .text(d => d.data.dept)
+        .transition().delay((d, i) => i * 120 + 600).duration(300)
+        .attr("opacity", 1);
+
+      svg.append("text").attr("text-anchor", "middle").attr("fill", "#888")
+        .attr("font-size", "12").attr("y", -6).text("City Budget");
+      svg.append("text").attr("text-anchor", "middle").attr("fill", "#e5e5e5")
+        .attr("font-size", "16").attr("font-weight", "bold").attr("y", 14)
+        .text("$" + d3.sum(data, d => d.amount).toFixed(0) + "M");
+    })();
+  </script>
+</body>
+</html>

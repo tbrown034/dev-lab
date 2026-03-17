@@ -1,0 +1,143 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+LESSON TITLE: Lesson 05 - Scales: The Translator (Deep Dive)
+TRACK: D3.js (12-lesson curriculum)
+
+--- CONTEXT FOR HOSTS ---
+
+Curriculum Position: Lesson 5 of 12. This deepens the scales concept from Lesson 02 with more scale types, practical usage patterns, and interactive exploration. After learning data binding in Lesson 04, Trevor can now wire scales directly into data-driven attribute functions. Next comes Lesson 06 (axes and margins in depth).
+
+What came before: Lesson 02 introduced scaleLinear, scaleBand, scaleTime, scaleSequential. Lesson 04 taught data binding, so now scales feed into accessor functions.
+
+What's coming next: Lesson 06 covers axes and the margins convention in full detail.
+
+What Trevor already knows: Basic scale concept from Lesson 02, React utility functions, TypeScript function types.
+
+Learner's goal: Broadcast TV visualizations need diverse scale types -- linear for vote counts, band for candidate labels, time for timelines, sequential for map colors, sqrt for proportional bubble sizes, ordinal for party colors.
+
+Specific analogies for THIS lesson:
+- Scales as "translation dictionaries" -- different dictionaries for different data types
+- scaleSqrt exists because human perception of circle SIZE is based on area, not radius
+- .nice() is like rounding to a clean number for a news headline -- "$47,892" becomes "about $48k"
+- .invert() is the reverse translator -- given a pixel position, what data value is it?
+- .clamp(true) is like setting min/max bounds on acceptable output
+
+Key mental models:
+- A scale is just a function: data in, pixels (or colors) out
+- Choose the scale type based on your data type: numbers=linear, categories=band, dates=time, colors=sequential
+- Y range always flipped, X range normal
+- .nice() for clean axes, .invert() for mouse interaction
+
+--- LESSON CONTENT ---
+
+The Problem (Revisited)
+
+Magic numbers like d.pop / 150 are fragile. Change the data or chart size and everything breaks. Scales solve this permanently by creating reusable translator functions configured with domain (data range) and range (pixel range).
+
+Domain and Range: The Two Settings
+
+Domain = input range (data world). "My data goes from 0 to 40 million."
+Range = output range (pixel world). "My chart area is 0 to 600 pixels wide."
+
+A scale is just a function. Call it with a data value, get a pixel value back. d3.scaleLinear() creates the function; .domain() and .range() configure it.
+
+Scale Types: Pick the Right Translator
+
+1. scaleLinear -- continuous numbers (population, money, temperature, percentages). For Y-axis, range is FLIPPED: .range([height, 0]) because SVG Y goes top-down.
+
+2. scaleBand -- categories (bar chart X-axis). Divides space evenly. Provides .bandwidth() for bar width. .padding() for gaps between bars.
+
+3. scaleTime -- dates. Maps Date objects to pixels. Used for time series X-axes.
+
+4. scaleSequential -- data to colors. Maps numbers to colors using interpolators. Essential for choropleth maps and heatmaps. d3.interpolateBlues goes light-to-dark blue. d3.interpolateViridis is colorblind-safe.
+
+5. scaleSqrt -- area-proportional sizing. For bubble charts: use sqrt so AREA scales linearly with data. If you linearly map population to radius, a city 4x larger gets a circle 16x larger (by area), which is visually misleading.
+
+6. scaleOrdinal -- categories to discrete values. Map party names to specific colors: Democrat -> blue, Republican -> red.
+
+7. scaleLog -- huge ranges (income distribution). Logarithmic scaling for data spanning many orders of magnitude.
+
+Essential Scale Methods
+
+.nice() -- rounds domain to clean numbers. Domain [3.2, 97.8] becomes [0, 100]. Always call after setting domain.
+
+.invert() -- reverse translator. Given a pixel position, returns the data value. Only works on linear/time scales. Essential for mouse interaction (converting cursor position to data coordinates).
+
+.clamp(true) -- prevents out-of-range outputs. Input beyond the domain still returns values within the range.
+
+Quick Reference Table:
+- scaleLinear: numbers (pop, money, %) -> continuous pixels
+- scaleBand: categories -> pixel bands (with .bandwidth())
+- scaleTime: dates -> continuous pixels
+- scaleSequential: numbers -> colors
+- scaleSqrt: numbers -> continuous (area-proportional)
+- scaleOrdinal: categories -> discrete values (colors)
+- scaleLog: huge numeric ranges -> continuous pixels
+
+--- KEY CONCEPTS TO EMPHASIZE ---
+
+1. Choose scale type based on data type: numbers=linear, categories=band, dates=time
+2. scaleSqrt for proportional AREA (bubble charts) -- because area = pi * r^2
+3. scaleSequential for color mapping in choropleth maps
+4. .nice() for clean axis boundaries, .invert() for mouse-to-data conversion
+5. Y range is ALWAYS flipped: [height, 0]
+
+--- COMMON PITFALLS ---
+
+- Using scaleLinear for bubble radius instead of scaleSqrt (creates visually misleading size comparisons)
+- Forgetting .nice() and getting ugly axis labels like 0, 7907, 15815
+- Not flipping the Y range (bars grow downward instead of upward)
+- Trying to use .invert() on a scaleBand (it only works on continuous scales)
+- Using the wrong color interpolator for accessibility (interpolateViridis is colorblind-safe, many others aren't)
+
+--- BROADCAST TV CONNECTION ---
+
+- Election dashboards use scaleOrdinal for party colors (Democrat blue, Republican red, Independent purple)
+- Weather maps use scaleSequential with temperature interpolators (blue cold, red hot)
+- Census bubble maps use scaleSqrt so population circles are proportional by area
+- Economic timelines use scaleTime for the X-axis
+- Income inequality visualizations use scaleLog to handle ranges from $20k to $10M
+- .invert() enables the "hover over the chart to see exact values" interaction used in broadcast graphics
+
+
+========================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+========================================
+
+PODCAST CUSTOMIZATION FOR LESSON 05: Scales Deep Dive
+
+TARGET MENTAL MODELS:
+- "Pick the right dictionary for your data type" -- scales as type-specific translators
+- scaleSqrt as "correcting for human perception" -- our eyes judge area, not radius
+- .nice() as "rounding for the headline" -- clean numbers for clean charts
+- .invert() as "the reverse lookup" -- pixel position back to data value
+
+SPECIFIC ANALOGIES TO USE:
+- "Choosing a scale is like choosing a unit conversion. You wouldn't use the Fahrenheit-to-Celsius formula to convert miles to kilometers. Same idea -- different data types need different scale types."
+- "scaleSqrt is like adjusting a photo for color accuracy. The raw numbers are technically correct, but human eyes perceive them differently. Sqrt corrects for how we perceive circle area."
+- "As a journalist, when you round '$47,892' to 'about $48k' for a headline, that's what .nice() does for your axes. Clean numbers that readers (or viewers) can quickly understand."
+- ".invert() is like the reverse of a lookup table. You know the pixel position of the user's mouse; .invert() tells you 'that's hovering over the year 2022' or 'that's $75,000 in income.'"
+
+CONNECTIONS TO OTHER LESSONS:
+- Connect to Lesson 02: "This is the expanded version of what you saw before. Now you know ALL the scale types, not just linear and band."
+- Connect to Lesson 04: "With data binding, your accessor functions call these scales. .attr('r', d => rScale(d.pop)) uses scaleSqrt to size bubbles proportionally."
+- Tease Lesson 06: "Next you'll learn how axes are literally generated FROM these scales. The axis reads the scale's domain and range to know where to put ticks."
+- Tease Lesson 10: "scaleSequential will come back big time when you build choropleth maps -- coloring states by income or voter turnout."
+
+TREVOR'S BACKGROUND TO REFERENCE:
+- TypeScript: "Think of scale types as a type system for your data. scaleLinear expects numbers in, scaleBand expects strings in, scaleTime expects Dates in. Wrong type = wrong output."
+- React: "You'd create a utility function like formatCurrency(value) in React. Scales are the same idea -- reusable functions that transform data for display."
+- Journalism: "When you write about income inequality, you can't put $20,000 and $10,000,000 on the same linear chart. scaleLog handles that kind of range, just like log-scale graphs in economic reporting."
+
+MEMORIZATION TECHNIQUES:
+- Scale type cheat: "Numbers=Linear, Categories=Band, Dates=Time, Colors=Sequential, Bubbles=Sqrt, Party colors=Ordinal"
+- "Domain is Data, Range is Render" -- repeated from Lesson 02
+- "Y is flipped, always" -- no exceptions
+- ".nice() after domain, every time" -- make it a habit
+
+TONE:
+- The React-dev host should have the pattern-recognition moment: "So the scale system is actually like a type system? You pick the type based on your data, configure it, and then it just works?"
+- The D3-expert host: "Exactly. And here's the beautiful part -- all scales have the same API. .domain().range(). Learn one, you know them all. The differences are in what they accept and how they interpolate."
+- Focus on the broadcast TV angle: "On election night, you'll have party colors (ordinal), vote counts (linear), time (time), and a map (sequential) all on one screen. Each uses a different scale, but the pattern is identical."

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn SQL - Trevor's Workshop</title>
+  <link rel="icon" type="image/svg+xml" href="/sql/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      min-height: 100vh;
+    }
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #3b82f6; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover, .nav a.active {
+      background: #3b82f6;
+      color: #fff;
+      border-color: #3b82f6;
+    }
+    .main {
+      padding: 2rem 3rem;
+      max-width: 1200px;
+    }
+    .main h2 { margin-bottom: 1rem; font-size: 1.3rem; }
+    .lesson-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+    .lesson-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: border-color 0.2s;
+    }
+    .lesson-card:hover { border-color: #3b82f6; }
+    .lesson-card h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .lesson-card .num {
+      color: #3b82f6;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .lesson-card p { color: #888; font-size: 0.85rem; line-height: 1.5; }
+    .lesson-card a {
+      display: inline-block;
+      margin-top: 0.75rem;
+      color: #3b82f6;
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+    .demo-container {
+      margin-top: 2rem;
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 2rem;
+    }
+    .demo-container h3 { margin-bottom: 1rem; }
+
+    /* Animated query result table */
+    .query-demo { font-family: 'SF Mono', 'Fira Code', monospace; }
+    .query-demo .query-text {
+      color: #3b82f6;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: #0a0a0a;
+      border: 1px solid #222;
+      border-radius: 6px;
+    }
+    .query-demo .keyword { color: #3b82f6; font-weight: 600; }
+    .query-demo .string { color: #4ade80; }
+    .query-demo .number { color: #f472b6; }
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .result-table th {
+      text-align: left;
+      color: #3b82f6;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 2px solid #333;
+    }
+    .result-table td {
+      padding: 0.5rem 0.75rem;
+      color: #bbb;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .result-table tr {
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fadeRow 0.4s ease forwards;
+    }
+    .result-table tr:nth-child(1) { animation-delay: 0.3s; }
+    .result-table tr:nth-child(2) { animation-delay: 0.45s; }
+    .result-table tr:nth-child(3) { animation-delay: 0.6s; }
+    .result-table tr:nth-child(4) { animation-delay: 0.75s; }
+    .result-table tr:nth-child(5) { animation-delay: 0.9s; }
+    .result-table tr:nth-child(6) { animation-delay: 1.05s; }
+    .result-table thead tr { opacity: 1; transform: none; animation: none; }
+    .result-count {
+      color: #666;
+      font-size: 0.8rem;
+      margin-top: 0.75rem;
+      opacity: 0;
+      animation: fadeRow 0.4s ease forwards;
+      animation-delay: 1.2s;
+    }
+    @keyframes fadeRow {
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Learn <span>SQL</span></h1>
+    <div class="meta">PostgreSQL focus &middot; Prisma to raw SQL</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/sql/" class="active">Home</a>
+    <a href="/sql/lessons/01-sql-fundamentals/">01 Fundamentals</a>
+    <a href="/sql/lessons/02-select-filtering/">02 SELECT</a>
+    <a href="/sql/lessons/03-joins/">03 JOINs</a>
+    <a href="/sql/lessons/04-aggregation/">04 Aggregation</a>
+    <a href="/sql/lessons/05-subqueries/">05 Subqueries</a>
+    <a href="/sql/lessons/06-window-functions/">06 Windows</a>
+    <a href="/sql/lessons/07-data-types-constraints/">07 Types</a>
+    <a href="/sql/lessons/08-indexes-performance/">08 Indexes</a>
+    <a href="/sql/lessons/09-postgres-specific/">09 PostgreSQL</a>
+    <a href="/sql/lessons/10-database-design/">10 Design</a>
+    <a href="/sql/lessons/11-advanced-queries/">11 Advanced</a>
+    <a href="/sql/lessons/12-capstone/">12 Capstone</a>
+  </nav>
+
+  <div class="main">
+    <h2>Week 1: The Foundation</h2>
+    <div class="lesson-grid">
+      <div class="lesson-card">
+        <div class="num">Lesson 01</div>
+        <h3>SQL Fundamentals</h3>
+        <p>From Prisma to raw SQL. CREATE, INSERT, SELECT, WHERE, UPDATE, DELETE. The core vocabulary.</p>
+        <a href="/sql/lessons/01-sql-fundamentals/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 02</div>
+        <h3>SELECT &amp; Filtering Deep Dive</h3>
+        <p>Aliases, pattern matching, NULL handling, CASE expressions. Mastering the query.</p>
+        <a href="/sql/lessons/02-select-filtering/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 03</div>
+        <h3>JOINs (The Power Move)</h3>
+        <p>INNER, LEFT, RIGHT, FULL OUTER, CROSS, self joins. Connecting related tables.</p>
+        <a href="/sql/lessons/03-joins/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 04</div>
+        <h3>Aggregation &amp; GROUP BY</h3>
+        <p>COUNT, SUM, AVG, MIN, MAX. Grouping rows and filtering groups with HAVING.</p>
+        <a href="/sql/lessons/04-aggregation/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 05</div>
+        <h3>Subqueries &amp; CTEs</h3>
+        <p>Queries inside queries. WITH clauses for readable, composable SQL.</p>
+        <a href="/sql/lessons/05-subqueries/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 06</div>
+        <h3>Window Functions</h3>
+        <p>ROW_NUMBER, RANK, LAG, LEAD. SQL's superpower for analytics.</p>
+        <a href="/sql/lessons/06-window-functions/">Start lesson &rarr;</a>
+      </div>
+    </div>
+
+    <h2 style="margin-top: 2rem;">Week 2: Going Deep</h2>
+    <div class="lesson-grid">
+      <div class="lesson-card">
+        <div class="num">Lesson 07</div>
+        <h3>Data Types &amp; Constraints</h3>
+        <p>VARCHAR, INTEGER, JSONB, TIMESTAMP. CHECK, UNIQUE, FOREIGN KEY. Data integrity.</p>
+        <a href="/sql/lessons/07-data-types-constraints/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 08</div>
+        <h3>Indexes &amp; Performance</h3>
+        <p>B-tree, GIN, EXPLAIN ANALYZE. Making queries fast.</p>
+        <a href="/sql/lessons/08-indexes-performance/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 09</div>
+        <h3>PostgreSQL-Specific Features</h3>
+        <p>JSONB operators, arrays, generate_series, full-text search.</p>
+        <a href="/sql/lessons/09-postgres-specific/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 10</div>
+        <h3>Database Design &amp; Normalization</h3>
+        <p>1NF, 2NF, 3NF. ERD diagrams. Schema design patterns.</p>
+        <a href="/sql/lessons/10-database-design/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 11</div>
+        <h3>Advanced Query Patterns</h3>
+        <p>Pivot tables, recursive queries, lateral joins, materialized views.</p>
+        <a href="/sql/lessons/11-advanced-queries/">Start lesson &rarr;</a>
+      </div>
+      <div class="lesson-card">
+        <div class="num">Lesson 12</div>
+        <h3>Capstone: Real-World Queries</h3>
+        <p>Election data, census analysis, public records. Journalism-ready SQL.</p>
+        <a href="/sql/lessons/12-capstone/">Start lesson &rarr;</a>
+      </div>
+    </div>
+
+    <div class="demo-container">
+      <h3>Live Demo: What SQL Looks Like</h3>
+      <div class="query-demo">
+        <div class="query-text">
+          <span class="keyword">SELECT</span> name, department, salary<br>
+          <span class="keyword">FROM</span> employees<br>
+          <span class="keyword">WHERE</span> salary &gt; <span class="number">75000</span><br>
+          <span class="keyword">ORDER BY</span> salary <span class="keyword">DESC</span><br>
+          <span class="keyword">LIMIT</span> <span class="number">6</span>;
+        </div>
+        <table class="result-table">
+          <thead>
+            <tr><th>name</th><th>department</th><th>salary</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Sarah Chen</td><td>Engineering</td><td>142,000</td></tr>
+            <tr><td>Marcus Rivera</td><td>Engineering</td><td>128,000</td></tr>
+            <tr><td>Priya Sharma</td><td>Data Science</td><td>118,000</td></tr>
+            <tr><td>James O'Brien</td><td>Product</td><td>105,000</td></tr>
+            <tr><td>Aisha Johnson</td><td>Design</td><td>95,000</td></tr>
+            <tr><td>David Kim</td><td>Marketing</td><td>82,000</td></tr>
+          </tbody>
+        </table>
+        <div class="result-count">(6 rows)</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

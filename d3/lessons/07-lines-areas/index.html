@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 07 - Enter / Update / Exit: The Deep Dive</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #f97316; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #f97316; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #f97316; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #f97316; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .demo h4 { color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .demo svg { background: #1a1a1a; border-radius: 4px; display: block; }
+    .demo button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 0.25rem; font-weight: 600; }
+    .demo button:hover { background: #fb923c; }
+    .demo button.secondary { background: #818cf8; color: #000; }
+    .demo button.green { background: #4ade80; color: #000; }
+    .demo .controls { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .quiz { background: #1a1500; border: 1px solid #f9731644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #f97316; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #f97316; text-decoration: none; }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #1a0a00; border-left: 3px solid #f97316; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #fdba74; }
+    .aha strong { color: #f97316; }
+    .legend { display: flex; gap: 1.5rem; margin: 0.75rem 0; font-size: 0.8rem; }
+    .legend span { display: inline-flex; align-items: center; gap: 0.4rem; color: #888; }
+    .legend .dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+    #eue-info { background: #0a0a0a; border: 1px solid #222; border-radius: 4px; padding: 0.75rem; margin-top: 0.75rem; font-size: 0.85rem; color: #888; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>07</span> Enter / Update / Exit &mdash; The Deep Dive</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #f97316;">Mental Model:</strong> Think of a wedding seating chart. <strong>Enter</strong> = new guests arriving (need a seat). <strong>Update</strong> = guests already seated (maybe move them). <strong>Exit</strong> = guests leaving (clear their seat).</p>
+
+    <h2>Why This Matters</h2>
+
+    <p>In Lesson 04, you used <code>.join("rect")</code> and it "just worked." But what happens under the hood when data changes? Understanding enter/update/exit gives you control over animations, transitions, and complex data updates &mdash; the difference between a basic chart and a polished one.</p>
+
+    <h2>The Three Groups</h2>
+
+    <p>When you call <code>.data(newData)</code>, D3 compares the new data to the existing elements and sorts everything into three groups:</p>
+
+    <ul>
+      <li><strong style="color: #4ade80;">Enter:</strong> Data items that have no matching element. Need to create new elements.</li>
+      <li><strong style="color: #f97316;">Update:</strong> Data items that match an existing element. May need to change attributes.</li>
+      <li><strong style="color: #ef4444;">Exit:</strong> Elements that have no matching data item. Need to be removed.</li>
+    </ul>
+
+    <h3>.join() with three callbacks</h3>
+
+    <pre><code>svg.selectAll("rect")
+  .data(newData, d => d.id)     <span class="comment">// key function!</span>
+  .join(
+    enter => enter.append("rect")  <span class="comment">// NEW: create + animate in</span>
+      .attr("fill", "#4ade80")
+      .attr("y", height)
+      .attr("height", 0)
+      .call(el => el.transition().duration(500)
+        .attr("y", d => y(d.value))
+        .attr("height", d => height - y(d.value))),
+
+    update => update               <span class="comment">// EXISTING: animate to new position</span>
+      .attr("fill", "#f97316")
+      .call(el => el.transition().duration(500)
+        .attr("y", d => y(d.value))
+        .attr("height", d => height - y(d.value))),
+
+    exit => exit                   <span class="comment">// LEAVING: animate out + remove</span>
+      .attr("fill", "#ef4444")
+      .call(el => el.transition().duration(300)
+        .attr("y", height).attr("height", 0).remove())
+  );</code></pre>
+
+    <h2>Key Functions: Name Tags for Data</h2>
+
+    <p>By default, D3 matches data to elements by index (position). The first data item goes with the first element, etc. This works for static charts but breaks for animations.</p>
+
+    <pre><code><span class="comment">// Without key: D3 matches by index (position)</span>
+.data(newData)              <span class="comment">// data[0] → element[0], data[1] → element[1]</span>
+
+<span class="comment">// With key: D3 matches by identity</span>
+.data(newData, d => d.id)   <span class="comment">// finds the element whose data has the same id</span></code></pre>
+
+    <div class="aha">
+      <p><strong>Keys are like React's <code>key</code> prop.</strong> Without keys, D3 (like React) just matches by position. With keys, it can track individual items through data changes. This is what makes smooth animations possible when items are added, removed, or reordered.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 1: ENTER/UPDATE/EXIT VISUALIZATION      -->
+    <!-- ============================================ -->
+
+    <h2>Demo: See Enter / Update / Exit in Action</h2>
+    <p>Click the buttons to change the data. Watch elements flash green (entering), orange (updating), or red (exiting).</p>
+
+    <div class="demo">
+      <h4>Live: Enter / Update / Exit with colors</h4>
+      <div class="controls">
+        <button id="btn-eue-set1">Dataset A (5 states)</button>
+        <button id="btn-eue-set2" class="secondary">Dataset B (7 states)</button>
+        <button id="btn-eue-set3" class="green">Dataset C (4 states)</button>
+        <button id="btn-eue-shuffle">Shuffle Values</button>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background: #4ade80;"></span> Enter (new)</span>
+        <span><span class="dot" style="background: #f97316;"></span> Update (existing)</span>
+        <span><span class="dot" style="background: #ef4444;"></span> Exit (leaving)</span>
+      </div>
+      <svg id="eue-chart" viewBox="0 0 700 300"></svg>
+      <div id="eue-info">Click a dataset button to see enter/update/exit in action.</div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 2: FILTERABLE BAR CHART                 -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Filterable, Sortable Bar Chart</h2>
+    <p>A practical application of the general update pattern. Filter by region, sort by value or name.</p>
+
+    <div class="demo">
+      <h4>Live: State population with filter & sort</h4>
+      <div class="controls">
+        <button id="btn-filter-all">All States</button>
+        <button id="btn-filter-south" class="secondary">South</button>
+        <button id="btn-filter-west" class="green">West</button>
+        <button id="btn-filter-ne" style="background: #f472b6; color: #000;">Northeast</button>
+        <button id="btn-sort-val">Sort by Pop</button>
+        <button id="btn-sort-name" style="background: #666;">Sort A-Z</button>
+      </div>
+      <svg id="filter-chart" viewBox="0 0 700 350"></svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What are the three groups D3 creates when you call <code>.data()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><strong>Enter:</strong> data items without matching elements (need creation). <strong>Update:</strong> data items with matching elements (may need attribute changes). <strong>Exit:</strong> elements without matching data items (need removal). Together, these three groups account for every possible difference between old and new data.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What does a key function do, and why does it matter for animations?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A key function (<code>.data(data, d => d.id)</code>) tells D3 how to match data items to elements by identity rather than by index. Without keys, if you remove the first item, D3 thinks every element changed (indices shifted). With keys, D3 knows element #1 is the same item it was before, just in a new position. This enables smooth, meaningful animations.</div>
+      </div>
+
+      <div class="question">
+        <p>3. How is <code>.join("rect")</code> different from <code>.join(enter, update, exit)</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The string form <code>.join("rect")</code> is shorthand that uses defaults: enter appends the element, update does nothing special, exit removes immediately. The three-callback form gives you full control: you can animate entering elements, transition updates, and fade out exiting elements. Use the string form for simple charts, the callback form when you need animation control.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Why is the "general update pattern" (a reusable update function) important?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It lets you write one function that handles any data change: filtering, sorting, adding, removing. Call it whenever data changes, and the enter/update/exit pattern handles the DOM updates automatically. This is the standard pattern for interactive D3 charts &mdash; buttons, sliders, and filters all just call the update function with new data.</div>
+      </div>
+
+      <div class="question">
+        <p>5. How do D3 key functions compare to React's <code>key</code> prop?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">They serve the same purpose: helping the framework track which items in a list are the same across re-renders. React's <code>key</code> helps the virtual DOM diff. D3's key function helps the data join. Without keys, both default to matching by index, which causes incorrect animations and wasted re-renders when items are reordered or removed.</div>
+      </div>
+
+      <div class="question">
+        <p>6. In the three-callback <code>.join()</code>, what happens to exiting elements if you don't call <code>.remove()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">They stay in the DOM but are no longer bound to any data. This is a memory leak and visual bug. Always call <code>.remove()</code> on exit elements, typically at the end of a transition: <code>exit.transition().duration(300).attr("opacity", 0).remove()</code>.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Chart That Updates</h4>
+      <p>Create a bar chart with a general update pattern:</p>
+      <ol>
+        <li>Write an <code>update(data)</code> function using <code>.data(data, d => d.state).join(enter, update, exit)</code></li>
+        <li>Enter: bars animate up from the bottom (green flash)</li>
+        <li>Update: bars smoothly resize (orange)</li>
+        <li>Exit: bars shrink and disappear (red flash)</li>
+        <li>Add 3 buttons that call update() with different datasets</li>
+        <li>Add a "sort" button that reorders the bars with animation</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Enter</strong> = new data needs new elements</li>
+      <li><strong>Update</strong> = existing data may need attribute changes</li>
+      <li><strong>Exit</strong> = old elements need removal</li>
+      <li><strong>Key functions</strong> (<code>d => d.id</code>) match by identity, not position</li>
+      <li><strong>.join(enter, update, exit)</strong> gives full control over animations</li>
+      <li><strong>General update pattern</strong> = one function handles all data changes</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/06-transitions-interactivity/">&larr; Lesson 06: Axes &amp; Margins Convention</a>
+      <a href="/d3/lessons/08-arcs-pies/">Lesson 08: Lines &amp; Areas &rarr;</a>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script type="module">
+    import * as d3 from "d3";
+
+    // =============================================
+    // Demo 1: Enter / Update / Exit visualization
+    // =============================================
+    (() => {
+      const setA = [
+        { state: "CA", pop: 39538 }, { state: "TX", pop: 29146 },
+        { state: "FL", pop: 21538 }, { state: "NY", pop: 20201 },
+        { state: "PA", pop: 13002 },
+      ];
+      const setB = [
+        { state: "CA", pop: 39538 }, { state: "TX", pop: 29146 },
+        { state: "FL", pop: 21538 }, { state: "NY", pop: 20201 },
+        { state: "PA", pop: 13002 }, { state: "IL", pop: 12812 },
+        { state: "OH", pop: 11799 },
+      ];
+      const setC = [
+        { state: "CA", pop: 39538 }, { state: "FL", pop: 21538 },
+        { state: "IL", pop: 12812 }, { state: "OH", pop: 11799 },
+      ];
+
+      const m = { top: 30, right: 20, bottom: 40, left: 50 };
+      const w = 700 - m.left - m.right, h = 300 - m.top - m.bottom;
+
+      const svg = d3.select("#eue-chart")
+        .append("g").attr("transform", `translate(${m.left},${m.top})`);
+
+      d3.select("#eue-chart").insert("rect", ":first-child")
+        .attr("width", 700).attr("height", 300).attr("fill", "#1a1a1a").attr("rx", 4);
+
+      const x = d3.scaleBand().range([0, w]).padding(0.15);
+      const y = d3.scaleLinear().range([h, 0]);
+      const xAxisG = svg.append("g").attr("transform", `translate(0,${h})`);
+      const yAxisG = svg.append("g");
+      const info = document.getElementById("eue-info");
+
+      function update(data) {
+        x.domain(data.map(d => d.state));
+        y.domain([0, d3.max(data, d => d.pop) * 1.1]).nice();
+
+        xAxisG.transition().duration(600).call(d3.axisBottom(x));
+        xAxisG.selectAll("text").attr("fill", "#888");
+        xAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+        yAxisG.transition().duration(600).call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d/1000}k`));
+        yAxisG.selectAll("text").attr("fill", "#888");
+        yAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+        let enterCount = 0, updateCount = 0, exitCount = 0;
+
+        svg.selectAll(".bar")
+          .data(data, d => d.state)
+          .join(
+            enter => {
+              enterCount = enter.size();
+              return enter.append("rect").attr("class", "bar")
+                .attr("x", d => x(d.state)).attr("width", x.bandwidth())
+                .attr("y", h).attr("height", 0)
+                .attr("fill", "#4ade80").attr("rx", 3)
+                .call(el => el.transition().duration(600)
+                  .attr("y", d => y(d.pop))
+                  .attr("height", d => h - y(d.pop))
+                  .transition().duration(400).attr("fill", "#f97316"));
+            },
+            update => {
+              updateCount = update.size();
+              return update
+                .attr("fill", "#fbbf24")
+                .call(el => el.transition().duration(600)
+                  .attr("x", d => x(d.state)).attr("width", x.bandwidth())
+                  .attr("y", d => y(d.pop)).attr("height", d => h - y(d.pop))
+                  .transition().duration(400).attr("fill", "#f97316"));
+            },
+            exit => {
+              exitCount = exit.size();
+              return exit
+                .attr("fill", "#ef4444")
+                .call(el => el.transition().duration(400)
+                  .attr("y", h).attr("height", 0).attr("opacity", 0).remove());
+            }
+          );
+
+        // Labels
+        svg.selectAll(".lbl")
+          .data(data, d => d.state)
+          .join(
+            enter => enter.append("text").attr("class", "lbl")
+              .attr("x", d => x(d.state) + x.bandwidth() / 2).attr("y", h)
+              .attr("text-anchor", "middle").attr("fill", "#888").attr("font-size", "10")
+              .call(el => el.transition().duration(600)
+                .attr("y", d => y(d.pop) - 5))
+              .text(d => `${(d.pop/1000).toFixed(1)}M`),
+            update => update.call(el => el.transition().duration(600)
+              .attr("x", d => x(d.state) + x.bandwidth() / 2)
+              .attr("y", d => y(d.pop) - 5))
+              .text(d => `${(d.pop/1000).toFixed(1)}M`),
+            exit => exit.transition().duration(300).attr("opacity", 0).remove()
+          );
+
+        setTimeout(() => {
+          info.innerHTML = `<span style="color:#4ade80">Enter: ${enterCount}</span> | <span style="color:#f97316">Update: ${updateCount}</span> | <span style="color:#ef4444">Exit: ${exitCount}</span>`;
+        }, 50);
+      }
+
+      update(setA);
+
+      d3.select("#btn-eue-set1").on("click", () => update(setA));
+      d3.select("#btn-eue-set2").on("click", () => update(setB));
+      d3.select("#btn-eue-set3").on("click", () => update(setC));
+      d3.select("#btn-eue-shuffle").on("click", () => {
+        const current = svg.selectAll(".bar").data();
+        const shuffled = current.map(d => ({ ...d, pop: 5000 + Math.floor(Math.random() * 35000) }));
+        update(shuffled);
+      });
+    })();
+
+    // =============================================
+    // Demo 2: Filterable, sortable bar chart
+    // =============================================
+    (() => {
+      const allData = [
+        { state: "CA", pop: 39538, region: "West" },
+        { state: "TX", pop: 29146, region: "South" },
+        { state: "FL", pop: 21538, region: "South" },
+        { state: "NY", pop: 20201, region: "Northeast" },
+        { state: "PA", pop: 13002, region: "Northeast" },
+        { state: "IL", pop: 12812, region: "Midwest" },
+        { state: "OH", pop: 11799, region: "Midwest" },
+        { state: "GA", pop: 10711, region: "South" },
+        { state: "NC", pop: 10439, region: "South" },
+        { state: "WA", pop: 7615, region: "West" },
+        { state: "CO", pop: 5774, region: "West" },
+        { state: "MA", pop: 7030, region: "Northeast" },
+      ];
+
+      const regionColors = { South: "#ef4444", West: "#4ade80", Northeast: "#818cf8", Midwest: "#fbbf24" };
+
+      const m = { top: 30, right: 20, bottom: 40, left: 50 };
+      const w = 700 - m.left - m.right, h = 350 - m.top - m.bottom;
+
+      const svg = d3.select("#filter-chart")
+        .append("g").attr("transform", `translate(${m.left},${m.top})`);
+
+      d3.select("#filter-chart").insert("rect", ":first-child")
+        .attr("width", 700).attr("height", 350).attr("fill", "#1a1a1a").attr("rx", 4);
+
+      const x = d3.scaleBand().range([0, w]).padding(0.15);
+      const y = d3.scaleLinear().range([h, 0]);
+      const xAxisG = svg.append("g").attr("transform", `translate(0,${h})`);
+      const yAxisG = svg.append("g");
+
+      let currentData = [...allData];
+      let sortByValue = true;
+
+      function renderFilter(data) {
+        currentData = data;
+        if (sortByValue) data.sort((a, b) => b.pop - a.pop);
+        else data.sort((a, b) => a.state.localeCompare(b.state));
+
+        x.domain(data.map(d => d.state));
+        y.domain([0, d3.max(data, d => d.pop) * 1.1]).nice();
+
+        xAxisG.transition().duration(500).call(d3.axisBottom(x));
+        xAxisG.selectAll("text").attr("fill", "#888").attr("font-size", "10");
+        xAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+        yAxisG.transition().duration(500).call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d/1000}k`));
+        yAxisG.selectAll("text").attr("fill", "#888");
+        yAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
+
+        svg.selectAll(".bar")
+          .data(data, d => d.state)
+          .join(
+            enter => enter.append("rect").attr("class", "bar")
+              .attr("x", d => x(d.state)).attr("width", x.bandwidth())
+              .attr("y", h).attr("height", 0)
+              .attr("fill", d => regionColors[d.region]).attr("rx", 3).attr("opacity", 0.85)
+              .call(el => el.transition().duration(500)
+                .attr("y", d => y(d.pop)).attr("height", d => h - y(d.pop))),
+            update => update.call(el => el.transition().duration(500)
+              .attr("x", d => x(d.state)).attr("width", x.bandwidth())
+              .attr("y", d => y(d.pop)).attr("height", d => h - y(d.pop))
+              .attr("fill", d => regionColors[d.region])),
+            exit => exit.call(el => el.transition().duration(300)
+              .attr("y", h).attr("height", 0).attr("opacity", 0).remove())
+          );
+      }
+
+      renderFilter([...allData]);
+
+      d3.select("#btn-filter-all").on("click", () => renderFilter([...allData]));
+      d3.select("#btn-filter-south").on("click", () => renderFilter(allData.filter(d => d.region === "South")));
+      d3.select("#btn-filter-west").on("click", () => renderFilter(allData.filter(d => d.region === "West")));
+      d3.select("#btn-filter-ne").on("click", () => renderFilter(allData.filter(d => d.region === "Northeast")));
+      d3.select("#btn-sort-val").on("click", () => { sortByValue = true; renderFilter([...currentData]); });
+      d3.select("#btn-sort-name").on("click", () => { sortByValue = false; renderFilter([...currentData]); });
+    })();
+  </script>
+</body>
+</html>

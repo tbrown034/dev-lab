@@ -1,0 +1,197 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+LESSON TITLE: Lesson 12 - Capstone: Broadcast Data Dashboard
+TRACK: D3.js (12-lesson curriculum)
+
+--- CONTEXT FOR HOSTS ---
+
+Curriculum Position: Lesson 12 of 12. This is the culmination of the entire curriculum. Every concept from all 11 previous lessons comes together in a single, working broadcast-style data dashboard. The capstone features a US state choropleth map, a filterable/sortable bar chart, and a donut chart with animated transitions -- all connected through shared filters and interactive tooltips.
+
+What came before: All 11 lessons. The capstone references and applies concepts from every single one:
+- Lesson 01: SVG elements (rect, path, text, g)
+- Lesson 02: Scales (initial introduction)
+- Lesson 03: Selections and method chaining
+- Lesson 04: Data binding (.data().join())
+- Lesson 05: Scales deep dive (linear, band, ordinal, sequential)
+- Lesson 06: Axes and margins convention
+- Lesson 07: Enter/update/exit with key functions
+- Lesson 08: Lines and areas (path generators)
+- Lesson 09: Arcs and pies (d3.pie(), d3.arc(), attrTween)
+- Lesson 10: Maps and geography (projections, geoPath, choropleth)
+- Lesson 11: Interactivity and polish (events, tooltips, transitions, viewBox, accessibility)
+
+What Trevor already knows: Everything taught in the curriculum. This lesson is about synthesis, not new concepts.
+
+Learner's goal: Prove interview readiness. Build the exact type of dashboard a broadcast TV data team creates for election night, census coverage, or budget reporting. Demonstrate mastery of all D3 concepts in a single, integrated project.
+
+Specific analogies for THIS lesson:
+- The capstone is like a "final performance" -- all the instruments (concepts) playing together
+- The linked filter pattern is like React's lifting state up -- one filter state drives all three charts
+- The dashboard grid is the broadcast equivalent of a multi-panel TV screen -- each panel shows different views of the same data
+- The updateAll() function is the general update pattern from Lesson 07 applied at the dashboard level
+
+Key mental models:
+- Dashboard architecture: shared state (currentRegion, sortByValue) drives all charts
+- One function (updateAll) triggers re-renders of all panels when state changes
+- Each chart is a self-contained update function that receives filtered data
+- Interactive linking: hover/click on one chart can highlight/filter another
+
+--- LESSON CONTENT ---
+
+Dashboard Architecture
+
+The capstone dashboard uses a simple but effective architecture:
+
+1. Shared state: Two global variables control the dashboard:
+   - currentRegion = "all" (filter: all regions, or Northeast/South/Midwest/West)
+   - sortByValue = true (bar chart sort order: by population or alphabetically)
+
+2. Data filtering function: getFilteredData() reads the current state and returns the appropriate subset of data, sorted as requested.
+
+3. Individual chart update functions: updateBars(data) and updateDonut(data) each accept filtered data and re-render their chart using the enter/update/exit pattern.
+
+4. Master update function: updateAll() calls getFilteredData() and passes the result to both chart update functions. This is called whenever a filter changes.
+
+5. Event binding: The region dropdown, sort buttons, and map interactions all update the shared state and call updateAll().
+
+This is the "general update pattern" from Lesson 07 scaled up to a multi-chart dashboard. One state change triggers coordinated re-renders across all panels.
+
+Components Used
+
+US State Choropleth Map (Lesson 10):
+- Loads TopoJSON from CDN, converts with topojson.feature()
+- geoAlbersUsa projection with .fitSize()
+- States colored by region using an ordinal color scheme
+- Hover tooltips with state name and region
+- Border highlighting on hover using topojson.mesh()
+- Region color legend in the map corner
+
+Filterable/Sortable Bar Chart (Lessons 06, 07, 11):
+- Margins convention for proper axis spacing
+- scaleBand for X (state abbreviations), scaleLinear for Y (population)
+- Enter/update/exit with key function (d => d.state)
+- Enter: bars grow from bottom with staggered delays
+- Update: bars slide to new positions and heights with transitions
+- Exit: bars shrink and fade out
+- Hover tooltips showing full state name, population, and region
+- Animated axes that smoothly update when data changes
+
+Regional Donut Chart (Lesson 09):
+- d3.pie() with .sort(null) to preserve region order
+- d3.arc() with innerRadius > 0 for donut style
+- attrTween for smooth arc transitions when data changes
+- Centroid-based labels (two-letter region abbreviation)
+- Center text showing total population
+- .padAngle() and .cornerRadius() for polish
+
+Shared Interactions (Lesson 11):
+- HTML tooltip div with position: fixed, shared across all charts
+- Hover highlights (brighter fill, border stroke) on bars and map states
+- viewBox on all SVGs for responsive sizing
+- role="img" and aria-label for accessibility
+
+Filter Controls:
+- Region dropdown filters data to one region or all regions
+- "By Value" and "A-Z" sort buttons reorder the bar chart
+- All controls call updateAll() to synchronize all charts
+
+Extension Opportunities (TODOs):
+- Click a state on the map to auto-filter to that state's region
+- Linked highlighting: hovering a bar highlights the matching state on the map
+- Add a second data metric (e.g., median income) with a dropdown switcher
+- Add a gradient color legend below the map
+
+Concepts Traced to Lessons:
+The dashboard includes a reference table mapping each concept to its source lesson:
+- SVG elements → Lesson 01
+- Selections & chaining → Lesson 03
+- Data binding → Lesson 04
+- Scales → Lesson 05
+- Axes & margins → Lesson 06
+- Enter/update/exit → Lesson 07
+- Arcs & pie layout → Lesson 09
+- Projections & geoPath → Lesson 10
+- Tooltips, transitions, events → Lesson 11
+
+After This Curriculum
+
+After completing all 12 lessons, Trevor can confidently build:
+- Bar charts, line charts, area charts, donut charts
+- Choropleth and interactive maps
+- Filterable, sortable, animated dashboards
+- Tooltips, hover effects, smooth transitions
+- Responsive, accessible visualizations
+
+The key interview insight: understanding D3's mental models, not just its API. Selections are DOM handles, scales are translators, projections are geographic scales, path generators are cookie cutters, and data binding attaches sticky notes.
+
+--- KEY CONCEPTS TO EMPHASIZE ---
+
+1. Dashboard architecture: shared state + individual chart update functions + master updateAll()
+2. The general update pattern scales from one chart to a multi-chart dashboard
+3. Every concept from all 11 lessons is applied in this single project
+4. Interactive linking between charts (hover/click coordination) is achievable by updating shared state
+5. The enter/update/exit pattern with key functions enables smooth filter and sort animations across all charts
+
+--- COMMON PITFALLS ---
+
+- Not using key functions in the bar chart's .data() call -- without keys, filtering and sorting animations look chaotic
+- Forgetting to update axes when data changes -- axes need their own .transition().call(axis) chain
+- Tooltip positioning issues across multiple panels -- use event.clientX/clientY (viewport coordinates) with position: fixed
+- Donut chart transitions breaking when the number of slices changes -- need proper enter/update/exit with attrTween
+- Not removing center text before re-rendering -- old text elements accumulate without cleanup
+- Map data loading failures (async/network issues) -- always handle errors gracefully with try/catch
+
+--- BROADCAST TV CONNECTION ---
+
+- This IS the broadcast dashboard. Election night coverage, census data exploration, budget reporting, demographic analysis -- all use this exact multi-panel layout
+- The filter-and-update pattern is how a producer interacts with the dashboard during a live show: select a region, and all charts update simultaneously
+- The map + bar chart + donut chart combination is a broadcast data team's go-to layout for geographic data stories
+- Linked highlighting (hover a bar → highlight the state) is standard behavior on broadcast web companions
+- The architecture (shared state, individual update functions, master update) is exactly how production broadcast dashboards work
+- This capstone is interview-portfolio material: it demonstrates mastery of every D3 concept in a realistic, broadcast-quality context
+
+
+========================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+========================================
+
+PODCAST CUSTOMIZATION FOR LESSON 12: Capstone Dashboard
+
+TARGET MENTAL MODELS:
+- "The concert" -- all instruments (concepts) playing together in one performance
+- Shared state + updateAll() as "React's lifting state up" applied to D3
+- The general update pattern scaled to a multi-chart dashboard
+- Each chart as a self-contained update function that receives filtered data
+
+SPECIFIC ANALOGIES TO USE:
+- "This is like a React app with global state. You have currentRegion and sortByValue as your 'state.' When state changes, you call updateAll(), which re-renders all three charts. It's exactly the pattern you'd build with useContext or Redux -- one state change, multiple components re-render."
+- "Think of the dashboard as a live broadcast control panel. The producer selects 'South' from the region dropdown. The map highlights southern states. The bar chart filters to only show southern states with smooth enter/exit animations. The donut chart rebalances to show the southern regional breakdown. All from one dropdown change."
+- "Each chart update function is like a React component's render method. It receives data (props), and it figures out what to create, update, and remove. The enter/update/exit pattern IS the reconciliation logic, applied manually."
+- "The TODO items -- click-to-filter, linked highlighting -- are exactly the features a producer would request. 'Can I click a state and see its region?' That's the polish that makes a broadcast dashboard usable under live-show pressure."
+
+CONNECTIONS TO OTHER LESSONS:
+- Connect to EVERY lesson: "The table in this lesson maps each concept to its source lesson. SVG from 01, selections from 03, data binding from 04, scales from 05, axes from 06, enter/update/exit from 07, arcs from 09, maps from 10, tooltips from 11. Everything connects."
+- Connect to Lesson 07 specifically: "The general update pattern -- one function, many data sources -- was the key concept in Lesson 07. Here it's scaled up: one updateAll() function handles region filtering, sort order changes, and data metric switches."
+- Connect to Lesson 11: "All the polish from Lesson 11 is applied everywhere: tooltips on bars and map states, smooth transitions between filter states, viewBox for responsive sizing, ARIA labels for accessibility."
+- Highlight the progression: "In Lesson 04, you learned selectAll-data-join for one chart. In Lesson 07, you added enter/update/exit for animations. Now you're coordinating multiple charts with shared state. Each lesson built on the previous ones."
+
+TREVOR'S BACKGROUND TO REFERENCE:
+- React: "This dashboard has the same architecture as a React app with multiple components sharing state. currentRegion is like a context value. getFilteredData() is like a useMemo selector. updateBars() and updateDonut() are like component render functions. The mental model transfers directly."
+- Journalism: "On election night, the data team has a dashboard like this. The producer selects a state or region, and every panel updates. The anchor reads the center stat from the donut chart, references the bar chart ranking, and the map provides geographic context. All from one dataset, one filter."
+- Broadcast TV/Tenga: "This capstone is your interview piece. When they ask 'can you build a broadcast data dashboard,' you open this project and walk through the architecture: shared state, individual chart update functions, coordinated transitions, responsive sizing, accessible markup. It demonstrates every D3 concept in a production-realistic context."
+
+MEMORIZATION TECHNIQUES:
+- "Shared state → filter data → update each chart" -- the three-step dashboard pattern
+- "updateAll() is the single function to rule them all" -- one function coordinates everything
+- "Each chart = one update function that receives data" -- self-contained, testable units
+- "Key functions everywhere" -- d => d.state for bars, d => d.data.region for donut slices
+- The concept reference table: "If you forget how something works, the table tells you which lesson to revisit"
+
+TONE:
+- This should feel like a graduation moment. The React-dev host: "Wait -- I can actually build this? A multi-chart dashboard with maps, filters, tooltips, and animations? All with what I learned in these 12 lessons?"
+- D3-expert: "Every single line of code in this dashboard uses concepts from the curriculum. There's nothing new. It's all synthesis -- putting the pieces together into something professional."
+- Celebrate the architecture: "The beauty is the simplicity. Two state variables, one filter function, two chart update functions, one master update. That's the entire dashboard architecture. And it scales -- add a fourth chart, just add one more update function and call it from updateAll()."
+- End with the interview angle: "You now have a portfolio piece that demonstrates every D3 concept: SVG, selections, data binding, scales, axes, enter/update/exit, path generators, arcs, maps, events, tooltips, transitions, and responsive accessibility. That's not a student project. That's a broadcast data engineer's toolkit."
+- Final note: "The mental models matter more than the API. In an interview, saying 'a projection is a scale for coordinates' shows you understand the concept, not just the syntax. Saying 'enter/update/exit is like React's reconciliation but explicit' shows you can connect D3 to broader programming knowledge."

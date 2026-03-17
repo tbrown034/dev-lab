@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 03 - Python Functions & Modules</title>
+  <link rel="icon" type="image/svg+xml" href="/django/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #22c55e; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #22c55e; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #22c55e; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
+    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #22c55e; }
+    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; padding: 0; color: #e5e5e5; }
+    .comment { color: #6b7280; }
+    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
+    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
+    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .callout p { color: #a5b4fc; }
+    .aha { background: #001a0a; border-left: 3px solid #22c55e; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
+    .aha p { color: #86efac; }
+    .aha strong { color: #22c55e; }
+    .warning { background: #1a1500; border-left: 3px solid #eab308; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+    .warning p { color: #fde68a; }
+    .warning strong { color: #eab308; }
+    .quiz { background: #001a0a; border: 1px solid #22c55e44; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
+    .quiz h4 { color: #22c55e; margin-bottom: 1rem; }
+    .quiz .question { margin-bottom: 1.25rem; }
+    .quiz .question p { color: #e5e5e5; font-weight: 500; }
+    .quiz button { background: #22c55e; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
+    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #22c55e; text-decoration: none; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th { text-align: left; color: #22c55e; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
+    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
+    td code { font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>03</span> Python Functions &amp; Modules</h1>
+    <a href="/django/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #22c55e;">Functions are functions.</strong> The concepts are identical &mdash; what changes is the syntax for defining them, the argument-passing superpowers Python adds, and how you organize code into modules.</p>
+
+    <!-- ============================================ -->
+    <!-- DEF VS FUNCTION                              -->
+    <!-- ============================================ -->
+
+    <h2>def vs function / const arrow</h2>
+
+    <p>JavaScript gives you three ways to define functions: <code>function</code> declarations, <code>const</code> arrow functions, and method shorthand. Python gives you one: <code>def</code>.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// Function declaration (hoisted)</span>
+function greet(name) {
+  return `Hello, ${name}!`;
+}
+
+<span class="comment">// Arrow function (not hoisted)</span>
+const greet = (name) => {
+  return `Hello, ${name}!`;
+};
+
+<span class="comment">// Arrow one-liner (implicit return)</span>
+const double = (n) => n * 2;
+
+<span class="comment">// No return = returns undefined</span>
+function log(msg) {
+  console.log(msg);
+}</code></pre>
+      </div>
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># def — the one and only way</span>
+def greet(name):
+    return f"Hello, {name}!"
+
+
+
+<span class="comment"># Functions are first-class objects</span>
+greet_fn = greet  <span class="comment"># assign to variable</span>
+greet_fn("Trevor")
+
+
+<span class="comment"># Lambda for one-liners (see below)</span>
+double = lambda n: n * 2
+
+<span class="comment"># No return = returns None</span>
+def log(msg):
+    print(msg)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> Python doesn't need arrow functions because it doesn't have <code>this</code>-binding issues. In JavaScript, arrow functions exist largely to solve <code>this</code> scoping problems. Python uses explicit <code>self</code> parameters, so that problem never arises. One function syntax is enough.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEFAULT ARGUMENTS                            -->
+    <!-- ============================================ -->
+
+    <h2>Default Arguments</h2>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code>function createUser(
+  name,
+  role = "viewer",
+  active = true
+) {
+  return { name, role, active };
+}
+
+createUser("Trevor");
+<span class="comment">// { name: "Trevor", role: "viewer", active: true }</span>
+
+createUser("Trevor", "admin");
+<span class="comment">// { name: "Trevor", role: "admin", active: true }</span>
+
+<span class="comment">// Skip middle args? Can't easily.</span>
+<span class="comment">// Need: createUser("Trevor", undefined, false)</span></code></pre>
+      </div>
+      <div>
+        <h5>Python</h5>
+        <pre><code>def create_user(
+    name,
+    role="viewer",
+    active=True
+):
+    return {"name": name, "role": role, "active": active}
+
+create_user("Trevor")
+<span class="comment"># {"name": "Trevor", "role": "viewer", "active": True}</span>
+
+create_user("Trevor", "admin")
+<span class="comment"># {"name": "Trevor", "role": "admin", "active": True}</span>
+
+<span class="comment"># Skip middle args? Use keyword arguments!</span>
+create_user("Trevor", active=False)
+<span class="comment"># {"name": "Trevor", "role": "viewer", "active": False}</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> Python's keyword arguments solve the "skip a default parameter" problem elegantly. In JS, you pass <code>undefined</code> to skip. In Python, you name the argument: <code>f(x, active=False)</code>. This is a superpower you'll miss when you go back to JS.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong>Mutable default argument trap!</strong> Never use a mutable value (list, dict) as a default argument. Python evaluates defaults once at function definition, not on each call. This is the single most common Python gotcha for ALL beginners.</p>
+    </div>
+
+    <div class="side-by-side">
+      <div>
+        <h5>WRONG</h5>
+        <pre><code><span class="comment"># BUG: all calls share the same list!</span>
+def add_item(item, items=[]):
+    items.append(item)
+    return items
+
+add_item("a")  <span class="comment"># ["a"]</span>
+add_item("b")  <span class="comment"># ["a", "b"] !!!!</span>
+<span class="comment"># Expected ["b"], got ["a", "b"]</span></code></pre>
+      </div>
+      <div>
+        <h5>RIGHT</h5>
+        <pre><code><span class="comment"># Use None sentinel + create inside</span>
+def add_item(item, items=None):
+    if items is None:
+        items = []
+    items.append(item)
+    return items
+
+add_item("a")  <span class="comment"># ["a"]</span>
+add_item("b")  <span class="comment"># ["b"] — correct!</span></code></pre>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- *ARGS AND **KWARGS                           -->
+    <!-- ============================================ -->
+
+    <h2>*args and **kwargs &mdash; Rest &amp; Spread</h2>
+
+    <p>Python splits JavaScript's <code>...rest</code> into two concepts: <code>*args</code> for positional arguments (like a rest array) and <code>**kwargs</code> for keyword arguments (like a rest object).</p>
+
+    <h3>*args &mdash; Rest Positional Arguments</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// ...rest collects remaining args</span>
+function sum(...numbers) {
+  return numbers.reduce((a, b) => a + b, 0);
+}
+
+sum(1, 2, 3);      <span class="comment">// 6</span>
+sum(10, 20);       <span class="comment">// 30</span>
+
+<span class="comment">// Spread into function call</span>
+const nums = [1, 2, 3];
+sum(...nums);      <span class="comment">// 6</span></code></pre>
+      </div>
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># *args collects remaining positional args</span>
+def total(*numbers):
+    return sum(numbers)  <span class="comment"># numbers is a tuple</span>
+
+
+total(1, 2, 3)     <span class="comment"># 6</span>
+total(10, 20)      <span class="comment"># 30</span>
+
+<span class="comment"># Spread into function call</span>
+nums = [1, 2, 3]
+total(*nums)       <span class="comment"># 6</span></code></pre>
+      </div>
+    </div>
+
+    <h3>**kwargs &mdash; Rest Keyword Arguments</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// Destructured options object</span>
+function createServer(options) {
+  const { host, port, debug, ...rest } = options;
+  console.log(host, port, debug);
+  console.log("Extra:", rest);
+}
+
+createServer({
+  host: "localhost",
+  port: 8000,
+  debug: true,
+  timeout: 30
+});</code></pre>
+      </div>
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># **kwargs collects remaining keyword args</span>
+def create_server(**kwargs):
+    host = kwargs.get("host", "localhost")
+    port = kwargs.get("port", 8000)
+    debug = kwargs.get("debug", False)
+    print(host, port, debug)
+    print("Extra:", kwargs)
+
+create_server(
+    host="localhost",
+    port=8000,
+    debug=True,
+    timeout=30
+)</code></pre>
+      </div>
+    </div>
+
+    <h3>Combining *args and **kwargs</h3>
+
+    <pre><code><span class="comment"># The full argument order (memorize this):</span>
+def func(positional, default="val", *args, **kwargs):
+    print(positional)   <span class="comment"># required arg</span>
+    print(default)      <span class="comment"># has default</span>
+    print(args)         <span class="comment"># tuple of extra positional args</span>
+    print(kwargs)       <span class="comment"># dict of extra keyword args</span>
+
+func("a", "b", "c", "d", x=1, y=2)
+<span class="comment"># positional = "a"</span>
+<span class="comment"># default = "b"</span>
+<span class="comment"># args = ("c", "d")</span>
+<span class="comment"># kwargs = {"x": 1, "y": 2}</span></code></pre>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>...rest</code> (array) &rarr; <code>*args</code> (tuple). <code>...rest</code> (object) &rarr; <code>**kwargs</code> (dict). Spread array into call: <code>fn(...arr)</code> &rarr; <code>fn(*list)</code>. Spread object into call: <code>fn({...obj})</code> &rarr; <code>fn(**dict)</code>. One star for sequences, two stars for key-value pairs. Always.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LAMBDA                                       -->
+    <!-- ============================================ -->
+
+    <h2>Lambda &mdash; One-Line Arrow Functions</h2>
+
+    <p>Python's <code>lambda</code> is a limited version of JavaScript's arrow function. It can only contain a single expression (no statements, no multi-line logic).</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// Arrow functions — unlimited</span>
+const double = (n) => n * 2;
+const add = (a, b) => a + b;
+const greet = (name) => `Hi, ${name}`;
+
+<span class="comment">// Used inline constantly</span>
+const evens = nums.filter(n => n % 2 === 0);
+const names = users.map(u => u.name);
+users.sort((a, b) => a.age - b.age);
+
+<span class="comment">// Multi-line arrow (full function body)</span>
+const process = (data) => {
+  const cleaned = data.trim();
+  return cleaned.toUpperCase();
+};</code></pre>
+      </div>
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># Lambda — single expression only</span>
+double = lambda n: n * 2
+add = lambda a, b: a + b
+greet = lambda name: f"Hi, {name}"
+
+<span class="comment"># Used inline</span>
+evens = list(filter(lambda n: n % 2 == 0, nums))
+names = list(map(lambda u: u["name"], users))
+users.sort(key=lambda u: u["age"])
+
+<span class="comment"># Multi-line? Use def (no lambda equivalent)</span>
+def process(data):
+    cleaned = data.strip()
+    return cleaned.upper()
+</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>In practice:</strong> Pythonistas rarely use <code>lambda</code> with <code>map()</code> and <code>filter()</code> because list comprehensions are more readable. The main use for <code>lambda</code> is in <code>sort(key=lambda ...)</code> and callback arguments. If you need more than one expression, just use <code>def</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DOCSTRINGS                                   -->
+    <!-- ============================================ -->
+
+    <h2>Docstrings &mdash; Built-in Documentation</h2>
+
+    <p>Python has a first-class way to document functions. The first string in a function body becomes its docstring &mdash; accessible at runtime via <code>help()</code> and your editor's intellisense.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript / JSDoc</h5>
+        <pre><code><span class="comment">/**
+ * Calculate the area of a rectangle.
+ * @param {number} width - The width
+ * @param {number} height - The height
+ * @returns {number} The area
+ */</span>
+function area(width, height) {
+  return width * height;
+}
+
+<span class="comment">// JSDoc is just a comment — not accessible
+// at runtime (needs external tools)</span></code></pre>
+      </div>
+      <div>
+        <h5>Python</h5>
+        <pre><code>def area(width, height):
+    """Calculate the area of a rectangle.
+
+    Args:
+        width: The width of the rectangle.
+        height: The height of the rectangle.
+
+    Returns:
+        The area as a number.
+    """
+    return width * height
+
+<span class="comment"># Accessible at runtime!</span>
+help(area)         <span class="comment"># prints the docstring</span>
+area.__doc__       <span class="comment"># the raw string</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> A docstring is a triple-quoted string as the first line of a function, class, or module. It's not a comment &mdash; it's a real string that Python attaches to the object. Your editor reads it for autocomplete tooltips. Django uses them for admin documentation. Always write them.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TYPE HINTS                                   -->
+    <!-- ============================================ -->
+
+    <h2>Type Hints &mdash; Python's TypeScript</h2>
+
+    <p>Python has optional type annotations, just like TypeScript. They don't enforce anything at runtime (unless you use a tool like mypy), but they give you editor autocomplete, error checking, and documentation.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>TypeScript</h5>
+        <pre><code><span class="comment">// Basic types</span>
+let name: string = "Trevor";
+let age: number = 38;
+let active: boolean = true;
+
+<span class="comment">// Function types</span>
+function greet(name: string): string {
+  return `Hello, ${name}!`;
+}
+
+<span class="comment">// Arrays</span>
+let scores: number[] = [95, 87, 92];
+
+<span class="comment">// Objects / interfaces</span>
+interface User {
+  name: string;
+  age: number;
+  email?: string;  <span class="comment">// optional</span>
+}
+
+<span class="comment">// Union types</span>
+let id: string | number = "abc";</code></pre>
+      </div>
+      <div>
+        <h5>Python (type hints)</h5>
+        <pre><code><span class="comment"># Basic types</span>
+name: str = "Trevor"
+age: int = 38
+active: bool = True
+
+<span class="comment"># Function types</span>
+def greet(name: str) -> str:
+    return f"Hello, {name}!"
+
+<span class="comment"># Lists</span>
+scores: list[int] = [95, 87, 92]
+
+<span class="comment"># Dicts (closest to interfaces)</span>
+from typing import TypedDict
+
+class User(TypedDict):
+    name: str
+    age: int
+    email: str  <span class="comment"># use NotRequired for optional</span>
+
+<span class="comment"># Union types</span>
+id: str | int = "abc"  <span class="comment"># Python 3.10+</span></code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Key difference:</strong> TypeScript types are enforced at compile time and stripped from the output. Python type hints are completely ignored at runtime &mdash; they're just metadata. Use <code>mypy</code> (a linter) to check them. Django and FastAPI use them heavily for auto-generating forms and API docs.</p>
+    </div>
+
+    <h3>Common Type Patterns</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>TypeScript</h5>
+        <pre><code><span class="comment">// Optional (nullable)</span>
+function find(id: number): User | null { }
+
+<span class="comment">// Callback type</span>
+function apply(fn: (x: number) => number) { }
+
+<span class="comment">// Generic</span>
+function first&lt;T&gt;(arr: T[]): T { }
+
+<span class="comment">// Tuple</span>
+let pair: [string, number] = ["age", 38];</code></pre>
+      </div>
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># Optional (nullable)</span>
+def find(id: int) -> User | None: ...
+
+<span class="comment"># Callable type</span>
+from typing import Callable
+def apply(fn: Callable[[int], int]): ...
+
+<span class="comment"># Generic</span>
+def first[T](arr: list[T]) -> T: ... <span class="comment"># 3.12+</span>
+
+<span class="comment"># Tuple</span>
+pair: tuple[str, int] = ("age", 38)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>string</code> &rarr; <code>str</code>. <code>number</code> &rarr; <code>int</code> or <code>float</code>. <code>boolean</code> &rarr; <code>bool</code>. <code>null</code> &rarr; <code>None</code>. <code>T[]</code> &rarr; <code>list[T]</code>. Return type <code>:</code> &rarr; <code>-></code>. The biggest win: Django reads your type hints to auto-generate form validation and API schemas.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- IMPORT SYSTEM                                -->
+    <!-- ============================================ -->
+
+    <h2>The Import System</h2>
+
+    <p>Python's <code>import</code> is conceptually similar to JavaScript's, but with important differences in how modules are resolved.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript (ES Modules)</h5>
+        <pre><code><span class="comment">// Default import</span>
+import React from 'react';
+
+<span class="comment">// Named imports</span>
+import { useState, useEffect } from 'react';
+
+<span class="comment">// Import all as namespace</span>
+import * as d3 from 'd3';
+
+<span class="comment">// Rename on import</span>
+import { render as renderDOM } from 'react-dom';
+
+<span class="comment">// Dynamic import</span>
+const module = await import('./utils.js');
+
+<span class="comment">// Relative paths required for local files</span>
+import { helper } from './utils.js';</code></pre>
+      </div>
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># Import entire module</span>
+import os
+
+<span class="comment"># Named imports</span>
+from datetime import datetime, timedelta
+
+<span class="comment"># Import with alias</span>
+import numpy as np
+
+<span class="comment"># Rename on import</span>
+from os.path import join as path_join
+
+<span class="comment"># Dynamic import</span>
+module = __import__("utils")
+
+<span class="comment"># Relative imports (within a package)</span>
+from . import utils
+from .utils import helper</code></pre>
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong>No default exports!</strong> Python has no concept of <code>export default</code>. Every name you import is a named import. <code>import os</code> imports the module itself as a namespace (like <code>import * as os</code>). <code>from os import path</code> imports a specific name (like <code>import { path } from 'os'</code>).</p>
+    </div>
+
+    <h3>Module Organization</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// File: utils/helpers.js</span>
+export function formatDate(d) { ... }
+export function slugify(s) { ... }
+
+<span class="comment">// File: utils/index.js (barrel)</span>
+export { formatDate } from './helpers.js';
+
+<span class="comment">// Using it</span>
+import { formatDate } from './utils';
+
+<span class="comment">// index.js = default entry point</span></code></pre>
+      </div>
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># File: utils/helpers.py</span>
+def format_date(d): ...
+def slugify(s): ...
+
+<span class="comment"># File: utils/__init__.py (barrel)</span>
+from .helpers import format_date
+
+<span class="comment"># Using it</span>
+from utils import format_date
+
+<span class="comment"># __init__.py = default entry point</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>index.js</code> &rarr; <code>__init__.py</code>. A folder with an <code>__init__.py</code> file becomes a Python "package" (like a folder with <code>index.js</code> becomes a module in Node). The <code>__init__.py</code> can be empty &mdash; it just marks the folder as importable.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PIP & VIRTUAL ENVIRONMENTS                   -->
+    <!-- ============================================ -->
+
+    <h2>pip &amp; Virtual Environments &mdash; npm &amp; node_modules</h2>
+
+    <p>The package management story maps directly. Different commands, identical concepts.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Concept</th>
+          <th>JavaScript / Node</th>
+          <th>Python</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Package manager</td>
+          <td><code>npm</code> / <code>yarn</code> / <code>pnpm</code></td>
+          <td><code>pip</code></td>
+        </tr>
+        <tr>
+          <td>Install a package</td>
+          <td><code>npm install express</code></td>
+          <td><code>pip install django</code></td>
+        </tr>
+        <tr>
+          <td>Install from lock file</td>
+          <td><code>npm ci</code></td>
+          <td><code>pip install -r requirements.txt</code></td>
+        </tr>
+        <tr>
+          <td>Save dependencies</td>
+          <td><code>package.json</code> (automatic)</td>
+          <td><code>pip freeze > requirements.txt</code></td>
+        </tr>
+        <tr>
+          <td>Local packages dir</td>
+          <td><code>node_modules/</code></td>
+          <td><code>venv/</code> (virtual environment)</td>
+        </tr>
+        <tr>
+          <td>Run a script</td>
+          <td><code>npx</code> / <code>npm run</code></td>
+          <td>Just run it (installed to venv PATH)</td>
+        </tr>
+        <tr>
+          <td>Global install</td>
+          <td><code>npm install -g</code></td>
+          <td><code>pip install</code> (outside venv)</td>
+        </tr>
+        <tr>
+          <td>.gitignore</td>
+          <td><code>node_modules/</code></td>
+          <td><code>venv/</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>The Virtual Environment Workflow</h3>
+
+    <pre><code><span class="comment"># 1. Create a virtual environment (once per project)</span>
+python -m venv venv
+
+<span class="comment"># 2. Activate it (every terminal session)</span>
+source venv/bin/activate          <span class="comment"># macOS/Linux</span>
+<span class="comment"># Your prompt changes: (venv) $</span>
+
+<span class="comment"># 3. Install packages (goes into venv, not global)</span>
+pip install django requests
+
+<span class="comment"># 4. Save your dependencies</span>
+pip freeze > requirements.txt
+
+<span class="comment"># 5. Deactivate when done</span>
+deactivate
+
+<span class="comment"># Teammate clones your repo:</span>
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt   <span class="comment"># installs everything</span></code></pre>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> A virtual environment is an isolated copy of Python with its own packages. It's what <code>node_modules/</code> does for Node &mdash; keeps project dependencies separate. Without a venv, <code>pip install</code> installs globally, which is like <code>npm install -g</code> for everything. Always use a venv.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- __name__ == "__main__"                       -->
+    <!-- ============================================ -->
+
+    <h2>__name__ == "__main__"</h2>
+
+    <p>This is a pattern you'll see in every Python file that's meant to be both imported and run directly. It's the "should I execute this code?" guard.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// No direct equivalent in JS/ESM</span>
+<span class="comment">// In CommonJS Node.js:</span>
+
+<span class="comment">// utils.js</span>
+function helper() { return 42; }
+
+if (require.main === module) {
+  <span class="comment">// Only runs if this file is executed directly</span>
+  <span class="comment">// Not when imported by another file</span>
+  console.log(helper());
+}
+
+module.exports = { helper };</code></pre>
+      </div>
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># utils.py</span>
+def helper():
+    return 42
+
+if __name__ == "__main__":
+    <span class="comment"># Only runs if: python utils.py</span>
+    <span class="comment"># NOT when: from utils import helper</span>
+    print(helper())
+
+
+
+
+<span class="comment"># When run directly: __name__ = "__main__"</span>
+<span class="comment"># When imported: __name__ = "utils"</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> When Python runs a file directly, it sets <code>__name__</code> to <code>"__main__"</code>. When the file is imported, <code>__name__</code> is set to the module name. The <code>if __name__ == "__main__":</code> guard means "only run this code if I'm the entry point, not when I'm being imported as a library." You'll see this in every Django management command.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FIRST-CLASS FUNCTIONS                        -->
+    <!-- ============================================ -->
+
+    <h2>First-Class Functions &mdash; Same as JS</h2>
+
+    <p>Functions in Python are first-class objects, just like in JavaScript. You can pass them around, return them, and store them in data structures.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// Passing functions as arguments</span>
+function apply(fn, value) {
+  return fn(value);
+}
+
+apply(Math.sqrt, 16);  <span class="comment">// 4</span>
+
+<span class="comment">// Returning functions (closures)</span>
+function multiplier(factor) {
+  return (n) => n * factor;
+}
+
+const triple = multiplier(3);
+triple(5);  <span class="comment">// 15</span>
+
+<span class="comment">// Functions in arrays</span>
+const ops = [Math.sqrt, Math.floor];
+ops.forEach(fn => console.log(fn(4.7)));</code></pre>
+      </div>
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># Passing functions as arguments</span>
+def apply(fn, value):
+    return fn(value)
+
+import math
+apply(math.sqrt, 16)   <span class="comment"># 4.0</span>
+
+<span class="comment"># Returning functions (closures)</span>
+def multiplier(factor):
+    def inner(n):
+        return n * factor
+    return inner
+
+triple = multiplier(3)
+triple(5)  <span class="comment"># 15</span>
+
+<span class="comment"># Functions in lists</span>
+ops = [math.sqrt, math.floor]
+for fn in ops: print(fn(4.7))</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Key difference in closures:</strong> Python closures can read outer variables, but can't reassign them without the <code>nonlocal</code> keyword. In JavaScript, closures can freely modify outer <code>let</code> variables. In Python: <code>nonlocal count</code> then <code>count += 1</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DECORATORS                                   -->
+    <!-- ============================================ -->
+
+    <h2>Decorators &mdash; A Preview</h2>
+
+    <p>Decorators are heavily used in Django. They're functions that wrap other functions to add behavior. You'll see them everywhere.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// Higher-order function pattern</span>
+function withLogging(fn) {
+  return function(...args) {
+    console.log(`Calling ${fn.name}`);
+    const result = fn(...args);
+    console.log(`Result: ${result}`);
+    return result;
+  };
+}
+
+const add = withLogging((a, b) => a + b);
+add(2, 3);
+<span class="comment">// Calling anonymous</span>
+<span class="comment">// Result: 5</span></code></pre>
+      </div>
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># Decorator — same concept, cleaner syntax</span>
+def with_logging(fn):
+    def wrapper(*args, **kwargs):
+        print(f"Calling {fn.__name__}")
+        result = fn(*args, **kwargs)
+        print(f"Result: {result}")
+        return result
+    return wrapper
+
+@with_logging          <span class="comment"># the @ syntax!</span>
+def add(a, b):
+    return a + b
+
+add(2, 3)
+<span class="comment"># Calling add</span>
+<span class="comment"># Result: 5</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>@decorator</code> above a function is just syntactic sugar for <code>fn = decorator(fn)</code>. It's a higher-order function that wraps another function. In Django, you'll see <code>@login_required</code>, <code>@csrf_exempt</code>, <code>@api_view</code> &mdash; they all work this way. The <code>@</code> symbol is not magic; it's just calling a function.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. What's wrong with <code>def add_tag(tag, tags=[])</code> and how do you fix it?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The default <code>[]</code> is created once at definition time and shared across all calls. Fix: <code>def add_tag(tag, tags=None):</code> then <code>if tags is None: tags = []</code> inside the function. This is Python's most infamous gotcha.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What's the Python equivalent of JavaScript's <code>...rest</code> for collecting function arguments?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>*args</code> for positional arguments (collected as a tuple) and <code>**kwargs</code> for keyword arguments (collected as a dict). <code>def f(*args, **kwargs)</code> accepts anything.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What does <code>if __name__ == "__main__":</code> do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It guards code that should only run when the file is executed directly (<code>python file.py</code>), not when it's imported by another file. When run directly, <code>__name__</code> is <code>"__main__"</code>; when imported, it's the module name.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What's the Python equivalent of <code>index.js</code> in a module folder?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>__init__.py</code> &mdash; it marks a folder as an importable Python package and acts as the default entry point when you import the folder name. It can be empty or contain re-exports.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What does the <code>@decorator</code> syntax do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>@decorator</code> above <code>def fn():</code> is syntactic sugar for <code>fn = decorator(fn)</code>. It passes your function into the decorator and replaces it with the return value. It's a higher-order function pattern with cleaner syntax.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/django/lessons/02-python-collections/">&larr; Previous: Collections &amp; Control Flow</a>
+      <a href="/django/lessons/04-python-oop/">Next: Object-Oriented Programming &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

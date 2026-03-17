@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 09 - PostgreSQL-Specific Features</title>
+  <link rel="icon" type="image/svg+xml" href="/sql/assets/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
+    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .header a { color: #3b82f6; text-decoration: none; font-size: 0.85rem; }
+    .header h1 { font-size: 1.2rem; }
+    .header h1 span { color: #3b82f6; }
+    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { color: #3b82f6; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
+    p { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
+    .coming-soon {
+      text-align: center; padding: 4rem 2rem;
+      background: #141414; border: 1px solid #222; border-radius: 12px;
+      margin: 2rem 0;
+    }
+    .coming-soon .icon { font-size: 3rem; margin-bottom: 1rem; }
+    .coming-soon h2 { border: none; text-align: center; }
+    .coming-soon p { color: #666; }
+    .topics { list-style: none; margin: 2rem auto; max-width: 400px; text-align: left; }
+    .topics li { padding: 0.5rem 0; color: #888; border-bottom: 1px solid #1a1a1a; font-size: 0.9rem; }
+    .topics li::before { content: ''; display: inline-block; width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; margin-right: 10px; }
+    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
+    .nav-footer a { color: #3b82f6; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>09</span> PostgreSQL-Specific Features</h1>
+    <a href="/sql/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+    <div class="coming-soon">
+      <div class="icon">&#128024;</div>
+      <h2>Coming Soon</h2>
+      <p>This lesson is under construction.</p>
+
+      <ul class="topics">
+        <li>JSONB operators: ->, ->>, @>, ?</li>
+        <li>Array columns and operators</li>
+        <li>generate_series() for test data</li>
+        <li>Full-text search: tsvector, tsquery</li>
+        <li>LISTEN/NOTIFY for real-time</li>
+        <li>UPSERT (INSERT ... ON CONFLICT)</li>
+        <li>RETURNING clause</li>
+        <li>Enum types</li>
+      </ul>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/sql/lessons/08-indexes-performance/">&larr; Lesson 08: Indexes</a>
+      <a href="/sql/lessons/10-database-design/">Lesson 10: Design &rarr;</a>
+    </div>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

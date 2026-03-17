@@ -1,0 +1,171 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+LESSON TITLE: Lesson 02 - How D3 Turns Numbers Into Pixels
+TRACK: D3.js (12-lesson curriculum)
+
+--- CONTEXT FOR HOSTS ---
+
+Curriculum Position: Lesson 2 of 12. In Lesson 01, Trevor learned pure SVG -- the shapes D3 produces. Now he learns the MATH layer: scales that translate data values into pixel positions, axes that label those positions, and the margins convention that creates space for everything. This is the bridge between raw SVG and real charts.
+
+What came before: Pure SVG fundamentals -- rect, circle, line, text, path, g, the coordinate system, and the margins convention concept.
+
+What's coming next: Lesson 03 covers D3 selections (the API for manipulating SVG elements). Lesson 04 covers data binding (connecting data arrays to DOM elements).
+
+What Trevor already knows: React, TypeScript, CSS. He understands functions, mapping, and proportional math. He's used to CSS positioning and responsive design.
+
+Learner's goal: Broadcast TV data visualization at Tenga -- election dashboards need scales for vote counts, weather maps need color scales for temperature, census overlays need scales for population data.
+
+Specific analogies for THIS lesson:
+- A scale is like a unit converter -- Fahrenheit to Celsius, or data-values to pixels. Same idea, different units.
+- Domain and range are like input/output of a function. Domain = what goes in (data world), range = what comes out (pixel world).
+- scaleBand is like CSS flexbox with gap -- it divides space evenly among items with padding between them.
+- The flipped Y range is like how CSS positions from top-down -- high values should be at the top of the chart (small Y pixel values).
+- Axes are "name tags" for your scale -- they show the viewer what the pixel positions mean.
+
+Key mental models:
+- A scale is a FUNCTION. You call it with data, it returns pixels. That's the whole concept.
+- Domain = data world, Range = pixel world.
+- Y range is ALWAYS flipped: [height, 0].
+- The margins convention is boilerplate -- copy-paste it every time.
+
+--- LESSON CONTENT ---
+
+The Problem
+
+In Lesson 01, we wrote things like .attr("width", d => d.pop / 100). That "/ 100" is embarrassing -- just eyeballing a number. If the data changes or the screen is a different size, it breaks. Every chart has this problem: your data lives in one world (millions of people), your screen lives in another (600 pixels wide). You need a translator. That's what a SCALE is.
+
+A Scale is a Translator
+
+Imagine converting Fahrenheit to Celsius for a journalism piece. The formula maps one range of numbers to another range. A D3 scale works the same way, except instead of temperature conversion, it's Data-to-Pixels:
+
+- Input: 0 (population) maps to Output: 0px
+- Input: 39,538,000 (California's population) maps to Output: 500px
+- Input: 20,000,000 (New York's population) maps to Output: 253px (proportional!)
+
+A scale is a function. You give it a data value, it gives back a pixel value. D3 gives you convenient ways to create these translator functions.
+
+Creating a Scale in D3
+
+Two things to configure: DOMAIN (the range of your data / input world) and RANGE (the range of your pixels / output world).
+
+const scale = d3.scaleLinear()
+  .domain([0, 39_538_000])   // data goes from 0 to 39.5M
+  .range([0, 500]);           // pixels go from 0 to 500
+
+scale(39_538_000)   // returns 500   (max data = max pixels)
+scale(20_000_000)   // returns 253   (proportional)
+scale(0)            // returns 0     (min data = min pixels)
+
+Different Data, Different Scales
+
+scaleLinear -- for continuous numbers: population, money, temperature, percentages. Any number in a continuous range. For Y scales, the range is FLIPPED: .range([height, 0]). This is because SVG's Y-axis goes top-down. 0% should be at the bottom (large Y pixel), 100% at the top (small Y pixel = 0). You will do this for EVERY Y-axis.
+
+scaleBand -- for categories (bar charts): state names, district labels, candidate names. Each gets its own "band" of space. scaleBand divides space evenly among categories and provides .bandwidth() -- the width each bar should be. No more manually calculating bar widths. Includes .padding() for gaps between bars.
+
+scaleTime -- for dates: maps Date objects to pixels. Used for the X-axis of time series charts like polling trends.
+
+scaleSequential -- for color: maps data values to colors instead of pixels. Essential for choropleth maps. Uses interpolators like d3.interpolateBlues to go from light blue to dark blue.
+
+Axes Are Just Labels for Your Scale
+
+You have a scale translating data to pixels, but the viewer doesn't know that. An axis draws tick marks and labels showing what the scale is doing. Without axis: "That bar is 253 pixels tall. So what?" With axis: "That bar represents 20 million people."
+
+An axis is created FROM a scale:
+- d3.axisBottom(xScale) -- ticks below the line (X-axis at bottom)
+- d3.axisLeft(yScale) -- ticks left of the line (Y-axis)
+
+Render it by calling it on a <g> group:
+svg.append("g")
+  .attr("transform", `translate(0, ${height})`)
+  .call(xAxis);
+
+The .call() method passes the selection to the axis function. The axis function creates lines, ticks, and text labels inside the group.
+
+The Margins Convention
+
+The standard boilerplate every professional D3 chart starts with:
+1. Define margins: { top: 20, right: 30, bottom: 40, left: 50 }
+2. Calculate inner chart dimensions: width = 700 - margin.left - margin.right
+3. Create SVG at full size, append a <g> group translated inward by the margins
+4. All drawing happens inside the group. Axes fit in the margin space.
+
+Copy-paste this pattern into every chart. It's boilerplate.
+
+Complete Pattern: margins + scales + axes + bars. Replace magic numbers with scale calls:
+- .attr("x", d => x(d.state)) instead of manual positioning
+- .attr("y", d => y(d.pop)) instead of eyeballing
+- .attr("width", x.bandwidth()) instead of hardcoded widths
+
+Useful Extras:
+- .nice() rounds domain to clean axis numbers (e.g., 0 to 40000 instead of 0 to 39538)
+- .tickFormat() formats labels (e.g., 10000 becomes "10k")
+- viewBox makes charts responsive -- define coordinate space, let browser scale
+
+--- KEY CONCEPTS TO EMPHASIZE ---
+
+1. A scale is a function that translates data values to pixel values (or color values)
+2. Domain = input range (data world), Range = output range (pixel world)
+3. Y range is ALWAYS flipped [height, 0] because SVG Y goes top-down
+4. scaleBand for categories, scaleLinear for numbers, scaleTime for dates
+5. The margins convention is copy-paste boilerplate for every chart
+
+--- COMMON PITFALLS ---
+
+- Forgetting to flip the Y range (bars grow down instead of up)
+- Using scaleLinear when you need scaleBand for categories (or vice versa)
+- Setting scale domain/range in wrong order (domain is data, range is pixels)
+- Not calling .nice() and getting ugly axis numbers like 0, 7907, 15815
+- Confusing width/height (total SVG size) with the inner chart dimensions (after margins)
+
+--- BROADCAST TV CONNECTION ---
+
+- Election dashboards need scaleLinear for vote counts and scaleBand for candidate names
+- Weather maps use scaleSequential for temperature-to-color mapping (blue = cold, red = hot)
+- Census choropleth maps use scaleSequential for population density colors
+- Poll tracking line charts use scaleTime for the X-axis (dates) and scaleLinear for the Y-axis (approval %)
+- Breaking-news graphics need responsive charts via viewBox to fit different broadcast screen resolutions
+- The margins convention creates the clean, structured layouts that broadcast design standards require
+
+
+========================================
+SECTION 2: CUSTOMIZATION INSTRUCTIONS
+========================================
+
+PODCAST CUSTOMIZATION FOR LESSON 02: Scales & Axes
+
+TARGET MENTAL MODELS:
+- Scale as a "translator function" between two worlds (data and pixels)
+- Domain/range as "input language / output language"
+- The flipped Y range as the natural consequence of SVG's top-down coordinate system (from Lesson 01)
+- Margins convention as "boilerplate you never think about"
+
+SPECIFIC ANALOGIES TO USE:
+- "You know how in journalism you sometimes have to convert units for different audiences? Fahrenheit to Celsius, miles to kilometers? A scale is the same thing -- converting population numbers to pixels."
+- "Think of domain as 'what language is the data speaking?' and range as 'what language does the screen speak?' The scale translates between them."
+- "scaleBand is basically CSS flexbox for categories. It divides the space evenly and even handles the gaps with .padding()."
+- "The margins convention is like a newspaper layout grid. You set your margins once and everything else fits inside them. In D3, you literally copy-paste this setup into every chart."
+
+CONNECTIONS TO OTHER LESSONS:
+- Connect back to Lesson 01: "Remember how the Y-axis goes top-down? That's exactly WHY we flip the range here -- [height, 0] maps low values to the bottom of the chart."
+- Connect back to the margins convention preview from Lesson 01: "Now you're actually implementing the margins pattern we saw diagrammed last time."
+- Tease Lesson 03: "Next, you'll learn how D3 actually grabs and manipulates those SVG elements -- selections are like jQuery but for SVG."
+- Tease Lesson 04: "And then you'll learn how to bind your data array to DOM elements so each bar automatically gets its own data point."
+
+TREVOR'S BACKGROUND TO REFERENCE:
+- As a React dev, he's used to passing data through components. A scale is like a utility function you'd put in a utils/ folder -- it takes data in and returns formatted output.
+- As a journalist, he's used to unit conversions and contextualizing numbers for audiences. Scales do the same thing for visual representation.
+- His broadcast TV goal: election night dashboards need multiple scale types simultaneously -- linear for votes, band for candidates, sequential for state map colors.
+
+MEMORIZATION TECHNIQUES:
+- "Domain is Data, Range is Render" -- both D words, both R words
+- "Y is always flipped: [height, 0]" -- say it like a rule that brooks no exceptions
+- The scale types cheat sheet: "Numbers = linear. Categories = band. Dates = time. Colors = sequential."
+- "The margins convention has 3 steps: define margins, calculate inner dimensions, create SVG + translated group."
+
+TONE:
+- The React-dev host should have the "aha moment": "Oh, so a scale is just a function? I can call it like scale(20000000) and it just gives me back 253 pixels? That's so simple."
+- The D3-expert host should emphasize the elegance: "Once you set up your scales, you never think about pixel math again. Change the data, change the screen size -- the scales handle it."
+- Ground it in broadcast TV: "On election night, when results come in, the scales automatically recalculate. The bars resize, the colors update. That's the whole point."
+- The React-dev host should ask: "So .call() is like passing a ref to a function? It just lets the axis function work on that DOM element?" -- and the expert confirms.

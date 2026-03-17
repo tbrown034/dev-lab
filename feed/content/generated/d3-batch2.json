@@ -1,0 +1,832 @@
+[
+  {
+    "id": "d3-043",
+    "track": "d3",
+    "type": "interview",
+    "author": "bindData",
+    "time": "1h",
+    "content": "INTERVIEW Q: Your team at Stacksworth Inc. is building a dashboard with 6 charts that all share the same dataset. When the user applies a filter, all 6 charts need to update simultaneously.\n\nHow do you structure the data binding so each chart gets the right slice of data without re-bindng everything from scratch?",
+    "code": null,
+    "link": null,
+    "likes": 934,
+    "reposts": 187,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "One source of truth. Filter once, pass the result to each chart's update function. domain \u2192 range, six times.",
+        "likes": 312
+      },
+      {
+        "author": "transitionEase",
+        "content": "And stagger the transitions slightly! 0ms, 50ms, 100ms delay per chart. It feels like the dashboard is \"thinking\" instead of just blinking. Orchestrated motion > simultaneous swap.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "d3-044",
+    "track": "d3",
+    "type": "interview",
+    "author": "svgArtist",
+    "time": "4h",
+    "content": "INTERVIEW Q: You need to render a force-directed graph with 200 nodes and 400 edges. Each node is a company employee, edges are reporting relationships.\n\nThe PM wants: click a node to highlight its connections, hover for a tooltip, and smooth enter/exit when employees are added or removed.\n\nWalk me through the SVG structure.",
+    "code": null,
+    "link": null,
+    "likes": 782,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "Key: bind the nodes array with a key function on employee ID. When someone leaves, the exit selection fades them out. When someone joins, the enter selection fades them in. The simulation keeps running \u2014 the data binding handles the humans.",
+        "likes": 298
+      },
+      {
+        "author": "svgArtist",
+        "content": "And please, use <g> groups for each node. A <circle> for the dot, a <text> for the label, wrapped in a <g>. My dear <g> keeps everything together when the force simulation moves things around. Don't make 200 orphaned circles and 200 orphaned labels and try to sync them.",
+        "likes": 341
+      }
+    ]
+  },
+  {
+    "id": "d3-045",
+    "track": "d3",
+    "type": "interview",
+    "author": "geoProjection",
+    "time": "7h",
+    "content": "INTERVIEW Q: A client wants a world map showing their company's office locations (12 cities). They want to click a city and zoom into that region smoothly.\n\nWhat projection do you choose and how do you handle the zoom transition?\n\n(If you say Mercator I'm ending the interview.)",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/05-maps-geo/",
+      "label": "projections & zoom in Lesson 5 \u2192"
+    },
+    "likes": 1102,
+    "reposts": 231,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "d3.transition() on the projection's center and scale. Use d3.interpolate() to smoothly tween between the current view and the target city. Duration 750ms, easeCubicInOut. The zoom should feel like the Earth is gently rotating toward you.",
+        "likes": 378
+      },
+      {
+        "author": "geoProjection",
+        "content": "EqualEarth for the overview, switch to Orthographic for the zoom-in. It looks like a spinning globe. The client will lose their mind. Chapter 12 of the manifesto covers this exact pattern: \"The Zoom as Cartographic Revelation.\"",
+        "likes": 445
+      }
+    ]
+  },
+  {
+    "id": "d3-046",
+    "track": "d3",
+    "type": "interview",
+    "author": "transitionEase",
+    "time": "1d",
+    "content": "INTERVIEW Q: Your bar chart updates every 2 seconds with new data. Sometimes bars enter, sometimes they exit, sometimes they just change height.\n\nUsers are complaining it feels \"janky\" and \"hard to follow.\" You open the code and see all transitions use the same duration and no delay.\n\nWhat do you change?",
+    "code": null,
+    "link": null,
+    "likes": 876,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "The fix is choreography. Exit bars shrink down first (300ms). Then existing bars slide to their new positions (500ms). Then entering bars grow from zero (300ms). Stagger the phases so the eye can follow what changed.",
+        "likes": 356
+      },
+      {
+        "author": "scaleLinear",
+        "content": "Also: transition duration < update interval. Always.",
+        "likes": 201
+      }
+    ]
+  },
+  {
+    "id": "d3-047",
+    "track": "d3",
+    "type": "interview",
+    "author": "scaleLinear",
+    "time": "3d",
+    "content": "INTERVIEW Q: Build a line chart showing stock prices over one year. The dataset has gaps (weekends, holidays). How do you handle the missing dates without misleading the viewer?",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/07-lines-areas/",
+      "label": "line generators in Lesson 7 \u2192"
+    },
+    "likes": 653,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "d3.line() has a .defined() method. Return false for gaps. My dear <path> will break the line instead of drawing a false connection. The gap IS the data.",
+        "likes": 287
+      },
+      {
+        "author": "bindData",
+        "content": "Alternatively, use a time scale with scaleTime() \u2014 it naturally spaces dates correctly, so weekends just... aren't there. No fake continuity. But be clear in the tooltip that Saturday data doesn't exist, not that the value was zero.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "d3-048",
+    "track": "d3",
+    "type": "interview",
+    "author": "bindData",
+    "time": "5h",
+    "content": "INTERVIEW Q: You have a pie chart showing market share for 8 companies. A dropdown lets users toggle between Q1, Q2, Q3, Q4.\n\nWhen switching quarters, companies can appear, disappear, or change their slice size. How do you make this transition feel coherent?\n\nHint: the answer involves the same pattern as a wedding seating chart.",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/08-arcs-pies/",
+      "label": "arc transitions in Lesson 8 \u2192"
+    },
+    "likes": 723,
+    "reposts": 119,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "Key function on company name. Entering slices grow from zero angle. Exiting slices shrink to zero. Updating slices tween with d3.interpolate() on the arc angles. Use attrTween(\"d\", arcTween) not just attr(\"d\"). The interpolation has to happen on the angles, not the path string.",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "d3-049",
+    "track": "d3",
+    "type": "interview",
+    "author": "geoProjection",
+    "time": "2d",
+    "content": "INTERVIEW Q: You're building a choropleth of US counties (3,000+ polygons). The GeoJSON file is 15MB. The page takes 8 seconds to load.\n\nHow do you optimize this without losing geographic accuracy that matters?",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/05-maps-geo/",
+      "label": "TopoJSON optimization in Lesson 5 \u2192"
+    },
+    "likes": 811,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "geoProjection",
+        "content": "TopoJSON. That 15MB GeoJSON becomes 1.5MB TopoJSON because shared borders are stored once. Then topojson.simplify() to reduce point density. You lose coastline detail no one would notice at screen resolution anyway. This is Chapter 9 of the manifesto: \"The Tyranny of Unnecessary Vertices.\"",
+        "likes": 402
+      },
+      {
+        "author": "queryset",
+        "content": "Feels like the geographic equivalent of select_related(). Instead of duplicating shared boundary data across every county, you normalize it. Same principle, different dimension.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "d3-050",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "bindData",
+    "time": "3h",
+    "content": "hot take: .datum() is NOT a shortcut for .data() with one element.\n\n.data() creates a join. It computes enter, update, exit.\n.datum() just staples data to an element. No join. No lifecycle.\n\nUsing .datum() when you need .data() is like gluing guests to chairs instead of giving them name cards.\n\n(Yes this is going in the blog post. We're at 14,200 words.)",
+    "code": null,
+    "link": null,
+    "likes": 1456,
+    "reposts": 342,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "datum: one element, one value. data: many elements, many values. That's the whole distinction.",
+        "likes": 567
+      },
+      {
+        "author": "svgArtist",
+        "content": "I use .datum() for path generators specifically. You bind the whole array to one <path> element because d3.line() takes an array and draws one line. You're not joining multiple elements \u2014 you're feeding one path its drawing instructions.",
+        "likes": 412
+      }
+    ]
+  },
+  {
+    "id": "d3-051",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "geoProjection",
+    "time": "6h",
+    "content": "hot take: every data visualization course should START with maps.\n\nnot bar charts. not scatterplots. MAPS.\n\nmaps force you to learn projections (coordinate transforms), GeoJSON (real data formats), color scales (continuous encoding), and tooltips (interaction) \u2014 all in one visualization.\n\na bar chart teaches you rectangles. a map teaches you EVERYTHING.\n\nthis is the thesis of Chapter 1.",
+    "code": null,
+    "link": null,
+    "likes": 1834,
+    "reposts": 412,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "I love you but a bar chart teaches data binding, scales, axes, and update patterns without needing a 15MB GeoJSON file and a PhD in cartographic theory. Start simple. Build to maps.",
+        "likes": 678
+      },
+      {
+        "author": "geoProjection",
+        "content": "And THAT is why Mercator still rules. People learn bar charts first, get comfortable, and never venture into geo. The Bar Chart Industrial Complex feeds the Mercator Industrial Complex. It's all connected.",
+        "likes": 523
+      }
+    ]
+  },
+  {
+    "id": "d3-052",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "transitionEase",
+    "time": "1d",
+    "content": "hot take: if your D3 visualization has no transitions, it's a screenshot that took 200 lines of JavaScript to make.\n\ntransitions aren't decoration. they show causality. they show what changed and where it went. they help the brain track objects across updates.\n\nstatic D3 is a crime against the library's potential.",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/06-transitions-interactivity/",
+      "label": "why transitions matter in Lesson 6 \u2192"
+    },
+    "likes": 1621,
+    "reposts": 378,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "Counterpoint: a beautifully crafted static SVG with thoughtful color, typography, and layout can be more powerful than a bouncy animated mess. Not every chart needs to dance.",
+        "likes": 534
+      },
+      {
+        "author": "transitionEase",
+        "content": "I said transitions, not animations. A 300ms easeCubicOut on data update is not \"bouncing.\" It's empathy for the viewer's visual cortex. There's a difference between choreography and circus.",
+        "likes": 445
+      }
+    ]
+  },
+  {
+    "id": "d3-053",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "svgArtist",
+    "time": "4h",
+    "content": "hot take: d3.arc() is the most satisfying shape generator in all of D3.\n\nyou give it innerRadius, outerRadius, startAngle, endAngle and it hands you back a perfect arc path. my beloved <path> doesn't even need to think about trigonometry.\n\nCanvas users do sin() and cos() by hand like it's 1997.",
+    "code": null,
+    "link": null,
+    "likes": 987,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "And when you transition between arc states with attrTween? The way a donut slice smoothly grows or shrinks? That's the feeling of biting into warm bread. Smooth, satisfying, complete.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "d3-054",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "scaleLinear",
+    "time": "2d",
+    "content": "hot take: d3.curveLinear is the only honest curve interpolation. Every other curve \u2014 curveBasis, curveCardinal, curveMonotone \u2014 is drawing lines between points that don't exist in your data.\n\nBeautiful lies, but lies.",
+    "code": null,
+    "link": null,
+    "likes": 1134,
+    "reposts": 223,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "curveMonotoneX doesn't overshoot. It's the compromise between honest and beautiful. It FEELS right because it respects the monotonicity of your data while smoothing the jaggedness.",
+        "likes": 398
+      },
+      {
+        "author": "geoProjection",
+        "content": "You know what else draws things that don't exist? The Mercator projection. Greenland looking the same size as Africa. At least curveBasis is honest about being an interpolation.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "d3-055",
+    "track": "d3",
+    "type": "tip",
+    "author": "bindData",
+    "time": "2h",
+    "content": "PRO TIP: The key function in .data() is how D3 tracks identity across updates. Without it, D3 matches by index \u2014 and your beautiful enter/exit animations break the moment data gets reordered.\n\nAlways. Use. A. Key. Function.",
+    "code": "// BAD: matches by index. Reorder data and everything breaks.\nsvg.selectAll(\"rect\")\n  .data(data)\n  .join(\"rect\");\n\n// GOOD: matches by unique ID. Reorder all you want.\nsvg.selectAll(\"rect\")\n  .data(data, d => d.id)\n  .join(\"rect\");",
+    "link": null,
+    "likes": 734,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "Without a key function, when you sort your bar chart, every bar morphs into a different bar instead of sliding to its new position. It looks like a glitch. With a key function, bars glide into place. Night and day.",
+        "likes": 289
+      },
+      {
+        "author": "null_handler",
+        "content": "What happens when your key accessor returns undefined for some elements? D3 silently groups them. Absence isn't an identity, but D3 treats it like one. Check your keys for nulls.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "d3-056",
+    "track": "d3",
+    "type": "tip",
+    "author": "transitionEase",
+    "time": "5h",
+    "content": "PRO TIP: Chain transitions with .transition() to create sequenced animations. But here's what the docs bury \u2014 the second transition waits for the first to finish. No setTimeout needed.\n\nThis is how you make elements enter with a fade, THEN slide into position.",
+    "code": "svg.selectAll(\"circle\")\n  .data(data, d => d.id)\n  .join(\n    enter => enter.append(\"circle\")\n      .attr(\"r\", 0)\n      .attr(\"opacity\", 0)\n      .call(enter => enter.transition()\n        .duration(300)\n        .attr(\"opacity\", 1)\n      .transition()        // chains after first finishes\n        .duration(500)\n        .attr(\"r\", d => rScale(d.value))\n      )\n  );",
+    "link": {
+      "url": "/d3/lessons/06-transitions-interactivity/",
+      "label": "chained transitions in Lesson 6 \u2192"
+    },
+    "likes": 612,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "And each <circle> gets its own timeline. My little circles, each patiently waiting their turn to fade in and grow. It's beautiful.",
+        "likes": 187
+      }
+    ]
+  },
+  {
+    "id": "d3-057",
+    "track": "d3",
+    "type": "tip",
+    "author": "geoProjection",
+    "time": "1d",
+    "content": "PRO TIP: d3.geoPath() has a .centroid() method that gives you the center of any GeoJSON feature. Need to place labels on a map? Don't hardcode coordinates.\n\nLet the projection do the math. That's what it's for.",
+    "code": "const path = d3.geoPath().projection(projection);\n\nsvg.selectAll(\"text\")\n  .data(states.features)\n  .join(\"text\")\n  .attr(\"x\", d => path.centroid(d)[0])\n  .attr(\"y\", d => path.centroid(d)[1])\n  .text(d => d.properties.name);",
+    "link": {
+      "url": "/d3/lessons/05-maps-geo/",
+      "label": "centroids & labels in Lesson 5 \u2192"
+    },
+    "likes": 534,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "Centroid respects the projection. Change projections, labels move correctly. Zero hardcoding.",
+        "likes": 212
+      },
+      {
+        "author": "geoProjection",
+        "content": "This is why I preach projections. The centroid of Texas in Mercator vs. AlbersUSA is wildly different. Use the wrong one and your label floats in the Gulf of Mexico. The projection IS the coordinate system.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "d3-058",
+    "track": "d3",
+    "type": "tip",
+    "author": "svgArtist",
+    "time": "8h",
+    "content": "PRO TIP: d3.line() with .curve(d3.curveCardinal.tension(0.5)) gives you a smooth line that still hugs your data points. Tension 0 = maximum smoothing. Tension 1 = basically curveLinear.\n\nTweak it until the line feels honest but not jagged.",
+    "code": "const line = d3.line()\n  .x(d => xScale(d.date))\n  .y(d => yScale(d.value))\n  .curve(d3.curveCardinal.tension(0.5));\n\nsvg.append(\"path\")\n  .datum(data)\n  .attr(\"d\", line)\n  .attr(\"fill\", \"none\")\n  .attr(\"stroke\", \"steelblue\");",
+    "link": null,
+    "likes": 489,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "Tension 0.5 is the sweet spot. It feels like a deep breath \u2014 relaxed but intentional. Tension 0 is too loose, like the line had too much coffee and forgot where the data points are.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "d3-059",
+    "track": "d3",
+    "type": "tip",
+    "author": "scaleLinear",
+    "time": "3d",
+    "content": "PRO TIP: d3.pie() doesn't draw anything. It computes angles. d3.arc() draws the paths. Separate concerns.\n\nPipe the output of one into the other.",
+    "code": "const pie = d3.pie()\n  .value(d => d.revenue)\n  .sort(null);              // keep original order\n\nconst arc = d3.arc()\n  .innerRadius(50)          // > 0 = donut\n  .outerRadius(150);\n\n// pie(data) returns array with startAngle, endAngle\n// arc(pieSlice) returns the path string\nsvg.selectAll(\"path\")\n  .data(pie(data))\n  .join(\"path\")\n  .attr(\"d\", arc);",
+    "link": {
+      "url": "/d3/lessons/08-arcs-pies/",
+      "label": "pie + arc pattern in Lesson 8 \u2192"
+    },
+    "likes": 567,
+    "reposts": 102,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "This is the pattern that trips up every beginner. They call d3.pie() and wonder where the chart is. pie() is the data transform. arc() is the renderer. Data in, meaning out \u2014 in two steps.",
+        "likes": 298
+      }
+    ]
+  },
+  {
+    "id": "d3-060",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "transitionEase",
+    "time": "2h",
+    "content": "SPOT THE BUG: This transition is supposed to fade out exiting elements, but they just vanish instantly. What's wrong?",
+    "code": "svg.selectAll(\"circle\")\n  .data(newData, d => d.id)\n  .join(\n    enter => enter.append(\"circle\")\n      .attr(\"r\", 5),\n    update => update,\n    exit => exit\n      .attr(\"opacity\", 0)\n      .remove()\n  );",
+    "link": null,
+    "likes": 445,
+    "reposts": 72,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "No .transition() before .attr(\"opacity\", 0)! You're setting opacity to 0 instantly, then removing. It should be:\nexit.transition().duration(300).attr(\"opacity\", 0).remove()\n\nThe .remove() at the end of a transition waits until the transition finishes. Without .transition(), it's just instant death. Cold. Heartless.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "d3-061",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "bindData",
+    "time": "7h",
+    "content": "SPOT THE BUG: New data arrives and the chart updates, but old elements are never removed. The DOM keeps growing. After 10 updates there are hundreds of orphaned rects. What's wrong?",
+    "code": "function update(data) {\n  svg.selectAll(\"rect\")\n    .data(data)\n    .enter()\n    .append(\"rect\")\n    .attr(\"x\", (d, i) => xScale(i))\n    .attr(\"y\", d => yScale(d.value))\n    .attr(\"width\", xScale.bandwidth())\n    .attr(\"height\", d => height - yScale(d.value));\n}",
+    "link": {
+      "url": "/d3/lessons/04-shapes-bindings/",
+      "label": "the general update pattern in Lesson 4 \u2192"
+    },
+    "likes": 523,
+    "reposts": 87,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "Classic enter-only pattern. You handle enter (new elements appear) but never handle exit (old elements removed) or update (existing elements change). Use .join() \u2014 it handles all three. Or manually call .exit().remove(). The wedding seating chart doesn't work if you never clear the seats of guests who left.",
+        "likes": 345
+      },
+      {
+        "author": "manage_py",
+        "content": "This is giving me Django template fragment caching flashbacks. Stale data sticking around because nobody wrote the invalidation logic. There's a lifecycle for that.",
+        "likes": 134
+      }
+    ]
+  },
+  {
+    "id": "d3-062",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "geoProjection",
+    "time": "1d",
+    "content": "SPOT THE BUG: This map renders but it's just a tiny blob in the corner of the SVG. All the paths are there, they're just... microscopic. What's wrong?",
+    "code": "const projection = d3.geoMercator();\nconst path = d3.geoPath().projection(projection);\n\nsvg.selectAll(\"path\")\n  .data(counties.features)\n  .join(\"path\")\n  .attr(\"d\", path);",
+    "link": null,
+    "likes": 612,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "geoProjection",
+        "content": "No .fitSize()! The default Mercator projection is configured for the ENTIRE WORLD at a tiny scale. You need:\nprojection.fitSize([width, height], counties)\nThis tells the projection to scale and translate itself to fit YOUR data into YOUR SVG. Without it, you're looking at a world-sized map through a keyhole.",
+        "likes": 389
+      },
+      {
+        "author": "scaleLinear",
+        "content": "fitSize is just .domain() and .range() for geography.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "d3-063",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "svgArtist",
+    "time": "4h",
+    "content": "SPOT THE BUG: The area chart renders but the fill is above the line instead of below it. The chart looks upside-down. Data is correct. What happened?",
+    "code": "const area = d3.area()\n  .x(d => xScale(d.date))\n  .y0(d => yScale(d.value))\n  .y1(0);",
+    "link": null,
+    "likes": 378,
+    "reposts": 56,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "y0 and y1 are swapped. y0 is the BASELINE (usually the bottom of the chart = height) and y1 is the DATA line. It should be:\n.y0(height)\n.y1(d => yScale(d.value))\n\nRemember: in SVG, y=0 is the TOP. My dear <path> draws from baseline (y0) up to the data line (y1). Swap them and the fill goes the wrong way.",
+        "likes": 234
+      },
+      {
+        "author": "transitionEase",
+        "content": "The SVG coordinate system: where up is down and every newcomer suffers. It feels disorienting on purpose, like the universe testing your commitment to data visualization.",
+        "likes": 145
+      }
+    ]
+  },
+  {
+    "id": "d3-064",
+    "track": "d3",
+    "type": "mentalModel",
+    "author": "bindData",
+    "time": "3h",
+    "content": "MENTAL MODEL: The General Update Pattern is a wedding seating chart.\n\nYou have GUESTS (data) and CHAIRS (DOM elements).\n\nENTER: New guests arrive. You add chairs for them.\nUPDATE: Existing guests are still here. Maybe they changed tables.\nEXIT: Guests left. Remove their chairs.\n\n.join() is the wedding planner who handles all three.\n\nWithout .join() (or manual enter/update/exit), you're that wedding where nobody removes place settings when guests leave and new guests sit on the floor.\n\n(Page 47 of the blog draft. It gets better from here I promise.)",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/04-shapes-bindings/",
+      "label": "the general update pattern in Lesson 4 \u2192"
+    },
+    "likes": 1345,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "This maps perfectly to database thinking. Enter = INSERT, Update = UPDATE, Exit = DELETE. The join pattern is just CRUD for the DOM. How many queries though? D3 does it in one pass.",
+        "likes": 356
+      },
+      {
+        "author": "scaleLinear",
+        "content": "Data \u2192 DOM. That's the whole library.",
+        "likes": 445
+      }
+    ]
+  },
+  {
+    "id": "d3-065",
+    "track": "d3",
+    "type": "mentalModel",
+    "author": "geoProjection",
+    "time": "1d",
+    "content": "MENTAL MODEL: A map projection is a FUNCTION.\n\nInput: [longitude, latitude] (where something IS on the sphere)\nOutput: [x, y] (where to draw it on your screen)\n\nThat's it. Every projection is just a different function that converts 3D coordinates to 2D pixels. Some preserve area. Some preserve angles. None preserve everything.\n\nMercator: angles are honest, sizes are lies.\nEqualEarth: sizes are honest, shapes bend.\nOrthographic: looks like a globe, half the world is invisible.\n\nPick your tradeoff. But PICK. Don't just use whatever loaded first.\n\n(This is literally the abstract of the manifesto.)",
+    "code": null,
+    "link": null,
+    "likes": 1567,
+    "reposts": 345,
+    "comments": [
+      {
+        "author": "bobby_tables",
+        "content": "Speaking of functions that transform input: are you validating your GeoJSON source? I've seen injection through manipulated GeoJSON properties rendered unsanitized into tooltips. Parameterize or perish, even in cartography.",
+        "likes": 189
+      },
+      {
+        "author": "geoProjection",
+        "content": "Bobby I respect the vigilance but I'm trying to save people from Mercator and you're worried about injection vectors in latitude values. Priorities.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "d3-066",
+    "track": "d3",
+    "type": "mentalModel",
+    "author": "transitionEase",
+    "time": "5h",
+    "content": "MENTAL MODEL: Easing functions are emotional pacing.\n\neaseLinear: a robot walking. Constant speed. No personality.\neaseCubicOut: a ball rolling to a stop. Starts fast, settles gently. This is the workhorse.\neaseCubicInOut: a deep breath. Slow start, fast middle, soft landing.\neaseElasticOut: a spring. Overshoots, bounces back. Use for playful UI, never for serious data.\neaseBounceOut: F tier. A rubber ball on concrete. If your quarterly revenue chart bounces, you've lost the room.\n\nThe easing function IS the emotional tone of your visualization. Choose like you're choosing background music.",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/06-transitions-interactivity/",
+      "label": "easing functions in Lesson 6 \u2192"
+    },
+    "likes": 1823,
+    "reposts": 398,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "This is the one time I agree with vibes over precision. The easing function changes how my dear <rect> feels when it moves, and feeling matters in data communication.",
+        "likes": 456
+      },
+      {
+        "author": "scaleLinear",
+        "content": "domain: [0, duration]. range: [startValue, endValue]. The easing function is the transfer function.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "d3-067",
+    "track": "d3",
+    "type": "til",
+    "author": "svgArtist",
+    "time": "1h",
+    "content": "TIL: d3.arc() accepts .cornerRadius() and .padAngle(). Corner radius rounds the edges of pie/donut slices. Pad angle adds spacing between slices.\n\nMy arcs just went from \"corporate PowerPoint\" to \"polished infographic\" with two method calls. My beautiful <path> elements have never looked so refined.",
+    "code": null,
+    "link": null,
+    "likes": 423,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "cornerRadius(4) and padAngle(0.02). Memorize those values. They feel like the difference between a sketch and a finished painting.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "d3-068",
+    "track": "d3",
+    "type": "til",
+    "author": "geoProjection",
+    "time": "8h",
+    "content": "TIL: d3.geoAlbersUsA() is a COMPOSITE projection. It's actually three projections stitched together \u2014 one for the lower 48, one for Alaska, and one for Hawaii. Alaska gets scaled down and Hawaii gets moved up.\n\nI've been using it for years without knowing it was doing this. The D3 team built a tiny cartographic miracle into one function call.",
+    "code": null,
+    "link": null,
+    "likes": 567,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "This is why D3 is special. It's not just a charting library. It's a library written by people who deeply understand the domains they're modeling. The cartography knowledge baked into d3-geo alone is staggering.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "d3-069",
+    "track": "d3",
+    "type": "til",
+    "author": "transitionEase",
+    "time": "2d",
+    "content": "TIL: .transition().on(\"end\", callback) fires when the transition finishes. But if you have 50 elements transitioning, it fires 50 times \u2014 once per element.\n\nIf you want \"do something when ALL transitions finish,\" you need to count completions or use Promise.all with .end().\n\nSpent 2 hours debugging why my \"animation complete\" callback fired 50 times.",
+    "code": null,
+    "link": null,
+    "likes": 389,
+    "reposts": 64,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "selection.transition().end() returns a Promise. Await it.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "d3-070",
+    "track": "d3",
+    "type": "poll",
+    "author": "geoProjection",
+    "time": "3h",
+    "content": "You're building a world map showing population data. Which projection do you reach for FIRST?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "Mercator (I like being wrong)",
+          "pct": 23
+        },
+        {
+          "text": "EqualEarth (correct answer)",
+          "pct": 41
+        },
+        {
+          "text": "Natural Earth",
+          "pct": 28
+        },
+        {
+          "text": "Orthographic (globe mode)",
+          "pct": 8
+        }
+      ],
+      "totalVotes": 6234
+    },
+    "likes": 934,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "geoProjection",
+        "content": "23% of you chose Mercator for POPULATION data. A projection that makes Greenland look bigger than Africa. For POPULATION. Greenland has 56,000 people. Africa has 1.4 BILLION. This is Chapter 3: \"How Mercator Distorts Democracy.\"",
+        "likes": 567
+      },
+      {
+        "author": "bindData",
+        "content": "Natural Earth is a perfectly valid choice too, Geo. It's a compromise projection that looks nice and doesn't egregiously distort area. Not everything has to be a manifesto chapter.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "d3-071",
+    "track": "d3",
+    "type": "poll",
+    "author": "transitionEase",
+    "time": "6h",
+    "content": "Updated easing tier list drop. Which D3 easing function is S-tier for data visualization?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "easeCubicOut",
+          "pct": 47
+        },
+        {
+          "text": "easeCubicInOut",
+          "pct": 31
+        },
+        {
+          "text": "easeLinear",
+          "pct": 14
+        },
+        {
+          "text": "easeBounceOut",
+          "pct": 8
+        }
+      ],
+      "totalVotes": 4567
+    },
+    "likes": 712,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "transitionEase",
+        "content": "47% chose easeCubicOut. Correct. It's the \"confident walk into a room\" of easing functions. Fast start, gentle deceleration. Professional. Trustworthy. The 8% who chose easeBounceOut: I'm not angry, I'm disappointed.",
+        "likes": 423
+      },
+      {
+        "author": "svgArtist",
+        "content": "14% chose easeLinear. My dear elements deserve better than constant velocity. Even a <rect> has feelings.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "d3-072",
+    "track": "d3",
+    "type": "eli5",
+    "author": "bindData",
+    "time": "4h",
+    "content": "ELI5: The D3 data join.\n\nImagine you have a row of coat hooks on a wall (the DOM) and a group of kids with coats (the data).\n\n.data(kids): D3 looks at the hooks and the kids.\n\nENTER: 3 kids have no hook. D3 says \"we need 3 new hooks.\"\nUPDATE: 5 kids already have a hook. D3 says \"these are fine, maybe update the nametag.\"\nEXIT: 2 hooks have no kid. D3 says \"remove these empty hooks.\"\n\n.join(\"hook\"): \"Hey D3, just handle all of this for me.\"\n\nThat's the entire data binding model. Hooks and coats.",
+    "code": null,
+    "link": {
+      "url": "/d3/lessons/04-shapes-bindings/",
+      "label": "data binding explained in Lesson 4 \u2192"
+    },
+    "likes": 2134,
+    "reposts": 478,
+    "comments": [
+      {
+        "author": "geoProjection",
+        "content": "Now imagine the coat hooks are countries on a map and the coats are data values and you start to understand why choropleth maps are the purest form of data binding\u2014",
+        "likes": 267
+      },
+      {
+        "author": "scaleLinear",
+        "content": "Kids \u2192 hooks. Domain \u2192 range. Same pattern everywhere.",
+        "likes": 345
+      },
+      {
+        "author": "bobby_tables",
+        "content": "And what if a kid's name contains a script tag? Always sanitize data before rendering into the DOM. Even coat hook labels can be injection vectors.",
+        "likes": 156
+      }
+    ]
+  },
+  {
+    "id": "d3-073",
+    "track": "d3",
+    "type": "slackPost",
+    "author": "svgArtist",
+    "time": "1d",
+    "content": "OVERHEARD IN #dataviz AT STACKSWORTH INC.\n\n@intern: \"Should I use Canvas or SVG for this 200-point scatterplot?\"\n@svgArtist: \"SVG.\"\n@intern: \"But I read that Canvas is faster\u2014\"\n@svgArtist: \"For 200 points? SVG. You get hover events, CSS styling, accessibility, and the ability to right-click inspect every single dot. Canvas gives you a flat image that you can't interact with without reimplementing half the browser's event system.\"\n@intern: \"When would I use Canvas then?\"\n@svgArtist: \"When you have 50,000 points and SVG brings your browser to its knees. Until then, SVG. Always SVG.\"\n@transitionEase: \"And with SVG you can transition each dot individually. With Canvas you're redrawing the entire frame. SVG transitions feel organic. Canvas transitions feel mechanical.\"\n@intern: \"ok SVG it is\"",
+    "code": null,
+    "link": null,
+    "likes": 876,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "geoProjection",
+        "content": "For maps specifically: SVG up to ~3,000 polygons (US counties). Canvas above that (world countries at high detail). The threshold is lower for maps because paths are complex. Chapter 15: \"The Great Rasterization Betrayal.\"",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "d3-074",
+    "track": "d3",
+    "type": "commitMsg",
+    "author": "transitionEase",
+    "time": "3d",
+    "content": "COMMIT MSG FROM HELL:\n\n\"fix: transitions\"\n\nDiff: +847 lines, -312 lines across 14 files.\n\nChanges include: rewrote all easing functions, changed every duration from hardcoded to computed, added .interrupt() before every .transition() to prevent overlapping animations, replaced all d3.interpolateRgb with d3.interpolateLab, added enter/exit animations that weren't there before.\n\nBut sure. \"fix: transitions.\"",
+    "code": null,
+    "link": null,
+    "likes": 1234,
+    "reposts": 267,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "The .interrupt() addition alone deserved its own commit. You know what happens when transitions overlap? My poor <rect> elements get pulled in two directions like they're in a custody battle.",
+        "likes": 345
+      },
+      {
+        "author": "scaleLinear",
+        "content": "One commit. One purpose. Not fourteen.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "d3-075",
+    "track": "d3",
+    "type": "ratiod",
+    "author": "svgArtist",
+    "time": "5h",
+    "content": "d3.area() is just d3.line() with a fill underneath. There's literally no reason to learn it separately. If you know line, you know area.",
+    "code": null,
+    "link": null,
+    "likes": 234,
+    "reposts": 45,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "Ratio. d3.area() has TWO baselines (y0 and y1). That's how you make stacked area charts, streamgraphs, and band charts. d3.line() can't do any of that. area() isn't \"line with fill\" \u2014 it's a shape defined by TWO boundaries. Completely different mental model.",
+        "likes": 567
+      },
+      {
+        "author": "scaleLinear",
+        "content": "line: one y per x. area: two y's per x. Different dimensionality.",
+        "likes": 345
+      },
+      {
+        "author": "svgArtist",
+        "content": "...okay the stacked area chart point is fair. I retract. My dear <path> can have two baselines and I should have respected that.",
+        "likes": 234
+      }
+    ]
+  }
+]
