@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 07 - Enter / Update / Exit: The Deep Dive</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #f97316; }</style>
+  <style>
+    .demo button { background: var(--track-color); color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 0.25rem; font-weight: 600; }
+    .demo button:hover { background: #fb923c; }
+    .demo button.secondary { background: var(--info); color: #000; }
+    .demo button.green { background: var(--success); color: #000; }
+    .demo .controls { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .legend { display: flex; gap: 1.5rem; margin: 0.75rem 0; font-size: 0.8rem; }
+    .legend span { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--text-muted); }
+    .legend .dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+    #eue-info { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0.75rem; margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted); }
+  </style>
+  <script type="module" crossorigin src="/assets/d3_lessons_07-lines-areas-DXHzKShK.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/init-tutor-Cq4VzOVI.js">
+  <link rel="modulepreload" crossorigin href="/assets/transform-DGvXF_4U.js">
+  <link rel="modulepreload" crossorigin href="/assets/defaultLocale-_QQJJ3OD.js">
+  <link rel="modulepreload" crossorigin href="/assets/linear-Bvwc2yJx.js">
+  <link rel="modulepreload" crossorigin href="/assets/band-HgbXjY_x.js">
+  <link rel="modulepreload" crossorigin href="/assets/max-DBeXZoyG.js">
+  <link rel="modulepreload" crossorigin href="/assets/select-PKtlUnGw.js">
+  <link rel="modulepreload" crossorigin href="/assets/axis-rlX7cRMw.js">
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>07</span> Enter / Update / Exit &mdash; The Deep Dive</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Mental Model:</strong> Think of a wedding seating chart. <strong>Enter</strong> = new guests arriving (need a seat). <strong>Update</strong> = guests already seated (maybe move them). <strong>Exit</strong> = guests leaving (clear their seat).</p>
+
+    <h2>Why This Matters</h2>
+
+    <p>In Lesson 04, you used <code>.join("rect")</code> and it "just worked." But what happens under the hood when data changes? Understanding enter/update/exit gives you control over animations, transitions, and complex data updates &mdash; the difference between a basic chart and a polished one.</p>
+
+    <h2>The Three Groups</h2>
+
+    <p>When you call <code>.data(newData)</code>, D3 compares the new data to the existing elements and sorts everything into three groups:</p>
+
+    <ul>
+      <li><strong style="color: var(--success);">Enter:</strong> Data items that have no matching element. Need to create new elements.</li>
+      <li><strong style="color: var(--track-color);">Update:</strong> Data items that match an existing element. May need to change attributes.</li>
+      <li><strong style="color: var(--error);">Exit:</strong> Elements that have no matching data item. Need to be removed.</li>
+    </ul>
+
+    <h3>.join() with three callbacks</h3>
+
+    <pre><code>svg.selectAll("rect")
+  .data(newData, d =&gt; d.id)     <span class="comment">// key function!</span>
+  .join(
+    enter =&gt; enter.append("rect")  <span class="comment">// NEW: create + animate in</span>
+      .attr("fill", "#4ade80")
+      .attr("y", height)
+      .attr("height", 0)
+      .call(el =&gt; el.transition().duration(500)
+        .attr("y", d =&gt; y(d.value))
+        .attr("height", d =&gt; height - y(d.value))),
+
+    update =&gt; update               <span class="comment">// EXISTING: animate to new position</span>
+      .attr("fill", "#f97316")
+      .call(el =&gt; el.transition().duration(500)
+        .attr("y", d =&gt; y(d.value))
+        .attr("height", d =&gt; height - y(d.value))),
+
+    exit =&gt; exit                   <span class="comment">// LEAVING: animate out + remove</span>
+      .attr("fill", "#ef4444")
+      .call(el =&gt; el.transition().duration(300)
+        .attr("y", height).attr("height", 0).remove())
+  );</code></pre>
+
+    <h2>Key Functions: Name Tags for Data</h2>
+
+    <p>By default, D3 matches data to elements by index (position). The first data item goes with the first element, etc. This works for static charts but breaks for animations.</p>
+
+    <pre><code><span class="comment">// Without key: D3 matches by index (position)</span>
+.data(newData)              <span class="comment">// data[0] → element[0], data[1] → element[1]</span>
+
+<span class="comment">// With key: D3 matches by identity</span>
+.data(newData, d =&gt; d.id)   <span class="comment">// finds the element whose data has the same id</span></code></pre>
+
+    <div class="aha">
+      <p><strong>Keys are like React's <code>key</code> prop.</strong> Without keys, D3 (like React) just matches by position. With keys, it can track individual items through data changes. This is what makes smooth animations possible when items are added, removed, or reordered.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 1: ENTER/UPDATE/EXIT VISUALIZATION      -->
+    <!-- ============================================ -->
+
+    <h2>Demo: See Enter / Update / Exit in Action</h2>
+    <p>Click the buttons to change the data. Watch elements flash green (entering), orange (updating), or red (exiting).</p>
+
+    <div class="demo">
+      <h4>Live: Enter / Update / Exit with colors</h4>
+      <div class="controls">
+        <button id="btn-eue-set1">Dataset A (5 states)</button>
+        <button id="btn-eue-set2" class="secondary">Dataset B (7 states)</button>
+        <button id="btn-eue-set3" class="green">Dataset C (4 states)</button>
+        <button id="btn-eue-shuffle">Shuffle Values</button>
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="background: #4ade80;"></span> Enter (new)</span>
+        <span><span class="dot" style="background: #f97316;"></span> Update (existing)</span>
+        <span><span class="dot" style="background: #ef4444;"></span> Exit (leaving)</span>
+      </div>
+      <svg id="eue-chart" viewBox="0 0 700 300"></svg>
+      <div id="eue-info">Click a dataset button to see enter/update/exit in action.</div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 2: FILTERABLE BAR CHART                 -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Filterable, Sortable Bar Chart</h2>
+    <p>A practical application of the general update pattern. Filter by region, sort by value or name.</p>
+
+    <div class="demo">
+      <h4>Live: State population with filter & sort</h4>
+      <div class="controls">
+        <button id="btn-filter-all">All States</button>
+        <button id="btn-filter-south" class="secondary">South</button>
+        <button id="btn-filter-west" class="green">West</button>
+        <button id="btn-filter-ne" style="background: #f472b6; color: #000;">Northeast</button>
+        <button id="btn-sort-val">Sort by Pop</button>
+        <button id="btn-sort-name" style="background: #666;">Sort A-Z</button>
+      </div>
+      <svg id="filter-chart" viewBox="0 0 700 350"></svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What are the three groups D3 creates when you call <code>.data()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><strong>Enter:</strong> data items without matching elements (need creation). <strong>Update:</strong> data items with matching elements (may need attribute changes). <strong>Exit:</strong> elements without matching data items (need removal). Together, these three groups account for every possible difference between old and new data.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What does a key function do, and why does it matter for animations?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A key function (<code>.data(data, d => d.id)</code>) tells D3 how to match data items to elements by identity rather than by index. Without keys, if you remove the first item, D3 thinks every element changed (indices shifted). With keys, D3 knows element #1 is the same item it was before, just in a new position. This enables smooth, meaningful animations.</div>
+      </div>
+
+      <div class="question">
+        <p>3. How is <code>.join("rect")</code> different from <code>.join(enter, update, exit)</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The string form <code>.join("rect")</code> is shorthand that uses defaults: enter appends the element, update does nothing special, exit removes immediately. The three-callback form gives you full control: you can animate entering elements, transition updates, and fade out exiting elements. Use the string form for simple charts, the callback form when you need animation control.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Why is the "general update pattern" (a reusable update function) important?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It lets you write one function that handles any data change: filtering, sorting, adding, removing. Call it whenever data changes, and the enter/update/exit pattern handles the DOM updates automatically. This is the standard pattern for interactive D3 charts &mdash; buttons, sliders, and filters all just call the update function with new data.</div>
+      </div>
+
+      <div class="question">
+        <p>5. How do D3 key functions compare to React's <code>key</code> prop?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">They serve the same purpose: helping the framework track which items in a list are the same across re-renders. React's <code>key</code> helps the virtual DOM diff. D3's key function helps the data join. Without keys, both default to matching by index, which causes incorrect animations and wasted re-renders when items are reordered or removed.</div>
+      </div>
+
+      <div class="question">
+        <p>6. In the three-callback <code>.join()</code>, what happens to exiting elements if you don't call <code>.remove()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">They stay in the DOM but are no longer bound to any data. This is a memory leak and visual bug. Always call <code>.remove()</code> on exit elements, typically at the end of a transition: <code>exit.transition().duration(300).attr("opacity", 0).remove()</code>.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Chart That Updates</h4>
+      <p>Create a bar chart with a general update pattern:</p>
+      <ol>
+        <li>Write an <code>update(data)</code> function using <code>.data(data, d => d.state).join(enter, update, exit)</code></li>
+        <li>Enter: bars animate up from the bottom (green flash)</li>
+        <li>Update: bars smoothly resize (orange)</li>
+        <li>Exit: bars shrink and disappear (red flash)</li>
+        <li>Add 3 buttons that call update() with different datasets</li>
+        <li>Add a "sort" button that reorders the bars with animation</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Enter</strong> = new data needs new elements</li>
+      <li><strong>Update</strong> = existing data may need attribute changes</li>
+      <li><strong>Exit</strong> = old elements need removal</li>
+      <li><strong>Key functions</strong> (<code>d => d.id</code>) match by identity, not position</li>
+      <li><strong>.join(enter, update, exit)</strong> gives full control over animations</li>
+      <li><strong>General update pattern</strong> = one function handles all data changes</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/06-transitions-interactivity/">&larr; Lesson 06: Axes &amp; Margins Convention</a>
+      <a href="/d3/lessons/08-arcs-pies/">Lesson 08: Lines &amp; Areas &rarr;</a>
+    </div>
+  </div>
+
+
+</body>
+</html>

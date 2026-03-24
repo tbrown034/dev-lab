@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 10 - Testing Patterns</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #eab308; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>10</span> Testing Patterns &mdash; The Editorial Review Process</h1>
+    <a href="/jsts/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Tests are the editorial review process for code.</strong> They catch errors before publication, verify that changes don't break existing stories, and give you confidence to make bold edits. This lesson covers testing TypeScript code with Vitest.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: Journalism's Review Layers</h2>
+
+    <p>A newspaper has multiple review layers before publication:</p>
+
+    <ul>
+      <li><strong>Unit tests</strong> = fact-checking individual claims. Does this function return the right value for these inputs?</li>
+      <li><strong>Integration tests</strong> = editorial review of a complete section. Do these modules work together correctly?</li>
+      <li><strong>End-to-end tests</strong> = printing a test run of the whole paper. Does the final product look right from the reader's perspective?</li>
+    </ul>
+
+    <p>You need all three layers, but the ratio matters. The <strong>testing pyramid</strong>: many unit tests (fast, cheap), fewer integration tests (medium), very few E2E tests (slow, expensive).</p>
+
+    <!-- ============================================ -->
+    <!-- VITEST SETUP                                 -->
+    <!-- ============================================ -->
+
+    <h2>Vitest: The Modern Test Runner</h2>
+
+    <p>Vitest is the testing framework built for Vite projects. It's Jest-compatible but faster, with native TypeScript support.</p>
+
+    <pre><code><span class="comment">// Install</span>
+npm install -D vitest
+
+<span class="comment">// vite.config.ts (or vitest.config.ts)</span>
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    globals: true,        <span class="comment">// describe, it, expect without imports</span>
+    environment: 'node',  <span class="comment">// or 'jsdom' for browser APIs</span>
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+    },
+  },
+});
+
+<span class="comment">// package.json</span>
+{
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  }
+}
+</code></pre>
+
+    <h3>Your First Test</h3>
+
+    <pre><code><span class="comment">// src/utils/format.ts</span>
+export function formatCurrency(cents: number): string {
+  return `$${(cents / 100).toFixed(2)}`;
+}
+
+<span class="comment">// src/utils/format.test.ts</span>
+import { describe, it, expect } from 'vitest';
+import { formatCurrency } from './format';
+
+describe('formatCurrency', () =&gt; {
+  it('formats cents to dollar string', () =&gt; {
+    expect(formatCurrency(1099)).toBe('$10.99');
+  });
+
+  it('handles zero', () =&gt; {
+    expect(formatCurrency(0)).toBe('$0.00');
+  });
+
+  it('handles negative amounts', () =&gt; {
+    expect(formatCurrency(-500)).toBe('$-5.00');
+  });
+});
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- TEST ANATOMY                                 -->
+    <!-- ============================================ -->
+
+    <h2>Anatomy of a Good Test</h2>
+
+    <p>Every test follows the <strong>AAA pattern</strong>: Arrange, Act, Assert.</p>
+
+    <pre><code>it('publishes a draft article', () =&gt; {
+  <span class="comment">// ARRANGE — set up the scenario</span>
+  const article = createArticle({ status: 'draft', title: 'Breaking News' });
+  const publisher = new Publisher();
+
+  <span class="comment">// ACT — do the thing</span>
+  const result = publisher.publish(article);
+
+  <span class="comment">// ASSERT — verify the outcome</span>
+  expect(result.status).toBe('published');
+  expect(result.publishedAt).toBeInstanceOf(Date);
+  expect(result.title).toBe('Breaking News');
+});
+</code></pre>
+
+    <div class="aha">
+      <p><strong>Test names should read like headlines.</strong> A journalist writes headlines that tell you the story without reading the article. A test name should tell you the expected behavior without reading the code: "publishes a draft article," not "test publish."</p>
+    </div>
+
+    <h3>Common Matchers</h3>
+
+    <pre><code><span class="comment">// Equality</span>
+expect(value).toBe(42);              <span class="comment">// Strict equality (===)</span>
+expect(obj).toEqual({ a: 1 });       <span class="comment">// Deep equality</span>
+expect(obj).toStrictEqual({ a: 1 }); <span class="comment">// Deep + no extra properties</span>
+
+<span class="comment">// Truthiness</span>
+expect(value).toBeTruthy();
+expect(value).toBeFalsy();
+expect(value).toBeNull();
+expect(value).toBeUndefined();
+expect(value).toBeDefined();
+
+<span class="comment">// Numbers</span>
+expect(value).toBeGreaterThan(10);
+expect(value).toBeCloseTo(0.3, 5);   <span class="comment">// Float comparison</span>
+
+<span class="comment">// Strings</span>
+expect(str).toMatch(/regex/);
+expect(str).toContain("substring");
+
+<span class="comment">// Arrays</span>
+expect(arr).toContain(item);
+expect(arr).toHaveLength(3);
+
+<span class="comment">// Objects</span>
+expect(obj).toHaveProperty('key');
+expect(obj).toMatchObject({ partial: true });
+
+<span class="comment">// Exceptions</span>
+expect(() =&gt; dangerousCall()).toThrow();
+expect(() =&gt; dangerousCall()).toThrow('specific message');
+expect(() =&gt; dangerousCall()).toThrowError(TypeError);
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- MOCKING                                      -->
+    <!-- ============================================ -->
+
+    <h2>Mocking</h2>
+
+    <p>Mocks replace real dependencies with controlled substitutes. Like using a source who gives you exactly the quotes you need for a test story.</p>
+
+    <h3>Function Mocks</h3>
+
+    <pre><code>import { vi, describe, it, expect } from 'vitest';
+
+<span class="comment">// Create a mock function</span>
+const mockFetch = vi.fn();
+
+<span class="comment">// Configure return values</span>
+mockFetch.mockResolvedValue({
+  ok: true,
+  json: () =&gt; Promise.resolve({ articles: [] }),
+});
+
+<span class="comment">// Use in test</span>
+it('fetches articles', async () =&gt; {
+  const api = new ApiClient(mockFetch);
+  const articles = await api.getArticles();
+
+  <span class="comment">// Verify the mock was called correctly</span>
+  expect(mockFetch).toHaveBeenCalledWith('/api/articles', expect.objectContaining({
+    method: 'GET',
+  }));
+  expect(mockFetch).toHaveBeenCalledTimes(1);
+  expect(articles).toEqual([]);
+});
+</code></pre>
+
+    <h3>Module Mocks</h3>
+
+    <pre><code><span class="comment">// Mock an entire module</span>
+vi.mock('./database', () =&gt; ({
+  query: vi.fn().mockResolvedValue([{ id: 1, title: 'Test' }]),
+  connect: vi.fn(),
+}));
+
+<span class="comment">// The real database module is never loaded</span>
+import { query } from './database';
+
+it('queries the database', async () =&gt; {
+  const results = await query('SELECT * FROM articles');
+  expect(results).toHaveLength(1);
+});
+</code></pre>
+
+    <h3>Spy on Existing Methods</h3>
+
+    <pre><code>it('logs errors to console', () =&gt; {
+  const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() =&gt; {});
+
+  handleError(new Error('test'));
+
+  expect(consoleSpy).toHaveBeenCalledWith(
+    expect.stringContaining('test')
+  );
+
+  consoleSpy.mockRestore();  <span class="comment">// Clean up</span>
+});
+</code></pre>
+
+    <div class="callout">
+      <p><strong>Mock sparingly.</strong> Over-mocking makes tests brittle and disconnected from reality. A good rule: mock I/O boundaries (network, filesystem, database) and time. Don't mock your own business logic &mdash; test it directly.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TESTING ASYNC CODE                           -->
+    <!-- ============================================ -->
+
+    <h2>Testing Async Code</h2>
+
+    <pre><code><span class="comment">// Vitest handles async/await natively</span>
+it('fetches user data', async () =&gt; {
+  const user = await fetchUser(1);
+  expect(user.name).toBe('Trevor');
+});
+
+<span class="comment">// Testing rejected promises</span>
+it('throws on invalid ID', async () =&gt; {
+  await expect(fetchUser(-1)).rejects.toThrow('Invalid ID');
+});
+
+<span class="comment">// Testing with timers</span>
+it('debounces search input', async () =&gt; {
+  vi.useFakeTimers();
+
+  const search = vi.fn();
+  const debounced = debounce(search, 300);
+
+  debounced('hello');
+  debounced('hello world');
+
+  expect(search).not.toHaveBeenCalled();
+
+  vi.advanceTimersByTime(300);
+
+  expect(search).toHaveBeenCalledOnce();
+  expect(search).toHaveBeenCalledWith('hello world');
+
+  vi.useRealTimers();
+});
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- SNAPSHOT TESTING                             -->
+    <!-- ============================================ -->
+
+    <h2>Snapshot Testing</h2>
+
+    <pre><code><span class="comment">// Snapshot testing captures output and compares to a saved version</span>
+it('generates correct HTML', () =&gt; {
+  const html = renderArticle({ title: 'Test', body: 'Content' });
+  expect(html).toMatchSnapshot();
+  <span class="comment">// First run: saves snapshot to __snapshots__/</span>
+  <span class="comment">// Subsequent runs: compares to saved snapshot</span>
+});
+
+<span class="comment">// Inline snapshots (stored in the test file)</span>
+it('formats date correctly', () =&gt; {
+  const formatted = formatDate(new Date('2024-01-15'));
+  expect(formatted).toMatchInlineSnapshot(`"January 15, 2024"`);
+});
+</code></pre>
+
+    <div class="warning">
+      <p><strong>Snapshot anti-pattern:</strong> Don't snapshot large, frequently changing objects. Snapshots work best for small, stable outputs (formatted strings, rendered HTML fragments, serialized config). Large snapshots become "approve everything" exercises that catch nothing.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TDD WORKFLOW                                 -->
+    <!-- ============================================ -->
+
+    <h2>TDD Workflow</h2>
+
+    <p>Test-Driven Development is a three-step cycle: Red, Green, Refactor.</p>
+
+    <pre><code><span class="comment">// Step 1: RED — Write a failing test</span>
+it('validates email format', () =&gt; {
+  expect(isValidEmail('trevor@example.com')).toBe(true);
+  expect(isValidEmail('not-an-email')).toBe(false);
+  expect(isValidEmail('')).toBe(false);
+});
+
+<span class="comment">// Step 2: GREEN — Write the minimum code to pass</span>
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+<span class="comment">// Step 3: REFACTOR — Improve the code without changing behavior</span>
+<span class="comment">// Tests stay green, proving the refactor is safe</span>
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function isValidEmail(email: string): boolean {
+  return EMAIL_REGEX.test(email);
+}
+</code></pre>
+
+    <div class="aha">
+      <p><strong>TDD is an investigation technique.</strong> A journalist outlines questions before the interview. TDD outlines expected behavior before writing code. The test is your hypothesis; the implementation is your proof. This discipline prevents scope creep and ensures every line of code has a reason to exist.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TESTING TYPESCRIPT                           -->
+    <!-- ============================================ -->
+
+    <h2>Testing TypeScript-Specific Patterns</h2>
+
+    <pre><code><span class="comment">// Testing type guards</span>
+import { describe, it, expect } from 'vitest';
+
+type Article = { type: 'article'; title: string; body: string };
+type Video = { type: 'video'; title: string; duration: number };
+type Content = Article | Video;
+
+function isArticle(content: Content): content is Article {
+  return content.type === 'article';
+}
+
+describe('isArticle', () =&gt; {
+  it('returns true for articles', () =&gt; {
+    const article: Content = { type: 'article', title: 'Test', body: 'Body' };
+    expect(isArticle(article)).toBe(true);
+  });
+
+  it('returns false for videos', () =&gt; {
+    const video: Content = { type: 'video', title: 'Test', duration: 120 };
+    expect(isArticle(video)).toBe(false);
+  });
+
+  it('narrows the type correctly', () =&gt; {
+    const content: Content = { type: 'article', title: 'Test', body: 'Body' };
+    if (isArticle(content)) {
+      <span class="comment">// TypeScript knows content is Article here</span>
+      expect(content.body).toBe('Body');
+    }
+  });
+});
+
+<span class="comment">// Testing generic functions</span>
+describe('groupBy', () =&gt; {
+  function groupBy&lt;T, K extends string&gt;(items: T[], keyFn: (item: T) =&gt; K): Record&lt;K, T[]&gt; {
+    return items.reduce((acc, item) =&gt; {
+      const key = keyFn(item);
+      (acc[key] = acc[key] || []).push(item);
+      return acc;
+    }, {} as Record&lt;K, T[]&gt;);
+  }
+
+  it('groups items by key', () =&gt; {
+    const articles = [
+      { title: 'A', status: 'draft' as const },
+      { title: 'B', status: 'published' as const },
+      { title: 'C', status: 'draft' as const },
+    ];
+
+    const grouped = groupBy(articles, a =&gt; a.status);
+
+    expect(grouped.draft).toHaveLength(2);
+    expect(grouped.published).toHaveLength(1);
+  });
+});
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Knowledge Check</h4>
+
+      <div class="question">
+        <p>1. What's the difference between <code>toBe</code> and <code>toEqual</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer"><code>toBe</code> uses strict equality (<code>===</code>) &mdash; same reference for objects. <code>toEqual</code> performs deep equality &mdash; compares structure and values recursively. Use <code>toBe</code> for primitives and reference checks. Use <code>toEqual</code> for objects and arrays.</div>
+      </div>
+
+      <div class="question">
+        <p>2. When should you use <code>vi.fn()</code> vs <code>vi.spyOn()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer"><code>vi.fn()</code> creates a standalone mock function with no original implementation. Use it when passing a callback to the code under test. <code>vi.spyOn()</code> wraps an existing method, preserving the original implementation by default (unless you <code>.mockImplementation()</code>). Use it when you want to observe calls to an existing method or temporarily override it.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why does the testing pyramid have more unit tests than E2E tests?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer">Unit tests are fast (milliseconds), reliable (no external dependencies), and precise (failures point to exact functions). E2E tests are slow (seconds/minutes), flaky (network, browser, timing), and vague (failures require investigation). Unit tests give fast feedback during development. E2E tests verify the whole system works but are expensive to maintain.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: TDD an Article Validator</h4>
+      <p>Use TDD (write tests FIRST) to build an <code>ArticleValidator</code> class:</p>
+      <pre><code><span class="comment">// Write tests for ALL of these rules, then implement:</span>
+
+<span class="comment">// 1. Title must be 5-100 characters</span>
+<span class="comment">// 2. Body must be at least 50 characters</span>
+<span class="comment">// 3. Status must be "draft", "published", or "archived"</span>
+<span class="comment">// 4. If status is "published", publishedAt must be a valid Date</span>
+<span class="comment">// 5. Tags must be an array of 1-5 non-empty strings</span>
+
+interface Article {
+  title: string;
+  body: string;
+  status: "draft" | "published" | "archived";
+  publishedAt?: Date;
+  tags: string[];
+}
+
+type ValidationResult =
+  | { valid: true; article: Article }
+  | { valid: false; errors: string[] };
+
+class ArticleValidator {
+  validate(input: unknown): ValidationResult { ... }
+}</code></pre>
+      <p><strong>Process:</strong> Write one test, see it fail (red), implement just enough to pass (green), refactor, repeat.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/jsts/lessons/09-ts-advanced/">&larr; Advanced TypeScript</a>
+      <a href="/jsts/lessons/11-node-internals/">Node.js Internals &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

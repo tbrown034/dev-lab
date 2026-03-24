@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interview Prep — Texas Tribune</title>
+  <style>
+    :root {
+      --crash: #ef4444;
+      --crash-dim: rgba(239, 68, 68, 0.15);
+      --d3: #f97316;
+      --django: #22c55e;
+    }
+
+    .hero {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 4rem 2rem 2rem;
+    }
+    .hero-kicker {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--crash);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .hero-kicker .pulse {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--crash);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 em { font-style: italic; color: var(--crash); }
+    .hero-body {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text-dim);
+      max-width: 640px;
+      margin-bottom: 2rem;
+    }
+    .hero-body strong { color: var(--text); }
+
+    /* ─── SECTIONS ─── */
+    .section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 2rem 2.5rem;
+    }
+    .section h2 {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ─── CONTEXT BOX ─── */
+    .context {
+      background: var(--crash-dim);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 8px;
+      padding: 1.75rem 2rem;
+      margin-bottom: 2rem;
+    }
+    .context h3 {
+      font-family: var(--sans);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--crash);
+      margin-bottom: 0.75rem;
+    }
+    .context p {
+      font-size: 0.92rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+
+    /* ─── TRACK CARDS ─── */
+    .track-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+    .track-card {
+      text-decoration: none; color: inherit; display: block;
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 2rem; background: var(--surface);
+      position: relative; overflow: hidden;
+      transition: border-color 0.3s, transform 0.2s;
+    }
+    .track-card:hover { transform: translateY(-2px); }
+    .track-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+    }
+    .track-card.d3::before { background: var(--d3); }
+    .track-card.d3:hover { border-color: var(--d3); }
+    .track-card.django::before { background: var(--django); }
+    .track-card.django:hover { border-color: var(--django); }
+    .track-card .label {
+      font-family: var(--mono); font-size: 0.6rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.6rem;
+    }
+    .track-card.d3 .label { color: var(--d3); }
+    .track-card.django .label { color: var(--django); }
+    .track-card h3 { font-family: var(--sans); font-size: 1.15rem; font-weight: 600; margin-bottom: 0.5rem; }
+    .track-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* ─── VIDEO RECS ─── */
+    .vid-list {
+      display: flex; flex-direction: column; gap: 1px;
+      background: var(--border); border-radius: 8px;
+      overflow: hidden; margin-bottom: 0.5rem;
+    }
+    .vid-row {
+      background: var(--surface); padding: 1rem 1.5rem;
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 1rem; align-items: center;
+      text-decoration: none; color: inherit;
+      transition: background 0.15s;
+    }
+    .vid-row:hover { background: var(--surface-2); }
+    .vid-row .vid-title { font-family: var(--sans); font-size: 0.88rem; font-weight: 600; }
+    .vid-row .vid-meta { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; line-height: 1.45; }
+    .vid-row .vid-tag {
+      font-family: var(--mono); font-size: 0.6rem;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 0.2rem 0.55rem; border-radius: 4px;
+      white-space: nowrap;
+    }
+    .vid-tag.quick { background: rgba(74, 222, 128, 0.12); color: #4ade80; }
+    .vid-tag.deep { background: rgba(129, 140, 248, 0.12); color: #818cf8; }
+    .vid-tag.start { background: rgba(249, 115, 22, 0.12); color: #f97316; }
+    .vid-note {
+      font-size: 0.8rem; color: var(--text-muted);
+      line-height: 1.6; margin-top: 0.5rem; margin-bottom: 1.5rem;
+    }
+    .vid-section-label {
+      font-family: var(--sans); font-size: 1rem; font-weight: 600;
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    @media (max-width: 700px) {
+      .track-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/shell-B2-DeMgN.css">
+</head>
+<body>
+
+  <div class="hero">
+    <div class="hero-kicker"><span class="pulse"></span> Interview Prep &mdash; March 25, 2026</div>
+    <h1>Texas Tribune <em>Crash Course</em></h1>
+    <p class="hero-body">
+      <strong>Your goal isn't to become a D3/Django expert overnight.</strong> It's to walk into that interview able to talk about these tools with confidence &mdash; understand what they do, why the Tribune uses them, and how they fit together. Mental models, not memorized code.
+    </p>
+    <a href="/courses/" style="color: var(--crash); text-decoration: none; font-size: 0.85rem;">&larr; Back to courses</a>
+  </div>
+
+  <div class="section">
+    <div class="context">
+      <h3>The Goal</h3>
+      <p>You might not get a single technical question. But if D3 or Django comes up in conversation, you want to <strong>sound like someone who's worked with these tools</strong>, not someone who just read the Wikipedia page. That means understanding the <em>why</em> and the <em>how it feels</em> &mdash; not just the <em>what</em>.</p>
+    </div>
+  </div>
+
+  <!-- ─── THE LESSONS ─── -->
+  <div class="section">
+    <h2>The Two Concepts</h2>
+    <div class="track-grid">
+      <a href="/courses/crash-course/d3/" class="track-card d3">
+        <div class="label">Concept 1</div>
+        <h3>D3.js &mdash; What It Is and How to Talk About It</h3>
+        <p>What D3 actually does, why it's different from Chart.js or Tableau, how the Tribune uses it for maps and election graphics, and the key vocabulary that shows you get it.</p>
+      </a>
+      <a href="/courses/crash-course/django/" class="track-card django">
+        <div class="label">Concept 2</div>
+        <h3>Django &mdash; What It Is and How to Talk About It</h3>
+        <p>How Django works as a framework, why newsrooms love it, the admin panel, how it serves data to D3 charts, and the key ideas that show you understand the stack.</p>
+      </a>
+    </div>
+  </div>
+
+  <!-- ─── YOUTUBE ─── -->
+  <div class="section">
+    <h2>YouTube &mdash; Watch These Tonight</h2>
+
+    <p class="vid-note" style="margin-top: 0;">These aren't coding tutorials. Pick the short ones. You're building a mental picture, not learning to code from scratch.</p>
+
+    <div class="vid-section-label" style="color: var(--d3);">D3.js</div>
+    <div class="vid-list">
+      <a href="https://www.youtube.com/watch?v=xkBheRZTkaw" target="_blank" rel="noopener" class="vid-row">
+        <div>
+          <div class="vid-title">D3.js in 100 Seconds</div>
+          <div class="vid-meta">Fireship &mdash; Best 2-minute overview of what D3 is and why it exists. Watch this first.</div>
+        </div>
+        <span class="vid-tag quick">2 min</span>
+      </a>
+      <a href="https://www.youtube.com/watch?v=2LhoCfjm8R4" target="_blank" rel="noopener" class="vid-row">
+        <div>
+          <div class="vid-title">D3.js Full Course &mdash; freeCodeCamp</div>
+          <div class="vid-meta">Curran Kelleher &mdash; Don't watch all 13 hrs. Skip to a bar chart section (~30 min) just to see what building a D3 chart looks like.</div>
+        </div>
+        <span class="vid-tag deep">skip around</span>
+      </a>
+    </div>
+
+    <div class="vid-section-label" style="color: var(--django);">Django</div>
+    <div class="vid-list">
+      <a href="https://www.youtube.com/watch?v=nGIg40xs9e4" target="_blank" rel="noopener" class="vid-row">
+        <div>
+          <div class="vid-title">Django in 20 Minutes</div>
+          <div class="vid-meta">Tech With Tim &mdash; See the full Django flow start to finish in one sitting. Best bang for your time.</div>
+        </div>
+        <span class="vid-tag start">20 min</span>
+      </a>
+      <a href="https://www.youtube.com/watch?v=cJveiktaOSQ" target="_blank" rel="noopener" class="vid-row">
+        <div>
+          <div class="vid-title">Django Crash Course</div>
+          <div class="vid-meta">Traversy Media &mdash; Builds a polls app. Good for seeing models, views, templates, and admin in action.</div>
+        </div>
+        <span class="vid-tag start">1 hr</span>
+      </a>
+      <a href="https://www.youtube.com/playlist?list=PL-osiE80TeTtoQCKZ03TU5fNfx2UY6U4p" target="_blank" rel="noopener" class="vid-row">
+        <div>
+          <div class="vid-title">Corey Schafer &mdash; Django Series</div>
+          <div class="vid-meta">The classic. Watch episode 1 &amp; 2 just to see how a project is set up. 17 episodes total but you only need the first couple.</div>
+        </div>
+        <span class="vid-tag deep">ep 1-2</span>
+      </a>
+    </div>
+    <p class="vid-note">Recommended order: Fireship D3 (2 min) &rarr; Tech With Tim Django (20 min) &rarr; read both crash course pages &rarr; Traversy Django crash course if you have time.</p>
+  </div>
+
+</body>
+</html>

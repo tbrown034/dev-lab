@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 02 - How D3 Turns Numbers Into Pixels</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #f97316; }</style>
+  <style>
+    .step-num { display: inline-block; background: var(--track-color); color: #000; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 600; font-size: 0.85rem; margin-right: 0.5rem; }
+    .scale-demo { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
+    .scale-demo .input-box, .scale-demo .output-box {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem;
+      font-family: var(--mono); font-size: 1rem; min-width: 120px; text-align: center;
+    }
+    .scale-demo .input-box { color: var(--info); border-color: rgba(129, 140, 248, 0.25); }
+    .scale-demo .output-box { color: var(--track-color); border-color: rgba(249, 115, 22, 0.25); }
+    .scale-demo .arrow { color: var(--text-muted); font-size: 1.5rem; }
+    .scale-demo label { color: var(--text-muted); font-size: 0.75rem; display: block; margin-bottom: 0.25rem; }
+  </style>
+  <script type="module" crossorigin src="/assets/d3_lessons_02-selections-data-VOqPGQh9.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/init-tutor-Cq4VzOVI.js">
+  <link rel="modulepreload" crossorigin href="/assets/transform-DGvXF_4U.js">
+  <link rel="modulepreload" crossorigin href="/assets/defaultLocale-_QQJJ3OD.js">
+  <link rel="modulepreload" crossorigin href="/assets/linear-Bvwc2yJx.js">
+  <link rel="modulepreload" crossorigin href="/assets/band-HgbXjY_x.js">
+  <link rel="modulepreload" crossorigin href="/assets/nice-CjghwxBw.js">
+  <link rel="modulepreload" crossorigin href="/assets/sequential-Bke8uvtG.js">
+  <link rel="modulepreload" crossorigin href="/assets/max-DBeXZoyG.js">
+  <link rel="modulepreload" crossorigin href="/assets/select-PKtlUnGw.js">
+  <link rel="modulepreload" crossorigin href="/assets/ramp-CK088EDZ.js">
+  <link rel="modulepreload" crossorigin href="/assets/Blues-jorKyqBF.js">
+  <link rel="modulepreload" crossorigin href="/assets/axis-rlX7cRMw.js">
+  <link rel="modulepreload" crossorigin href="/assets/interactive-playground-DpCW7cfN.js">
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>02</span> How D3 Turns Numbers Into Pixels</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <!-- ============================================ -->
+    <!-- THE PROBLEM                                  -->
+    <!-- ============================================ -->
+
+    <h2>Part 1: The Problem</h2>
+
+    <p>In Lesson 01, we wrote things like this:</p>
+
+    <pre><code>.attr("width", d =&gt; d.pop / 100)</code></pre>
+
+    <p>That <code>/ 100</code> is embarrassing. We just eyeballed a number to shrink the population values down to something that fits on screen. What if the data changes? What if the screen is a different size? It'll look wrong.</p>
+
+    <p>Every chart has this problem: <strong>your data lives in one world, your screen lives in another.</strong></p>
+
+    <ul>
+      <li>Populations are in the millions. Your SVG is 600 pixels wide.</li>
+      <li>Dates span years. Your chart area is 400 pixels.</li>
+      <li>Donation amounts range from $200 to $5,000,000. Your bars need to be 20-350 pixels tall.</li>
+    </ul>
+
+    <p>You need a translator. That's what a <strong>scale</strong> is.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>Part 2: A Scale is a Translator</h2>
+
+    <p>Imagine you're a journalist writing for both US and UK audiences. You need to convert Fahrenheit to Celsius. The formula is always the same:</p>
+
+    <pre><code><span class="comment">// A temperature "scale"</span>
+input:  32&deg;F   &rarr;   output:  0&deg;C
+input: 212&deg;F   &rarr;   output: 100&deg;C
+input: 98.6&deg;F  &rarr;   output:  37&deg;C</code></pre>
+
+    <p>A D3 scale works the same way, except instead of Fahrenheit&rarr;Celsius, it's <strong>Data&rarr;Pixels</strong>:</p>
+
+    <pre><code><span class="comment">// A D3 scale</span>
+input:  0 (population)      &rarr;   output:   0px
+input:  39,538,000 (CA pop) &rarr;   output: 500px
+input:  20,000,000 (NY pop) &rarr;   output: 253px  <span class="comment">// proportional!</span></code></pre>
+
+    <div class="aha">
+      <p><strong>A scale is a function.</strong> You give it a data value, it gives back a pixel value. That's the whole concept. D3 just gives you convenient ways to create these translator functions.</p>
+    </div>
+
+    <h3>Creating a scale in D3</h3>
+
+    <pre><code><span class="comment">// Two things to tell the scale:</span>
+<span class="comment">// 1. DOMAIN = the range of your data (input world)</span>
+<span class="comment">// 2. RANGE  = the range of your pixels (output world)</span>
+
+const scale = d3.scaleLinear()
+  .domain([0, 39_538_000])   <span class="comment">// data goes from 0 to 39.5M</span>
+  .range([0, 500]);           <span class="comment">// pixels go from 0 to 500</span>
+
+<span class="comment">// Now use it like a function:</span>
+scale(39_538_000)   <span class="comment">// &rarr; 500    (max data = max pixels)</span>
+scale(20_000_000)   <span class="comment">// &rarr; 253    (proportional)</span>
+scale(0)            <span class="comment">// &rarr; 0      (min data = min pixels)</span></code></pre>
+
+    <div class="try-it">
+      <h4>Play with it: scaleLinear number line</h4>
+      <p style="color: #a5b4fc; font-size: 0.85rem; margin-bottom: 0.75rem;">Drag the input slider and watch where the value lands on the output number line. This is what scaleLinear does: proportional mapping.</p>
+      <div id="playground-scale-linear"></div>
+    </div>
+
+    <div class="demo">
+      <h4>Live: Play with a scale</h4>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Drag the slider to change the input value and see what the scale outputs.</p>
+      <div style="margin-bottom: 1rem;">
+        <input type="range" id="scale-slider" min="0" max="40000000" value="20000000" style="width: 100%; accent-color: #f97316;">
+      </div>
+      <div class="scale-demo">
+        <div>
+          <label>Domain (data world)</label>
+          <div class="input-box" id="scale-input">20,000,000</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div>
+          <label>scale()</label>
+          <div style="color: #666; font-size: 2rem;">&fnof;</div>
+        </div>
+        <div class="arrow">&rarr;</div>
+        <div>
+          <label>Range (pixel world)</label>
+          <div class="output-box" id="scale-output">253px</div>
+        </div>
+      </div>
+      <div id="scale-bar-demo" style="margin-top: 1rem;"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TYPES OF SCALES                              -->
+    <!-- ============================================ -->
+
+    <h2>Part 3: Different Data, Different Scales</h2>
+
+    <p>Not all data is the same. D3 has different scale types for different situations. You only need 3-4 for most work:</p>
+
+    <h3><span class="step-num">1</span> scaleLinear &mdash; for continuous numbers</h3>
+    <p>Population, money, temperature, percentages. Any number in a continuous range.</p>
+    <pre><code>const y = d3.scaleLinear()
+  .domain([0, 100])     <span class="comment">// voter turnout: 0% to 100%</span>
+  .range([height, 0]);  <span class="comment">// NOTE: flipped! 0% at bottom, 100% at top</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Why is the range flipped?</strong> Remember SVG's Y-axis goes top-down. A value of 100% should be at the TOP of the chart (y=0 in SVG). A value of 0% should be at the BOTTOM (y=height). So we flip the range: <code>[height, 0]</code>. You'll do this every single time for Y-axes.</p>
+    </div>
+
+    <h3><span class="step-num">2</span> scaleBand &mdash; for categories (bar charts)</h3>
+    <p>State names, district labels, candidate names. Each gets its own "band" of space.</p>
+    <pre><code>const x = d3.scaleBand()
+  .domain(["CA", "TX", "FL", "NY", "IL"])  <span class="comment">// your categories</span>
+  .range([0, width])                        <span class="comment">// spread across width</span>
+  .padding(0.2);                            <span class="comment">// 20% gap between bars</span>
+
+x("CA")            <span class="comment">// &rarr; 0     (start of first band)</span>
+x("TX")            <span class="comment">// &rarr; 124   (start of second band)</span>
+x.bandwidth()      <span class="comment">// &rarr; 99    (how wide each bar should be)</span></code></pre>
+
+    <div class="aha">
+      <p><strong>scaleBand is specifically for bar charts.</strong> It divides space evenly among categories and gives you <code>.bandwidth()</code> &mdash; the width each bar should be. No more manually calculating bar widths.</p>
+    </div>
+
+    <h3><span class="step-num">3</span> scaleTime &mdash; for dates</h3>
+    <pre><code>const x = d3.scaleTime()
+  .domain([new Date("2020-01-01"), new Date("2024-12-31")])
+  .range([0, width]);</code></pre>
+
+    <h3><span class="step-num">4</span> scaleSequential &mdash; for color</h3>
+    <p>Data value &rarr; color instead of data value &rarr; pixel. Essential for choropleth maps.</p>
+    <pre><code>const color = d3.scaleSequential()
+  .domain([0, 100])
+  .interpolator(d3.interpolateBlues);  <span class="comment">// light &rarr; dark blue</span>
+
+color(0)    <span class="comment">// &rarr; very light blue</span>
+color(100)  <span class="comment">// &rarr; dark blue</span></code></pre>
+
+    <div class="demo">
+      <h4>Live: Scale types visualized</h4>
+      <div id="scale-types-demo"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- AXES                                         -->
+    <!-- ============================================ -->
+
+    <h2>Part 4: Axes Are Just Labels for Your Scale</h2>
+
+    <p>You have a scale translating data to pixels. But your viewer doesn't know that. They need labels. An <strong>axis</strong> draws tick marks and labels that show what the scale is doing.</p>
+
+    <ul>
+      <li>Without axis: "That bar is 253 pixels tall. So what?"</li>
+      <li>With axis: "That bar represents 20 million people."</li>
+    </ul>
+
+    <pre><code><span class="comment">// An axis is created FROM a scale</span>
+const xAxis = d3.axisBottom(xScale);  <span class="comment">// ticks below the line</span>
+const yAxis = d3.axisLeft(yScale);    <span class="comment">// ticks left of the line</span>
+
+<span class="comment">// Render it by "calling" it on a &lt;g&gt; group</span>
+svg.append("g")
+  .attr("transform", `translate(0, ${height})`)  <span class="comment">// push to bottom</span>
+  .call(xAxis);                       <span class="comment">// D3 draws ticks + labels</span></code></pre>
+
+    <div class="callout">
+      <p><strong>What does <code>.call()</code> mean?</strong> It passes the selection to a function. <code>group.call(xAxis)</code> is the same as <code>xAxis(group)</code>. D3 uses this because the axis function creates multiple child elements (line, ticks, text labels) inside the group.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MARGINS                                      -->
+    <!-- ============================================ -->
+
+    <h2>Part 5: The Margins Convention</h2>
+
+    <p>Axes take up space. Labels need room. The <strong>margins convention</strong> is D3's standard pattern for this. Every professional D3 chart starts with it:</p>
+
+    <pre><code><span class="comment">// Step 1: Define margins</span>
+const margin = { top: 20, right: 30, bottom: 40, left: 50 };
+
+<span class="comment">// Step 2: Calculate inner chart dimensions</span>
+const width = 700 - margin.left - margin.right;   <span class="comment">// 620</span>
+const height = 400 - margin.top - margin.bottom;  <span class="comment">// 340</span>
+
+<span class="comment">// Step 3: SVG at full size, group pushed inward</span>
+const svg = d3.select("#chart")
+  .append("svg")
+  .attr("viewBox", `0 0 700 400`)
+  .append("g")
+  .attr("transform", `translate(${margin.left}, ${margin.top})`);</code></pre>
+
+    <div class="demo">
+      <h4>Live: Margins visualized</h4>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Orange = your chart area. Gray = margins where axes and labels live.</p>
+      <div id="margins-demo"></div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Copy-paste this pattern into every chart.</strong> It's boilerplate. Margin &rarr; width/height &rarr; SVG &rarr; group. Once set up, everything goes inside the group and margins handle themselves.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ALL TOGETHER                                 -->
+    <!-- ============================================ -->
+
+    <h2>Part 6: All Together &mdash; A Real Chart</h2>
+
+    <p>Here's the complete pattern: margins + scales + axes + bars. This is what you'll use for every bar chart:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Lesson 01 (magic numbers)</h5>
+        <pre><code>.attr("x", (d,i) =&gt; i * 100)
+.attr("y", d =&gt; 300 - d.pop/150)
+.attr("width", 80)
+.attr("height", d =&gt; d.pop / 150)
+
+<span class="comment">// Breaks if data changes
+// No labels for viewer</span></code></pre>
+      </div>
+      <div>
+        <h5>Lesson 02 (scales)</h5>
+        <pre><code>.attr("x", d =&gt; x(d.state))
+.attr("y", d =&gt; y(d.pop))
+.attr("width", x.bandwidth())
+.attr("height", d =&gt; height-y(d.pop))
+
+<span class="comment">// Scales handle the math
+// Axes label it</span></code></pre>
+      </div>
+    </div>
+
+    <div class="demo">
+      <h4>Live: Complete chart with scales, axes, and margins</h4>
+      <div id="full-chart"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- USEFUL EXTRAS                                -->
+    <!-- ============================================ -->
+
+    <h2>Part 7: Useful Extras</h2>
+
+    <h3><code>.nice()</code> &mdash; clean axis numbers</h3>
+    <pre><code><span class="comment">// Without: axis shows 0, 7907, 15815, 23722, 39538 (messy)</span>
+<span class="comment">// With:    axis shows 0, 10000, 20000, 30000, 40000 (clean)</span>
+y.domain([0, d3.max(data, d =&gt; d.pop)]).nice();</code></pre>
+
+    <h3><code>.tickFormat()</code> &mdash; format labels</h3>
+    <pre><code>d3.axisLeft(y).tickFormat(d =&gt; `${d / 1000}k`)     <span class="comment">// 10000 &rarr; 10k</span>
+d3.axisBottom(x).tickFormat(d3.format("$,.0f"))     <span class="comment">// 1200000 &rarr; $1,200,000</span></code></pre>
+
+    <h3><code>viewBox</code> &mdash; responsive charts</h3>
+    <pre><code><span class="comment">// The chart scales to fit its container, like an image.</span>
+svg.attr("viewBox", "0 0 700 400")  <span class="comment">// define coordinate space</span>
+<span class="comment">// No fixed width/height needed. Responsive by default.</span></code></pre>
+
+    <!-- QUIZ -->
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. In your own words, what does a D3 scale do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A scale is a translator function. It converts values from your data world (populations, dollars, dates) into your screen world (pixels, colors). You define the input range (domain) and output range (range), and it handles all the proportional math.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why do we write <code>.range([height, 0])</code> for Y scales instead of <code>.range([0, height])</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">SVG Y-axis goes top-down. Small values (0%) should be at the bottom (large Y pixel), large values (100%) at the top (small Y pixel). Flipping the range does this automatically: domain 0 &rarr; pixel height (bottom), domain max &rarr; pixel 0 (top).</div>
+      </div>
+
+      <div class="question">
+        <p>3. When would you use scaleBand vs scaleLinear?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><strong>scaleBand</strong> for categories (state names, labels) &mdash; divides space into equal bands. <strong>scaleLinear</strong> for continuous numbers (population, money) &mdash; maps proportionally. Text labels &rarr; band. Numbers &rarr; linear.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What does the margins convention give you?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Room for axes and labels around the chart area. You create the SVG at full size, push a group inward by the margins. Everything you draw goes in the group, axes fit in the margins. It's the standard boilerplate for every D3 chart.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What does <code>.call(xAxis)</code> do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It passes the current selection (a &lt;g&gt; group) to the axis generator function. The axis function then creates all the axis elements (line, ticks, text labels) inside that group. It's equivalent to <code>xAxis(selection)</code>.</div>
+      </div>
+    </div>
+
+    <!-- EXERCISE -->
+    <div class="exercise">
+      <h4>Exercise: Upgrade Your Chart</h4>
+      <p>Open <code>code/exercises/02-exercise.js</code>. Take the bar chart from Lesson 01 and upgrade it:</p>
+      <ol>
+        <li>Set up the margins convention</li>
+        <li>Create a <code>scaleBand</code> for X and <code>scaleLinear</code> for Y</li>
+        <li>Add axes with <code>axisBottom</code> and <code>axisLeft</code></li>
+        <li>Replace all magic numbers with scale calls</li>
+        <li>Bonus: <code>.nice()</code> and format Y axis as currency</li>
+      </ol>
+      <p style="margin-top: 0.75rem; color: #4ade80;">View at: <a href="/d3/code/exercises/02-exercise.html" style="color: #4ade80;">/code/exercises/02-exercise.html</a></p>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Scales are translators</strong> &mdash; data world &rarr; pixel world (or color world)</li>
+      <li><strong>Domain</strong> = input range, <strong>Range</strong> = output range</li>
+      <li><strong>scaleLinear</strong> for numbers, <strong>scaleBand</strong> for categories, <strong>scaleTime</strong> for dates</li>
+      <li><strong>Y range is always flipped</strong> <code>[height, 0]</code></li>
+      <li><strong>Axes</strong> = labels for your scale, drawn with <code>.call()</code></li>
+      <li><strong>Margins convention</strong> = the boilerplate every chart starts with</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/01-fundamentals/">&larr; Lesson 01: Pure SVG</a>
+      <a href="/d3/lessons/03-scales-axes/">Lesson 03: D3 Selections Deep Dive &rarr;</a>
+    </div>
+  </div>
+
+
+
+</body>
+</html>

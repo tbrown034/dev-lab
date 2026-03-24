@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-World JS/TS Use Cases - Learn JS + TS</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #eab308; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover, .nav a.active {
+      background: #eab308;
+      color: #000;
+      border-color: #eab308;
+    }
+
+    .page-title {
+      padding: 2rem 3rem 0.5rem;
+    }
+    .page-title h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+    .page-title h2 span { color: #eab308; }
+    .page-title p {
+      color: #888;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+      max-width: 700px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.25rem;
+      padding: 1.5rem 3rem 3rem;
+      max-width: 1600px;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      border-color: #444;
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      padding: 1.25rem 1.25rem 0.75rem;
+    }
+    .card-header .card-num {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.35rem;
+    }
+    .card-header h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .card-header .who {
+      font-size: 0.78rem;
+      color: #888;
+      font-style: italic;
+    }
+
+    .card-demo {
+      margin: 0.5rem 1.25rem;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      overflow: hidden;
+      min-height: 140px;
+      display: flex;
+      align-items: stretch;
+    }
+    .card-demo pre {
+      width: 100%;
+      padding: 1rem;
+      font-family: 'JetBrains Mono', 'SF Mono', monospace;
+      font-size: 0.72rem;
+      line-height: 1.6;
+      color: #aaa;
+      overflow-x: auto;
+      margin: 0;
+      white-space: pre;
+    }
+    .card-demo pre .kw { color: #c084fc; }
+    .card-demo pre .fn { color: #60a5fa; }
+    .card-demo pre .str { color: #4ade80; }
+    .card-demo pre .cm { color: #555; }
+    .card-demo pre .num { color: #fbbf24; }
+    .card-demo pre .type { color: #06b6d4; }
+
+    .card-body {
+      padding: 0.75rem 1.25rem 1rem;
+    }
+    .card-body ul {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 0.75rem;
+    }
+    .card-body ul li {
+      font-size: 0.78rem;
+      color: #999;
+      line-height: 1.6;
+      padding-left: 0.85rem;
+      position: relative;
+    }
+    .card-body ul li::before {
+      content: "\2022";
+      position: absolute;
+      left: 0;
+      color: #555;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .tag {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .tag-yellow { background: #eab30822; color: #eab308; }
+    .tag-purple { background: #818cf822; color: #818cf8; }
+    .tag-green  { background: #4ade8022; color: #4ade80; }
+    .tag-cyan   { background: #06b6d422; color: #06b6d4; }
+
+    .accent-yellow { color: #eab308; }
+    .accent-purple { color: #818cf8; }
+    .accent-green  { color: #4ade80; }
+    .accent-cyan   { color: #06b6d4; }
+
+    @media (max-width: 768px) {
+      .header, .nav, .page-title, .grid { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .grid { grid-template-columns: 1fr; }
+      .page-title h2 { font-size: 1.4rem; }
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Learn <span>JS/TS</span></h1>
+    <div class="meta">Real-World Use Cases</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/jsts/">Home</a>
+    <a href="/jsts/references/use-cases/" class="active">Use Cases</a>
+    <a href="/jsts/games/">Games</a>
+    <a href="/jsts/projects/">Projects</a>
+  </nav>
+
+  <div class="page-title">
+    <h2>15 Production <span>Patterns</span></h2>
+    <p>Battle-tested JavaScript and TypeScript patterns you'll find in every serious codebase. Each card includes a working implementation you can copy and adapt.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- Card 1: Debounce / Throttle -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-yellow">01 / PERFORMANCE</div>
+        <h3>Debounce &amp; Throttle</h3>
+        <div class="who">Search inputs, scroll handlers, resize events</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">function</span> <span class="fn">debounce</span>&lt;<span class="type">T extends (...args: any[]) =&gt; void</span>&gt;(
+  fn: <span class="type">T</span>, delay: <span class="type">number</span>
+): <span class="type">(...args: Parameters&lt;T&gt;) =&gt; void</span> {
+  <span class="kw">let</span> timer: <span class="type">ReturnType&lt;typeof setTimeout&gt;</span>;
+  <span class="kw">return</span> (...args) =&gt; {
+    clearTimeout(timer);
+    timer = setTimeout(() =&gt; fn(...args), delay);
+  };
+}
+
+<span class="cm">// Usage: auto-save, search-as-you-type</span>
+<span class="kw">const</span> search = <span class="fn">debounce</span>(query =&gt; {
+  fetchResults(query);
+}, <span class="num">300</span>);</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Debounce: waits until input stops for N ms before firing</li>
+          <li>Throttle: fires at most once per N ms during continuous input</li>
+          <li>Type-safe with generics preserving parameter types</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">setTimeout</span>
+          <span class="tag tag-purple">Generics</span>
+          <span class="tag tag-green">Performance</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Pub/Sub Event System -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">02 / ARCHITECTURE</div>
+        <h3>Pub/Sub Event System</h3>
+        <div class="who">Decoupled component communication</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">type</span> <span class="type">EventMap</span> = Record&lt;<span class="type">string</span>, <span class="type">any</span>&gt;;
+
+<span class="kw">class</span> <span class="fn">EventBus</span>&lt;<span class="type">T extends EventMap</span>&gt; {
+  <span class="kw">private</span> handlers = <span class="kw">new</span> Map&lt;
+    <span class="type">keyof T</span>, Set&lt;<span class="type">Function</span>&gt;
+  &gt;();
+
+  <span class="fn">on</span>&lt;<span class="type">K extends keyof T</span>&gt;(
+    event: <span class="type">K</span>, handler: (data: <span class="type">T[K]</span>) =&gt; <span class="type">void</span>
+  ) {
+    <span class="kw">if</span> (!<span class="kw">this</span>.handlers.has(event))
+      <span class="kw">this</span>.handlers.set(event, <span class="kw">new</span> Set());
+    <span class="kw">this</span>.handlers.get(event)!.add(handler);
+    <span class="kw">return</span> () =&gt; <span class="kw">this</span>.handlers.get(event)!.delete(handler);
+  }
+
+  <span class="fn">emit</span>&lt;<span class="type">K extends keyof T</span>&gt;(event: <span class="type">K</span>, data: <span class="type">T[K]</span>) {
+    <span class="kw">this</span>.handlers.get(event)?.forEach(h =&gt; h(data));
+  }
+}</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Fully type-safe: event names and payloads are checked at compile time</li>
+          <li>Returns an unsubscribe function for cleanup</li>
+          <li>Foundation for micro-frontend and plugin architectures</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">EventEmitter</span>
+          <span class="tag tag-purple">Generics</span>
+          <span class="tag tag-cyan">Type-safe</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: State Machine -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">03 / STATE</div>
+        <h3>State Machine</h3>
+        <div class="who">Forms, workflows, UI interactions</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">type</span> <span class="type">State</span> = <span class="str">"idle"</span> | <span class="str">"loading"</span> | <span class="str">"success"</span> | <span class="str">"error"</span>;
+<span class="kw">type</span> <span class="type">Event</span> = <span class="str">"FETCH"</span> | <span class="str">"RESOLVE"</span> | <span class="str">"REJECT"</span> | <span class="str">"RETRY"</span>;
+
+<span class="kw">const</span> transitions: Record&lt;<span class="type">State</span>,
+  Partial&lt;Record&lt;<span class="type">Event</span>, <span class="type">State</span>&gt;&gt;
+&gt; = {
+  idle:    { FETCH: <span class="str">"loading"</span> },
+  loading: { RESOLVE: <span class="str">"success"</span>, REJECT: <span class="str">"error"</span> },
+  success: { FETCH: <span class="str">"loading"</span> },
+  error:   { RETRY: <span class="str">"loading"</span> },
+};
+
+<span class="kw">function</span> <span class="fn">transition</span>(state: <span class="type">State</span>, event: <span class="type">Event</span>): <span class="type">State</span> {
+  <span class="kw">return</span> transitions[state][event] ?? state;
+}</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Eliminates impossible states with discriminated unions</li>
+          <li>Transitions are a pure function: easy to test and reason about</li>
+          <li>Scales to complex workflows with guard conditions and side effects</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">Discriminated Unions</span>
+          <span class="tag tag-green">Pure Functions</span>
+          <span class="tag tag-cyan">XState-pattern</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Retry with Backoff -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-cyan">04 / RESILIENCE</div>
+        <h3>Retry with Exponential Backoff</h3>
+        <div class="who">API calls, network requests, flaky services</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">async function</span> <span class="fn">retry</span>&lt;<span class="type">T</span>&gt;(
+  fn: () =&gt; <span class="type">Promise&lt;T&gt;</span>,
+  opts = { retries: <span class="num">3</span>, baseDelay: <span class="num">1000</span> }
+): <span class="type">Promise&lt;T&gt;</span> {
+  <span class="kw">for</span> (<span class="kw">let</span> attempt = <span class="num">0</span>; attempt &lt;= opts.retries; attempt++) {
+    <span class="kw">try</span> {
+      <span class="kw">return await</span> fn();
+    } <span class="kw">catch</span> (err) {
+      <span class="kw">if</span> (attempt === opts.retries) <span class="kw">throw</span> err;
+      <span class="kw">const</span> delay = opts.baseDelay * <span class="num">2</span> ** attempt;
+      <span class="kw">const</span> jitter = delay * (<span class="num">0.5</span> + Math.random() * <span class="num">0.5</span>);
+      <span class="kw">await new</span> Promise(r =&gt; setTimeout(r, jitter));
+    }
+  }
+  <span class="kw">throw new</span> Error(<span class="str">"unreachable"</span>);
+}</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Exponential backoff: 1s, 2s, 4s... prevents server overload</li>
+          <li>Jitter randomization prevents thundering herd problem</li>
+          <li>Generic return type preserves the wrapped function's type</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">async/await</span>
+          <span class="tag tag-purple">Generics</span>
+          <span class="tag tag-green">Error Handling</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: Worker Thread Pool -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-yellow">05 / CONCURRENCY</div>
+        <h3>Worker Thread Pool</h3>
+        <div class="who">CPU-intensive tasks, image processing, parsing</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">class</span> <span class="fn">WorkerPool</span> {
+  <span class="kw">private</span> workers: Worker[] = [];
+  <span class="kw">private</span> queue: Array&lt;{
+    data: <span class="type">any</span>;
+    resolve: <span class="type">Function</span>;
+    reject: <span class="type">Function</span>;
+  }&gt; = [];
+  <span class="kw">private</span> available: Set&lt;Worker&gt;;
+
+  <span class="kw">constructor</span>(script: <span class="type">string</span>, size = navigator.hardwareConcurrency) {
+    <span class="kw">this</span>.workers = Array.from({ length: size },
+      () =&gt; <span class="kw">new</span> Worker(script, { type: <span class="str">"module"</span> })
+    );
+    <span class="kw">this</span>.available = <span class="kw">new</span> Set(<span class="kw">this</span>.workers);
+  }
+
+  <span class="fn">exec</span>&lt;<span class="type">T</span>&gt;(data: <span class="type">any</span>): <span class="type">Promise&lt;T&gt;</span> {
+    <span class="kw">return new</span> Promise((resolve, reject) =&gt; {
+      <span class="kw">this</span>.queue.push({ data, resolve, reject });
+      <span class="kw">this</span>.dispatch();
+    });
+  }
+}</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Manages a fixed pool of Web Workers for parallel execution</li>
+          <li>Queue-based dispatch prevents thread oversubscription</li>
+          <li>Uses navigator.hardwareConcurrency for optimal pool sizing</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">Web Workers</span>
+          <span class="tag tag-purple">Concurrency</span>
+          <span class="tag tag-green">Queue</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 6: Stream Processing -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">06 / DATA</div>
+        <h3>Stream Processing</h3>
+        <div class="who">Large files, real-time feeds, ETL pipelines</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">async function*</span> <span class="fn">processStream</span>&lt;<span class="type">T, R</span>&gt;(
+  source: AsyncIterable&lt;<span class="type">T</span>&gt;,
+  transform: (chunk: <span class="type">T</span>) =&gt; <span class="type">R</span>,
+  filter?: (item: <span class="type">R</span>) =&gt; <span class="type">boolean</span>
+): AsyncGenerator&lt;<span class="type">R</span>&gt; {
+  <span class="kw">for await</span> (<span class="kw">const</span> chunk <span class="kw">of</span> source) {
+    <span class="kw">const</span> result = transform(chunk);
+    <span class="kw">if</span> (!filter || filter(result)) {
+      <span class="kw">yield</span> result;
+    }
+  }
+}
+
+<span class="cm">// Usage: process a large NDJSON file</span>
+<span class="kw">for await</span> (<span class="kw">const</span> record <span class="kw">of</span> <span class="fn">processStream</span>(
+  readLines(<span class="str">"data.ndjson"</span>),
+  line =&gt; JSON.parse(line),
+  obj =&gt; obj.score &gt; <span class="num">0.8</span>
+)) { <span class="cm">/* ... */</span> }</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Async generators enable lazy, memory-efficient data processing</li>
+          <li>Composable transform + filter pipeline pattern</li>
+          <li>Handles backpressure naturally through async iteration</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">AsyncGenerator</span>
+          <span class="tag tag-cyan">for-await-of</span>
+          <span class="tag tag-green">Backpressure</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 7: Type-safe API Client -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">07 / NETWORKING</div>
+        <h3>Type-safe API Client</h3>
+        <div class="who">REST APIs, microservices, BFFs</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">interface</span> <span class="type">ApiRoutes</span> {
+  <span class="str">"/users"</span>:     { GET: <span class="type">User[]</span>;   POST: <span class="type">User</span> };
+  <span class="str">"/users/:id"</span>: { GET: <span class="type">User</span>;     PUT: <span class="type">User</span> };
+  <span class="str">"/posts"</span>:     { GET: <span class="type">Post[]</span>;   POST: <span class="type">Post</span> };
+}
+
+<span class="kw">class</span> <span class="fn">ApiClient</span>&lt;<span class="type">R extends Record&lt;string, Record&lt;string, any&gt;&gt;</span>&gt; {
+  <span class="kw">async</span> <span class="fn">request</span>&lt;
+    <span class="type">P extends keyof R & string</span>,
+    <span class="type">M extends keyof R[P] & string</span>
+  &gt;(method: <span class="type">M</span>, path: <span class="type">P</span>): Promise&lt;<span class="type">R[P][M]</span>&gt; {
+    <span class="kw">const</span> res = <span class="kw">await</span> fetch(path, { method });
+    <span class="kw">return</span> res.json();
+  }
+}
+
+<span class="cm">// TypeScript knows this returns User[]</span>
+<span class="kw">const</span> users = <span class="kw">await</span> api.<span class="fn">request</span>(<span class="str">"GET"</span>, <span class="str">"/users"</span>);</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Route definitions map paths to method/response-type pairs</li>
+          <li>Compiler catches invalid path + method combinations</li>
+          <li>Response types are automatically inferred -- no casting needed</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">fetch</span>
+          <span class="tag tag-cyan">Mapped Types</span>
+          <span class="tag tag-purple">Template Literals</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 8: Plugin Architecture -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-cyan">08 / ARCHITECTURE</div>
+        <h3>Plugin Architecture</h3>
+        <div class="who">Build tools, editors, frameworks</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">interface</span> <span class="type">Plugin</span> {
+  name: <span class="type">string</span>;
+  version: <span class="type">string</span>;
+  <span class="fn">setup</span>(ctx: <span class="type">PluginContext</span>): <span class="type">void | Promise&lt;void&gt;</span>;
+  <span class="fn">teardown</span>?(): <span class="type">void</span>;
+}
+
+<span class="kw">class</span> <span class="fn">PluginManager</span> {
+  <span class="kw">private</span> plugins = <span class="kw">new</span> Map&lt;<span class="type">string, Plugin</span>&gt;();
+  <span class="kw">private</span> hooks = <span class="kw">new</span> Map&lt;<span class="type">string, Set&lt;Function&gt;</span>&gt;();
+
+  <span class="kw">async</span> <span class="fn">register</span>(plugin: <span class="type">Plugin</span>) {
+    <span class="kw">const</span> ctx: <span class="type">PluginContext</span> = {
+      hook: (name, fn) =&gt; {
+        <span class="kw">if</span> (!<span class="kw">this</span>.hooks.has(name))
+          <span class="kw">this</span>.hooks.set(name, <span class="kw">new</span> Set());
+        <span class="kw">this</span>.hooks.get(name)!.add(fn);
+      }
+    };
+    <span class="kw">await</span> plugin.<span class="fn">setup</span>(ctx);
+    <span class="kw">this</span>.plugins.set(plugin.name, plugin);
+  }
+}</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Plugins register hooks during setup phase via a context object</li>
+          <li>Lifecycle-based: setup / teardown for clean resource management</li>
+          <li>Same pattern used by Vite, Rollup, and Webpack</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">Interface</span>
+          <span class="tag tag-purple">Hooks</span>
+          <span class="tag tag-green">Lifecycle</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 9: Observable Pattern -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-yellow">09 / REACTIVE</div>
+        <h3>Observable Pattern</h3>
+        <div class="who">RxJS-style streams, reactive state</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">class</span> <span class="fn">Observable</span>&lt;<span class="type">T</span>&gt; {
+  <span class="kw">constructor</span>(
+    <span class="kw">private</span> subscribeFn: (
+      observer: <span class="type">Observer&lt;T&gt;</span>
+    ) =&gt; <span class="type">Teardown</span>
+  ) {}
+
+  <span class="fn">subscribe</span>(observer: <span class="type">Partial&lt;Observer&lt;T&gt;&gt;</span>): <span class="type">Subscription</span> {
+    <span class="kw">const</span> teardown = <span class="kw">this</span>.subscribeFn({
+      next: observer.next ?? (() =&gt; {}),
+      error: observer.error ?? (() =&gt; {}),
+      complete: observer.complete ?? (() =&gt; {}),
+    });
+    <span class="kw">return</span> { unsubscribe: teardown };
+  }
+
+  <span class="fn">pipe</span>&lt;<span class="type">R</span>&gt;(op: (src: <span class="type">Observable&lt;T&gt;</span>) =&gt; <span class="type">Observable&lt;R&gt;</span>) {
+    <span class="kw">return</span> op(<span class="kw">this</span>);
+  }
+}</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Push-based data flow with next/error/complete lifecycle</li>
+          <li>Composable via pipe() with map, filter, debounce operators</li>
+          <li>Unsubscribe function prevents memory leaks</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">Observer</span>
+          <span class="tag tag-cyan">Reactive</span>
+          <span class="tag tag-purple">Pipe</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 10: Dependency Injection -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">10 / TESTING</div>
+        <h3>Dependency Injection</h3>
+        <div class="who">Testable services, decoupled modules</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">const</span> tokens = {
+  logger: Symbol(<span class="str">"Logger"</span>),
+  db:     Symbol(<span class="str">"Database"</span>),
+} <span class="kw">as const</span>;
+
+<span class="kw">class</span> <span class="fn">Container</span> {
+  <span class="kw">private</span> registry = <span class="kw">new</span> Map&lt;<span class="type">symbol, () =&gt; any</span>&gt;();
+
+  <span class="fn">bind</span>&lt;<span class="type">T</span>&gt;(token: <span class="type">symbol</span>, factory: () =&gt; <span class="type">T</span>) {
+    <span class="kw">this</span>.registry.set(token, factory);
+  }
+
+  <span class="fn">get</span>&lt;<span class="type">T</span>&gt;(token: <span class="type">symbol</span>): <span class="type">T</span> {
+    <span class="kw">const</span> factory = <span class="kw">this</span>.registry.get(token);
+    <span class="kw">if</span> (!factory) <span class="kw">throw new</span> Error(<span class="str">`No binding: $</span>{token.toString()}<span class="str">`</span>);
+    <span class="kw">return</span> factory() <span class="kw">as</span> <span class="type">T</span>;
+  }
+}
+
+<span class="cm">// Test: swap real DB for mock</span>
+container.<span class="fn">bind</span>(tokens.db, () =&gt; <span class="kw">new</span> MockDB());</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Symbol-based tokens prevent naming collisions</li>
+          <li>Factory functions enable lazy instantiation and scoping</li>
+          <li>Swap real implementations for mocks in tests without code changes</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">Symbol</span>
+          <span class="tag tag-green">Testability</span>
+          <span class="tag tag-purple">IoC</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 11: Command Pattern -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">11 / UX</div>
+        <h3>Command Pattern (Undo/Redo)</h3>
+        <div class="who">Text editors, drawing apps, form builders</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">interface</span> <span class="type">Command</span> {
+  <span class="fn">execute</span>(): <span class="type">void</span>;
+  <span class="fn">undo</span>(): <span class="type">void</span>;
+  description: <span class="type">string</span>;
+}
+
+<span class="kw">class</span> <span class="fn">CommandHistory</span> {
+  <span class="kw">private</span> undoStack: <span class="type">Command</span>[] = [];
+  <span class="kw">private</span> redoStack: <span class="type">Command</span>[] = [];
+
+  <span class="fn">execute</span>(cmd: <span class="type">Command</span>) {
+    cmd.<span class="fn">execute</span>();
+    <span class="kw">this</span>.undoStack.push(cmd);
+    <span class="kw">this</span>.redoStack.length = <span class="num">0</span>; <span class="cm">// clear redo</span>
+  }
+
+  <span class="fn">undo</span>() {
+    <span class="kw">const</span> cmd = <span class="kw">this</span>.undoStack.pop();
+    <span class="kw">if</span> (!cmd) <span class="kw">return</span>;
+    cmd.<span class="fn">undo</span>();
+    <span class="kw">this</span>.redoStack.push(cmd);
+  }
+
+  <span class="fn">redo</span>() {
+    <span class="kw">const</span> cmd = <span class="kw">this</span>.redoStack.pop();
+    <span class="kw">if</span> (!cmd) <span class="kw">return</span>;
+    cmd.<span class="fn">execute</span>();
+    <span class="kw">this</span>.undoStack.push(cmd);
+  }
+}</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Each action is an object with execute() and undo() methods</li>
+          <li>Redo stack clears on new command (standard undo/redo semantics)</li>
+          <li>Description field enables "Undo: Delete paragraph" UI labels</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">Interface</span>
+          <span class="tag tag-green">Stack</span>
+          <span class="tag tag-cyan">Undo/Redo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 12: Memoization -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-cyan">12 / PERFORMANCE</div>
+        <h3>Memoization with Cache Eviction</h3>
+        <div class="who">Expensive computations, API responses</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">function</span> <span class="fn">memoize</span>&lt;<span class="type">Args extends any[], R</span>&gt;(
+  fn: (...args: <span class="type">Args</span>) =&gt; <span class="type">R</span>,
+  opts: { maxSize?: <span class="type">number</span>; ttl?: <span class="type">number</span> } = {}
+) {
+  <span class="kw">const</span> cache = <span class="kw">new</span> Map&lt;<span class="type">string</span>, {
+    value: <span class="type">R</span>; expires: <span class="type">number</span>
+  }&gt;();
+
+  <span class="kw">return</span> (...args: <span class="type">Args</span>): <span class="type">R</span> =&gt; {
+    <span class="kw">const</span> key = JSON.stringify(args);
+    <span class="kw">const</span> hit = cache.get(key);
+    <span class="kw">if</span> (hit && (!opts.ttl || Date.now() &lt; hit.expires))
+      <span class="kw">return</span> hit.value;
+
+    <span class="kw">const</span> result = fn(...args);
+    <span class="kw">if</span> (opts.maxSize && cache.size &gt;= opts.maxSize)
+      cache.delete(cache.keys().next().value!);
+    cache.set(key, {
+      value: result,
+      expires: Date.now() + (opts.ttl ?? Infinity)
+    });
+    <span class="kw">return</span> result;
+  };
+}</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>LRU-style eviction when maxSize is reached (Map preserves insertion order)</li>
+          <li>Optional TTL for time-based cache invalidation</li>
+          <li>Preserves function signature via generic types</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">Map</span>
+          <span class="tag tag-green">Caching</span>
+          <span class="tag tag-purple">Generics</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 13: Circuit Breaker -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-yellow">13 / RESILIENCE</div>
+        <h3>Circuit Breaker</h3>
+        <div class="who">Microservices, API gateways, external integrations</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">class</span> <span class="fn">CircuitBreaker</span> {
+  <span class="kw">private</span> state: <span class="str">"closed"</span> | <span class="str">"open"</span> | <span class="str">"half-open"</span> = <span class="str">"closed"</span>;
+  <span class="kw">private</span> failures = <span class="num">0</span>;
+  <span class="kw">private</span> lastFailure = <span class="num">0</span>;
+
+  <span class="kw">constructor</span>(
+    <span class="kw">private</span> threshold = <span class="num">5</span>,
+    <span class="kw">private</span> resetTimeout = <span class="num">30000</span>
+  ) {}
+
+  <span class="kw">async</span> <span class="fn">call</span>&lt;<span class="type">T</span>&gt;(fn: () =&gt; <span class="type">Promise&lt;T&gt;</span>): <span class="type">Promise&lt;T&gt;</span> {
+    <span class="kw">if</span> (<span class="kw">this</span>.state === <span class="str">"open"</span>) {
+      <span class="kw">if</span> (Date.now() - <span class="kw">this</span>.lastFailure &gt; <span class="kw">this</span>.resetTimeout)
+        <span class="kw">this</span>.state = <span class="str">"half-open"</span>;
+      <span class="kw">else throw new</span> Error(<span class="str">"Circuit is OPEN"</span>);
+    }
+    <span class="kw">try</span> {
+      <span class="kw">const</span> result = <span class="kw">await</span> fn();
+      <span class="kw">this</span>.<span class="fn">onSuccess</span>();
+      <span class="kw">return</span> result;
+    } <span class="kw">catch</span> (err) {
+      <span class="kw">this</span>.<span class="fn">onFailure</span>();
+      <span class="kw">throw</span> err;
+    }
+  }
+}</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Three states: closed (normal), open (failing fast), half-open (testing)</li>
+          <li>Prevents cascading failures across distributed services</li>
+          <li>Auto-recovers after resetTimeout with a test request</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">State Machine</span>
+          <span class="tag tag-cyan">Resilience</span>
+          <span class="tag tag-green">Microservices</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 14: Rate Limiter -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">14 / SECURITY</div>
+        <h3>Rate Limiter (Token Bucket)</h3>
+        <div class="who">API endpoints, WebSocket messages, form submissions</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">class</span> <span class="fn">RateLimiter</span> {
+  <span class="kw">private</span> tokens: <span class="type">number</span>;
+  <span class="kw">private</span> lastRefill: <span class="type">number</span>;
+
+  <span class="kw">constructor</span>(
+    <span class="kw">private</span> maxTokens: <span class="type">number</span>,
+    <span class="kw">private</span> refillRate: <span class="type">number</span> <span class="cm">// tokens per second</span>
+  ) {
+    <span class="kw">this</span>.tokens = maxTokens;
+    <span class="kw">this</span>.lastRefill = Date.now();
+  }
+
+  <span class="fn">tryConsume</span>(count = <span class="num">1</span>): <span class="type">boolean</span> {
+    <span class="kw">this</span>.<span class="fn">refill</span>();
+    <span class="kw">if</span> (<span class="kw">this</span>.tokens &gt;= count) {
+      <span class="kw">this</span>.tokens -= count;
+      <span class="kw">return true</span>;
+    }
+    <span class="kw">return false</span>;
+  }
+
+  <span class="kw">private</span> <span class="fn">refill</span>() {
+    <span class="kw">const</span> now = Date.now();
+    <span class="kw">const</span> elapsed = (now - <span class="kw">this</span>.lastRefill) / <span class="num">1000</span>;
+    <span class="kw">this</span>.tokens = Math.min(
+      <span class="kw">this</span>.maxTokens,
+      <span class="kw">this</span>.tokens + elapsed * <span class="kw">this</span>.refillRate
+    );
+    <span class="kw">this</span>.lastRefill = now;
+  }
+}</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Token bucket algorithm: smooth rate limiting with burst allowance</li>
+          <li>Tokens refill continuously based on elapsed time</li>
+          <li>Used in Express middleware, WebSocket handlers, and client-side throttling</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">Algorithm</span>
+          <span class="tag tag-purple">Security</span>
+          <span class="tag tag-cyan">Middleware</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 15: Builder Pattern -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">15 / API DESIGN</div>
+        <h3>Builder Pattern (Fluent API)</h3>
+        <div class="who">Query builders, config objects, test fixtures</div>
+      </div>
+      <div class="card-demo">
+        <pre><span class="kw">class</span> <span class="fn">QueryBuilder</span>&lt;<span class="type">T</span>&gt; {
+  <span class="kw">private</span> conditions: <span class="type">string</span>[] = [];
+  <span class="kw">private</span> sortField?: <span class="type">keyof T</span>;
+  <span class="kw">private</span> limitVal?: <span class="type">number</span>;
+
+  <span class="fn">where</span>&lt;<span class="type">K extends keyof T</span>&gt;(
+    field: <span class="type">K</span>, op: <span class="str">"=" | "&gt;" | "&lt;"</span>, val: <span class="type">T[K]</span>
+  ): <span class="type">this</span> {
+    <span class="kw">this</span>.conditions.push(<span class="str">`$</span>{String(field)} ${op} ${val}<span class="str">`</span>);
+    <span class="kw">return this</span>;
+  }
+
+  <span class="fn">orderBy</span>(field: <span class="type">keyof T</span>): <span class="type">this</span> {
+    <span class="kw">this</span>.sortField = field;
+    <span class="kw">return this</span>;
+  }
+
+  <span class="fn">limit</span>(n: <span class="type">number</span>): <span class="type">this</span> { <span class="kw">this</span>.limitVal = n; <span class="kw">return this</span>; }
+
+  <span class="fn">build</span>(): <span class="type">string</span> { <span class="cm">/* ... */</span> }
+}
+
+<span class="cm">// Fluent, type-safe chaining</span>
+<span class="kw">new</span> QueryBuilder&lt;<span class="type">User</span>&gt;()
+  .<span class="fn">where</span>(<span class="str">"age"</span>, <span class="str">">"</span>, <span class="num">18</span>)
+  .<span class="fn">orderBy</span>(<span class="str">"name"</span>)
+  .<span class="fn">limit</span>(<span class="num">10</span>)
+  .<span class="fn">build</span>();</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>return this enables fluent method chaining</li>
+          <li>Type-safe field names: compiler catches typos in "where" clauses</li>
+          <li>Same pattern used by Knex, Prisma, and Zod</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-yellow">Fluent API</span>
+          <span class="tag tag-cyan">keyof</span>
+          <span class="tag tag-green">Method Chaining</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

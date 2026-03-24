@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 12 - Capstone: Data Journalism Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #06b6d4; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>12</span> Capstone &mdash; Full-Stack Data Journalism Dashboard</h1>
+    <a href="/react/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Everything comes together here.</strong> You're building a production-grade investigative data dashboard with Next.js 15, React Server Components, streaming, D3 visualizations, authentication, and testing. Every lesson in this course shows up in this project.</p>
+
+    <!-- ============================================ -->
+    <!-- THE PROJECT                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Project: Campaign Finance Tracker</h2>
+
+    <p>You're building a public-interest data journalism tool: a campaign finance tracker that lets citizens explore who's funding political campaigns in their state. Think ProPublica meets Next.js.</p>
+
+    <h3>What you'll build</h3>
+
+    <ul>
+      <li><strong>Public dashboard:</strong> Interactive D3 charts showing campaign contributions by sector, amount, and time</li>
+      <li><strong>Search &amp; filter:</strong> Real-time search across candidates and donors with React Query</li>
+      <li><strong>Detail pages:</strong> Individual candidate profiles with contribution breakdowns</li>
+      <li><strong>Admin panel:</strong> Authenticated editors can flag suspicious contributions and add notes</li>
+      <li><strong>Data pipeline:</strong> Server Components process raw CSV data into visualizations</li>
+    </ul>
+
+    <div class="aha">
+      <p><strong>Why this project:</strong> It uses every pattern from the course: RSC for data processing, streaming for the dashboard, React Query for search, Server Actions for the admin panel, D3 for visualizations, Zod for validation, Testing Library for tests. It also reflects your journalism background &mdash; building tools that serve the public interest.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ARCHITECTURE                                 -->
+    <!-- ============================================ -->
+
+    <h2>Architecture: How the Lessons Map to Features</h2>
+
+    <table>
+      <tr><th>Feature</th><th>Lesson</th><th>Pattern</th></tr>
+      <tr><td>Component structure</td><td>01: Mental Model</td><td>Composition, props-down callbacks-up</td></tr>
+      <tr><td>List rendering (donors)</td><td>02: Fiber</td><td>Proper keys, reconciliation-aware lists</td></tr>
+      <tr><td>Custom hooks (useDebounce, useFilters)</td><td>03: Hooks</td><td>Extracted stateful logic</td></tr>
+      <tr><td>Global state (filters, user prefs)</td><td>04: State</td><td>Zustand for filters, Context for auth</td></tr>
+      <tr><td>Data processing on server</td><td>05: RSC</td><td>CSV parsing in Server Components, zero client JS</td></tr>
+      <tr><td>Dashboard layout + routes</td><td>06: App Router</td><td>Layouts, parallel routes, error boundaries</td></tr>
+      <tr><td>Search + pagination</td><td>07: Data Fetching</td><td>React Query + server prefetching</td></tr>
+      <tr><td>Chart rendering (D3)</td><td>08: Performance</td><td>Lazy loading, virtualization for data tables</td></tr>
+      <tr><td>Admin edit forms</td><td>09: Forms</td><td>React Hook Form + Zod + Server Actions</td></tr>
+      <tr><td>Test suite</td><td>10: Testing</td><td>Testing Library + MSW + Playwright</td></tr>
+      <tr><td>Architecture decisions</td><td>11: Frameworks</td><td>Why Next.js was the right choice here</td></tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- PROJECT SETUP                                -->
+    <!-- ============================================ -->
+
+    <h2>Step 1: Project Setup</h2>
+
+    <pre><code><span class="comment"># Create the project</span>
+npx create-next-app@latest campaign-tracker --typescript --tailwind --app --src-dir
+
+<span class="comment"># Install dependencies</span>
+cd campaign-tracker
+npm install @tanstack/react-query zustand zod @hookform/resolvers
+npm install react-hook-form d3 @types/d3
+npm install -D @testing-library/react @testing-library/jest-dom
+npm install -D msw vitest @playwright/test</code></pre>
+
+    <pre><code><span class="comment">// Project structure</span>
+src/
+  app/
+    layout.tsx                  <span class="comment">→ Root layout with providers</span>
+    page.tsx                    <span class="comment">→ Public dashboard homepage</span>
+    loading.tsx                 <span class="comment">→ Dashboard skeleton</span>
+
+    candidates/
+      page.tsx                  <span class="comment">→ Candidate search/list</span>
+      [id]/
+        page.tsx                <span class="comment">→ Candidate detail</span>
+        loading.tsx             <span class="comment">→ Detail skeleton</span>
+
+    dashboard/
+      layout.tsx                <span class="comment">→ Dashboard layout with sidebar</span>
+      @charts/page.tsx          <span class="comment">→ Parallel: D3 charts</span>
+      @stats/page.tsx           <span class="comment">→ Parallel: Quick stats</span>
+      @recent/page.tsx          <span class="comment">→ Parallel: Recent contributions</span>
+
+    admin/
+      layout.tsx                <span class="comment">→ Auth-protected layout</span>
+      page.tsx                  <span class="comment">→ Admin dashboard</span>
+      contributions/
+        [id]/edit/page.tsx      <span class="comment">→ Edit contribution form</span>
+
+    actions/
+      contributions.ts          <span class="comment">→ Server Actions</span>
+      auth.ts                   <span class="comment">→ Auth actions</span>
+
+  components/
+    charts/
+      ContributionChart.tsx     <span class="comment">→ D3 bar chart (client)</span>
+      SectorBreakdown.tsx       <span class="comment">→ D3 pie chart (client)</span>
+      TimelineChart.tsx         <span class="comment">→ D3 line chart (client)</span>
+    ui/
+      DataTable.tsx             <span class="comment">→ Virtualized table (client)</span>
+      SearchInput.tsx           <span class="comment">→ Debounced search (client)</span>
+      Skeleton.tsx              <span class="comment">→ Loading skeletons</span>
+
+  hooks/
+    useDebounce.ts
+    useFilters.ts
+    useCandidateSearch.ts
+
+  lib/
+    schemas.ts                  <span class="comment">→ Zod schemas (shared client/server)</span>
+    db.ts                       <span class="comment">→ Database client</span>
+    data-processing.ts          <span class="comment">→ CSV parsing (server-only)</span>
+
+  stores/
+    filterStore.ts              <span class="comment">→ Zustand store</span>
+
+  test/
+    mocks/handlers.ts           <span class="comment">→ MSW handlers</span>
+    utils.tsx                   <span class="comment">→ Custom render with providers</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- SERVER COMPONENTS FOR DATA                   -->
+    <!-- ============================================ -->
+
+    <h2>Step 2: Server Components for Data Processing</h2>
+
+    <pre><code><span class="comment">// lib/data-processing.ts (server-only — never shipped to client)</span>
+import { parse } from 'csv-parse/sync';
+import { readFile } from 'fs/promises';
+
+export async function processContributions() {
+  const raw = await readFile('data/contributions.csv', 'utf-8');
+  const records = parse(raw, { columns: true });
+
+  <span class="comment">// Heavy processing stays on the server</span>
+  const bySector = records.reduce((acc, r) =&gt; {
+    const sector = r.contributor_sector;
+    acc[sector] = (acc[sector] || 0) + parseFloat(r.amount);
+    return acc;
+  }, {} as Record&lt;string, number&gt;);
+
+  const byMonth = records.reduce((acc, r) =&gt; {
+    const month = r.date.substring(0, 7);
+    acc[month] = (acc[month] || 0) + parseFloat(r.amount);
+    return acc;
+  }, {} as Record&lt;string, number&gt;);
+
+  return { bySector, byMonth, total: records.length };
+}
+
+<span class="comment">// app/dashboard/@charts/page.tsx (Server Component)</span>
+import { processContributions } from '@/lib/data-processing';
+import { ContributionChart } from '@/components/charts/ContributionChart';
+
+export default async function ChartsSlot() {
+  <span class="comment">// CSV parsing (csv-parse) and data crunching happen on server</span>
+  <span class="comment">// Only the processed numbers go to the client</span>
+  const { bySector, byMonth } = await processContributions();
+
+  return (
+    &lt;div className="charts-grid"&gt;
+      &lt;ContributionChart data={bySector} /&gt;  {/* Client: D3 rendering */}
+      &lt;TimelineChart data={byMonth} /&gt;       {/* Client: D3 rendering */}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>The RSC payoff:</strong> The <code>csv-parse</code> library, all the data processing logic, and the raw CSV data stay on the server. The client receives only the aggregated numbers &mdash; maybe 2KB of JSON instead of 500KB of library code plus a 2MB CSV file. This is why RSC exists.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- D3 CHARTS                                    -->
+    <!-- ============================================ -->
+
+    <h2>Step 3: D3 Visualizations as Client Components</h2>
+
+    <pre><code><span class="comment">// components/charts/ContributionChart.tsx</span>
+'use client';
+
+import { useRef, useEffect } from 'react';
+import * as d3 from 'd3';
+
+interface Props {
+  data: Record&lt;string, number&gt;;
+}
+
+export function ContributionChart({ data }: Props) {
+  const svgRef = useRef&lt;SVGSVGElement&gt;(null);
+
+  useEffect(() =&gt; {
+    if (!svgRef.current) return;
+    const svg = d3.select(svgRef.current);
+    svg.selectAll('*').remove();
+
+    const entries = Object.entries(data)
+      .sort((a, b) =&gt; b[1] - a[1])
+      .slice(0, 10);
+
+    const margin = { top: 20, right: 30, bottom: 40, left: 120 };
+    const width = 600 - margin.left - margin.right;
+    const height = 400 - margin.top - margin.bottom;
+
+    const g = svg
+      .attr('viewBox', `0 0 600 400`)
+      .append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    const x = d3.scaleLinear()
+      .domain([0, d3.max(entries, d =&gt; d[1]) || 0])
+      .range([0, width]);
+
+    const y = d3.scaleBand()
+      .domain(entries.map(d =&gt; d[0]))
+      .range([0, height])
+      .padding(0.2);
+
+    g.selectAll('rect')
+      .data(entries)
+      .join('rect')
+      .attr('x', 0)
+      .attr('y', d =&gt; y(d[0]) || 0)
+      .attr('height', y.bandwidth())
+      .attr('fill', '#06b6d4')
+      .attr('rx', 3)
+      .transition()
+      .duration(800)
+      .attr('width', d =&gt; x(d[1]));
+
+    g.selectAll('.label')
+      .data(entries)
+      .join('text')
+      .attr('class', 'label')
+      .attr('x', -5)
+      .attr('y', d =&gt; (y(d[0]) || 0) + y.bandwidth() / 2)
+      .attr('dy', '0.35em')
+      .attr('text-anchor', 'end')
+      .attr('fill', 'var(--text-dim)')
+      .attr('font-size', '12px')
+      .text(d =&gt; d[0]);
+
+    g.append('g')
+      .attr('transform', `translate(0,${height})`)
+      .call(d3.axisBottom(x).ticks(5).tickFormat(d =&gt;
+        `$${(d as number / 1000000).toFixed(1)}M`
+      ));
+
+  }, [data]);
+
+  return &lt;svg ref={svgRef} className="w-full" /&gt;;
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- SEARCH WITH REACT QUERY                      -->
+    <!-- ============================================ -->
+
+    <h2>Step 4: Search with React Query</h2>
+
+    <pre><code><span class="comment">// hooks/useCandidateSearch.ts</span>
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from './useDebounce';
+
+export function useCandidateSearch(query: string) {
+  const debouncedQuery = useDebounce(query, 300);
+
+  return useQuery({
+    queryKey: ['candidates', debouncedQuery],
+    queryFn: async () =&gt; {
+      if (!debouncedQuery) return [];
+      const res = await fetch(
+        `/api/candidates?q=${encodeURIComponent(debouncedQuery)}`
+      );
+      return res.json();
+    },
+    enabled: debouncedQuery.length &gt; 0,
+    staleTime: 60_000,
+  });
+}
+
+<span class="comment">// components/ui/CandidateSearch.tsx</span>
+'use client';
+
+export function CandidateSearch() {
+  const [query, setQuery] = useState('');
+  const { data: candidates, isLoading, error } = useCandidateSearch(query);
+
+  return (
+    &lt;div&gt;
+      &lt;input
+        role="searchbox"
+        aria-label="Search candidates"
+        value={query}
+        onChange={e =&gt; setQuery(e.target.value)}
+        placeholder="Search by name or office..."
+      /&gt;
+
+      {isLoading &amp;&amp; &lt;SearchSkeleton /&gt;}
+      {error &amp;&amp; &lt;p&gt;Search failed. Please try again.&lt;/p&gt;}
+      {candidates?.map(c =&gt; (
+        &lt;CandidateCard key={c.id} candidate={c} /&gt;
+      ))}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- ADMIN FORMS                                  -->
+    <!-- ============================================ -->
+
+    <h2>Step 5: Admin Forms with Server Actions</h2>
+
+    <pre><code><span class="comment">// lib/schemas.ts — shared between client and server</span>
+import { z } from 'zod';
+
+export const contributionNoteSchema = z.object({
+  contributionId: z.string().uuid(),
+  flagged: z.boolean(),
+  note: z.string().max(1000).optional(),
+  category: z.enum(['normal', 'suspicious', 'needs-review']),
+});
+
+export type ContributionNote = z.infer&lt;typeof contributionNoteSchema&gt;;
+
+<span class="comment">// app/actions/contributions.ts</span>
+'use server';
+
+import { contributionNoteSchema } from '@/lib/schemas';
+import { auth } from '@/lib/auth';
+
+export async function flagContribution(prevState: any, formData: FormData) {
+  <span class="comment">// 1. Auth check</span>
+  const session = await auth();
+  if (!session?.user?.isEditor) {
+    return { error: 'Unauthorized' };
+  }
+
+  <span class="comment">// 2. Validate with same Zod schema used on client</span>
+  const parsed = contributionNoteSchema.safeParse({
+    contributionId: formData.get('contributionId'),
+    flagged: formData.get('flagged') === 'true',
+    note: formData.get('note'),
+    category: formData.get('category'),
+  });
+
+  if (!parsed.success) {
+    return { errors: parsed.error.flatten().fieldErrors };
+  }
+
+  <span class="comment">// 3. Save to database</span>
+  await db.contributionNote.upsert({
+    where: { contributionId: parsed.data.contributionId },
+    create: parsed.data,
+    update: parsed.data,
+  });
+
+  <span class="comment">// 4. Revalidate</span>
+  revalidatePath(`/admin/contributions/${parsed.data.contributionId}`);
+  return { success: true };
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- TESTING                                      -->
+    <!-- ============================================ -->
+
+    <h2>Step 6: Testing</h2>
+
+    <pre><code><span class="comment">// test/mocks/handlers.ts</span>
+import { http, HttpResponse } from 'msw';
+
+export const handlers = [
+  http.get('/api/candidates', ({ request }) =&gt; {
+    const url = new URL(request.url);
+    const q = url.searchParams.get('q') || '';
+    const results = mockCandidates.filter(c =&gt;
+      c.name.toLowerCase().includes(q.toLowerCase())
+    );
+    return HttpResponse.json(results);
+  }),
+
+  http.get('/api/contributions/:id', ({ params }) =&gt; {
+    const contribution = mockContributions.find(c =&gt; c.id === params.id);
+    if (!contribution) return new HttpResponse(null, { status: 404 });
+    return HttpResponse.json(contribution);
+  }),
+];
+
+<span class="comment">// tests/CandidateSearch.test.tsx</span>
+import { render, screen, waitFor } from '@/test/utils';
+import userEvent from '@testing-library/user-event';
+import { CandidateSearch } from '@/components/ui/CandidateSearch';
+
+describe('CandidateSearch', () =&gt; {
+  it('shows search results after typing', async () =&gt; {
+    const user = userEvent.setup();
+    render(&lt;CandidateSearch /&gt;);
+
+    const search = screen.getByRole('searchbox', { name: /search/i });
+    await user.type(search, 'Johnson');
+
+    await waitFor(() =&gt; {
+      expect(screen.getByText('Sen. Maria Johnson')).toBeInTheDocument();
+    });
+  });
+
+  it('shows empty state for no results', async () =&gt; {
+    const user = userEvent.setup();
+    render(&lt;CandidateSearch /&gt;);
+
+    await user.type(screen.getByRole('searchbox'), 'zzzznonexistent');
+
+    await waitFor(() =&gt; {
+      expect(screen.getByText(/no candidates found/i)).toBeInTheDocument();
+    });
+  });
+});</code></pre>
+
+    <!-- ============================================ -->
+    <!-- DEPLOYMENT CHECKLIST                         -->
+    <!-- ============================================ -->
+
+    <h2>Step 7: Deployment Checklist</h2>
+
+    <div class="exercise">
+      <h4>Before You Ship</h4>
+      <ol>
+        <li><strong>Performance:</strong> Run Lighthouse. Target 90+ on all scores. Check bundle size with <code>ANALYZE=true</code>.</li>
+        <li><strong>Accessibility:</strong> Tab through the entire app. Every interactive element should be keyboard-accessible. Run axe DevTools.</li>
+        <li><strong>Testing:</strong> All tests pass. Coverage on critical paths (search, filter, admin forms). At least one E2E test for the happy path.</li>
+        <li><strong>Error handling:</strong> Every data fetch has an error boundary. Server Actions return meaningful errors. 404 pages work.</li>
+        <li><strong>Security:</strong> Admin routes are auth-protected. Server Actions validate input. No sensitive data in client bundles.</li>
+        <li><strong>SEO:</strong> Metadata on all pages. Open Graph images. Proper heading hierarchy.</li>
+        <li><strong>Monitoring:</strong> Error tracking (Sentry). Analytics. Performance monitoring.</li>
+      </ol>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHAT YOU'VE LEARNED                          -->
+    <!-- ============================================ -->
+
+    <h2>What You've Built (And What You've Learned)</h2>
+
+    <p>This capstone isn't just a project. It's proof that you understand:</p>
+
+    <ol>
+      <li><strong>React's rendering model</strong> &mdash; you know when and why components re-render</li>
+      <li><strong>Fiber architecture</strong> &mdash; you use keys correctly and understand reconciliation</li>
+      <li><strong>Hooks internals</strong> &mdash; you build custom hooks that compose and perform well</li>
+      <li><strong>State management</strong> &mdash; you choose the right tool for the right state</li>
+      <li><strong>Server Components</strong> &mdash; you keep heavy processing off the client</li>
+      <li><strong>App Router</strong> &mdash; you use layouts, parallel routes, and streaming</li>
+      <li><strong>Data fetching</strong> &mdash; you combine server and client patterns effectively</li>
+      <li><strong>Performance</strong> &mdash; you measure before optimizing</li>
+      <li><strong>Forms</strong> &mdash; you validate on client and server with shared schemas</li>
+      <li><strong>Testing</strong> &mdash; you test behavior, not implementation</li>
+      <li><strong>Framework tradeoffs</strong> &mdash; you can explain why you chose Next.js and when you'd choose something else</li>
+    </ol>
+
+    <div class="aha">
+      <p><strong>The real graduation test:</strong> The next time you encounter a React problem you haven't seen before &mdash; a hydration mismatch, a performance cliff, a state management debate &mdash; you should be able to reason about it from first principles. Not Google the error message, but understand <em>why</em> it's happening and <em>what</em> to do about it. That's what this course was designed to teach you.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>You started as a journalist who codes.</strong> You're now a developer who investigates. The skills transfer: deep research, connecting disparate sources, building a narrative from evidence, explaining complex systems simply. Apply the same rigor to debugging, architecture, and code review that you applied to investigative reporting. That's what makes the difference.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/react/lessons/11-framework-comparison/">&larr; Lesson 11: Frameworks</a>
+      <a href="/react/">Back to Course Home &rarr;</a>
+    </div>
+  </div>
+</body>
+</html>

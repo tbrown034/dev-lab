@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 11 - Framework Comparison</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #06b6d4; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>11</span> Framework Comparison &mdash; Next.js vs Remix vs Astro vs SvelteKit</h1>
+    <a href="/react/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">This isn't a "which framework is best" lesson.</strong> That question is meaningless without context. The real question: which architecture fits which problem? Each framework makes different bets, and understanding those bets helps you make informed choices.</p>
+
+    <!-- ============================================ -->
+    <!-- THE ARCHITECTURE SPECTRUM                    -->
+    <!-- ============================================ -->
+
+    <h2>The Architecture Spectrum</h2>
+
+    <p>Every framework makes tradeoffs along a few key axes. Understanding where each framework sits on these spectrums is more useful than memorizing features.</p>
+
+    <table>
+      <tr><th>Axis</th><th>Next.js</th><th>Remix</th><th>Astro</th><th>SvelteKit</th></tr>
+      <tr><td><strong>Rendering</strong></td><td>RSC + SSR + SSG + ISR</td><td>SSR + Client</td><td>SSG + Islands</td><td>SSR + Client</td></tr>
+      <tr><td><strong>JS shipped</strong></td><td>Moderate (RSC helps)</td><td>Full app hydration</td><td>Near-zero (by default)</td><td>Less than React</td></tr>
+      <tr><td><strong>Data pattern</strong></td><td>Server Components + Actions</td><td>Loaders + Actions (web forms)</td><td>Frontmatter + fetch</td><td>Load functions</td></tr>
+      <tr><td><strong>Complexity</strong></td><td>High (many concepts)</td><td>Medium (web-standard APIs)</td><td>Low (content-focused)</td><td>Medium (new language)</td></tr>
+      <tr><td><strong>Best for</strong></td><td>Complex apps, dashboards</td><td>Data-heavy web apps</td><td>Content sites, blogs</td><td>Interactive apps</td></tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- NEXT.JS DEEP DIVE                            -->
+    <!-- ============================================ -->
+
+    <h2>Next.js: The Full-Stack React Framework</h2>
+
+    <h3>Architecture bets</h3>
+
+    <ul>
+      <li><strong>React Server Components</strong> as the primary rendering model</li>
+      <li><strong>File-system routing</strong> with layouts, loading, and error boundaries</li>
+      <li><strong>Edge-first</strong> deployment (Vercel's infrastructure)</li>
+      <li><strong>Caching by default</strong> with explicit opt-out</li>
+    </ul>
+
+    <h3>Strengths</h3>
+
+    <ul>
+      <li>Most feature-complete React framework. If React supports it, Next.js implements it first.</li>
+      <li>RSC reduces bundle sizes significantly for content-heavy pages</li>
+      <li>Parallel routes, intercepting routes &mdash; patterns no other React framework offers</li>
+      <li>Massive ecosystem, hiring market, and documentation</li>
+    </ul>
+
+    <h3>Weaknesses</h3>
+
+    <ul>
+      <li>Caching behavior is confusing and has changed between versions</li>
+      <li>Heavy coupling to Vercel for optimal deployment</li>
+      <li>High conceptual complexity: RSC, Server Actions, route handlers, middleware, ISR, dynamic rendering</li>
+      <li>Breaking changes between major versions can be significant</li>
+    </ul>
+
+    <pre><code><span class="comment">// Next.js pattern: Server Component with streaming</span>
+import { Suspense } from 'react';
+
+export default async function DashboardPage() {
+  const quickStats = await getQuickStats(); <span class="comment">// Fast (cached)</span>
+
+  return (
+    &lt;div&gt;
+      &lt;StatsBar data={quickStats} /&gt;
+      &lt;Suspense fallback={&lt;ChartSkeleton /&gt;}&gt;
+        &lt;SlowChart /&gt; {/* Streams in when ready */}
+      &lt;/Suspense&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- REMIX                                        -->
+    <!-- ============================================ -->
+
+    <h2>Remix: Web Standards First</h2>
+
+    <h3>Architecture bets</h3>
+
+    <ul>
+      <li><strong>Web platform APIs</strong> over framework-specific abstractions</li>
+      <li><strong>Loaders and actions</strong> that mirror HTML form behavior</li>
+      <li><strong>Progressive enhancement</strong> &mdash; apps work without JavaScript</li>
+      <li><strong>Nested routing</strong> with parallel data loading</li>
+    </ul>
+
+    <h3>Strengths</h3>
+
+    <ul>
+      <li>Simpler mental model than Next.js &mdash; fewer concepts to learn</li>
+      <li>Data loading is co-located with routes but uses standard Request/Response objects</li>
+      <li>Forms work without JavaScript (progressive enhancement by default)</li>
+      <li>Not coupled to any deployment platform &mdash; runs anywhere Node runs</li>
+      <li>Error handling and race conditions handled elegantly</li>
+    </ul>
+
+    <h3>Weaknesses</h3>
+
+    <ul>
+      <li>No RSC support &mdash; all component JavaScript ships to the client</li>
+      <li>Smaller ecosystem and community than Next.js</li>
+      <li>No static generation (SSG) &mdash; everything is SSR</li>
+      <li>Shopify acquisition creates uncertainty about direction</li>
+    </ul>
+
+    <pre><code><span class="comment">// Remix pattern: Loader + Action</span>
+import { json, redirect } from '@remix-run/node';
+import { useLoaderData, Form } from '@remix-run/react';
+
+<span class="comment">// Loader: runs on server for GET requests</span>
+export async function loader({ params }) {
+  const article = await db.article.findUnique({
+    where: { slug: params.slug },
+  });
+  if (!article) throw new Response('Not Found', { status: 404 });
+  return json({ article });
+}
+
+<span class="comment">// Action: runs on server for POST/PUT/DELETE</span>
+export async function action({ request, params }) {
+  const formData = await request.formData();
+  const intent = formData.get('intent');
+
+  if (intent === 'like') {
+    await db.article.update({
+      where: { slug: params.slug },
+      data: { likes: { increment: 1 } },
+    });
+  }
+
+  return json({ success: true });
+}
+
+<span class="comment">// Component: renders with loader data, submits with Form</span>
+export default function ArticlePage() {
+  const { article } = useLoaderData&lt;typeof loader&gt;();
+
+  return (
+    &lt;article&gt;
+      &lt;h1&gt;{article.title}&lt;/h1&gt;
+      &lt;p&gt;{article.body}&lt;/p&gt;
+      &lt;Form method="post"&gt;
+        &lt;button name="intent" value="like"&gt;Like&lt;/button&gt;
+      &lt;/Form&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>Remix's insight:</strong> HTML forms already do mutations. The <code>&lt;form&gt;</code> element has handled POST requests for 30 years. Remix enhances this with JavaScript when available (instant feedback, optimistic updates) but the form still works without it. This makes Remix apps inherently more robust than apps that require JavaScript for basic functionality.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ASTRO                                        -->
+    <!-- ============================================ -->
+
+    <h2>Astro: Zero JS by Default</h2>
+
+    <h3>Architecture bets</h3>
+
+    <ul>
+      <li><strong>Ship zero JavaScript by default</strong> &mdash; only add JS where interactivity is needed</li>
+      <li><strong>Island architecture</strong> &mdash; interactive components hydrate independently</li>
+      <li><strong>Framework-agnostic</strong> &mdash; use React, Svelte, Vue, or Solid components in the same project</li>
+      <li><strong>Content-first</strong> with built-in Markdown/MDX support and content collections</li>
+    </ul>
+
+    <h3>Strengths</h3>
+
+    <ul>
+      <li>Incredible performance for content sites &mdash; nearly zero JS shipped</li>
+      <li>Use React components where you need them without hydrating the entire page</li>
+      <li>Content collections with schema validation (like a CMS built into your framework)</li>
+      <li>Perfect for blogs, docs, marketing sites, portfolios</li>
+    </ul>
+
+    <h3>Weaknesses</h3>
+
+    <ul>
+      <li>Not designed for highly interactive apps (dashboards, editors, real-time)</li>
+      <li>Islands architecture requires explicit hydration directives (another concept to learn)</li>
+      <li>Server-side state management is limited compared to Next.js/Remix</li>
+      <li>Routing and data fetching are less sophisticated</li>
+    </ul>
+
+    <pre><code><span class="comment">// Astro: Component with selective hydration</span>
+---
+<span class="comment">// This runs on the server (like PHP frontmatter)</span>
+import ArticleCard from '../components/ArticleCard.astro';
+import SearchWidget from '../components/SearchWidget.tsx'; // React!
+
+const articles = await fetch('https://api.example.com/articles')
+  .then(r =&gt; r.json());
+---
+
+&lt;html&gt;
+  &lt;body&gt;
+    &lt;h1&gt;Latest Articles&lt;/h1&gt;
+
+    &lt;!-- Static: zero JS shipped for these --&gt;
+    {articles.map(a =&gt; &lt;ArticleCard article={a} /&gt;)}
+
+    &lt;!-- Interactive island: only THIS component ships JS --&gt;
+    &lt;SearchWidget client:visible /&gt;
+    &lt;!-- client:visible = hydrate when scrolled into view --&gt;
+    &lt;!-- client:idle = hydrate when browser is idle --&gt;
+    &lt;!-- client:load = hydrate immediately --&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+    <div class="aha">
+      <p><strong>Astro's insight:</strong> Most web pages are mostly content. A blog post doesn't need 200KB of JavaScript. Only the search widget, the comment section, and the dark mode toggle need interactivity. Astro makes the static parts truly static and only hydrates the interactive parts &mdash; "islands" of interactivity in a sea of static HTML. For content sites, this is an order of magnitude faster than frameworks that hydrate the entire page.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SVELTEKIT                                    -->
+    <!-- ============================================ -->
+
+    <h2>SvelteKit: Compiler-First</h2>
+
+    <h3>Architecture bets</h3>
+
+    <ul>
+      <li><strong>Svelte is a compiler, not a runtime</strong> &mdash; no virtual DOM, no diffing</li>
+      <li><strong>Reactive by default</strong> &mdash; assignments trigger updates (no useState)</li>
+      <li><strong>Smaller bundles</strong> because the framework compiles away</li>
+      <li><strong>Full-stack with SvelteKit</strong> &mdash; SSR, SSG, API routes, form actions</li>
+    </ul>
+
+    <h3>Strengths</h3>
+
+    <ul>
+      <li>Less code for the same result &mdash; Svelte components are typically 30-50% shorter than React equivalents</li>
+      <li>True reactivity: <code>let count = 0; count++;</code> triggers an update. No setter functions.</li>
+      <li>Smaller runtime (~2KB vs React's ~40KB)</li>
+      <li>Built-in transitions and animations</li>
+      <li>Svelte 5 runes bring explicit fine-grained reactivity</li>
+    </ul>
+
+    <h3>Weaknesses</h3>
+
+    <ul>
+      <li>New language to learn (<code>.svelte</code> files with custom syntax)</li>
+      <li>Much smaller ecosystem than React (fewer libraries, fewer developers to hire)</li>
+      <li>TypeScript support is good but not as mature as React's ecosystem</li>
+      <li>Fewer advanced patterns (no equivalent to RSC yet)</li>
+    </ul>
+
+    <pre><code><span class="comment">&lt;!-- SvelteKit: Counter component --&gt;</span>
+&lt;script lang="ts"&gt;
+  let count = $state(0); <span class="comment">// Svelte 5 rune — reactive variable</span>
+
+  function increment() {
+    count++; <span class="comment">// Just assign! Svelte compiles this to an update.</span>
+  }
+&lt;/script&gt;
+
+&lt;button onclick={increment}&gt;
+  Clicked {count} times
+&lt;/button&gt;
+
+<span class="comment">&lt;!-- No useState, no setter, no re-render. --&gt;</span>
+<span class="comment">&lt;!-- Svelte compiles this to direct DOM updates. --&gt;</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- THE DECISION MATRIX                          -->
+    <!-- ============================================ -->
+
+    <h2>The Decision Matrix</h2>
+
+    <p>When choosing a framework for a project, ask these questions:</p>
+
+    <div class="quiz">
+      <h4>Decision Checklist</h4>
+
+      <div class="question">
+        <p>1. Is it primarily a content site (blog, docs, marketing)?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><strong>Astro.</strong> Zero JS by default. Content collections. Markdown/MDX first-class. Use React components only where you need interactivity. You'll ship 10x less JavaScript than any other option.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Is it a complex web application with lots of interactivity?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><strong>Next.js or Remix.</strong> Next.js if you want RSC, parallel routes, and the cutting-edge React features. Remix if you want simpler mental models, better progressive enhancement, and platform-agnostic deployment.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Do you need to hire React developers?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><strong>Next.js.</strong> Largest React framework ecosystem, most job listings, most Stack Overflow answers. Remix is second. SvelteKit requires Svelte knowledge. Astro works with React but is its own thing.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Is bundle size critical (mobile-first, emerging markets)?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><strong>Astro</strong> for content, <strong>SvelteKit</strong> for apps. Both ship significantly less JavaScript than React-based frameworks. Astro can ship near-zero JS. Svelte's compiler produces smaller bundles than React's runtime.</div>
+      </div>
+
+      <div class="question">
+        <p>5. You want the simplest possible setup for a full-stack data journalism project?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><strong>Next.js.</strong> You already know React and Next.js. RSC lets you do heavy data processing on the server. App Router gives you streaming, layouts, and error handling out of the box. D3 visualizations work as client components. Server Actions handle form submissions. It's the path of least resistance given your existing knowledge.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HYBRID ARCHITECTURES                         -->
+    <!-- ============================================ -->
+
+    <h2>Hybrid Architectures: Use Multiple Tools</h2>
+
+    <p>You don't have to pick one framework for everything. Real organizations mix and match:</p>
+
+    <ul>
+      <li><strong>Marketing site:</strong> Astro (performance, SEO, content)</li>
+      <li><strong>Application:</strong> Next.js (complex interactions, RSC, dashboards)</li>
+      <li><strong>Documentation:</strong> Astro or Starlight (content-focused)</li>
+      <li><strong>Internal tools:</strong> Whatever your team knows best</li>
+    </ul>
+
+    <div class="callout">
+      <p><strong>The framework doesn't determine your success.</strong> All four frameworks can build excellent applications. The biggest factors are: how well do you understand the framework's mental model, how well does the team execute, and how well does the architecture match the problem. Picking the "wrong" framework that you deeply understand beats picking the "right" framework that you use poorly.</p>
+    </div>
+
+    <div class="exercise">
+      <h4>Exercise: Architecture Analysis</h4>
+      <ol>
+        <li>Pick three real websites you use daily. For each, identify which framework would be the best fit and why.</li>
+        <li>Take a page from your portfolio and rewrite the data-fetching pattern in Remix style (loader/action). How does it compare to your Next.js approach?</li>
+        <li>Build a small blog page in Astro using a React component for the search widget. Measure the JS bundle size compared to the same page in Next.js.</li>
+      </ol>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/react/lessons/10-testing-react/">&larr; Lesson 10: Testing</a>
+      <a href="/react/lessons/12-capstone/">Lesson 12: Capstone &rarr;</a>
+    </div>
+  </div>
+</body>
+</html>

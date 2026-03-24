@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 03 - D3 Selections Deep Dive</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #f97316; }</style>
+  <style>
+    .demo button { background: var(--track-color); color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 0.25rem; font-weight: 600; }
+    .demo button:hover { background: #fb923c; }
+    .demo button.secondary { background: var(--info); color: #000; }
+    .demo button.secondary:hover { background: #a5b4fc; }
+    .demo button.green { background: var(--success); color: #000; }
+    .demo button.green:hover { background: #86efac; }
+    .demo .controls { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    #log-output { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0.75rem; margin-top: 0.75rem; font-family: var(--mono); font-size: 0.8rem; color: var(--success); max-height: 120px; overflow-y: auto; }
+  </style>
+  <script type="module" crossorigin src="/assets/d3_lessons_03-scales-axes--WjR5Fkc.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/init-tutor-Cq4VzOVI.js">
+  <link rel="modulepreload" crossorigin href="/assets/transform-DGvXF_4U.js">
+  <link rel="modulepreload" crossorigin href="/assets/select-PKtlUnGw.js">
+  <link rel="modulepreload" crossorigin href="/assets/interactive-playground-DpCW7cfN.js">
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>03</span> D3 Selections Deep Dive</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Mental Model:</strong> D3 selections are like jQuery but for SVG. If you ever used <code>$(".class").css("color", "red")</code>, you already understand the core idea. D3 just does the same thing for SVG attributes.</p>
+
+    <!-- ============================================ -->
+    <!-- THE CONCEPT                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Core Idea</h2>
+
+    <p>In React, you describe what the UI should look like and React figures out how to update the DOM. D3 is the opposite: <strong>you directly tell the DOM what to do, step by step.</strong></p>
+
+    <p>A <strong>selection</strong> is a wrapper around one or more DOM elements that gives you a chainable API for manipulating them. Think of it as a "handle" you grab onto elements with.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>jQuery (you know this)</h5>
+        <pre><code>$("circle")
+  .css("fill", "orange")
+  .attr("r", 20);</code></pre>
+      </div>
+      <div>
+        <h5>D3 (same pattern)</h5>
+        <pre><code>d3.selectAll("circle")
+  .style("fill", "orange")
+  .attr("r", 20);</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Every D3 method returns the selection itself.</strong> That is how method chaining works. <code>.attr()</code> sets the attribute AND returns the selection so you can call <code>.style()</code> next. This is the same pattern as jQuery, Lodash chains, or even array methods like <code>.filter().map()</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SELECT vs SELECTALL                          -->
+    <!-- ============================================ -->
+
+    <h2>d3.select() vs d3.selectAll()</h2>
+
+    <pre><code><span class="comment">// Select ONE element (first match)</span>
+d3.select("#my-chart")      <span class="comment">// by ID</span>
+d3.select("svg")            <span class="comment">// first SVG on the page</span>
+d3.select(".highlight")     <span class="comment">// first element with class</span>
+
+<span class="comment">// Select ALL matching elements</span>
+d3.selectAll("circle")      <span class="comment">// every circle in the SVG</span>
+d3.selectAll(".bar")        <span class="comment">// every element with class "bar"</span>
+d3.selectAll("rect, circle")<span class="comment">// CSS multi-selector</span></code></pre>
+
+    <p>These use standard CSS selectors, exactly like <code>document.querySelector()</code> and <code>document.querySelectorAll()</code>. The difference is that D3 wraps the result in a selection object with its chainable API.</p>
+
+    <h3>Scoped selections</h3>
+    <p>You can chain selections to scope them, just like <code>element.querySelector()</code>:</p>
+
+    <pre><code><span class="comment">// Select circles inside #chart only</span>
+d3.select("#chart").selectAll("circle")
+
+<span class="comment">// This is equivalent to:</span>
+document.querySelectorAll("#chart circle")</code></pre>
+
+    <!-- ============================================ -->
+    <!-- THE METHODS                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Essential Methods</h2>
+
+    <h3>.attr() &mdash; Set SVG attributes</h3>
+    <p>This is the workhorse of D3. SVG elements are controlled by attributes.</p>
+    <pre><code>d3.select("rect")
+  .attr("x", 10)
+  .attr("y", 20)
+  .attr("width", 200)
+  .attr("height", 50)
+  .attr("fill", "#f97316")
+  .attr("rx", 4);           <span class="comment">// corner radius</span></code></pre>
+
+    <h3>.style() &mdash; Set CSS styles</h3>
+    <pre><code>d3.select("rect")
+  .style("opacity", 0.8)
+  .style("cursor", "pointer");</code></pre>
+
+    <div class="callout">
+      <p><strong>.attr("fill") vs .style("fill"):</strong> Both work for properties like fill and stroke, but <code>.attr()</code> sets the SVG attribute directly (appears in the markup), while <code>.style()</code> sets an inline CSS style (appears in the <code>style=""</code> attribute). CSS styles override SVG attributes. For SVG-specific properties like <code>x</code>, <code>width</code>, <code>r</code>, <code>d</code>, you must use <code>.attr()</code>. For CSS-only properties like <code>cursor</code>, <code>opacity</code>, use <code>.style()</code>. When in doubt, use <code>.attr()</code> for SVG.</p>
+    </div>
+
+    <div class="try-it">
+      <h4>Play with it: .attr() and .style() in action</h4>
+      <p style="color: #a5b4fc; font-size: 0.85rem; margin-bottom: 0.75rem;">Drag the sliders to change attributes and styles on three text labels in real time. This is what .attr() and .style() do under the hood.</p>
+      <div id="playground-attr-style"></div>
+    </div>
+
+    <h3>.text() and .html()</h3>
+    <pre><code>d3.select("text").text("Hello");       <span class="comment">// set text content</span>
+d3.select("div").html("&lt;b&gt;Bold&lt;/b&gt;"); <span class="comment">// set inner HTML (divs only, not SVG)</span></code></pre>
+
+    <h3>.property() &mdash; for form elements</h3>
+    <pre><code>d3.select("input").property("value", "42");
+d3.select("input").property("checked", true);</code></pre>
+
+    <h3>.classed() &mdash; toggle CSS classes</h3>
+    <pre><code>d3.select("rect").classed("active", true);   <span class="comment">// add class</span>
+d3.select("rect").classed("active", false);  <span class="comment">// remove class</span>
+
+<span class="comment">// Toggle based on condition</span>
+d3.selectAll("rect").classed("highlighted", d =&gt; d.value &gt; 50);</code></pre>
+
+    <h3>.append() and .remove()</h3>
+    <pre><code><span class="comment">// Add a new element as the last child</span>
+const circle = d3.select("svg")
+  .append("circle")         <span class="comment">// creates &lt;circle&gt; inside the SVG</span>
+  .attr("cx", 100)
+  .attr("cy", 50)
+  .attr("r", 20);
+
+<span class="comment">// Remove elements</span>
+d3.selectAll(".old").remove();</code></pre>
+
+    <h3>.each() &mdash; side effects</h3>
+    <pre><code>d3.selectAll("circle").each(function(d, i) {
+  console.log(i, this);  <span class="comment">// index, DOM node</span>
+  <span class="comment">// "this" is the raw DOM element</span>
+});</code></pre>
+
+    <h3>Inspection methods</h3>
+    <pre><code>const sel = d3.selectAll("circle");
+sel.empty()    <span class="comment">// true if no elements matched</span>
+sel.size()     <span class="comment">// number of elements in selection</span>
+sel.node()     <span class="comment">// first raw DOM element</span>
+sel.nodes()    <span class="comment">// array of all raw DOM elements</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- REFERENCE TABLE                              -->
+    <!-- ============================================ -->
+
+    <h2>Quick Reference</h2>
+
+    <table>
+      <tr><th>Method</th><th>Purpose</th><th>Returns</th></tr>
+      <tr><td><code>.attr(name, value)</code></td><td>Set SVG attribute</td><td>selection</td></tr>
+      <tr><td><code>.style(name, value)</code></td><td>Set CSS style</td><td>selection</td></tr>
+      <tr><td><code>.text(value)</code></td><td>Set text content</td><td>selection</td></tr>
+      <tr><td><code>.html(value)</code></td><td>Set inner HTML</td><td>selection</td></tr>
+      <tr><td><code>.property(name, val)</code></td><td>Set DOM property</td><td>selection</td></tr>
+      <tr><td><code>.classed(name, bool)</code></td><td>Add/remove CSS class</td><td>selection</td></tr>
+      <tr><td><code>.append(tag)</code></td><td>Append child element</td><td>new selection (child)</td></tr>
+      <tr><td><code>.remove()</code></td><td>Remove elements</td><td>removed selection</td></tr>
+      <tr><td><code>.each(fn)</code></td><td>Run function per element</td><td>selection</td></tr>
+      <tr><td><code>.empty()</code></td><td>Is selection empty?</td><td>boolean</td></tr>
+      <tr><td><code>.size()</code></td><td>Count of elements</td><td>number</td></tr>
+      <tr><td><code>.node()</code></td><td>First DOM element</td><td>Element</td></tr>
+      <tr><td><code>.nodes()</code></td><td>All DOM elements</td><td>Array</td></tr>
+    </table>
+
+    <div class="aha">
+      <p><strong>Notice how almost every method returns the selection.</strong> That is the entire design principle. You grab elements, then chain method after method. The only methods that break the chain are the inspection ones: <code>.empty()</code>, <code>.size()</code>, <code>.node()</code>, <code>.nodes()</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 1: INTERACTIVE SHAPE BUILDER            -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Interactive Shape Builder</h2>
+    <p>Click the buttons to trigger D3 selection methods in real time. Watch the SVG update.</p>
+
+    <div class="demo">
+      <h4>Live: Build shapes with selection methods</h4>
+      <div class="controls" id="shape-controls">
+        <button onclick="addRect()">append("rect")</button>
+        <button onclick="addCircle()" class="secondary">append("circle")</button>
+        <button onclick="addText()" class="green">append("text")</button>
+        <button onclick="colorAll()">selectAll &rarr; fill orange</button>
+        <button onclick="scaleUp()">selectAll("rect") &rarr; bigger</button>
+        <button onclick="removeLast()" style="background: #ef4444;">remove() last</button>
+        <button onclick="clearAll()" style="background: #666;">clear all</button>
+      </div>
+      <svg id="shape-canvas" viewBox="0 0 700 200"></svg>
+      <div id="log-output">// Actions will appear here...</div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 2: ATTR vs STYLE                        -->
+    <!-- ============================================ -->
+
+    <h2>Demo: .attr() vs .style()</h2>
+    <p>Both can set <code>fill</code>, but they work differently. Inspect the elements to see where the values end up.</p>
+
+    <div class="demo">
+      <h4>Live: attr vs style comparison</h4>
+      <div class="controls">
+        <button id="btn-attr-fill">Set fill with .attr()</button>
+        <button id="btn-style-fill" class="secondary">Override with .style()</button>
+        <button id="btn-reset-fill" style="background: #666;">Reset</button>
+      </div>
+      <svg id="attr-style-demo" viewBox="0 0 700 120"></svg>
+      <p style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">Right-click the rectangles and "Inspect" to see the difference in the markup.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What is the difference between <code>d3.select()</code> and <code>d3.selectAll()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>d3.select()</code> selects the <strong>first</strong> matching element. <code>d3.selectAll()</code> selects <strong>all</strong> matching elements. Both use CSS selectors. Think of it as <code>querySelector</code> vs <code>querySelectorAll</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why does method chaining work in D3?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because almost every selection method (<code>.attr()</code>, <code>.style()</code>, <code>.text()</code>, etc.) returns the selection itself after modifying it. This lets you write <code>sel.attr("x", 10).attr("y", 20).style("fill", "red")</code> instead of calling each method on a separate line.</div>
+      </div>
+
+      <div class="question">
+        <p>3. When should you use <code>.attr("fill", "red")</code> vs <code>.style("fill", "red")</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>.attr()</code> sets the SVG attribute directly in the element's markup. <code>.style()</code> sets an inline CSS style. CSS styles override SVG attributes, so if both are set, the <code>.style()</code> wins. For SVG-only attributes like <code>x</code>, <code>width</code>, <code>r</code>, <code>d</code>, you must use <code>.attr()</code>. In practice, most D3 code uses <code>.attr()</code> for SVG drawing properties.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What does <code>.append("circle")</code> return?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A new selection containing the newly created <code>&lt;circle&gt;</code> element. This is important: after <code>.append()</code>, subsequent chained methods operate on the <strong>new child element</strong>, not the parent. So <code>svg.append("circle").attr("r", 10)</code> sets the radius on the new circle, not on the SVG.</div>
+      </div>
+
+      <div class="question">
+        <p>5. How do you check if a selection matched any elements?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use <code>selection.empty()</code>. It returns <code>true</code> if the selection contains no elements. You can also use <code>selection.size()</code> to get the count. These are inspection methods that return values instead of the selection, so they break the chain.</div>
+      </div>
+
+      <div class="question">
+        <p>6. You need to add a CSS class to all rects with a value above 50. How?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>d3.selectAll("rect").classed("high-value", d => d.value > 50)</code>. The <code>.classed()</code> method can take a function as the second argument. When the function returns <code>true</code>, the class is added; when <code>false</code>, it is removed. This works because each rect has data bound to it (which we will learn in the next lesson).</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Manipulate a Pre-Built SVG</h4>
+      <p>Open your browser console on this page and practice using D3 selections to manipulate the shape builder SVG above. Try these:</p>
+      <ol>
+        <li><code>d3.selectAll("#shape-canvas circle").attr("fill", "hotpink")</code></li>
+        <li><code>d3.select("#shape-canvas").append("rect").attr("x",300).attr("y",50).attr("width",100).attr("height",50).attr("fill","cyan")</code></li>
+        <li><code>d3.selectAll("#shape-canvas rect").style("opacity", 0.5)</code></li>
+        <li><code>d3.selectAll("#shape-canvas *").attr("transform", "translate(20,0)")</code></li>
+        <li>Use <code>.each()</code> to log the tag name of every shape in the SVG</li>
+        <li>Use <code>.size()</code> to count all elements, then <code>.remove()</code> to clear them</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">The goal: get comfortable calling D3 selection methods from memory. These are the building blocks for everything that follows.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- RECAP                                        -->
+    <!-- ============================================ -->
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Selections wrap DOM elements</strong> with a chainable API</li>
+      <li><strong>d3.select()</strong> = first match, <strong>d3.selectAll()</strong> = all matches</li>
+      <li><strong>.attr()</strong> for SVG attributes, <strong>.style()</strong> for CSS properties</li>
+      <li><strong>.append()</strong> creates children, <strong>.remove()</strong> destroys elements</li>
+      <li><strong>Method chaining works</strong> because every method returns the selection</li>
+      <li><strong>.classed()</strong> for toggling CSS classes</li>
+      <li><strong>.empty(), .size(), .node(), .nodes()</strong> for inspecting selections</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/02-selections-data/">&larr; Lesson 02: Scales &amp; Axes</a>
+      <a href="/d3/lessons/04-shapes-bindings/">Lesson 04: Data Binding &rarr;</a>
+    </div>
+  </div>
+
+
+
+</body>
+</html>

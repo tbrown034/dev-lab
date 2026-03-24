@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVG Fundamentals — The Pod</title>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/shell-B2-DeMgN.css">
+  <link rel="stylesheet" crossorigin href="/assets/episode-FuyZZf_I.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">The Pod</a>
+      <div class="header-right">
+        <a href="/pod/" class="back-link">&larr; All Episodes</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="episode-page" data-accent="var(--accent-d3)">
+
+    <!-- Episode Header -->
+    <div class="episode-header">
+      <span class="episode-track-badge d3">D3.js &mdash; Episode 01</span>
+      <h1>SVG Fundamentals</h1>
+      <p class="episode-subtitle">The coordinate system, basic shapes, and why SVG is D3's canvas.</p>
+      <span class="episode-duration-badge">~12 min</span>
+    </div>
+
+    <!-- Audio Player -->
+    <div class="player-container">
+      <audio id="episode-audio" preload="metadata">
+        <source src="/audio/d3/01-svg-fundamentals.mp3" type="audio/mpeg">
+      </audio>
+
+      <div class="player">
+        <div class="player-controls">
+          <button class="player-btn skip-btn" id="skip-back" aria-label="Skip back 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+          <button class="player-btn play-btn" id="play-pause" aria-label="Play">
+            <svg class="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg class="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <button class="player-btn skip-btn" id="skip-forward" aria-label="Skip forward 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+        </div>
+
+        <div class="player-progress">
+          <span class="player-time" id="current-time">0:00</span>
+          <div class="progress-bar-container" id="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <input type="range" class="progress-scrubber" id="scrubber" min="0" max="1000" value="0" step="1">
+          </div>
+          <span class="player-time" id="duration">0:00</span>
+        </div>
+
+        <div class="player-extras">
+          <div class="speed-control">
+            <button class="speed-btn" id="speed-btn">1x</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transcript -->
+    <div class="transcript-container">
+      <div class="transcript-header">
+        <h2>Transcript</h2>
+        <button class="auto-scroll-toggle active" id="auto-scroll-toggle" aria-label="Toggle auto-scroll">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          Auto-scroll
+        </button>
+      </div>
+      <div class="transcript" id="transcript"></div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>The Pod &mdash; part of <a href="/">Learn Coding</a> by Trevor Brown</p>
+  </footer>
+
+  <script>
+    // ─── Theme Toggle ───
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+
+    // ─── Transcript Data ───
+    const TRANSCRIPT = [
+      { time: 0, text: "Hey everyone, welcome back to The Pod. I'm Alex, and today we're kicking off the D3 track with something that might surprise you. Before we write a single line of D3 code, we need to understand SVG." },
+      { time: 12, text: "That's right. I'm Sam, and honestly, when I first started learning D3, I skipped right to the fancy stuff. Selections, data binding, animations. And I hit a wall almost immediately because I didn't understand what D3 was actually drawing on." },
+      { time: 26, text: "Exactly. Think of it this way, if D3 is the painter, SVG is the canvas. You can't paint without understanding your canvas. So let's start there. SVG stands for Scalable Vector Graphics. What does 'vector' mean here?" },
+      { time: 40, text: "So unlike a JPEG or PNG, which are made of pixels, little colored dots, SVG is made of math. Literal math. A circle in SVG isn't a bunch of colored pixels arranged in a circle shape. It's an instruction that says 'draw a circle at position x, y with radius r.'" },
+      { time: 58, text: "And that's huge because it means SVG scales infinitely. Zoom in 1000%, and it's still crisp. There's no pixelation. That's why it's called 'scalable.' For data visualization, this is perfect because your charts look sharp on any screen size." },
+      { time: 72, text: "Okay, let's talk coordinates. This trips everyone up at first. In math class, y goes up. In SVG, y goes down. The origin, that's 0,0, is the top-left corner of the SVG element." },
+      { time: 87, text: "Right, so if you place something at y equals 0, it's at the top. Y equals 100? That's 100 pixels down from the top. This feels backwards at first, but it actually makes sense when you think about how screens render. They draw from top to bottom, left to right." },
+      { time: 103, text: "Let's talk about the SVG element itself. In your HTML, you create an SVG tag and give it a width and height. That defines your drawing area. Everything inside that tag is part of your graphic." },
+      { time: 116, text: "And here's a key concept: the viewBox. The viewBox attribute lets you define an internal coordinate system that's separate from the actual pixel size. So you could have an SVG that's 600 pixels wide on screen but has an internal coordinate system from 0 to 100." },
+      { time: 134, text: "That sounds confusing. Why would you want that?" },
+      { time: 138, text: "Responsiveness! If you set the viewBox and let the width be 100% of its container, the whole graphic scales proportionally. Your chart works on a phone and on a 4K monitor without changing any numbers." },
+      { time: 152, text: "Alright, let's get into the basic shapes. There are six you need to know. Rect, circle, ellipse, line, polyline, and path. Let's start with rect." },
+      { time: 164, text: "Rect is probably the one you'll use most, especially for bar charts. It takes x, y for the top-left corner, width and height for the size, and optionally rx and ry for rounded corners. Super straightforward." },
+      { time: 180, text: "Circle is just as simple. cx and cy for the center point, r for the radius. You'll use these for scatter plots, bubble charts, node-link diagrams. Anything with dots." },
+      { time: 194, text: "Line is what you'd expect. x1, y1 for the start point and x2, y2 for the end point. But for more complex lines, like a line chart with many points, you'll actually use the path element." },
+      { time: 208, text: "Path is the Swiss Army knife of SVG. It has this d attribute, which stands for 'data' or 'definition,' and it contains a mini drawing language. M means move to, L means line to, C means curve to. It can draw literally anything." },
+      { time: 225, text: "Don't worry about memorizing path commands though. D3 has generator functions that write path strings for you. But it's good to know what's happening under the hood." },
+      { time: 238, text: "Now here's something crucial. Styling in SVG works differently from regular HTML. You don't use background-color, you use fill. You don't use border, you use stroke and stroke-width." },
+      { time: 253, text: "This catches a lot of web developers off guard. In CSS for HTML elements, you'd write background-color: blue. In SVG, it's fill: blue. Want to add a border? That's stroke: black and stroke-width: 2." },
+      { time: 268, text: "And opacity works on both fill and stroke independently. You can have fill-opacity: 0.5 for a semi-transparent fill but a fully opaque stroke. That's really useful for overlapping elements in data viz." },
+      { time: 282, text: "Let's talk about layering. SVG doesn't have z-index. Elements are painted in document order. Whatever comes last in the markup is drawn on top. So if you want one shape in front of another, put it later in the SVG." },
+      { time: 298, text: "This matters a lot in D3 because when you're bindin data and creating elements, the order of your data array determines the visual stacking. It's something you have to be intentional about." },
+      { time: 312, text: "One more important concept: the g element. It stands for 'group,' and it's like a div for SVG. It doesn't draw anything itself, but it lets you group elements together and apply transforms to the whole group." },
+      { time: 328, text: "Transforms in SVG are incredibly useful. Translate moves a group, scale resizes it, and rotate spins it. D3 uses translate all the time, like for positioning the chart area within margins." },
+      { time: 342, text: "Speaking of margins, that's actually a pattern you'll see in every single D3 chart. You define margins as an object, then create a g element and translate it by the left and top margins. That gives you a clean inner drawing area." },
+      { time: 358, text: "It's like creating a picture frame. The SVG is the whole frame, the margins are the matting, and the translated g element is where you actually put the picture. Every D3 developer uses this pattern." },
+      { time: 372, text: "So to recap: SVG gives us a resolution-independent canvas. The coordinate system starts at top-left with y going down. We have basic shapes like rect, circle, and path. Styling uses fill and stroke instead of background and border." },
+      { time: 390, text: "And we use g elements with transforms to organize and position our drawings. Once you have this mental model, D3 starts making a lot more sense. Next episode, we'll build on this foundation with selections and data binding." },
+      { time: 405, text: "If you want to play around, open your browser dev tools, find any SVG on a webpage, and start tweaking the attributes. Change a circle's radius, move a rect around. It's the best way to build intuition." },
+      { time: 420, text: "That's a great tip. Alright, thanks for listening everyone. See you in the next episode where things get really interesting with D3 selections. Until then, happy coding." }
+    ];
+  </script>
+  <script src="/pod/player.js"></script>
+
+</body>
+</html>

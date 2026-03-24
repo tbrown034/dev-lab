@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Projects - Learn React</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    body {
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #06b6d4; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+
+    /* ── Nav ── */
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover {
+      background: #06b6d4;
+      color: #000;
+      border-color: #06b6d4;
+    }
+    .nav a.active {
+      background: #f472b6;
+      color: #000;
+      border-color: #f472b6;
+    }
+
+    /* ── Page Title ── */
+    .page-hero {
+      padding: 3rem 3rem 1rem;
+      max-width: 1200px;
+    }
+    .page-hero h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-hero h2 .accent { color: #f472b6; }
+    .page-hero .subtitle {
+      color: #888;
+      font-size: 1.05rem;
+      max-width: 720px;
+      line-height: 1.7;
+    }
+    .page-hero .subtitle strong { color: #ccc; font-weight: 600; }
+    .page-hero .badge-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      color: #aaa;
+    }
+    .badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* ── Project Cards ── */
+    .projects {
+      padding: 1rem 3rem 4rem;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    .project-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .project-card:hover { border-color: #444; }
+
+    .project-header {
+      padding: 2rem 2rem 1rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .project-num {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .project-header h3 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .project-header p {
+      color: #999;
+      font-size: 0.9rem;
+      max-width: 650px;
+    }
+    .project-tags {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .project-tags span {
+      padding: 0.2rem 0.6rem;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: #888;
+    }
+
+    /* ── Architecture Diagram Area ── */
+    .arch-container {
+      padding: 1.5rem 2rem;
+      min-height: 180px;
+      position: relative;
+    }
+    .arch-diagram {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 8px;
+      padding: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: #888;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+    .arch-diagram .layer {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .arch-diagram .box {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .box-cyan   { background: #06b6d420; color: #06b6d4; border: 1px solid #06b6d444; }
+    .box-purple { background: #818cf820; color: #818cf8; border: 1px solid #818cf844; }
+    .box-green  { background: #4ade8020; color: #4ade80; border: 1px solid #4ade8044; }
+    .box-pink   { background: #f472b620; color: #f472b6; border: 1px solid #f472b644; }
+    .box-orange { background: #f9731620; color: #f97316; border: 1px solid #f9731644; }
+    .arch-diagram .arrow {
+      color: #444;
+      font-size: 0.8rem;
+    }
+    .arch-diagram .label {
+      color: #555;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.25rem;
+    }
+
+    .how-built {
+      padding: 1.5rem 2rem 2rem;
+      border-top: 1px solid #1e1e1e;
+      background: #111;
+    }
+    .how-built h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #06b6d4;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.75rem;
+    }
+    .how-built ul {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0.5rem;
+    }
+    .how-built li {
+      color: #888;
+      font-size: 0.82rem;
+      padding-left: 1.2rem;
+      position: relative;
+      line-height: 1.5;
+    }
+    .how-built li::before {
+      content: '>';
+      position: absolute;
+      left: 0;
+      color: #06b6d4;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .how-built code {
+      background: #1a1a1a;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.78rem;
+      color: #06b6d4;
+    }
+
+    /* ── Demonstrates Section ── */
+    .demonstrates {
+      padding: 1rem 2rem 1.5rem;
+      border-top: 1px solid #1a1a1a;
+    }
+    .demonstrates h4 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #818cf8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+    }
+    .demonstrates .demo-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .demonstrates .demo-tag {
+      padding: 0.25rem 0.6rem;
+      background: #818cf815;
+      border: 1px solid #818cf830;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: #818cf8;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header, .nav, .page-hero, .projects { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .page-hero h2 { font-size: 1.6rem; }
+      .project-header, .arch-container, .how-built, .demonstrates { padding-left: 1.25rem; padding-right: 1.25rem; }
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+</head>
+<body>
+
+  <div class="header">
+    <h1>Learn <span>React</span></h1>
+    <div class="meta">Trevor Brown &middot; Portfolio Projects</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/react/">Home</a>
+    <a href="/react/references/use-cases/">Use Cases</a>
+    <a href="/react/games/">Games</a>
+    <a href="/react/projects/" class="active">Projects</a>
+  </nav>
+
+  <div class="page-hero">
+    <h2>Portfolio <span class="accent">Projects</span></h2>
+    <p class="subtitle">
+      Four production-quality React applications built for <strong>broadcast journalism</strong>
+      and <strong>data-driven storytelling</strong>. Each uses Next.js 15, React Server Components,
+      and modern patterns that demonstrate real-world engineering competence.
+    </p>
+    <div class="badge-row">
+      <span class="badge"><span class="dot" style="background: #06b6d4;"></span>Next.js 15</span>
+      <span class="badge"><span class="dot" style="background: #818cf8;"></span>React Server Components</span>
+      <span class="badge"><span class="dot" style="background: #4ade80;"></span>TypeScript</span>
+      <span class="badge"><span class="dot" style="background: #f472b6;"></span>Journalism-focused</span>
+    </div>
+  </div>
+
+  <div class="projects">
+
+    <!-- ======================================================
+         PROJECT 1: Newsroom Dashboard
+         ====================================================== -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #06b6d4;">Project 01</div>
+        <h3>Newsroom Dashboard (Next.js 15)</h3>
+        <p>A real-time newsroom operations dashboard tracking story assignments, publication pipeline, traffic analytics, and social engagement. Built as a full-stack Next.js 15 app with Server Components for data-heavy views and Client Components for interactive controls.</p>
+        <div class="project-tags">
+          <span>Next.js 15 App Router</span>
+          <span>React Server Components</span>
+          <span>Server Actions</span>
+          <span>Suspense Boundaries</span>
+          <span>WebSocket</span>
+          <span>Prisma</span>
+        </div>
+      </div>
+      <div class="arch-container">
+        <div class="arch-diagram">
+          <div class="label">Architecture</div>
+          <div class="layer">
+            <span class="box box-cyan">Next.js 15 App Router</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-purple">Layout (RSC)</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-green">Page (RSC)</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-green">Suspense</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-pink">StoryTable (RSC)</span>
+            <span class="box box-orange" style="margin-left: 0.5rem;">LiveFeed (Client)</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-cyan">Server Actions</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-purple">Prisma ORM</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-green">PostgreSQL</span>
+          </div>
+        </div>
+      </div>
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>App Router with nested layouts: <code>/dashboard/stories</code>, <code>/dashboard/analytics</code>, <code>/dashboard/team</code> each with their own loading states</li>
+          <li>Server Components fetch story data directly from the database via Prisma, sending zero JavaScript for data-heavy tables</li>
+          <li>Client-side LiveFeed component uses WebSocket for real-time story updates, auto-reconnecting on disconnect</li>
+          <li>Server Actions handle story status updates (draft, review, published) with optimistic UI via <code>useOptimistic</code></li>
+          <li>Suspense boundaries wrap each dashboard section independently, so analytics can load without blocking the story list</li>
+          <li>Role-based access using Next.js middleware: editors see assignment controls, reporters see their stories only</li>
+        </ul>
+      </div>
+      <div class="demonstrates">
+        <h4>What This Demonstrates</h4>
+        <div class="demo-tags">
+          <span class="demo-tag">RSC Data Fetching</span>
+          <span class="demo-tag">Server Actions</span>
+          <span class="demo-tag">Streaming SSR</span>
+          <span class="demo-tag">WebSocket Integration</span>
+          <span class="demo-tag">Auth Middleware</span>
+          <span class="demo-tag">Prisma ORM</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         PROJECT 2: Election Night Live Tracker
+         ====================================================== -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #818cf8;">Project 02</div>
+        <h3>Election Night Live Tracker</h3>
+        <p>A broadcast-quality election night results page with live vote counting, interactive maps, projected winner calls, and Electoral College tracking. Styled to match the on-screen graphics of network election coverage.</p>
+        <div class="project-tags">
+          <span>React + D3 Hybrid</span>
+          <span>Server-Sent Events</span>
+          <span>Framer Motion</span>
+          <span>GeoJSON Maps</span>
+          <span>useSyncExternalStore</span>
+        </div>
+      </div>
+      <div class="arch-container">
+        <div class="arch-diagram">
+          <div class="label">Real-time Data Flow</div>
+          <div class="layer">
+            <span class="box box-cyan">SSE Endpoint</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-purple">External Store</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-green">useSyncExternalStore</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-green">Race Components</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-pink">StateMap (D3 geo)</span>
+            <span class="box box-orange" style="margin-left: 0.5rem;">VoteBars (Motion)</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-cyan">EC Counter</span>
+            <span class="box box-purple" style="margin-left: 0.5rem;">Call Overlay</span>
+            <span class="box box-green" style="margin-left: 0.5rem;">Ticker Tape</span>
+          </div>
+        </div>
+      </div>
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Server-Sent Events stream vote updates from a Node.js backend, with <code>useSyncExternalStore</code> bridging the event source to React state</li>
+          <li>D3.js renders the geographic map (geoAlbersUsa projection) while React manages the component tree and state -- a hybrid rendering approach</li>
+          <li>Framer Motion animates vote count bars with spring physics, creating the dramatic "counting" effect seen on broadcast networks</li>
+          <li>"Projected Winner" callouts trigger when a candidate crosses the victory threshold, with configurable margins for competitive vs. safe states</li>
+          <li>Electoral College counter aggregates called states in real-time, animating the needle toward 270 with Framer Motion's layout animations</li>
+          <li>Ticker tape at the bottom scrolls latest race calls using CSS animation, matching the broadcast TV lower-third aesthetic</li>
+        </ul>
+      </div>
+      <div class="demonstrates">
+        <h4>What This Demonstrates</h4>
+        <div class="demo-tags">
+          <span class="demo-tag">React + D3 Integration</span>
+          <span class="demo-tag">Real-time Streaming</span>
+          <span class="demo-tag">Animation</span>
+          <span class="demo-tag">External Store Pattern</span>
+          <span class="demo-tag">Broadcast Design</span>
+          <span class="demo-tag">GeoJSON</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         PROJECT 3: Data Journalism CMS
+         ====================================================== -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #4ade80;">Project 03</div>
+        <h3>Data Journalism CMS</h3>
+        <p>A content management system built for data journalism teams. Reporters upload datasets (CSV, JSON), create interactive chart embeds, and publish stories with inline visualizations. Editors review and approve before publication.</p>
+        <div class="project-tags">
+          <span>Next.js 15</span>
+          <span>TipTap Rich Editor</span>
+          <span>Chart Builder</span>
+          <span>File Upload</span>
+          <span>RBAC</span>
+          <span>Vercel Blob</span>
+        </div>
+      </div>
+      <div class="arch-container">
+        <div class="arch-diagram">
+          <div class="label">CMS Architecture</div>
+          <div class="layer">
+            <span class="box box-cyan">TipTap Editor (Client)</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-purple">Chart Embed Block</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-green">D3 Preview</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-pink">Dataset Upload</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-orange">Vercel Blob Storage</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-cyan">Parser (CSV/JSON)</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-green">Publish Pipeline</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-purple">Review Queue</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-pink">Public Article (ISR)</span>
+          </div>
+        </div>
+      </div>
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>TipTap rich text editor with custom extension for embedding interactive charts -- reporters drag datasets into the editor</li>
+          <li>Chart builder component lets reporters pick chart type (bar, line, scatter, map), map columns to axes, and customize colors</li>
+          <li>Dataset files upload to Vercel Blob via Server Actions, with progress tracking and schema auto-detection from CSV headers</li>
+          <li>Role-based access: reporters create/edit, editors approve, admins manage users. Implemented with Next.js middleware and JWT claims</li>
+          <li>Published articles use ISR (Incremental Static Regeneration) for fast loading, with on-demand revalidation when edits are made</li>
+          <li>Preview mode lets editors see the full published layout before approving, using Next.js Draft Mode</li>
+        </ul>
+      </div>
+      <div class="demonstrates">
+        <h4>What This Demonstrates</h4>
+        <div class="demo-tags">
+          <span class="demo-tag">Rich Text Editor</span>
+          <span class="demo-tag">File Upload</span>
+          <span class="demo-tag">Data Visualization</span>
+          <span class="demo-tag">RBAC</span>
+          <span class="demo-tag">ISR</span>
+          <span class="demo-tag">CMS Architecture</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         PROJECT 4: Interactive Story Builder
+         ====================================================== -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #f472b6;">Project 04</div>
+        <h3>Interactive Story Builder</h3>
+        <p>A scrollytelling framework for creating immersive data-driven stories. Journalists design scroll-triggered animations, chart transitions, and media sequences without writing code. Think Scrollama meets a visual editor.</p>
+        <div class="project-tags">
+          <span>Scrollytelling</span>
+          <span>IntersectionObserver</span>
+          <span>React Spring</span>
+          <span>Drag-and-Drop</span>
+          <span>Story Format</span>
+          <span>Accessibility</span>
+        </div>
+      </div>
+      <div class="arch-container">
+        <div class="arch-diagram">
+          <div class="label">Story Builder Architecture</div>
+          <div class="layer">
+            <span class="box box-cyan">Visual Editor</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-purple">Story JSON</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-green">Renderer</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-pink">Scroll Triggers</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-orange">IntersectionObserver</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-cyan">Animation Queue</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-green">Media Blocks</span>
+            <span class="box box-purple" style="margin-left: 0.5rem;">Chart Blocks</span>
+            <span class="box box-pink" style="margin-left: 0.5rem;">Text Blocks</span>
+            <span class="box box-orange" style="margin-left: 0.5rem;">Map Blocks</span>
+          </div>
+        </div>
+      </div>
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Visual editor uses drag-and-drop (dnd-kit) to arrange story blocks: text, chart, image, video, and map sections in a vertical sequence</li>
+          <li>Scroll triggers powered by IntersectionObserver with configurable thresholds (enter at 25%, 50%, 75%) for precise timing</li>
+          <li>React Spring handles scroll-linked animations: fade-in, parallax, chart transitions, and element reveals with spring physics</li>
+          <li>Story format is a JSON document describing the block sequence, animation configs, and data sources -- portable and versionable</li>
+          <li>Accessibility: all scroll-triggered content has static fallbacks, reduced-motion media query support, and keyboard navigation</li>
+          <li>Export to static HTML: the renderer can output a standalone page with embedded data, no server required for published stories</li>
+        </ul>
+      </div>
+      <div class="demonstrates">
+        <h4>What This Demonstrates</h4>
+        <div class="demo-tags">
+          <span class="demo-tag">Scrollytelling</span>
+          <span class="demo-tag">Drag and Drop</span>
+          <span class="demo-tag">Scroll-linked Animation</span>
+          <span class="demo-tag">Visual Editor</span>
+          <span class="demo-tag">Accessibility</span>
+          <span class="demo-tag">Static Export</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

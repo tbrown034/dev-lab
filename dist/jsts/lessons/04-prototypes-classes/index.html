@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 04 - Prototypes &amp; Classes</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #eab308; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>04</span> Prototypes &amp; Classes &mdash; The Editorial Chain of Command</h1>
+    <a href="/jsts/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">JavaScript does not have classical inheritance.</strong> It has <em>prototypal</em> delegation. The <code>class</code> keyword is syntactic sugar over a fundamentally different system. Understanding the real mechanism is the difference between copying patterns and designing them.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: Editorial Chain of Command</h2>
+
+    <p>In a newsroom, when a junior reporter has a question they can't answer, they ask their editor. If the editor doesn't know, they ask the managing editor. If the managing editor doesn't know, they ask the editor-in-chief. The question travels up the chain until someone has the answer or the chain ends.</p>
+
+    <p>JavaScript objects work identically. When you access a property on an object, if the object doesn't have it, JavaScript asks the object's <strong>prototype</strong>. If the prototype doesn't have it, JavaScript asks the prototype's prototype. This chain continues until it reaches <code>null</code> (the end of the chain).</p>
+
+    <div class="aha">
+      <p><strong>This is not inheritance. It's delegation.</strong> The object doesn't "have" its prototype's methods. It <em>delegates</em> to the prototype when asked. The distinction matters: in classical inheritance, subclasses get copies. In prototypal delegation, objects share live references up the chain.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE PROTOTYPE CHAIN                          -->
+    <!-- ============================================ -->
+
+    <h2>The Prototype Chain</h2>
+
+    <pre><code>const reporter = {
+  file(story) {
+    console.log(`Filing: ${story}`);
+  }
+};
+
+const trevor = Object.create(reporter);
+trevor.name = "Trevor";
+trevor.beat = "politics";
+
+trevor.file("Election results");
+<span class="comment">// "Filing: Election results"</span>
+<span class="comment">// trevor doesn't have `file` — it delegates to reporter</span>
+
+trevor.hasOwnProperty("name");  <span class="comment">// true  (own property)</span>
+trevor.hasOwnProperty("file");  <span class="comment">// false (on the prototype)</span>
+</code></pre>
+
+    <p>The chain for <code>trevor</code>:</p>
+
+    <pre><code>trevor → reporter → Object.prototype → null
+
+<span class="comment">// trevor.file       → found on reporter</span>
+<span class="comment">// trevor.toString   → found on Object.prototype</span>
+<span class="comment">// trevor.foo        → not found anywhere → undefined</span>
+</code></pre>
+
+    <h3>Inspecting the Chain</h3>
+
+    <pre><code><span class="comment">// Get an object's prototype</span>
+Object.getPrototypeOf(trevor) === reporter;  <span class="comment">// true</span>
+
+<span class="comment">// The older, non-standard way (still widely used)</span>
+trevor.__proto__ === reporter;  <span class="comment">// true</span>
+
+<span class="comment">// Check if something is in the chain</span>
+reporter.isPrototypeOf(trevor);  <span class="comment">// true</span>
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- CONSTRUCTOR FUNCTIONS                        -->
+    <!-- ============================================ -->
+
+    <h2>Constructor Functions (The Pre-Class Way)</h2>
+
+    <p>Before <code>class</code>, this was how you created "types" in JavaScript:</p>
+
+    <pre><code>function Reporter(name, beat) {
+  this.name = name;
+  this.beat = beat;
+}
+
+<span class="comment">// Methods go on the prototype (shared across all instances)</span>
+Reporter.prototype.file = function(story) {
+  console.log(`${this.name} filing: ${story}`);
+};
+
+const trevor = new Reporter("Trevor", "politics");
+const sarah = new Reporter("Sarah", "tech");
+
+trevor.file("Election day");  <span class="comment">// "Trevor filing: Election day"</span>
+sarah.file("AI launch");      <span class="comment">// "Sarah filing: AI launch"</span>
+
+<span class="comment">// Both share the SAME function object</span>
+trevor.file === sarah.file;   <span class="comment">// true</span>
+</code></pre>
+
+    <h3>What <code>new</code> Actually Does</h3>
+
+    <p>The <code>new</code> keyword does exactly 4 things:</p>
+
+    <pre><code><span class="comment">// new Reporter("Trevor", "politics") is equivalent to:</span>
+
+<span class="comment">// 1. Create a new empty object</span>
+const obj = {};
+
+<span class="comment">// 2. Set its prototype to Reporter.prototype</span>
+Object.setPrototypeOf(obj, Reporter.prototype);
+
+<span class="comment">// 3. Call Reporter with `this` bound to the new object</span>
+Reporter.call(obj, "Trevor", "politics");
+
+<span class="comment">// 4. Return the object (unless the constructor returns an object)</span>
+return obj;
+</code></pre>
+
+    <div class="callout">
+      <p><strong>Common mistake:</strong> Forgetting <code>new</code>. Without it, <code>this</code> inside the constructor points to the global object (or <code>undefined</code> in strict mode). This is why the convention is to capitalize constructor function names &mdash; it's a visual signal that <code>new</code> is required.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CLASS SYNTAX                                 -->
+    <!-- ============================================ -->
+
+    <h2>Class Syntax: Sugar, Not Magic</h2>
+
+    <p>ES6 <code>class</code> is syntactic sugar over the constructor function + prototype pattern. Nothing new at runtime.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Constructor function</h5>
+        <pre><code>function Reporter(name) {
+  this.name = name;
+}
+
+Reporter.prototype.file = function(s) {
+  console.log(`${this.name}: ${s}`);
+};
+
+const t = new Reporter("Trevor");</code></pre>
+      </div>
+      <div>
+        <h5>Class syntax (identical behavior)</h5>
+        <pre><code>class Reporter {
+  constructor(name) {
+    this.name = name;
+  }
+
+  file(s) {
+    console.log(`${this.name}: ${s}`);
+  }
+}
+
+const t = new Reporter("Trevor");</code></pre>
+      </div>
+    </div>
+
+    <p>Under the hood, both produce identical prototype chains:</p>
+
+    <pre><code>t → Reporter.prototype → Object.prototype → null
+</code></pre>
+
+    <h3>Class Features</h3>
+
+    <pre><code>class Article {
+  <span class="comment">// Public field</span>
+  status = "draft";
+
+  <span class="comment">// Private field (# prefix)</span>
+  #wordCount = 0;
+
+  <span class="comment">// Static method (on the class itself, not instances)</span>
+  static fromMarkdown(md) {
+    const article = new Article();
+    article.#wordCount = md.split(/\s+/).length;
+    return article;
+  }
+
+  <span class="comment">// Getter</span>
+  get words() {
+    return this.#wordCount;
+  }
+
+  <span class="comment">// Setter</span>
+  set words(count) {
+    if (count &lt; 0) throw new Error("Invalid word count");
+    this.#wordCount = count;
+  }
+
+  constructor(title) {
+    this.title = title;
+  }
+
+  publish() {
+    this.status = "published";
+    console.log(`Published: ${this.title} (${this.#wordCount} words)`);
+  }
+}
+
+const article = new Article("Breaking News");
+article.words = 500;
+article.publish();
+<span class="comment">// "Published: Breaking News (500 words)"</span>
+
+article.#wordCount;  <span class="comment">// SyntaxError: Private field</span>
+</code></pre>
+
+    <div class="aha">
+      <p><strong>Private fields (#) are truly private.</strong> Unlike the closure-based privacy from lesson 03, <code>#</code> fields are enforced by the engine. Even subclasses can't access them. This is one thing <code>class</code> adds that constructor functions can't easily do.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- INHERITANCE                                  -->
+    <!-- ============================================ -->
+
+    <h2>Inheritance with extends</h2>
+
+    <pre><code>class Reporter {
+  constructor(name) {
+    this.name = name;
+  }
+
+  file(story) {
+    console.log(`${this.name} filing: ${story}`);
+  }
+}
+
+class SeniorReporter extends Reporter {
+  constructor(name, years) {
+    super(name);  <span class="comment">// MUST call super before using `this`</span>
+    this.years = years;
+  }
+
+  <span class="comment">// Override parent method</span>
+  file(story) {
+    super.file(story);  <span class="comment">// Call parent version</span>
+    console.log(`(${this.years} years experience)`);
+  }
+
+  mentor(junior) {
+    console.log(`${this.name} mentoring ${junior.name}`);
+  }
+}
+
+const senior = new SeniorReporter("Trevor", 8);
+senior.file("Investigation");
+<span class="comment">// "Trevor filing: Investigation"</span>
+<span class="comment">// "(8 years experience)"</span>
+</code></pre>
+
+    <p>The prototype chain:</p>
+
+    <pre><code>senior → SeniorReporter.prototype → Reporter.prototype → Object.prototype → null
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- COMPOSITION VS INHERITANCE                   -->
+    <!-- ============================================ -->
+
+    <h2>Composition Over Inheritance</h2>
+
+    <p>Deep inheritance hierarchies are fragile. Modern JavaScript (and React) prefers <strong>composition</strong>:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Inheritance (fragile)</h5>
+        <pre><code>class Animal { ... }
+class Dog extends Animal { ... }
+class ServiceDog extends Dog { ... }
+class GuideDog extends ServiceDog { ... }
+
+<span class="comment">// What if you need a Robot Guide?</span>
+<span class="comment">// It's not an Animal...</span>
+<span class="comment">// The hierarchy breaks.</span></code></pre>
+      </div>
+      <div>
+        <h5>Composition (flexible)</h5>
+        <pre><code>const canWalk = (state) =&gt; ({
+  walk: () =&gt; state.position++
+});
+
+const canGuide = (state) =&gt; ({
+  guide: (person) =&gt;
+    console.log(`Guiding ${person}`)
+});
+
+function createGuideDog(name) {
+  const state = { name, position: 0 };
+  return {
+    ...canWalk(state),
+    ...canGuide(state),
+  };
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>React made this choice explicitly.</strong> React moved from class components (with lifecycle inheritance) to hooks (with composition). <code>useState</code> + <code>useEffect</code> compose better than <code>componentDidMount</code> + <code>componentDidUpdate</code>. Same principle: mix behaviors, don't stack hierarchies.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THIS KEYWORD                                 -->
+    <!-- ============================================ -->
+
+    <h2>The <code>this</code> Keyword</h2>
+
+    <p><code>this</code> in JavaScript is determined by <em>how a function is called</em>, not where it's defined (the opposite of lexical scope):</p>
+
+    <pre><code>const reporter = {
+  name: "Trevor",
+  greet() {
+    console.log(`Hi, I'm ${this.name}`);
+  }
+};
+
+reporter.greet();          <span class="comment">// "Hi, I'm Trevor" (method call → this = reporter)</span>
+
+const greet = reporter.greet;
+greet();                   <span class="comment">// "Hi, I'm undefined" (plain call → this = global/undefined)</span>
+
+const button = document.createElement('button');
+button.addEventListener('click', reporter.greet);
+<span class="comment">// When clicked: "Hi, I'm " (this = the button element)</span>
+</code></pre>
+
+    <h3>Fixing <code>this</code></h3>
+
+    <pre><code><span class="comment">// 1. Arrow functions (lexical this — from lesson 03)</span>
+const reporter = {
+  name: "Trevor",
+  greet: () =&gt; {
+    <span class="comment">// Arrow functions don't have their own `this`</span>
+    <span class="comment">// They use the `this` from the enclosing scope</span>
+  }
+};
+
+<span class="comment">// 2. bind() — creates a new function with fixed `this`</span>
+const boundGreet = reporter.greet.bind(reporter);
+
+<span class="comment">// 3. Class fields with arrow functions</span>
+class Reporter {
+  name = "Trevor";
+  <span class="comment">// Arrow function in a class field — `this` always = instance</span>
+  greet = () =&gt; console.log(`Hi, I'm ${this.name}`);
+}
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Knowledge Check</h4>
+
+      <div class="question">
+        <p>1. What's the difference between <code>obj.hasOwnProperty('x')</code> returning true vs <code>'x' in obj</code> returning true?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer"><code>hasOwnProperty</code> only checks the object itself. The <code>in</code> operator checks the entire prototype chain. So <code>'toString' in {}</code> is <code>true</code> (found on Object.prototype), but <code>{}.hasOwnProperty('toString')</code> is <code>false</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why must you call <code>super()</code> before using <code>this</code> in a subclass constructor?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer">In a derived class, <code>this</code> is not initialized until <code>super()</code> is called. The parent constructor is responsible for creating the object that <code>this</code> will refer to. Accessing <code>this</code> before <code>super()</code> throws a ReferenceError.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Is <code>class</code> just syntactic sugar? What does it add that constructor functions don't have?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer">Mostly sugar, but with extras: (1) <code>class</code> must be called with <code>new</code> (constructors don't enforce this), (2) methods are non-enumerable by default, (3) class bodies are always in strict mode, (4) private fields (<code>#</code>) have no constructor-function equivalent, (5) <code>extends</code> sets up prototype chains for both instance and static methods.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Prototype Chain Detective</h4>
+      <p>1. Create a <code>Newsroom</code> class with a <code>publish(article)</code> method.</p>
+      <p>2. Create a <code>DigitalNewsroom</code> that extends it and overrides <code>publish</code> to also call <code>this.tweet(article)</code>.</p>
+      <p>3. Use <code>Object.getPrototypeOf()</code> to walk the full prototype chain of a <code>DigitalNewsroom</code> instance and log each level.</p>
+      <p>4. Verify that both instances share the same <code>toString</code> method (from <code>Object.prototype</code>).</p>
+      <pre><code><span class="comment">// Your chain should be:</span>
+<span class="comment">// instance → DigitalNewsroom.prototype → Newsroom.prototype → Object.prototype → null</span></code></pre>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/jsts/lessons/03-closures-scope/">&larr; Closures &amp; Scope</a>
+      <a href="/jsts/lessons/05-async-patterns/">Async Patterns &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

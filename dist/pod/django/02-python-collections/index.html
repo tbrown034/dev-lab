@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Collections — The Pod</title>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/shell-B2-DeMgN.css">
+  <link rel="stylesheet" crossorigin href="/assets/episode-FuyZZf_I.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">The Pod</a>
+      <div class="header-right">
+        <a href="/pod/" class="back-link">&larr; All Episodes</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="episode-page" data-accent="var(--accent-django)">
+
+    <div class="episode-header">
+      <span class="episode-track-badge django">Django &mdash; Episode 02</span>
+      <h1>Python Collections</h1>
+      <p class="episode-subtitle">Lists, dicts, sets, and tuples. How they map to JS arrays and objects.</p>
+      <span class="episode-duration-badge">~12 min</span>
+    </div>
+
+    <div class="player-container">
+      <audio id="episode-audio" preload="metadata">
+        <source src="/audio/django/02-python-collections.mp3" type="audio/mpeg">
+      </audio>
+
+      <div class="player">
+        <div class="player-controls">
+          <button class="player-btn skip-btn" id="skip-back" aria-label="Skip back 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+          <button class="player-btn play-btn" id="play-pause" aria-label="Play">
+            <svg class="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg class="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <button class="player-btn skip-btn" id="skip-forward" aria-label="Skip forward 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+        </div>
+
+        <div class="player-progress">
+          <span class="player-time" id="current-time">0:00</span>
+          <div class="progress-bar-container" id="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <input type="range" class="progress-scrubber" id="scrubber" min="0" max="1000" value="0" step="1">
+          </div>
+          <span class="player-time" id="duration">0:00</span>
+        </div>
+
+        <div class="player-extras">
+          <div class="speed-control">
+            <button class="speed-btn" id="speed-btn">1x</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="transcript-container">
+      <div class="transcript-header">
+        <h2>Transcript</h2>
+        <button class="auto-scroll-toggle active" id="auto-scroll-toggle" aria-label="Toggle auto-scroll">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          Auto-scroll
+        </button>
+      </div>
+      <div class="transcript" id="transcript"></div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>The Pod &mdash; part of <a href="/">Learn Coding</a> by Trevor Brown</p>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+
+    const TRANSCRIPT = [
+      { time: 0, text: "Welcome back to The Pod. I'm Alex, and today we're diving into Python's collection types. If you know JavaScript arrays and objects, you're already halfway there. But Python has some extras that you're going to love." },
+      { time: 15, text: "I'm Sam, and collections are where you spend most of your time in any language. Getting these right in Python is essential for everything that comes later, especially Django's ORM which works heavily with lists and dicts." },
+      { time: 30, text: "Let's start with lists. A Python list is basically a JavaScript array. Square brackets, zero-indexed, ordered, mutable. [1, 2, 3] works the same in both languages." },
+      { time: 42, text: "The methods are slightly different though. JavaScript's push becomes append in Python. JavaScript's includes becomes the 'in' keyword. Instead of array.includes(5), you write 5 in my_list. Much more readable." },
+      { time: 58, text: "And Python has this killer feature called slicing. my_list[1:4] gives you a new list with elements at index 1, 2, and 3. my_list[:3] is the first three elements. my_list[-1] is the last element. JavaScript just got Array.at() for negative indexing recently, but Python has had it forever." },
+      { time: 78, text: "Slicing is one of those features that, once you learn it, you can't live without. my_list[::2] gives every other element. my_list[::-1] reverses the list. It's incredibly expressive." },
+      { time: 94, text: "Now, dictionaries. A Python dict is the closest thing to a JavaScript object. Key-value pairs in curly braces. {'name': 'Alex', 'age': 30}. You access values with square brackets: my_dict['name']." },
+      { time: 110, text: "One key difference: you can't access dict values with dot notation like you can with JavaScript objects. No my_dict.name. It's always my_dict['name']. That trips up JavaScript developers constantly." },
+      { time: 126, text: "But you get .get() which is amazing. my_dict.get('name', 'default') returns the value if the key exists, or the default if it doesn't. No more checking if a property exists before accessing it. In JavaScript, you'd need optional chaining or a ternary." },
+      { time: 146, text: "Dict methods are super useful too. .keys() gives you all the keys, .values() gives all values, .items() gives you key-value tuples. In JavaScript, you'd use Object.keys(), Object.values(), and Object.entries(). Same idea, different syntax." },
+      { time: 164, text: "Now let's talk about tuples. JavaScript doesn't really have an equivalent. A tuple is like a list, but immutable. Once created, you can't change it. You create them with parentheses: (1, 2, 3)." },
+      { time: 180, text: "Why would you want an immutable list? Isn't that just limiting?" },
+      { time: 186, text: "It's a feature, not a limitation. Tuples signal intent: 'this data shouldn't change.' They're used for things like coordinates, RGB values, database rows. Because they're immutable, they can be used as dictionary keys, which lists cannot." },
+      { time: 206, text: "Tuple unpacking is one of Python's best features. If you have a tuple (x, y) = (10, 20), you can unpack it into separate variables. This works with function returns too. A function can return a tuple and you unpack it: name, age = get_person()." },
+      { time: 226, text: "JavaScript has destructuring which is similar, but Python's unpacking is more versatile. You can do first, *rest = [1, 2, 3, 4] and rest becomes [2, 3, 4]. That star operator collects the remaining items." },
+      { time: 244, text: "Now, sets. JavaScript has Set, and Python's set is the same idea. An unordered collection of unique values. {1, 2, 3}. No duplicates allowed." },
+      { time: 256, text: "Sets are fantastic for removing duplicates. list(set(my_list)) gives you a deduplicated list. And set operations like union, intersection, and difference are built right in. my_set & other_set for intersection, my_set | other_set for union." },
+      { time: 276, text: "Those set operations use actual mathematical operators. That's so clean compared to JavaScript where you'd need to write loops or use filter." },
+      { time: 288, text: "Let's cover list comprehensions because they're one of Python's most powerful features. A list comprehension creates a new list by transforming each element of an existing list. [x * 2 for x in my_list] doubles every element." },
+      { time: 306, text: "It's like JavaScript's map, but built into the language syntax. And you can add conditions: [x for x in my_list if x > 5] is like filter. You can even combine both: [x * 2 for x in my_list if x > 5]. Map and filter in one expression." },
+      { time: 326, text: "You can also create dict comprehensions: {k: v for k, v in items}. And set comprehensions: {x for x in my_list}. The syntax is consistent across all collection types." },
+      { time: 342, text: "One more thing: the zip function. zip(list1, list2) pairs up elements from two lists into tuples. zip(['a', 'b', 'c'], [1, 2, 3]) gives you [('a', 1), ('b', 2), ('c', 3)]. It's incredibly useful and has no direct equivalent in JavaScript." },
+      { time: 362, text: "To summarize: lists are arrays, dicts are objects, tuples are immutable lists, and sets are unique collections. Slicing, comprehensions, and unpacking are Python superpowers that make working with data concise and expressive." },
+      { time: 382, text: "Next episode, we're covering Python functions: decorators, generators, and comprehensions. The tools that make Python code feel magical. See you there!" }
+    ];
+  </script>
+  <script src="/pod/player.js"></script>
+
+</body>
+</html>

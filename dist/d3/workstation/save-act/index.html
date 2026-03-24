@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The SAVE America Act — Data Workstation — Learn D3</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    body {
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #f97316; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+
+    /* ── Nav ── */
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover {
+      background: #f97316;
+      color: #000;
+      border-color: #f97316;
+    }
+    .nav a.active {
+      background: #f472b6;
+      color: #000;
+      border-color: #f472b6;
+    }
+
+    /* ── Hero ── */
+    .page-hero {
+      padding: 3rem 3rem 1.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .page-hero .kicker {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #f472b6;
+      margin-bottom: 0.75rem;
+    }
+    .page-hero h2 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+      line-height: 1.15;
+    }
+    .page-hero .subtitle {
+      color: #999;
+      font-size: 1.05rem;
+      max-width: 720px;
+      line-height: 1.7;
+    }
+    .page-hero .byline {
+      margin-top: 1rem;
+      color: #666;
+      font-size: 0.85rem;
+    }
+    .page-hero .byline strong { color: #aaa; font-weight: 600; }
+
+    /* ── Content Container ── */
+    .content {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 3rem 6rem;
+    }
+
+    /* ── Section Divider ── */
+    .section-divider {
+      border: none;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #333, transparent);
+      margin: 4rem 0;
+    }
+
+    /* ── Viz Section ── */
+    .viz-section {
+      margin-bottom: 1rem;
+    }
+    .viz-section .section-num {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #f97316;
+      margin-bottom: 0.5rem;
+    }
+    .viz-section h3 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+    .viz-section .viz-subtitle {
+      color: #888;
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+      max-width: 680px;
+    }
+
+    /* ── Chart Container ── */
+    .chart-container {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .chart-container svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ── Toggle Buttons ── */
+    .toggle-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .toggle-btn {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .toggle-btn:hover { border-color: #555; color: #fff; }
+    .toggle-btn.active { border-color: #f97316; color: #f97316; }
+    .toggle-btn.code-btn.active { border-color: #818cf8; color: #818cf8; }
+    .toggle-btn.learning-btn.active { border-color: #f97316; color: #f97316; }
+    .toggle-btn.brief-btn.active { border-color: #4ade80; color: #4ade80; }
+
+    /* ── Code Block ── */
+    .code-panel {
+      display: none;
+      background: #0d1117;
+      border: 1px solid #222;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .code-panel.open { display: block; }
+    .code-panel .code-header {
+      padding: 0.6rem 1rem;
+      background: #161b22;
+      border-bottom: 1px solid #222;
+      font-size: 0.75rem;
+      color: #8b949e;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .code-panel pre {
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: #e6edf3;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      tab-size: 2;
+    }
+
+    /* ── Explanation Panels ── */
+    .explanation-panel {
+      display: none;
+      border: 1px solid #222;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .explanation-panel.open { display: block; }
+    .explanation-panel.learning {
+      border-color: #f9731633;
+    }
+    .explanation-panel.brief {
+      border-color: #4ade8033;
+    }
+    .explanation-panel .panel-header {
+      padding: 0.75rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-bottom: 1px solid #222;
+    }
+    .explanation-panel.learning .panel-header {
+      background: #f9731610;
+      color: #f97316;
+    }
+    .explanation-panel.brief .panel-header {
+      background: #4ade8010;
+      color: #4ade80;
+    }
+    .explanation-panel .panel-body {
+      padding: 1rem 1.25rem;
+      color: #bbb;
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+    .explanation-panel .panel-body strong { color: #e5e5e5; }
+    .explanation-panel .panel-body code {
+      background: #1a1a1a;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.82rem;
+      color: #f97316;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .explanation-panel .panel-body ul {
+      margin: 0.5rem 0;
+      padding-left: 1.25rem;
+    }
+    .explanation-panel .panel-body li {
+      margin-bottom: 0.4rem;
+    }
+    .explanation-panel .panel-body p {
+      margin-bottom: 0.6rem;
+    }
+
+    /* ── Annotation / Key Stat ── */
+    .key-stat {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+    .key-stat .stat {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      min-width: 140px;
+      flex: 1;
+    }
+    .key-stat .stat .number {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .key-stat .stat .label {
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 0.25rem;
+    }
+
+    /* ── Tooltip ── */
+    .tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      color: #e5e5e5;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 1000;
+      max-width: 280px;
+      line-height: 1.4;
+      border: 1px solid #333;
+    }
+    .tooltip.visible { opacity: 1; }
+    .tooltip .tip-label { font-weight: 600; margin-bottom: 0.15rem; }
+    .tooltip .tip-value { color: #aaa; }
+
+    /* ── Data Sources ── */
+    .sources-section {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-top: 3rem;
+    }
+    .sources-section h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: #ccc;
+    }
+    .sources-section ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sources-section li {
+      padding: 0.4rem 0;
+      color: #888;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .sources-section li:last-child { border-bottom: none; }
+    .sources-section li strong { color: #bbb; font-weight: 600; }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+      padding: 0.75rem 0;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      color: #aaa;
+    }
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header, .nav, .page-hero, .content { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .page-hero h2 { font-size: 1.6rem; }
+      .chart-container { padding: 1rem; }
+      .key-stat { flex-direction: column; }
+    }
+
+    /* ── Syntax highlight colors ── */
+    .code-panel .kw { color: #ff7b72; }
+    .code-panel .fn { color: #d2a8ff; }
+    .code-panel .str { color: #a5d6ff; }
+    .code-panel .num { color: #79c0ff; }
+    .code-panel .cm { color: #8b949e; }
+    .code-panel .op { color: #c9d1d9; }
+  </style>
+  <script type="module" crossorigin src="/assets/d3_workstation_save-act-6v9JUWpC.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/init-tutor-Cq4VzOVI.js">
+  <link rel="modulepreload" crossorigin href="/assets/transform-DGvXF_4U.js">
+  <link rel="modulepreload" crossorigin href="/assets/feature-DXDMwmIR.js">
+  <link rel="modulepreload" crossorigin href="/assets/mesh-CkkaPKVR.js">
+  <link rel="modulepreload" crossorigin href="/assets/defaultLocale-_QQJJ3OD.js">
+  <link rel="modulepreload" crossorigin href="/assets/linear-Bvwc2yJx.js">
+  <link rel="modulepreload" crossorigin href="/assets/band-HgbXjY_x.js">
+  <link rel="modulepreload" crossorigin href="/assets/max-DBeXZoyG.js">
+  <link rel="modulepreload" crossorigin href="/assets/select-PKtlUnGw.js">
+  <link rel="modulepreload" crossorigin href="/assets/albersUsa-fMGaySAz.js">
+  <link rel="modulepreload" crossorigin href="/assets/axis-rlX7cRMw.js">
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+</head>
+<body>
+
+  <!-- Shared tooltip -->
+  <div class="tooltip" id="tooltip"></div>
+
+  <!-- ── Header ── -->
+  <div class="header">
+    <h1>Learn <span>D3</span>.js</h1>
+    <div class="meta">Data Journalism Workstation</div>
+  </div>
+
+  <!-- ── Nav ── -->
+  <nav class="nav">
+    <a href="/d3/">Home</a>
+    <a href="/d3/projects/">Portfolio</a>
+    <a href="/d3/workstation/save-act/" class="active" style="color: #f472b6;">Workstation</a>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <div class="page-hero">
+    <div class="kicker">Data Investigation</div>
+    <h2>The SAVE America Act: What the Data Actually Shows</h2>
+    <p class="subtitle">
+      A data-driven investigation into the Safeguard American Voter Eligibility Act.
+      Five visualizations built with D3.js, exploring who this legislation affects and the
+      scale of the problem it claims to solve.
+    </p>
+    <p class="byline">By <strong>Trevor Brown</strong> &middot; Data Visualization Workstation &middot; 2026</p>
+  </div>
+
+  <!-- ── Main Content ── -->
+  <div class="content">
+
+    <!-- ================================================================ -->
+    <!-- VIZ 1: The Documentation Gap -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz1-section">
+      <div class="section-num">Visualization 01</div>
+      <h3>The Documentation Gap</h3>
+      <p class="viz-subtitle">21.3 million voting-age Americans lack ready access to citizenship documents that the SAVE Act would require.</p>
+
+      <div class="key-stat">
+        <div class="stat">
+          <div class="number" style="color: #f97316;" id="counter-total">0</div>
+          <div class="label">Americans lack ready access to docs</div>
+        </div>
+        <div class="stat">
+          <div class="number" style="color: #dc2626;" id="counter-none">0</div>
+          <div class="label">Lack docs entirely</div>
+        </div>
+        <div class="stat">
+          <div class="number" style="color: #818cf8;" id="counter-passport">0</div>
+          <div class="label">No valid passport</div>
+        </div>
+      </div>
+
+      <div class="chart-container" id="viz1-waffle"></div>
+
+      <div class="chart-container" id="viz1-bars"></div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code1">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn1">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief1">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code1">
+        <div class="code-header"><span>viz1-documentation-gap.js</span><span>D3.js v7</span></div>
+        <pre id="code1-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn1">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><code>d3.interpolateNumber(a, b)</code> &mdash; returns a function that interpolates between two numbers. Used inside <code>transition().tween()</code> to animate the counter from 0 to 21.3M.</li>
+            <li><strong>IntersectionObserver</strong> &mdash; not D3, but the standard way to trigger animations on scroll. We observe each viz section and fire the animation when it enters the viewport.</li>
+            <li><strong>Waffle chart pattern:</strong> Use <code>d3.range(100)</code> to generate 100 indices, then lay them out as a 10x10 grid using <code>i % cols</code> for x and <code>Math.floor(i / cols)</code> for y. Color 9 of them differently to represent 9%.</li>
+            <li><code>d3.scaleLinear()</code> for the horizontal bar chart. Domain is [0, max value], range is [0, chart width].</li>
+            <li><code>d3.scaleBand()</code> for the bar positions on the y-axis. Each category gets an equal slice.</li>
+            <li><strong>Staggered transitions:</strong> <code>.delay((d, i) => i * 100)</code> makes bars animate sequentially rather than all at once.</li>
+          </ul>
+          <p><strong>Mental model:</strong> The waffle chart is just a grid of squares where some are highlighted. Think of it like a 10x10 Excel grid with conditional formatting. The animated counter is a "number tween" &mdash; D3 can interpolate anything, not just positions.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief1">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers & Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> Brennan Center for Justice, "Citizens Without Proof" (updated 2024). Survey-based estimate of citizenship document access among voting-age Americans.</p>
+          <p><strong>Methodology:</strong> The 21.3 million figure represents US citizens who report lacking ready access to documents that could prove citizenship (birth certificate, passport, naturalization certificate). The 9% proportion is visualized via a unit chart (waffle) where each square = 1% of voting-age citizens.</p>
+          <p><strong>Why this approach:</strong> The animated counter creates emotional impact (journalism convention for large numbers). The waffle chart makes the proportion tangible &mdash; 9 out of 100 is easier to grasp than "21.3 million out of 240 million." The horizontal bars show sub-categories for deeper understanding.</p>
+          <p><strong>Limitations:</strong> Survey-based estimates have margins of error. "Ready access" is self-reported. The 69M women with name mismatch may overlap with other categories.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- VIZ 2: Voter ID Requirements by State (Choropleth) -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz2-section">
+      <div class="section-num">Visualization 02</div>
+      <h3>Voter ID Requirements by State</h3>
+      <p class="viz-subtitle">Current voter identification laws range from strict photo ID to no requirement at all. The SAVE Act would impose a uniform documentary proof-of-citizenship requirement nationwide.</p>
+
+      <div class="chart-container" id="viz2-map"></div>
+
+      <div class="legend" id="viz2-legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#dc2626;"></div> Strict Photo ID</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#f97316;"></div> Non-strict Photo ID</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#eab308;"></div> Strict Non-photo ID</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#818cf8;"></div> Non-strict Non-photo ID</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#4ade80;"></div> No ID Required</div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code2">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn2">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief2">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code2">
+        <div class="code-header"><span>viz2-voter-id-map.js</span><span>D3.js v7 + TopoJSON</span></div>
+        <pre id="code2-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn2">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><code>d3.geoAlbersUsa()</code> &mdash; the projection built specifically for US maps. It repositions Alaska and Hawaii into insets. No need to set center/rotate; it just works for US state data.</li>
+            <li><code>d3.geoPath(projection)</code> &mdash; the path generator. Takes a GeoJSON feature and returns an SVG path string. Think of it as a "translator" from latitude/longitude coordinates to SVG <code>d</code> attribute values.</li>
+            <li><strong>TopoJSON vs GeoJSON:</strong> TopoJSON is compressed (shared borders stored once). We use <code>topojson.feature()</code> to convert back to GeoJSON for D3. The CDN file is ~200KB vs ~2MB for GeoJSON.</li>
+            <li><strong>Choropleth pattern:</strong> Create a lookup object mapping state names to categories, then use it in the fill: <code>.attr("fill", d => colorMap[stateCategory[d.properties.name]])</code>.</li>
+            <li><strong>Tooltip on geographic shapes:</strong> Use <code>mousemove</code> with <code>event.clientX/Y</code> for positioning. For maps, the tooltip needs to follow the cursor because states have irregular shapes.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A D3 map is just SVG paths that happen to look like geography. Each state is a <code>&lt;path&gt;</code> element. The projection is the "lens" that converts 3D globe coordinates to 2D screen coordinates. <code>geoPath</code> takes those 2D coordinates and turns them into SVG path commands.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief2">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers & Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> National Conference of State Legislatures (NCSL), "Voter Identification Requirements by State" (2025 update).</p>
+          <p><strong>Methodology:</strong> States are classified into 5 tiers by the NCSL's established taxonomy: Strict Photo ID, Non-strict Photo ID, Strict Non-photo ID, Non-strict Non-photo ID, and No ID Required. "Strict" means voters without acceptable ID must cast a provisional ballot that is not counted unless they return with ID.</p>
+          <p><strong>Technical implementation:</strong> US Atlas TopoJSON (10m resolution) for state boundaries. Albers USA projection for standard journalistic US map layout. Sequential color scale from green (no requirement) to red (strict photo ID) chosen for intuitive severity mapping.</p>
+          <p><strong>Editorial note:</strong> The SAVE Act would effectively move all states to a requirement stricter than any current "Strict Photo ID" state, since it requires documentary proof of citizenship (passport, birth certificate) rather than just a state-issued photo ID.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- VIZ 3: Needle in a Haystack -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz3-section">
+      <div class="section-num">Visualization 03</div>
+      <h3>Needle in a Haystack</h3>
+      <p class="viz-subtitle">Total votes cast in 2024 vs. confirmed noncitizen voter incidents across all state audits. The scale difference makes the "problem" nearly invisible.</p>
+
+      <div class="chart-container" id="viz3-scale"></div>
+
+      <div class="chart-container" id="viz3-inset">
+        <p style="color:#888; font-size: 0.8rem; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">Magnified View &mdash; State Audit Findings</p>
+        <div id="viz3-inset-chart"></div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code3">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn3">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief3">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code3">
+        <div class="code-header"><span>viz3-needle-haystack.js</span><span>D3.js v7</span></div>
+        <pre id="code3-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn3">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><strong>Unit chart pattern:</strong> <code>d3.range(n)</code> generates an array of indices. Lay them out in a grid. Each unit represents a fixed number (here, 153,000 votes per dot). This is the "one dot = X" convention from data journalism.</li>
+            <li><code>d3.scaleLinear()</code> for the magnified inset bar chart. Important concept: using <strong>two different scales</strong> for the same data to show both the big picture and the detail.</li>
+            <li><strong>Text annotations:</strong> <code>svg.append("text")</code> is used heavily here. In data journalism, annotations ARE the story. D3 makes it easy to position text at exact data-driven coordinates.</li>
+            <li><code>d3.format(",")</code> and <code>d3.format(".4%")</code> &mdash; D3's number formatting is incredibly useful for journalism. Commas for large numbers, percentage formatting, SI prefixes, etc.</li>
+          </ul>
+          <p><strong>Mental model:</strong> This is a "scale comparison" viz. The whole point is that when you put 153 million and 9,824 on the same scale, you literally can't see the smaller number. The magnified inset is the classic journalism trick &mdash; "let's zoom in on that tiny sliver."</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief3">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers & Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Sources:</strong> Total votes from Federal Election Commission 2024 general election results. State audit data from Texas Secretary of State (2,724), Virginia Department of Elections (6,303), Ohio Secretary of State (499), Iowa Secretary of State (277), Michigan Secretary of State (16), North Carolina State Board of Elections (5).</p>
+          <p><strong>Methodology:</strong> Direct comparison of total legitimate votes cast against all documented noncitizen voter findings from the states that have conducted audits. Combined total of all findings: 9,824 out of 153,000,000 votes = 0.0064%. The unit chart uses 1,000 dots where each dot = 153,000 votes; the combined noncitizen total wouldn't fill 7% of a single dot.</p>
+          <p><strong>Why this approach:</strong> Log scales would compress the difference. The unit chart with a magnified inset preserves the visceral sense of proportion while still making the smaller numbers readable. This is a standard technique in investigative data journalism (used by ProPublica, NYT Upshot).</p>
+          <p><strong>Caveat:</strong> These are confirmed findings from states that chose to audit. Not all states have conducted audits. However, every audit conducted has found rates well below 0.1%.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- VIZ 4: Who Lacks Documents? -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz4-section">
+      <div class="section-num">Visualization 04</div>
+      <h3>Who Lacks Documents?</h3>
+      <p class="viz-subtitle">Documentary proof requirements do not affect all demographics equally. Lower-income Americans, younger voters, and people of color are disproportionately impacted.</p>
+
+      <div class="chart-container" id="viz4-bars"></div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code4">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn4">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief4">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code4">
+        <div class="code-header"><span>viz4-demographics.js</span><span>D3.js v7</span></div>
+        <pre id="code4-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn4">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><code>d3.scaleBand()</code> &mdash; perfect for categorical axes. The <code>.padding()</code> method controls spacing between bands. For grouped bars, we nest a second <code>scaleBand</code> within each category band.</li>
+            <li><strong>Grouped bar pattern:</strong> Each category gets a group <code>&lt;g&gt;</code> element positioned with the outer scaleBand. Within each group, bars are positioned using an inner scaleBand for the sub-categories ("Lack access" vs "Lack entirely").</li>
+            <li><code>d3.axisLeft()</code> on a band scale automatically creates labels for each category. Use <code>.tickSize(0)</code> to remove the tick marks, keeping just the labels.</li>
+            <li><strong>Grid lines:</strong> Create a second axis call with <code>.tickSize(-width)</code> and <code>.tickFormat("")</code>. This draws lines across the chart without labels. Style them with low opacity.</li>
+            <li><code>.attr("fill", (d, i) => colors[i])</code> &mdash; the index parameter <code>i</code> tells us which sub-bar we're drawing within the group.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A grouped bar chart is really a "chart within a chart." The outer chart positions groups, the inner chart positions bars within each group. Two levels of scaleBand, nested.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief4">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers & Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> Brennan Center for Justice survey data, supplemented by NPR/Marist poll on document access by demographic group.</p>
+          <p><strong>Methodology:</strong> Survey respondents were asked whether they could readily produce documents proving U.S. citizenship. Results are broken down by race/ethnicity, household income, and age group. Two metrics are shown: "Lack ready access" (cannot quickly produce a document) and "Lack entirely" (do not possess one at all).</p>
+          <p><strong>Why grouped bars:</strong> The two-bar grouping allows direct comparison between "lack access" and "lack entirely" within each demographic, while the horizontal layout makes category labels readable and enables easy comparison across demographics.</p>
+          <p><strong>Editorial context:</strong> The disparate impact across demographics raises civil rights concerns. The 15% rate among 18-29 year olds is nearly double the rate for those 50+, suggesting age-related barriers to document access (e.g., born in hospitals that have since closed, reliance on parents for vital records).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- VIZ 5: State Audit Results -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz5-section">
+      <div class="section-num">Visualization 05</div>
+      <h3>State Audit Results</h3>
+      <p class="viz-subtitle">Every state that has audited its rolls for noncitizen registrations has found rates far below even one-tenth of one percent.</p>
+
+      <div class="chart-container" id="viz5-lollipop"></div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code5">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn5">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief5">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code5">
+        <div class="code-header"><span>viz5-audit-lollipop.js</span><span>D3.js v7</span></div>
+        <pre id="code5-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn5">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><strong>Lollipop chart pattern:</strong> Combine a <code>line</code> (the stick) and a <code>circle</code> (the dot) for each data point. It's cleaner than a bar chart for very small values because the dot draws the eye to the actual data point.</li>
+            <li><code>d3.scaleLinear()</code> for the x-axis (percentage). Setting the domain to [0, 1] gives us a reference line at 1% for context.</li>
+            <li><code>d3.scaleBand()</code> for the y-axis (state names). Using <code>.padding(0.4)</code> gives comfortable spacing between lollipops.</li>
+            <li><strong>Reference lines:</strong> <code>svg.append("line")</code> at a specific x-scale value. Add a text label next to it. This is a core data journalism technique &mdash; "here's a benchmark for comparison."</li>
+            <li><strong>Annotations with <code>text</code> elements:</strong> Placing the percentage value at the end of each lollipop stick. Use <code>text-anchor: "start"</code> and offset by a few pixels from the dot.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A lollipop chart is a bar chart that went on a diet. The "lollipop" (dot + stick) communicates the same data as a bar but with less visual weight. It's perfect when your values are all very small and you want the dots to be the focus, not heavy bars.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief5">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers & Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Sources:</strong> Official audit reports from each state's Secretary of State or Board of Elections. Texas (2024 audit), Virginia (2022-2024 cumulative), Ohio (2024), Iowa (2024), Michigan (2024), North Carolina (2024).</p>
+          <p><strong>Methodology:</strong> Each state's noncitizen findings are expressed as a percentage of total registered voters in that state. The 1% reference line provides scale context &mdash; all findings are at least an order of magnitude below 1%.</p>
+          <p><strong>Why lollipop over bar:</strong> With percentages this small (max 0.103%), bars would be nearly invisible. The lollipop's dot provides a visible anchor point, and the stick connects it to the axis for readability. The explicit percentage labels ensure precision.</p>
+          <p><strong>Key finding:</strong> Virginia shows the highest rate (0.103%), yet this represents removals over a 2-year period, not a single election. The median rate across all audited states is 0.013%. North Carolina's rate is so low (0.00007%) it's barely distinguishable from zero.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- Data Sources Section -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="sources-section">
+      <h3>Data Sources &amp; Methodology</h3>
+      <ul>
+        <li><strong>Brennan Center for Justice</strong> &mdash; "Citizens Without Proof" study. Estimate that 21.3 million voting-age Americans lack ready access to citizenship documentation.</li>
+        <li><strong>National Conference of State Legislatures (NCSL)</strong> &mdash; "Voter Identification Requirements" database, updated 2025. Classification of state voter ID laws by strictness.</li>
+        <li><strong>Texas Secretary of State</strong> &mdash; 2024 voter roll audit identifying 2,724 potential noncitizen registrations out of 18M+ registered voters.</li>
+        <li><strong>Virginia Department of Elections</strong> &mdash; 2022-2024 cumulative report of 6,303 noncitizen registrations removed from rolls.</li>
+        <li><strong>Ohio Secretary of State</strong> &mdash; 2024 audit finding 499 potential noncitizen registrations out of ~8 million registered voters.</li>
+        <li><strong>Iowa Secretary of State</strong> &mdash; 2024 audit confirming 277 noncitizen registrations out of ~2.2 million registered voters.</li>
+        <li><strong>Michigan Secretary of State</strong> &mdash; 2024 investigation confirming 16 noncitizen votes out of 8.4 million registered voters.</li>
+        <li><strong>North Carolina State Board of Elections</strong> &mdash; 2024 review identifying 5 noncitizen registrations out of 7.4 million registered voters.</li>
+        <li><strong>US Census Bureau</strong> &mdash; Current Population Survey for voting-age citizen population estimates (~240 million).</li>
+        <li><strong>Election Assistance Commission (EAC)</strong> &mdash; 2024 Election Administration and Voting Survey (EAVS) Report for total votes cast.</li>
+        <li><strong>Federal Election Commission</strong> &mdash; 2024 general election certified results (153 million total votes cast).</li>
+      </ul>
+    </div>
+
+  </div><!-- end .content -->
+
+  <!-- ── Scripts ── -->
+
+</body>
+</html>

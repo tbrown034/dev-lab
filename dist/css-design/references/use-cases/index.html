@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-World CSS Use Cases - Learn CSS</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #a855f7; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover, .nav a.active {
+      background: #a855f7;
+      color: #000;
+      border-color: #a855f7;
+    }
+
+    .page-title {
+      padding: 2rem 3rem 0.5rem;
+    }
+    .page-title h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+    .page-title h2 span { color: #a855f7; }
+    .page-title p {
+      color: #888;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+      max-width: 700px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.25rem;
+      padding: 1.5rem 3rem 3rem;
+      max-width: 1600px;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      border-color: #444;
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      padding: 1.25rem 1.25rem 0.75rem;
+    }
+    .card-header .card-num {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.35rem;
+    }
+    .card-header h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .card-header .who {
+      font-size: 0.78rem;
+      color: #888;
+      font-style: italic;
+    }
+
+    .card-demo {
+      margin: 0.5rem 1.25rem;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      overflow: hidden;
+      min-height: 170px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .card-body {
+      padding: 0.75rem 1.25rem 1rem;
+    }
+    .card-body ul {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 0.75rem;
+    }
+    .card-body ul li {
+      font-size: 0.78rem;
+      color: #999;
+      line-height: 1.6;
+      padding-left: 0.85rem;
+      position: relative;
+    }
+    .card-body ul li::before {
+      content: "\2022";
+      position: absolute;
+      left: 0;
+      color: #555;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .tag {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .tag-purple { background: #a855f722; color: #a855f7; }
+    .tag-blue   { background: #818cf822; color: #818cf8; }
+    .tag-green  { background: #4ade8022; color: #4ade80; }
+    .tag-pink   { background: #f472b622; color: #f472b6; }
+    .tag-orange { background: #f9731622; color: #f97316; }
+
+    .accent-purple { color: #a855f7; }
+    .accent-blue   { color: #818cf8; }
+    .accent-green  { color: #4ade80; }
+    .accent-pink   { color: #f472b6; }
+
+    /* ── Demo Specific Styles ── */
+    .demo-lower-third {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 0;
+    }
+    .lt-bar {
+      display: flex;
+      align-items: stretch;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .lt-name {
+      background: #a855f7;
+      color: #000;
+      padding: 0.5rem 1rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .lt-title {
+      background: #1a1a1a;
+      color: #ccc;
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    .demo-toast {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-left: 3px solid #4ade80;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+      color: #ccc;
+      max-width: 280px;
+      animation: slideInRight 0.3s ease-out;
+    }
+    .demo-toast .toast-icon { color: #4ade80; font-size: 1.1rem; }
+
+    .skeleton-line {
+      background: linear-gradient(90deg, #222 25%, #2a2a2a 50%, #222 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+      height: 12px;
+      margin-bottom: 8px;
+    }
+    .skeleton-line.short { width: 60%; }
+    .skeleton-line.medium { width: 80%; }
+    .skeleton-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(90deg, #222 25%, #2a2a2a 50%, #222 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .demo-tabs {
+      display: flex;
+      border-bottom: 2px solid #222;
+      width: 100%;
+    }
+    .demo-tab {
+      padding: 0.6rem 1rem;
+      font-size: 0.75rem;
+      color: #888;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.2s;
+    }
+    .demo-tab.active {
+      color: #a855f7;
+      border-bottom-color: #a855f7;
+    }
+
+    .demo-tooltip-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .demo-tooltip-trigger {
+      background: #a855f7;
+      color: #000;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .demo-tooltip-bubble {
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.7rem;
+      color: #ccc;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .demo-tooltip-bubble::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #1a1a1a;
+    }
+    .demo-tooltip-wrap:hover .demo-tooltip-bubble { opacity: 1; }
+
+    .demo-progress {
+      width: 80%;
+      height: 8px;
+      background: #222;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .demo-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #a855f7, #f472b6);
+      border-radius: 4px;
+      animation: progressFill 2s ease-out forwards;
+    }
+    @keyframes progressFill {
+      to { width: 72%; }
+    }
+
+    .demo-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+    }
+    .demo-modal-box {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 1.25rem;
+      max-width: 200px;
+      text-align: center;
+    }
+    .demo-modal-box h4 { font-size: 0.85rem; margin-bottom: 0.5rem; }
+    .demo-modal-box p { font-size: 0.7rem; color: #888; margin-bottom: 0.75rem; }
+    .demo-modal-btn {
+      background: #a855f7;
+      color: #000;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .demo-flip-card {
+      width: 140px;
+      height: 100px;
+      perspective: 600px;
+      cursor: pointer;
+    }
+    .demo-flip-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+    .demo-flip-card:hover .demo-flip-inner {
+      transform: rotateY(180deg);
+    }
+    .demo-flip-front, .demo-flip-back {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .demo-flip-front {
+      background: #a855f730;
+      border: 1px solid #a855f7;
+      color: #a855f7;
+    }
+    .demo-flip-back {
+      background: #4ade8030;
+      border: 1px solid #4ade80;
+      color: #4ade80;
+      transform: rotateY(180deg);
+    }
+
+    .demo-masonry {
+      columns: 3;
+      column-gap: 6px;
+      padding: 8px;
+      width: 100%;
+    }
+    .demo-masonry-item {
+      break-inside: avoid;
+      margin-bottom: 6px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      color: #000;
+      font-weight: 700;
+    }
+
+    .demo-sidebar-layout {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 4px;
+      width: 100%;
+      height: 150px;
+      padding: 8px;
+    }
+    .demo-sidebar-side {
+      background: #a855f720;
+      border: 1px solid #a855f750;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 10px;
+      gap: 6px;
+    }
+    .demo-sidebar-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: #a855f740;
+    }
+    .demo-sidebar-main {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      padding: 10px;
+    }
+    .demo-sidebar-main-line {
+      height: 8px;
+      background: #2a2a2a;
+      border-radius: 3px;
+      margin-bottom: 6px;
+    }
+
+    .demo-sticky-header {
+      background: #1a1a1a;
+      border-bottom: 2px solid #a855f7;
+      padding: 0.5rem 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .demo-sticky-logo { font-size: 0.8rem; font-weight: 700; color: #a855f7; }
+    .demo-sticky-links { display: flex; gap: 0.5rem; }
+    .demo-sticky-link {
+      font-size: 0.6rem;
+      color: #888;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: #222;
+    }
+
+    @media (max-width: 768px) {
+      .header, .nav, .page-title, .grid { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Learn <span>CSS</span> + Design</h1>
+    <div class="meta">Real-World Use Cases</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/css-design/">Home</a>
+    <a href="/css-design/lessons/01-cascade-specificity/">01 Cascade</a>
+    <a href="/css-design/lessons/02-layout-mental-models/">02 Layout</a>
+    <a href="/css-design/lessons/03-flexbox-mastery/">03 Flexbox</a>
+    <a href="/css-design/lessons/04-grid-mastery/">04 Grid</a>
+    <a href="/css-design/lessons/05-custom-properties/">05 Variables</a>
+    <a href="/css-design/lessons/06-modern-css/">06 Modern</a>
+    <a href="/css-design/lessons/07-animation-motion/">07 Motion</a>
+    <a href="/css-design/lessons/08-tailwind-v4/">08 Tailwind</a>
+    <a href="/css-design/lessons/09-design-tokens/">09 Tokens</a>
+    <a href="/css-design/lessons/10-component-systems/">10 Components</a>
+    <a href="/css-design/lessons/11-broadcast-graphics/">11 Broadcast</a>
+    <a href="/css-design/lessons/12-capstone/">12 Capstone</a>
+    <a href="/css-design/references/use-cases/" class="active">Use Cases</a>
+  </nav>
+
+  <div class="page-title">
+    <h2>15 Production <span>Use Cases</span></h2>
+    <p>Real-world CSS patterns used in broadcast graphics, newsrooms, dashboards, and modern web applications. Each card demonstrates a working implementation.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- Card 1: Broadcast Lower Third -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">01 / BROADCAST</div>
+        <h3>Broadcast Lower Third</h3>
+        <div class="who">CNN, ESPN, Fox News</div>
+      </div>
+      <div class="card-demo" id="demo-lower-third">
+        <div style="width:100%;height:100%;background:#0a0a0a;position:relative;display:flex;align-items:center;justify-content:center;">
+          <div style="color:#555;font-size:0.7rem;">Live Video Feed</div>
+          <div class="demo-lower-third">
+            <div class="lt-bar">
+              <div class="lt-name">TREVOR BROWN</div>
+              <div class="lt-title">Broadcast Engineer &middot; Tenga Media</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Absolute positioning over video feed element</li>
+          <li>Flexbox for name/title bar alignment</li>
+          <li>CSS animation for slide-in reveal on air</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">position: absolute</span>
+          <span class="tag tag-blue">flexbox</span>
+          <span class="tag tag-green">animation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Election Overlay -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-blue">02 / BROADCAST</div>
+        <h3>Election Night Overlay</h3>
+        <div class="who">AP, Decision Desk HQ</div>
+      </div>
+      <div class="card-demo" id="demo-election-overlay">
+        <div style="width:100%;padding:12px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:0.7rem;">
+            <span style="color:#dc2626;font-weight:700;">RED 48.2%</span>
+            <span style="font-size:0.65rem;color:#666;">87% reporting</span>
+            <span style="color:#2563eb;font-weight:700;">BLUE 51.1%</span>
+          </div>
+          <div style="height:20px;border-radius:4px;overflow:hidden;display:flex;">
+            <div style="width:48.2%;background:#dc2626;transition:width 1s;"></div>
+            <div style="width:51.1%;background:#2563eb;transition:width 1s;"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:10px;">
+            <div style="background:#dc2626;border-radius:3px;padding:4px;text-align:center;font-size:0.55rem;color:#fff;">OH</div>
+            <div style="background:#2563eb;border-radius:3px;padding:4px;text-align:center;font-size:0.55rem;color:#fff;">PA</div>
+            <div style="background:#dc2626;border-radius:3px;padding:4px;text-align:center;font-size:0.55rem;color:#fff;">FL</div>
+            <div style="background:#2563eb;border-radius:3px;padding:4px;text-align:center;font-size:0.55rem;color:#fff;">MI</div>
+            <div style="background:#666;border-radius:3px;padding:4px;text-align:center;font-size:0.55rem;color:#fff;">AZ</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>CSS Grid for state result cards</li>
+          <li>Flexbox progress bars with percentage widths</li>
+          <li>CSS transitions for live vote count animations</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">grid</span>
+          <span class="tag tag-blue">transitions</span>
+          <span class="tag tag-green">percentage widths</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Responsive Dashboard -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">03 / DASHBOARD</div>
+        <h3>Responsive Dashboard</h3>
+        <div class="who">Grafana, Datadog, internal tools</div>
+      </div>
+      <div class="card-demo">
+        <div style="width:100%;padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:4px;padding:8px;">
+            <div style="font-size:0.55rem;color:#888;text-transform:uppercase;">Viewers</div>
+            <div style="font-size:1.1rem;font-weight:700;color:#a855f7;">24.8K</div>
+          </div>
+          <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:4px;padding:8px;">
+            <div style="font-size:0.55rem;color:#888;text-transform:uppercase;">Rating</div>
+            <div style="font-size:1.1rem;font-weight:700;color:#4ade80;">3.2</div>
+          </div>
+          <div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:4px;padding:8px;grid-column:1/-1;">
+            <div style="font-size:0.55rem;color:#888;text-transform:uppercase;margin-bottom:4px;">Share Trend</div>
+            <div style="display:flex;gap:2px;align-items:flex-end;height:30px;">
+              <div style="flex:1;background:#a855f740;border-radius:2px;height:40%;"></div>
+              <div style="flex:1;background:#a855f740;border-radius:2px;height:55%;"></div>
+              <div style="flex:1;background:#a855f740;border-radius:2px;height:35%;"></div>
+              <div style="flex:1;background:#a855f740;border-radius:2px;height:70%;"></div>
+              <div style="flex:1;background:#a855f740;border-radius:2px;height:60%;"></div>
+              <div style="flex:1;background:#a855f740;border-radius:2px;height:85%;"></div>
+              <div style="flex:1;background:#a855f7;border-radius:2px;height:90%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>CSS Grid auto-fill for responsive card layout</li>
+          <li>Container queries for widget-level responsiveness</li>
+          <li>Custom properties for theming metric colors</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">grid auto-fill</span>
+          <span class="tag tag-blue">container queries</span>
+          <span class="tag tag-green">custom properties</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Dark Mode System -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">04 / THEMING</div>
+        <h3>Dark Mode System</h3>
+        <div class="who">Every modern app</div>
+      </div>
+      <div class="card-demo">
+        <div style="display:flex;gap:8px;padding:12px;">
+          <div style="width:120px;background:#060608;border:1px solid #222;border-radius:6px;padding:8px;">
+            <div style="font-size:0.6rem;color:#a855f7;font-weight:600;margin-bottom:4px;">DARK</div>
+            <div style="height:6px;background:#222;border-radius:3px;margin-bottom:4px;"></div>
+            <div style="height:6px;background:#222;border-radius:3px;width:70%;margin-bottom:4px;"></div>
+            <div style="height:20px;background:#a855f7;border-radius:4px;margin-top:8px;"></div>
+          </div>
+          <div style="width:120px;background:#f5f4f1;border:1px solid #ddd;border-radius:6px;padding:8px;">
+            <div style="font-size:0.6rem;color:#a855f7;font-weight:600;margin-bottom:4px;">LIGHT</div>
+            <div style="height:6px;background:#ddd;border-radius:3px;margin-bottom:4px;"></div>
+            <div style="height:6px;background:#ddd;border-radius:3px;width:70%;margin-bottom:4px;"></div>
+            <div style="height:20px;background:#a855f7;border-radius:4px;margin-top:8px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>CSS custom properties for theme tokens</li>
+          <li>prefers-color-scheme media query for auto-detection</li>
+          <li>Data attribute toggle for user override</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">custom properties</span>
+          <span class="tag tag-pink">prefers-color-scheme</span>
+          <span class="tag tag-green">data attributes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: Toast Notification -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">05 / UX</div>
+        <h3>Toast Notification</h3>
+        <div class="who">Slack, GitHub, Vercel</div>
+      </div>
+      <div class="card-demo" style="flex-direction:column;gap:8px;">
+        <div class="demo-toast">
+          <span class="toast-icon">&#10003;</span>
+          <span>Changes saved successfully</span>
+        </div>
+        <div class="demo-toast" style="border-left-color:#f97316;">
+          <span class="toast-icon" style="color:#f97316;">&#9888;</span>
+          <span>Connection unstable</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>CSS keyframe slide-in from edge of viewport</li>
+          <li>Border-left accent for severity indication</li>
+          <li>Auto-dismiss with animation-fill-mode</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">@keyframes</span>
+          <span class="tag tag-blue">position: fixed</span>
+          <span class="tag tag-green">animation-fill-mode</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 6: Skeleton Loading -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-blue">06 / UX</div>
+        <h3>Skeleton Loading</h3>
+        <div class="who">Facebook, YouTube, LinkedIn</div>
+      </div>
+      <div class="card-demo" style="flex-direction:column;align-items:flex-start;padding:16px;">
+        <div class="skeleton-circle"></div>
+        <div class="skeleton-line" style="width:90%;"></div>
+        <div class="skeleton-line medium"></div>
+        <div class="skeleton-line short"></div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Linear gradient with background-size animation</li>
+          <li>Shimmer effect using background-position keyframes</li>
+          <li>Matches actual content dimensions for smooth transition</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">linear-gradient</span>
+          <span class="tag tag-blue">background-size</span>
+          <span class="tag tag-green">@keyframes</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 7: Scroll-driven Parallax -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">07 / SCROLL</div>
+        <h3>Scroll-driven Parallax</h3>
+        <div class="who">Apple, NYT Snowfall</div>
+      </div>
+      <div class="card-demo">
+        <div style="width:100%;height:170px;position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg,#1a0a2e,#0d0d0d);display:flex;align-items:center;justify-content:center;">
+            <div style="font-size:2rem;color:#a855f720;">&#9733;</div>
+          </div>
+          <div style="position:absolute;bottom:0;left:0;right:0;height:60px;background:linear-gradient(0deg,#0d0d0d,transparent);"></div>
+          <div style="position:absolute;top:20px;left:20px;width:6px;height:6px;border-radius:50%;background:#a855f740;"></div>
+          <div style="position:absolute;top:40px;right:30px;width:4px;height:4px;border-radius:50%;background:#818cf840;"></div>
+          <div style="position:absolute;top:60px;left:50%;width:3px;height:3px;border-radius:50%;background:#4ade8040;"></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>CSS scroll-timeline for native scroll-driven animation</li>
+          <li>Multiple layers with different transform speeds</li>
+          <li>No JavaScript needed with animation-timeline</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">scroll-timeline</span>
+          <span class="tag tag-blue">animation-timeline</span>
+          <span class="tag tag-green">transform</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 8: Sticky Header Variants -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">08 / NAV</div>
+        <h3>Sticky Header Variants</h3>
+        <div class="who">Every SaaS product</div>
+      </div>
+      <div class="card-demo" style="flex-direction:column;align-items:stretch;">
+        <div class="demo-sticky-header">
+          <div class="demo-sticky-logo">Brand</div>
+          <div class="demo-sticky-links">
+            <span class="demo-sticky-link">Home</span>
+            <span class="demo-sticky-link">About</span>
+            <span class="demo-sticky-link">Contact</span>
+          </div>
+        </div>
+        <div style="padding:10px;flex:1;">
+          <div style="height:6px;background:#1a1a1a;border-radius:3px;margin-bottom:6px;"></div>
+          <div style="height:6px;background:#1a1a1a;border-radius:3px;width:80%;margin-bottom:6px;"></div>
+          <div style="height:6px;background:#1a1a1a;border-radius:3px;width:60%;"></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>position: sticky with top: 0 for scroll-aware header</li>
+          <li>backdrop-filter: blur() for frosted-glass effect</li>
+          <li>Scroll-triggered class toggle for compact mode</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">position: sticky</span>
+          <span class="tag tag-blue">backdrop-filter</span>
+          <span class="tag tag-pink">scroll-behavior</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 9: Card Flip Animation -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">09 / ANIMATION</div>
+        <h3>Card Flip Animation</h3>
+        <div class="who">E-commerce, flashcard apps</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-flip-card">
+          <div class="demo-flip-inner">
+            <div class="demo-flip-front">Hover me</div>
+            <div class="demo-flip-back">Revealed!</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>CSS perspective for 3D context</li>
+          <li>transform-style: preserve-3d for stacked faces</li>
+          <li>backface-visibility: hidden to hide the back face</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">perspective</span>
+          <span class="tag tag-blue">rotateY</span>
+          <span class="tag tag-green">backface-visibility</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 10: Masonry Grid -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-blue">10 / LAYOUT</div>
+        <h3>Masonry Grid</h3>
+        <div class="who">Pinterest, Unsplash</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-masonry">
+          <div class="demo-masonry-item" style="height:60px;background:#a855f750;">1</div>
+          <div class="demo-masonry-item" style="height:40px;background:#818cf850;">2</div>
+          <div class="demo-masonry-item" style="height:80px;background:#4ade8050;">3</div>
+          <div class="demo-masonry-item" style="height:50px;background:#f472b650;">4</div>
+          <div class="demo-masonry-item" style="height:70px;background:#f9731650;">5</div>
+          <div class="demo-masonry-item" style="height:45px;background:#a855f750;">6</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>CSS columns for simple masonry without JS</li>
+          <li>break-inside: avoid prevents card splitting</li>
+          <li>Future: native CSS masonry with grid-template-rows: masonry</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">columns</span>
+          <span class="tag tag-blue">break-inside</span>
+          <span class="tag tag-green">column-gap</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 11: Sidebar Layout -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">11 / LAYOUT</div>
+        <h3>Sidebar Layout</h3>
+        <div class="who">Gmail, VS Code, Slack</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-sidebar-layout">
+          <div class="demo-sidebar-side">
+            <div class="demo-sidebar-dot"></div>
+            <div class="demo-sidebar-dot"></div>
+            <div class="demo-sidebar-dot"></div>
+          </div>
+          <div class="demo-sidebar-main">
+            <div class="demo-sidebar-main-line" style="width:90%;"></div>
+            <div class="demo-sidebar-main-line" style="width:70%;"></div>
+            <div class="demo-sidebar-main-line" style="width:80%;"></div>
+            <div class="demo-sidebar-main-line" style="width:50%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>CSS Grid with fixed sidebar and fluid main content</li>
+          <li>Collapsible sidebar using grid-template-columns transition</li>
+          <li>Media query breakpoint for mobile drawer pattern</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">grid-template-columns</span>
+          <span class="tag tag-blue">minmax()</span>
+          <span class="tag tag-green">@media</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 12: Modal with Backdrop -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">12 / UX</div>
+        <h3>Modal with Backdrop</h3>
+        <div class="who">Stripe, Linear, Notion</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-modal-backdrop">
+          <div class="demo-modal-box">
+            <h4>Confirm Action</h4>
+            <p>Are you sure you want to proceed?</p>
+            <button class="demo-modal-btn">Continue</button>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Native &lt;dialog&gt; with ::backdrop pseudo-element</li>
+          <li>backdrop-filter: blur() for depth effect</li>
+          <li>Focus trap and inert attribute for accessibility</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">&lt;dialog&gt;</span>
+          <span class="tag tag-blue">::backdrop</span>
+          <span class="tag tag-green">backdrop-filter</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 13: Tab Component -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">13 / COMPONENT</div>
+        <h3>Tab Component</h3>
+        <div class="who">GitHub, Jira, Figma</div>
+      </div>
+      <div class="card-demo" style="flex-direction:column;align-items:stretch;">
+        <div class="demo-tabs">
+          <div class="demo-tab active">Overview</div>
+          <div class="demo-tab">Analytics</div>
+          <div class="demo-tab">Settings</div>
+        </div>
+        <div style="padding:12px;">
+          <div style="height:6px;background:#222;border-radius:3px;margin-bottom:6px;width:90%;"></div>
+          <div style="height:6px;background:#222;border-radius:3px;margin-bottom:6px;width:70%;"></div>
+          <div style="height:6px;background:#222;border-radius:3px;width:50%;"></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Border-bottom indicator with transition on active state</li>
+          <li>Scroll-snap for horizontal tab overflow on mobile</li>
+          <li>ARIA roles and keyboard navigation support</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">border-bottom</span>
+          <span class="tag tag-blue">scroll-snap</span>
+          <span class="tag tag-green">overflow-x</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 14: Tooltip System -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-blue">14 / COMPONENT</div>
+        <h3>Tooltip System</h3>
+        <div class="who">Tailwind UI, Radix, Shadcn</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-tooltip-wrap">
+          <div class="demo-tooltip-trigger">Hover me</div>
+          <div class="demo-tooltip-bubble">This is a tooltip</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>CSS-only tooltip using ::after pseudo-element</li>
+          <li>Positioned with transform: translateX(-50%) for centering</li>
+          <li>Arrow created with border trick on ::after</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">::after</span>
+          <span class="tag tag-blue">transform</span>
+          <span class="tag tag-green">border trick</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 15: Progress Indicator -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">15 / UX</div>
+        <h3>Progress Indicator</h3>
+        <div class="who">Dropbox, Notion, upload UIs</div>
+      </div>
+      <div class="card-demo" style="flex-direction:column;gap:8px;padding:20px;">
+        <div style="font-size:0.7rem;color:#888;text-align:center;">Uploading... 72%</div>
+        <div class="demo-progress">
+          <div class="demo-progress-fill"></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Gradient fill with CSS animation for smooth transitions</li>
+          <li>Border-radius on inner element for rounded caps</li>
+          <li>CSS custom property for dynamic width via JS</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">linear-gradient</span>
+          <span class="tag tag-blue">animation</span>
+          <span class="tag tag-pink">custom properties</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

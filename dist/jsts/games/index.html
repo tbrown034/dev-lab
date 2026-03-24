@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JS/TS Games & Quizzes - Learn JS + TS</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.25rem; font-weight: 600; }
+    .header h1 span { color: #eab308; }
+    .header .meta { color: #888; font-size: 0.8rem; }
+    .header .meta a { color: #eab308; text-decoration: none; }
+
+    /* ── Tab Bar ── */
+    .tab-bar {
+      display: flex;
+      gap: 0.35rem;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-bottom: 1px solid #222;
+      scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex-shrink: 0;
+      padding: 0.55rem 0.85rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #aaa;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+    .tab-btn:hover { border-color: #555; color: #ddd; }
+    .tab-btn.active {
+      background: #eab308;
+      color: #000;
+      border-color: #eab308;
+      font-weight: 600;
+    }
+
+    /* ── Game Panels ── */
+    .game-panel {
+      display: none;
+      padding: 1.25rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .game-panel.active { display: block; }
+
+    .game-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .game-subtitle {
+      color: #888;
+      font-size: 0.82rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Score Bar ── */
+    .score-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .score-item {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 6px;
+      padding: 0.5rem 0.85rem;
+      font-size: 0.82rem;
+    }
+    .score-item .label { color: #888; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .score-item .value { color: #eab308; font-weight: 600; font-size: 1.1rem; }
+    .score-item .value.green { color: #4ade80; }
+    .score-item .value.purple { color: #818cf8; }
+    .score-item .value.pink { color: #f472b6; }
+
+    /* ── Question Card ── */
+    .question-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .question-card pre {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #ddd;
+      font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+      margin: 0.75rem 0;
+    }
+    .question-card .prompt {
+      font-size: 0.9rem;
+      color: #ccc;
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+
+    /* ── Choice Buttons ── */
+    .choices {
+      display: grid;
+      gap: 0.6rem;
+    }
+    .choices.two-col {
+      grid-template-columns: 1fr 1fr;
+    }
+    .choice-btn {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      color: #ddd;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+      min-height: 48px;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+    }
+    .choice-btn:hover { border-color: #555; background: #222; }
+    .choice-btn:active { transform: scale(0.98); }
+    .choice-btn.correct {
+      border-color: #4ade80;
+      background: #4ade8015;
+      color: #4ade80;
+    }
+    .choice-btn.wrong {
+      border-color: #ef4444;
+      background: #ef444415;
+      color: #ef4444;
+    }
+    .choice-btn.highlight {
+      border-color: #4ade80;
+      background: #4ade8010;
+    }
+    .choice-btn:disabled { cursor: default; opacity: 0.85; }
+    .choice-btn code {
+      font-family: 'JetBrains Mono', 'SF Mono', monospace;
+      font-size: 0.8rem;
+    }
+
+    /* ── Explanation Box ── */
+    .explanation {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 0.75rem;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: #ccc;
+      display: none;
+    }
+    .explanation.show { display: block; }
+    .explanation strong { color: #4ade80; }
+
+    /* ── Next Button ── */
+    .next-btn {
+      display: none;
+      width: 100%;
+      padding: 0.85rem;
+      background: #eab308;
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.75rem;
+      min-height: 48px;
+      transition: background 0.15s;
+    }
+    .next-btn:hover { background: #facc15; }
+    .next-btn.show { display: block; }
+
+    /* ── Speed Round ── */
+    .speed-timer {
+      font-size: 2rem;
+      font-weight: 600;
+      text-align: center;
+      color: #eab308;
+      margin: 0.5rem 0;
+    }
+    .speed-timer.danger { color: #ef4444; }
+    .tf-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .tf-btn {
+      padding: 1.25rem;
+      border-radius: 8px;
+      border: 2px solid;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 60px;
+      transition: all 0.1s;
+    }
+    .tf-btn.true-btn {
+      background: #4ade8015;
+      border-color: #4ade80;
+      color: #4ade80;
+    }
+    .tf-btn.false-btn {
+      background: #ef444415;
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+    .tf-btn:active { transform: scale(0.96); }
+
+    /* ── Start / Reset Button ── */
+    .start-btn {
+      width: 100%;
+      padding: 1rem;
+      background: #eab308;
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 48px;
+      margin: 1rem 0;
+    }
+    .start-btn:hover { background: #facc15; }
+
+    /* ── Drag / Sort Area ── */
+    .sort-items {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .sort-item {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+    }
+    .sort-item:hover { border-color: #555; }
+    .sort-item.selected {
+      border-color: #eab308;
+      background: #eab30810;
+      color: #eab308;
+    }
+    .sort-item.correct-pos {
+      border-color: #4ade80;
+      background: #4ade8010;
+      color: #4ade80;
+      cursor: default;
+    }
+    .sort-item.wrong-pos {
+      border-color: #ef4444;
+      background: #ef444410;
+      color: #ef4444;
+    }
+    .step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-right: 0.75rem;
+      flex-shrink: 0;
+    }
+    .sort-item.correct-pos .step-number {
+      background: #4ade80;
+      color: #000;
+    }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      height: 4px;
+      background: #222;
+      border-radius: 2px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: #eab308;
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+
+    /* ── Results List ── */
+    .results-list {
+      margin-top: 1rem;
+    }
+    .result-item {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 0.4rem;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .result-item .icon { flex-shrink: 0; font-size: 1rem; }
+    .result-item.wrong { border-color: #ef444444; }
+    .result-item.right { border-color: #4ade8044; }
+
+    /* ── Input field ── */
+    .answer-input {
+      width: 100%;
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      color: #ddd;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      outline: none;
+      margin-bottom: 0.5rem;
+    }
+    .answer-input:focus { border-color: #eab308; }
+    .submit-btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: #eab308;
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 44px;
+    }
+    .submit-btn:hover { background: #facc15; }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .header { padding: 0.75rem 1rem; }
+      .game-panel { padding: 1rem; }
+      .question-card pre { font-size: 0.72rem; padding: 0.75rem; }
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+</head>
+<body>
+  <div class="header">
+    <h1>JS/TS <span>Games</span></h1>
+    <div class="meta"><a href="/jsts/">Home</a></div>
+  </div>
+
+  <div class="tab-bar" id="tabBar"></div>
+
+  <!-- All 10 game panels -->
+  <div class="game-panel" id="panel-coercion">
+    <div class="game-title">Type Coercion Predictor</div>
+    <div class="game-subtitle">What does JavaScript coerce this expression to?</div>
+    <div class="score-bar" id="coercion-score"></div>
+    <div class="progress-bar"><div class="fill" id="coercion-progress"></div></div>
+    <div class="question-card" id="coercion-question"></div>
+    <div class="choices" id="coercion-choices"></div>
+    <div class="explanation" id="coercion-explanation"></div>
+    <button class="next-btn" id="coercion-next">Next Expression</button>
+  </div>
+
+  <div class="game-panel" id="panel-closure">
+    <div class="game-title">Closure Output Quiz</div>
+    <div class="game-subtitle">What does this closure-based code output?</div>
+    <div class="score-bar" id="closure-score"></div>
+    <div class="progress-bar"><div class="fill" id="closure-progress"></div></div>
+    <div class="question-card" id="closure-question"></div>
+    <div class="choices" id="closure-choices"></div>
+    <div class="explanation" id="closure-explanation"></div>
+    <button class="next-btn" id="closure-next">Next Closure</button>
+  </div>
+
+  <div class="game-panel" id="panel-eventloop">
+    <div class="game-title">Event Loop Sequencer</div>
+    <div class="game-subtitle">Put the console.log outputs in the correct order</div>
+    <div class="score-bar" id="eventloop-score"></div>
+    <div class="question-card" id="eventloop-question"></div>
+    <div class="sort-items" id="eventloop-items"></div>
+    <div class="explanation" id="eventloop-explanation"></div>
+    <button class="next-btn" id="eventloop-next">Next Sequence</button>
+  </div>
+
+  <div class="game-panel" id="panel-proto">
+    <div class="game-title">Prototype Chain Tracer</div>
+    <div class="game-subtitle">Trace the prototype chain to find the output</div>
+    <div class="score-bar" id="proto-score"></div>
+    <div class="progress-bar"><div class="fill" id="proto-progress"></div></div>
+    <div class="question-card" id="proto-question"></div>
+    <div class="choices" id="proto-choices"></div>
+    <div class="explanation" id="proto-explanation"></div>
+    <button class="next-btn" id="proto-next">Next Chain</button>
+  </div>
+
+  <div class="game-panel" id="panel-promise">
+    <div class="game-title">Promise Chain Builder</div>
+    <div class="game-subtitle">What does this promise chain resolve/reject to?</div>
+    <div class="score-bar" id="promise-score"></div>
+    <div class="progress-bar"><div class="fill" id="promise-progress"></div></div>
+    <div class="question-card" id="promise-question"></div>
+    <div class="choices" id="promise-choices"></div>
+    <div class="explanation" id="promise-explanation"></div>
+    <button class="next-btn" id="promise-next">Next Promise</button>
+  </div>
+
+  <div class="game-panel" id="panel-tstype">
+    <div class="game-title">TypeScript Type Puzzle</div>
+    <div class="game-subtitle">What type does TypeScript infer here?</div>
+    <div class="score-bar" id="tstype-score"></div>
+    <div class="progress-bar"><div class="fill" id="tstype-progress"></div></div>
+    <div class="question-card" id="tstype-question"></div>
+    <div class="choices" id="tstype-choices"></div>
+    <div class="explanation" id="tstype-explanation"></div>
+    <button class="next-btn" id="tstype-next">Next Type</button>
+  </div>
+
+  <div class="game-panel" id="panel-scope">
+    <div class="game-title">Scope Detective</div>
+    <div class="game-subtitle">What value does this variable hold?</div>
+    <div class="score-bar" id="scope-score"></div>
+    <div class="progress-bar"><div class="fill" id="scope-progress"></div></div>
+    <div class="question-card" id="scope-question"></div>
+    <div class="choices" id="scope-choices"></div>
+    <div class="explanation" id="scope-explanation"></div>
+    <button class="next-btn" id="scope-next">Next Puzzle</button>
+  </div>
+
+  <div class="game-panel" id="panel-array">
+    <div class="game-title">Array Method Challenge</div>
+    <div class="game-subtitle">What does this array method chain produce?</div>
+    <div class="score-bar" id="array-score"></div>
+    <div class="progress-bar"><div class="fill" id="array-progress"></div></div>
+    <div class="question-card" id="array-question"></div>
+    <div class="choices" id="array-choices"></div>
+    <div class="explanation" id="array-explanation"></div>
+    <button class="next-btn" id="array-next">Next Array</button>
+  </div>
+
+  <div class="game-panel" id="panel-regex">
+    <div class="game-title">Regex Matcher</div>
+    <div class="game-subtitle">Which string(s) does this regex match?</div>
+    <div class="score-bar" id="regex-score"></div>
+    <div class="progress-bar"><div class="fill" id="regex-progress"></div></div>
+    <div class="question-card" id="regex-question"></div>
+    <div class="choices" id="regex-choices"></div>
+    <div class="explanation" id="regex-explanation"></div>
+    <button class="next-btn" id="regex-next">Next Pattern</button>
+  </div>
+
+  <div class="game-panel" id="panel-thisbind">
+    <div class="game-title">This Binding Quiz</div>
+    <div class="game-subtitle">What does `this` refer to here?</div>
+    <div class="score-bar" id="thisbind-score"></div>
+    <div class="progress-bar"><div class="fill" id="thisbind-progress"></div></div>
+    <div class="question-card" id="thisbind-question"></div>
+    <div class="choices" id="thisbind-choices"></div>
+    <div class="explanation" id="thisbind-explanation"></div>
+    <button class="next-btn" id="thisbind-next">Next Binding</button>
+  </div>
+
+
+  <script>
+    // =======================================
+    //  HELPERS
+    // =======================================
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    function renderScore(containerId, items) {
+      const c = document.getElementById(containerId);
+      c.innerHTML = items.map(it =>
+        `<div class="score-item"><div class="label">${it.label}</div><div class="value ${it.cls || ''}">${it.value}</div></div>`
+      ).join('');
+    }
+    function saveHigh(key, val) {
+      const prev = parseInt(localStorage.getItem(key) || '0');
+      if (val > prev) localStorage.setItem(key, val);
+      return Math.max(prev, val);
+    }
+    function getHigh(key) { return parseInt(localStorage.getItem(key) || '0'); }
+
+    // =======================================
+    //  TAB SYSTEM
+    // =======================================
+    const tabs = [
+      { id: 'coercion', label: 'Coercion' },
+      { id: 'closure', label: 'Closures' },
+      { id: 'eventloop', label: 'Event Loop' },
+      { id: 'proto', label: 'Prototypes' },
+      { id: 'promise', label: 'Promises' },
+      { id: 'tstype', label: 'TS Types' },
+      { id: 'scope', label: 'Scope' },
+      { id: 'array', label: 'Arrays' },
+      { id: 'regex', label: 'Regex' },
+      { id: 'thisbind', label: 'this' },
+    ];
+
+    const tabBar = document.getElementById('tabBar');
+    let activeTab = localStorage.getItem('jsts-games-tab') || 'coercion';
+
+    tabs.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'tab-btn' + (t.id === activeTab ? ' active' : '');
+      btn.textContent = t.label;
+      btn.dataset.tab = t.id;
+      btn.addEventListener('click', () => switchTab(t.id));
+      tabBar.appendChild(btn);
+    });
+
+    const started = {};
+    function switchTab(id) {
+      activeTab = id;
+      localStorage.setItem('jsts-games-tab', id);
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+      document.querySelectorAll('.game-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
+      if (!started[id]) {
+        started[id] = true;
+        gameInits[id]();
+      }
+    }
+
+    const gameInits = {};
+
+    // =======================================
+    //  GENERIC QUIZ ENGINE
+    // =======================================
+    function createQuizGame(config) {
+      const { id, questions, storageKey } = config;
+      let idx = 0, score = 0, streak = 0, best = getHigh(storageKey);
+      const qs = shuffle(questions);
+
+      function updateScore() {
+        renderScore(`${id}-score`, [
+          { label: 'Score', value: `${score}/${qs.length}` },
+          { label: 'Streak', value: streak, cls: 'green' },
+          { label: 'Best', value: best, cls: 'purple' },
+        ]);
+        const prog = document.getElementById(`${id}-progress`);
+        if (prog) prog.style.width = `${(idx / qs.length) * 100}%`;
+      }
+
+      function showQuestion() {
+        if (idx >= qs.length) {
+          best = saveHigh(storageKey, score);
+          document.getElementById(`${id}-question`).innerHTML = `<div class="prompt">Round complete! You scored <strong style="color:#eab308;">${score}/${qs.length}</strong>.</div>`;
+          document.getElementById(`${id}-choices`).innerHTML = '';
+          document.getElementById(`${id}-explanation`).classList.remove('show');
+          document.getElementById(`${id}-next`).classList.remove('show');
+          updateScore();
+          return;
+        }
+        const q = qs[idx];
+        document.getElementById(`${id}-question`).innerHTML = `<div class="prompt">${q.prompt || ''}</div><pre>${q.code}</pre>`;
+        document.getElementById(`${id}-explanation`).classList.remove('show');
+        document.getElementById(`${id}-next`).classList.remove('show');
+
+        const choicesEl = document.getElementById(`${id}-choices`);
+        const opts = shuffle(q.options);
+        choicesEl.innerHTML = '';
+        opts.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'choice-btn';
+          btn.innerHTML = `<code>${opt}</code>`;
+          btn.addEventListener('click', () => handleAnswer(opt, q, choicesEl));
+          choicesEl.appendChild(btn);
+        });
+        updateScore();
+      }
+
+      function handleAnswer(picked, q, container) {
+        const btns = container.querySelectorAll('.choice-btn');
+        btns.forEach(b => {
+          b.disabled = true;
+          const val = b.textContent;
+          if (val === q.answer) b.classList.add('correct');
+          if (val === picked && picked !== q.answer) b.classList.add('wrong');
+        });
+        if (picked === q.answer) { score++; streak++; }
+        else { streak = 0; }
+        best = saveHigh(storageKey, score);
+        const expEl = document.getElementById(`${id}-explanation`);
+        expEl.innerHTML = q.explanation;
+        expEl.classList.add('show');
+        document.getElementById(`${id}-next`).classList.add('show');
+        updateScore();
+      }
+
+      document.getElementById(`${id}-next`).addEventListener('click', () => { idx++; showQuestion(); });
+
+      return showQuestion;
+    }
+
+    // =======================================
+    //  1. TYPE COERCION PREDICTOR
+    // =======================================
+    gameInits.coercion = () => {
+      const questions = [
+        { code: `[] + []`, options: ['""', '"undefined"', '0', 'NaN'], answer: '""', explanation: '<strong>Empty string.</strong> Both arrays are coerced to strings via .toString(), producing "" + "" = "".' },
+        { code: `[] + {}`, options: ['"[object Object]"', '{}', 'NaN', '0'], answer: '"[object Object]"', explanation: '<strong>[object Object].</strong> [] becomes "" and {} becomes "[object Object]", resulting in string concatenation.' },
+        { code: `{} + []`, options: ['0', '"[object Object]"', 'NaN', '""'], answer: '0', explanation: '<strong>0.</strong> The {} is parsed as an empty block, so it becomes +[] which is +0 = 0.' },
+        { code: `true + true + true`, options: ['3', '"truetruetrue"', 'true', 'NaN'], answer: '3', explanation: '<strong>3.</strong> Boolean true is coerced to 1, so 1 + 1 + 1 = 3.' },
+        { code: `"5" - 3`, options: ['2', '"53"', 'NaN', '"2"'], answer: '2', explanation: '<strong>2.</strong> The minus operator coerces "5" to the number 5, then 5 - 3 = 2.' },
+        { code: `"5" + 3`, options: ['"53"', '8', '"8"', 'NaN'], answer: '"53"', explanation: '<strong>"53".</strong> The + operator with a string triggers string concatenation: "5" + "3" = "53".' },
+        { code: `null == undefined`, options: ['true', 'false', 'TypeError', 'null'], answer: 'true', explanation: '<strong>true.</strong> This is a special case in the spec: null and undefined are loosely equal to each other and nothing else.' },
+        { code: `typeof NaN`, options: ['"number"', '"NaN"', '"undefined"', '"object"'], answer: '"number"', explanation: '<strong>"number".</strong> NaN stands for "Not a Number" but its type is ironically "number" per the IEEE 754 spec.' },
+        { code: `0.1 + 0.2 === 0.3`, options: ['false', 'true', 'NaN', 'undefined'], answer: 'false', explanation: '<strong>false.</strong> Floating point arithmetic: 0.1 + 0.2 = 0.30000000000000004, which is not strictly equal to 0.3.' },
+        { code: `!!"false"`, options: ['true', 'false', '"true"', 'TypeError'], answer: 'true', explanation: '<strong>true.</strong> Any non-empty string is truthy, so !"false" is false, then !false is true.' },
+        { code: `+"" `, options: ['0', 'NaN', '""', 'undefined'], answer: '0', explanation: '<strong>0.</strong> The unary + operator converts an empty string to 0.' },
+        { code: `null + 1`, options: ['1', 'null', 'NaN', '"null1"'], answer: '1', explanation: '<strong>1.</strong> null is coerced to 0 in numeric context, so 0 + 1 = 1.' },
+      ];
+      createQuizGame({ id: 'coercion', questions, storageKey: 'jsts-coercion-best' })();
+    };
+
+    // =======================================
+    //  2. CLOSURE OUTPUT QUIZ
+    // =======================================
+    gameInits.closure = () => {
+      const questions = [
+        { code: `function outer() {\n  let count = 0;\n  return function() {\n    return ++count;\n  };\n}\nconst fn = outer();\nconsole.log(fn(), fn(), fn());`, options: ['1 2 3', '0 1 2', '1 1 1', '3 3 3'], answer: '1 2 3', explanation: '<strong>1 2 3.</strong> The inner function closes over count. Each call increments the same variable: ++0=1, ++1=2, ++2=3.' },
+        { code: `for (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0);\n}\n// Output:`, options: ['3 3 3', '0 1 2', '0 0 0', 'undefined x3'], answer: '3 3 3', explanation: '<strong>3 3 3.</strong> var is function-scoped, so all callbacks share the same i. By the time they run, i is 3.' },
+        { code: `for (let i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0);\n}\n// Output:`, options: ['0 1 2', '3 3 3', '0 0 0', '2 2 2'], answer: '0 1 2', explanation: '<strong>0 1 2.</strong> let creates a new binding for each iteration, so each callback captures its own i.' },
+        { code: `function make() {\n  var arr = [];\n  for (var i = 0; i < 3; i++) {\n    arr.push(function() { return i; });\n  }\n  return arr;\n}\nconsole.log(make()[0]());`, options: ['3', '0', '1', 'undefined'], answer: '3', explanation: '<strong>3.</strong> Classic closure trap: var i is shared across all closures. After the loop, i = 3.' },
+        { code: `const add = (a) => (b) => a + b;\nconst add5 = add(5);\nconsole.log(add5(3));`, options: ['8', '5', '3', 'NaN'], answer: '8', explanation: '<strong>8.</strong> add(5) returns (b) => 5 + b. Calling add5(3) computes 5 + 3 = 8. This is currying via closures.' },
+        { code: `function counter() {\n  let n = 0;\n  return {\n    inc: () => ++n,\n    dec: () => --n,\n    val: () => n\n  };\n}\nconst c = counter();\nc.inc(); c.inc(); c.dec();\nconsole.log(c.val());`, options: ['1', '2', '0', '3'], answer: '1', explanation: '<strong>1.</strong> inc() twice brings n to 2, dec() brings it to 1. All methods share the same closed-over n.' },
+        { code: `let x = 10;\nfunction foo() {\n  console.log(x);\n  let x = 20;\n}\nfoo();`, options: ['ReferenceError', '10', '20', 'undefined'], answer: 'ReferenceError', explanation: '<strong>ReferenceError.</strong> The let x = 20 declaration creates a Temporal Dead Zone. The x exists in scope but cannot be accessed before its declaration.' },
+        { code: `function once(fn) {\n  let called = false;\n  return (...args) => {\n    if (called) return;\n    called = true;\n    return fn(...args);\n  };\n}\nconst f = once(x => x * 2);\nconsole.log(f(5), f(10));`, options: ['10 undefined', '10 20', '5 10', '10 10'], answer: '10 undefined', explanation: '<strong>10 undefined.</strong> The first call returns 5*2=10 and sets called=true. The second call returns early with undefined.' },
+      ];
+      createQuizGame({ id: 'closure', questions, storageKey: 'jsts-closure-best' })();
+    };
+
+    // =======================================
+    //  3. EVENT LOOP SEQUENCER
+    // =======================================
+    gameInits.eventloop = () => {
+      const puzzles = [
+        {
+          code: `console.log("A");\nsetTimeout(() => console.log("B"), 0);\nPromise.resolve().then(() => console.log("C"));\nconsole.log("D");`,
+          correctOrder: ['A', 'D', 'C', 'B'],
+          explanation: '<strong>A, D, C, B.</strong> Synchronous code runs first (A, D). Microtasks (Promises) run before macrotasks (setTimeout), so C before B.'
+        },
+        {
+          code: `setTimeout(() => console.log("1"), 0);\nsetTimeout(() => console.log("2"), 0);\nPromise.resolve()\n  .then(() => console.log("3"))\n  .then(() => console.log("4"));`,
+          correctOrder: ['3', '4', '1', '2'],
+          explanation: '<strong>3, 4, 1, 2.</strong> Both promise .then() microtasks drain before any setTimeout macrotask fires.'
+        },
+        {
+          code: `console.log("start");\nsetTimeout(() => console.log("timeout"), 0);\nPromise.resolve()\n  .then(() => {\n    console.log("promise1");\n    return Promise.resolve();\n  })\n  .then(() => console.log("promise2"));\nconsole.log("end");`,
+          correctOrder: ['start', 'end', 'promise1', 'promise2', 'timeout'],
+          explanation: '<strong>start, end, promise1, promise2, timeout.</strong> Sync runs first, then all microtasks (including chained ones), then the macrotask.'
+        },
+        {
+          code: `async function foo() {\n  console.log("A");\n  await Promise.resolve();\n  console.log("B");\n}\nconsole.log("C");\nfoo();\nconsole.log("D");`,
+          correctOrder: ['C', 'A', 'D', 'B'],
+          explanation: '<strong>C, A, D, B.</strong> C logs first. foo() is called: A logs synchronously. await pauses foo, so D logs. Then B runs as a microtask.'
+        },
+        {
+          code: `queueMicrotask(() => console.log("micro"));\nsetTimeout(() => console.log("macro"), 0);\nconsole.log("sync");`,
+          correctOrder: ['sync', 'micro', 'macro'],
+          explanation: '<strong>sync, micro, macro.</strong> Synchronous code first, then microtasks (queueMicrotask), then macrotasks (setTimeout).'
+        },
+      ];
+
+      let pIdx = 0, score = 0, best = getHigh('jsts-eventloop-best');
+      let selectedOrder = [];
+      const ps = shuffle(puzzles);
+
+      function updateScore() {
+        renderScore('eventloop-score', [
+          { label: 'Score', value: `${score}/${ps.length}` },
+          { label: 'Best', value: best, cls: 'purple' },
+        ]);
+      }
+
+      function showPuzzle() {
+        if (pIdx >= ps.length) {
+          best = saveHigh('jsts-eventloop-best', score);
+          document.getElementById('eventloop-question').innerHTML = `<div class="prompt">Complete! Score: <strong style="color:#eab308;">${score}/${ps.length}</strong></div>`;
+          document.getElementById('eventloop-items').innerHTML = '';
+          document.getElementById('eventloop-explanation').classList.remove('show');
+          document.getElementById('eventloop-next').classList.remove('show');
+          updateScore();
+          return;
+        }
+        selectedOrder = [];
+        const p = ps[pIdx];
+        document.getElementById('eventloop-question').innerHTML = `<div class="prompt">What order do these log?</div><pre>${p.code}</pre>`;
+        document.getElementById('eventloop-explanation').classList.remove('show');
+        document.getElementById('eventloop-next').classList.remove('show');
+
+        const container = document.getElementById('eventloop-items');
+        const shuffled = shuffle(p.correctOrder);
+        container.innerHTML = '';
+        shuffled.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'sort-item';
+          div.innerHTML = `<span class="step-number">?</span><code>${item}</code>`;
+          div.addEventListener('click', () => selectItem(div, item, p));
+          container.appendChild(div);
+        });
+        updateScore();
+      }
+
+      function selectItem(el, item, puzzle) {
+        if (el.classList.contains('correct-pos') || el.classList.contains('wrong-pos')) return;
+        selectedOrder.push(item);
+        const pos = selectedOrder.length;
+        const isCorrect = puzzle.correctOrder[pos - 1] === item;
+
+        el.querySelector('.step-number').textContent = pos;
+        if (isCorrect) {
+          el.classList.add('correct-pos');
+        } else {
+          el.classList.add('wrong-pos');
+        }
+
+        if (selectedOrder.length === puzzle.correctOrder.length) {
+          const allCorrect = selectedOrder.every((s, i) => s === puzzle.correctOrder[i]);
+          if (allCorrect) score++;
+          best = saveHigh('jsts-eventloop-best', score);
+          const expEl = document.getElementById('eventloop-explanation');
+          expEl.innerHTML = puzzle.explanation;
+          expEl.classList.add('show');
+          document.getElementById('eventloop-next').classList.add('show');
+          updateScore();
+        }
+      }
+
+      document.getElementById('eventloop-next').addEventListener('click', () => { pIdx++; showPuzzle(); });
+      showPuzzle();
+    };
+
+    // =======================================
+    //  4. PROTOTYPE CHAIN TRACER
+    // =======================================
+    gameInits.proto = () => {
+      const questions = [
+        { code: `function Animal(name) { this.name = name; }\nAnimal.prototype.speak = function() {\n  return this.name + " speaks";\n};\nconst dog = new Animal("Rex");\nconsole.log(dog.speak());`, options: ['"Rex speaks"', 'undefined', 'TypeError', '"speaks"'], answer: '"Rex speaks"', explanation: '<strong>"Rex speaks".</strong> dog inherits speak() from Animal.prototype. this.name is "Rex" from the constructor.' },
+        { code: `const obj = { a: 1 };\nconst child = Object.create(obj);\nchild.b = 2;\nconsole.log(child.a, child.b);`, options: ['1 2', 'undefined 2', '1 undefined', 'TypeError'], answer: '1 2', explanation: '<strong>1 2.</strong> Object.create sets obj as child\'s prototype. child.a is found on the prototype, child.b is own property.' },
+        { code: `class Base {\n  constructor() { this.x = 1; }\n  getX() { return this.x; }\n}\nclass Sub extends Base {\n  constructor() {\n    super();\n    this.x = 2;\n  }\n}\nconsole.log(new Sub().getX());`, options: ['2', '1', 'undefined', 'TypeError'], answer: '2', explanation: '<strong>2.</strong> super() sets x=1, then this.x=2 overwrites it. getX() is inherited from Base.prototype and returns this.x which is 2.' },
+        { code: `function Foo() {}\nFoo.prototype.bar = 42;\nconst f = new Foo();\nFoo.prototype = { bar: 99 };\nconsole.log(f.bar);`, options: ['42', '99', 'undefined', 'TypeError'], answer: '42', explanation: '<strong>42.</strong> f.__proto__ still points to the original Foo.prototype object. Reassigning Foo.prototype doesn\'t affect existing instances.' },
+        { code: `const arr = [1, 2, 3];\nconsole.log(\n  arr.hasOwnProperty("length")\n);`, options: ['true', 'false', 'TypeError', 'undefined'], answer: 'true', explanation: '<strong>true.</strong> length is an own property of arrays, not inherited from Array.prototype.' },
+        { code: `function A() {}\nfunction B() {}\nB.prototype = Object.create(A.prototype);\nconst b = new B();\nconsole.log(b instanceof A);`, options: ['true', 'false', 'TypeError', 'undefined'], answer: 'true', explanation: '<strong>true.</strong> B.prototype\'s prototype is A.prototype, so b is an instance of both B and A via the prototype chain.' },
+        { code: `const obj = {};\nconsole.log(\n  obj.toString === \n  Object.prototype.toString\n);`, options: ['true', 'false', 'TypeError', 'undefined'], answer: 'true', explanation: '<strong>true.</strong> Plain objects inherit toString from Object.prototype. They reference the exact same function.' },
+      ];
+      createQuizGame({ id: 'proto', questions, storageKey: 'jsts-proto-best' })();
+    };
+
+    // =======================================
+    //  5. PROMISE CHAIN BUILDER
+    // =======================================
+    gameInits.promise = () => {
+      const questions = [
+        { code: `Promise.resolve(1)\n  .then(x => x + 1)\n  .then(x => x * 3)\n  .then(x => console.log(x));`, options: ['6', '4', '3', '9'], answer: '6', explanation: '<strong>6.</strong> 1 -> 1+1=2 -> 2*3=6.' },
+        { code: `Promise.reject("err")\n  .then(x => x + "!")\n  .catch(e => e + " caught")\n  .then(x => console.log(x));`, options: ['"err caught"', '"err!"', '"err"', 'Unhandled rejection'], answer: '"err caught"', explanation: '<strong>"err caught".</strong> The rejection skips .then() and hits .catch(), which returns "err caught". The next .then() receives this value.' },
+        { code: `Promise.all([\n  Promise.resolve(1),\n  Promise.resolve(2),\n  Promise.resolve(3)\n]).then(x => console.log(x));`, options: ['[1, 2, 3]', '6', '3', '1'], answer: '[1, 2, 3]', explanation: '<strong>[1, 2, 3].</strong> Promise.all resolves with an array of all resolved values in order.' },
+        { code: `Promise.resolve("a")\n  .then(x => {\n    throw new Error("oops");\n  })\n  .then(x => "b")\n  .catch(e => "recovered")\n  .then(x => console.log(x));`, options: ['"recovered"', '"b"', 'Error: oops', '"a"'], answer: '"recovered"', explanation: '<strong>"recovered".</strong> The thrown error skips the next .then() and is caught by .catch(). catch returns "recovered" which flows to the final .then().' },
+        { code: `const p = new Promise((res) => {\n  res(1);\n  res(2);\n});\np.then(console.log);`, options: ['1', '2', '1 2', 'TypeError'], answer: '1', explanation: '<strong>1.</strong> A promise can only be resolved once. The second res(2) is ignored.' },
+        { code: `async function foo() {\n  return 42;\n}\nfoo().then(x => console.log(x));`, options: ['42', 'Promise {42}', 'undefined', 'TypeError'], answer: '42', explanation: '<strong>42.</strong> An async function always returns a Promise. return 42 is equivalent to return Promise.resolve(42).' },
+        { code: `Promise.race([\n  new Promise(r => setTimeout(() => r("slow"), 200)),\n  new Promise(r => setTimeout(() => r("fast"), 50)),\n]).then(console.log);`, options: ['"fast"', '"slow"', '["fast","slow"]', 'undefined'], answer: '"fast"', explanation: '<strong>"fast".</strong> Promise.race resolves with the first promise to settle. The 50ms one wins.' },
+        { code: `Promise.resolve()\n  .then(() => { return { then(r) { r(99); } }; })\n  .then(console.log);`, options: ['99', '{ then: [Function] }', 'undefined', 'TypeError'], answer: '99', explanation: '<strong>99.</strong> Returning a thenable (an object with a then method) from .then() causes it to be "unwrapped". The promise adopts the thenable\'s value.' },
+      ];
+      createQuizGame({ id: 'promise', questions, storageKey: 'jsts-promise-best' })();
+    };
+
+    // =======================================
+    //  6. TYPESCRIPT TYPE PUZZLE
+    // =======================================
+    gameInits.tstype = () => {
+      const questions = [
+        { code: `const x = [1, "hello", true] as const;\n// What is typeof x?`, options: ['readonly [1, "hello", true]', '(number | string | boolean)[]', '[number, string, boolean]', 'any[]'], answer: 'readonly [1, "hello", true]', explanation: '<strong>readonly [1, "hello", true].</strong> as const creates a readonly tuple with literal types, not widened types.' },
+        { code: `type A = { x: number; y: string };\ntype B = { y: string; z: boolean };\ntype C = A & B;\n// What keys does C have?`, options: ['x, y, z', 'y', 'x, y', 'never'], answer: 'x, y, z', explanation: '<strong>x, y, z.</strong> Intersection types (&) combine all properties from both types.' },
+        { code: `type Result = \n  string extends object ? "yes" : "no";\n// Result is:`, options: ['"no"', '"yes"', 'string', 'never'], answer: '"no"', explanation: '<strong>"no".</strong> string does not extend object (string is a primitive, not an object type), so the conditional resolves to "no".' },
+        { code: `function id<T>(x: T): T { return x; }\nconst result = id("hello");\n// typeof result:`, options: ['"hello"', 'string', 'T', 'unknown'], answer: '"hello"', explanation: '<strong>"hello".</strong> TypeScript infers the literal type "hello" for T when passed a string literal directly.' },
+        { code: `type NonNull<T> = T extends \n  null | undefined ? never : T;\ntype X = NonNull<\n  string | null | number\n>;`, options: ['string | number', 'string', 'never', 'string | null | number'], answer: 'string | number', explanation: '<strong>string | number.</strong> Conditional types distribute over unions. null extends null|undefined -> never, string -> string, number -> number.' },
+        { code: `interface Cat { meow(): void; }\ninterface Dog { bark(): void; }\ntype Pet = Cat | Dog;\n// Can you call meow() on Pet?`, options: ['No, need narrowing', 'Yes always', 'Yes if Cat first', 'TypeError'], answer: 'No, need narrowing', explanation: '<strong>No, need narrowing.</strong> A union type only allows access to members common to all types. You need a type guard to narrow to Cat first.' },
+        { code: `type Flatten<T> = \n  T extends Array<infer U> ? U : T;\ntype X = Flatten<string[]>;`, options: ['string', 'string[]', 'Array<string>', 'never'], answer: 'string', explanation: '<strong>string.</strong> The infer keyword captures the element type U from Array<U>. string[] matches Array<string>, so U = string.' },
+        { code: `const obj = {\n  name: "Trevor",\n  age: 25\n};\ntype Keys = keyof typeof obj;`, options: ['"name" | "age"', 'string', 'string | number', '"Trevor" | 25'], answer: '"name" | "age"', explanation: '<strong>"name" | "age".</strong> keyof typeof obj extracts the union of literal key types from the object.' },
+      ];
+      createQuizGame({ id: 'tstype', questions, storageKey: 'jsts-tstype-best' })();
+    };
+
+    // =======================================
+    //  7. SCOPE DETECTIVE
+    // =======================================
+    gameInits.scope = () => {
+      const questions = [
+        { code: `var a = 1;\nfunction foo() {\n  console.log(a);\n  var a = 2;\n}\nfoo();`, options: ['undefined', '1', '2', 'ReferenceError'], answer: 'undefined', explanation: '<strong>undefined.</strong> var declarations are hoisted to the top of the function, but not their assignments. So a exists but is undefined when logged.' },
+        { code: `let x = 1;\n{\n  let x = 2;\n  {\n    let x = 3;\n    console.log(x);\n  }\n}`, options: ['3', '2', '1', 'ReferenceError'], answer: '3', explanation: '<strong>3.</strong> let is block-scoped. The innermost block\'s x = 3 shadows the outer ones.' },
+        { code: `const a = 10;\nfunction outer() {\n  const a = 20;\n  function inner() {\n    console.log(a);\n  }\n  return inner;\n}\nouter()();`, options: ['20', '10', 'undefined', 'ReferenceError'], answer: '20', explanation: '<strong>20.</strong> Lexical scoping: inner() looks up a in its enclosing scope (outer), finding 20, not the global 10.' },
+        { code: `for (var i = 0; i < 3; i++) {}\nconsole.log(i);`, options: ['3', 'undefined', 'ReferenceError', '2'], answer: '3', explanation: '<strong>3.</strong> var is function-scoped, not block-scoped. After the loop, i = 3 and is accessible outside the for block.' },
+        { code: `for (let j = 0; j < 3; j++) {}\nconsole.log(j);`, options: ['ReferenceError', '3', 'undefined', '2'], answer: 'ReferenceError', explanation: '<strong>ReferenceError.</strong> let is block-scoped. j only exists within the for loop block.' },
+        { code: `function foo() {\n  bar = 42;\n}\nfoo();\nconsole.log(bar);`, options: ['42', 'undefined', 'ReferenceError', 'TypeError'], answer: '42', explanation: '<strong>42.</strong> Without var/let/const, bar becomes an implicit global variable (sloppy mode). This is a common bug.' },
+        { code: `(function() {\n  var x = y = 10;\n})();\nconsole.log(typeof x, typeof y);`, options: ['"undefined" "number"', '"number" "number"', 'ReferenceError', '"undefined" "undefined"'], answer: '"undefined" "number"', explanation: '<strong>"undefined" "number".</strong> y = 10 creates a global (no var), but var x is local to the IIFE. Outside, x is undefined and y is 10.' },
+        { code: `function test() {\n  console.log(typeof foo);\n  console.log(typeof bar);\n  var foo = "hello";\n  function bar() {}\n}\ntest();`, options: ['"undefined" "function"', '"string" "function"', 'ReferenceError', '"undefined" "undefined"'], answer: '"undefined" "function"', explanation: '<strong>"undefined" "function".</strong> var foo is hoisted (undefined), function bar is fully hoisted (including its body).' },
+      ];
+      createQuizGame({ id: 'scope', questions, storageKey: 'jsts-scope-best' })();
+    };
+
+    // =======================================
+    //  8. ARRAY METHOD CHALLENGE
+    // =======================================
+    gameInits.array = () => {
+      const questions = [
+        { code: `[1, 2, 3, 4, 5]\n  .filter(n => n % 2 !== 0)\n  .map(n => n * 2)`, options: ['[2, 6, 10]', '[2, 4, 6, 8, 10]', '[1, 3, 5]', '[4, 8]'], answer: '[2, 6, 10]', explanation: '<strong>[2, 6, 10].</strong> filter keeps odds [1,3,5], then map doubles each: [2,6,10].' },
+        { code: `[1, 2, 3].reduce(\n  (acc, n) => acc + n, 10\n)`, options: ['16', '6', '10', 'NaN'], answer: '16', explanation: '<strong>16.</strong> Starting with accumulator 10: 10+1=11, 11+2=13, 13+3=16.' },
+        { code: `["a", "b", "c"]\n  .map((el, i) => i)\n  .reverse()`, options: ['[2, 1, 0]', '[0, 1, 2]', '["c", "b", "a"]', '[2, 0, 1]'], answer: '[2, 1, 0]', explanation: '<strong>[2, 1, 0].</strong> map produces indices [0,1,2], then reverse() flips it to [2,1,0].' },
+        { code: `[3, 1, 4, 1, 5]\n  .sort()\n  .slice(0, 3)`, options: ['[1, 1, 3]', '[1, 1, 4]', '[3, 1, 4]', '[1, 3, 4]'], answer: '[1, 1, 3]', explanation: '<strong>[1, 1, 3].</strong> sort() without a comparator sorts lexicographically (works for single digits), giving [1,1,3,4,5]. slice(0,3) takes the first three.' },
+        { code: `[1, [2, [3, [4]]]].flat(2)`, options: ['[1, 2, 3, [4]]', '[1, 2, 3, 4]', '[1, [2, [3, [4]]]]', '[1, 2, [3, [4]]]'], answer: '[1, 2, 3, [4]]', explanation: '<strong>[1, 2, 3, [4]].</strong> flat(2) flattens two levels deep. The innermost [4] is at depth 3, so it stays nested.' },
+        { code: `Array.from({ length: 3 },\n  (_, i) => i * 2\n)`, options: ['[0, 2, 4]', '[2, 4, 6]', '[0, 1, 2]', '[undefined, undefined, undefined]'], answer: '[0, 2, 4]', explanation: '<strong>[0, 2, 4].</strong> Array.from creates an array of length 3 and maps each index: 0*2=0, 1*2=2, 2*2=4.' },
+        { code: `[10, 20, 30].find(n => n > 15)`, options: ['20', '30', '[20, 30]', 'true'], answer: '20', explanation: '<strong>20.</strong> find() returns the first element that passes the test. 20 is the first value > 15.' },
+        { code: `[..."hello"].filter(\n  (c, i, a) => a.indexOf(c) === i\n).join("")`, options: ['"helo"', '"hello"', '"hlo"', '"hel"'], answer: '"helo"', explanation: '<strong>"helo".</strong> This is a unique characters filter. indexOf finds the first occurrence index. The second "l" at index 3 !== indexOf("l") which is 2, so it\'s removed.' },
+        { code: `[1, 2, 3]\n  .map(n => [n, n * 2])\n  .flat()`, options: ['[1, 2, 2, 4, 3, 6]', '[[1,2],[2,4],[3,6]]', '[1, 2, 3, 2, 4, 6]', '[2, 4, 6]'], answer: '[1, 2, 2, 4, 3, 6]', explanation: '<strong>[1, 2, 2, 4, 3, 6].</strong> map produces [[1,2],[2,4],[3,6]], then flat() merges them into a single array.' },
+      ];
+      createQuizGame({ id: 'array', questions, storageKey: 'jsts-array-best' })();
+    };
+
+    // =======================================
+    //  9. REGEX MATCHER
+    // =======================================
+    gameInits.regex = () => {
+      const questions = [
+        { code: `/^\\d{3}-\\d{4}$/.test("555-1234")`, prompt: 'Does this regex match?', options: ['true', 'false'], answer: 'true', explanation: '<strong>true.</strong> \\d{3} matches 3 digits, - is literal, \\d{4} matches 4 digits. "555-1234" fits perfectly with ^ and $ anchors.' },
+        { code: `"hello world".match(/\\b\\w+/g)`, prompt: 'What does this return?', options: ['["hello", "world"]', '["hello"]', '["hello world"]', 'null'], answer: '["hello", "world"]', explanation: '<strong>["hello", "world"].</strong> \\b is a word boundary, \\w+ matches one or more word chars. The g flag finds all matches.' },
+        { code: `"2024-03-15".replace(\n  /(\\d{4})-(\\d{2})-(\\d{2})/,\n  "$3/$2/$1"\n)`, prompt: 'What is the result?', options: ['"15/03/2024"', '"2024/03/15"', '"03/15/2024"', '"2024-03-15"'], answer: '"15/03/2024"', explanation: '<strong>"15/03/2024".</strong> Capture groups: $1=2024, $2=03, $3=15. The replacement pattern $3/$2/$1 reorders them.' },
+        { code: `/[aeiou]/gi.test("BCDFG")`, prompt: 'Does this match?', options: ['false', 'true'], answer: 'false', explanation: '<strong>false.</strong> The regex matches any vowel (case-insensitive). "BCDFG" contains no vowels at all.' },
+        { code: `"foo123bar456".match(/\\d+/g)`, prompt: 'What does this return?', options: ['["123", "456"]', '["1","2","3","4","5","6"]', '["foo123bar456"]', '["123456"]'], answer: '["123", "456"]', explanation: '<strong>["123", "456"].</strong> \\d+ matches one or more consecutive digits. The g flag finds all such groups.' },
+        { code: `"a1b2c3".replace(/[a-z]/g, "")`, prompt: 'What is the result?', options: ['"123"', '""', '"abc"', '"a1b2c3"'], answer: '"123"', explanation: '<strong>"123".</strong> The regex matches any lowercase letter. Replacing with "" removes all letters, leaving only digits.' },
+        { code: `/^(?=.*[A-Z])(?=.*\\d).{8,}$/\n  .test("Hello123")`, prompt: 'Does this password pass?', options: ['true', 'false'], answer: 'true', explanation: '<strong>true.</strong> Lookaheads check: has uppercase (H), has digit (1,2,3), length >= 8 (8 chars). All conditions met.' },
+        { code: `"aaabbbccc".match(/(.)\\1+/g)`, prompt: 'What does this return?', options: ['["aaa", "bbb", "ccc"]', '["a", "b", "c"]', '["aaabbbccc"]', 'null'], answer: '["aaa", "bbb", "ccc"]', explanation: '<strong>["aaa", "bbb", "ccc"].</strong> (.) captures any char, \\1+ matches one or more of the same char. Finds runs of repeated chars.' },
+      ];
+      createQuizGame({ id: 'regex', questions, storageKey: 'jsts-regex-best' })();
+    };
+
+    // =======================================
+    //  10. THIS BINDING QUIZ
+    // =======================================
+    gameInits.thisbind = () => {
+      const questions = [
+        { code: `const obj = {\n  name: "Alice",\n  greet() {\n    return "Hi, " + this.name;\n  }\n};\nconsole.log(obj.greet());`, options: ['"Hi, Alice"', '"Hi, undefined"', 'TypeError', '"Hi, "'], answer: '"Hi, Alice"', explanation: '<strong>"Hi, Alice".</strong> Method call: this is bound to obj, so this.name is "Alice".' },
+        { code: `const obj = {\n  name: "Bob",\n  greet() {\n    return "Hi, " + this.name;\n  }\n};\nconst fn = obj.greet;\nconsole.log(fn());`, options: ['"Hi, undefined"', '"Hi, Bob"', 'TypeError', '"Hi, "'], answer: '"Hi, undefined"', explanation: '<strong>"Hi, undefined".</strong> Extracting the method loses the binding. In non-strict mode, this becomes the global object (no name property).' },
+        { code: `const obj = {\n  name: "Carol",\n  greet: () => {\n    return "Hi, " + this.name;\n  }\n};\nconsole.log(obj.greet());`, options: ['"Hi, undefined"', '"Hi, Carol"', 'TypeError', '"Hi, "'], answer: '"Hi, undefined"', explanation: '<strong>"Hi, undefined".</strong> Arrow functions don\'t have their own this. They inherit from the enclosing scope (module/global), which has no name.' },
+        { code: `function greet() {\n  return "Hi, " + this.name;\n}\nconst bound = greet.bind({ name: "Dave" });\nconsole.log(bound());`, options: ['"Hi, Dave"', '"Hi, undefined"', 'TypeError', '"Hi, "'], answer: '"Hi, Dave"', explanation: '<strong>"Hi, Dave".</strong> bind() creates a new function with this permanently set to { name: "Dave" }.' },
+        { code: `class Person {\n  constructor(name) { this.name = name; }\n  greet = () => "Hi, " + this.name;\n}\nconst p = new Person("Eve");\nconst fn = p.greet;\nconsole.log(fn());`, options: ['"Hi, Eve"', '"Hi, undefined"', 'TypeError', '"Hi, "'], answer: '"Hi, Eve"', explanation: '<strong>"Hi, Eve".</strong> Class field arrow functions capture this from the constructor. Even when extracted, this remains the instance.' },
+        { code: `function Timer() {\n  this.seconds = 0;\n  setInterval(function() {\n    this.seconds++;\n  }, 1000);\n}\nconst t = new Timer();\n// After 3 seconds, t.seconds is:`, options: ['0', '3', 'NaN', 'undefined'], answer: '0', explanation: '<strong>0.</strong> The regular function inside setInterval has its own this (the global object). t.seconds is never incremented.' },
+        { code: `const obj = { n: 42 };\nfunction getN() { return this.n; }\nconsole.log(\n  getN.call(obj)\n);`, options: ['42', 'undefined', 'TypeError', 'NaN'], answer: '42', explanation: '<strong>42.</strong> call() explicitly sets this to obj, so this.n is 42.' },
+        { code: `const obj = {\n  x: 10,\n  getX() { return this.x; },\n  getXArrow: () => this.x\n};\nconsole.log(\n  obj.getX(),\n  obj.getXArrow()\n);`, options: ['10 undefined', '10 10', 'undefined undefined', 'undefined 10'], answer: '10 undefined', explanation: '<strong>10 undefined.</strong> getX() is a regular method, so this = obj. getXArrow is an arrow function, so this is inherited from the enclosing scope (not obj).' },
+      ];
+      createQuizGame({ id: 'thisbind', questions, storageKey: 'jsts-thisbind-best' })();
+    };
+
+    // ── Initialize active tab ──
+    switchTab(activeTab);
+  </script>
+</body>
+</html>

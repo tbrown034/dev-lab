@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Functions — The Pod</title>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/shell-B2-DeMgN.css">
+  <link rel="stylesheet" crossorigin href="/assets/episode-FuyZZf_I.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">The Pod</a>
+      <div class="header-right">
+        <a href="/pod/" class="back-link">&larr; All Episodes</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="episode-page" data-accent="var(--accent-django)">
+
+    <div class="episode-header">
+      <span class="episode-track-badge django">Django &mdash; Episode 03</span>
+      <h1>Python Functions</h1>
+      <p class="episode-subtitle">Decorators, generators, comprehensions &mdash; Python's power tools.</p>
+      <span class="episode-duration-badge">~11 min</span>
+    </div>
+
+    <div class="player-container">
+      <audio id="episode-audio" preload="metadata">
+        <source src="/audio/django/03-python-functions.mp3" type="audio/mpeg">
+      </audio>
+
+      <div class="player">
+        <div class="player-controls">
+          <button class="player-btn skip-btn" id="skip-back" aria-label="Skip back 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+          <button class="player-btn play-btn" id="play-pause" aria-label="Play">
+            <svg class="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg class="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <button class="player-btn skip-btn" id="skip-forward" aria-label="Skip forward 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+        </div>
+
+        <div class="player-progress">
+          <span class="player-time" id="current-time">0:00</span>
+          <div class="progress-bar-container" id="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <input type="range" class="progress-scrubber" id="scrubber" min="0" max="1000" value="0" step="1">
+          </div>
+          <span class="player-time" id="duration">0:00</span>
+        </div>
+
+        <div class="player-extras">
+          <div class="speed-control">
+            <button class="speed-btn" id="speed-btn">1x</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="transcript-container">
+      <div class="transcript-header">
+        <h2>Transcript</h2>
+        <button class="auto-scroll-toggle active" id="auto-scroll-toggle" aria-label="Toggle auto-scroll">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          Auto-scroll
+        </button>
+      </div>
+      <div class="transcript" id="transcript"></div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>The Pod &mdash; part of <a href="/">Learn Coding</a> by Trevor Brown</p>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+
+    const TRANSCRIPT = [
+      { time: 0, text: "Welcome back to The Pod. I'm Alex, and today we're going deep on Python functions. We covered the basics last time, but Python functions have some incredibly powerful features that go way beyond what JavaScript offers natively." },
+      { time: 16, text: "I'm Sam, and this is the episode where Python starts showing off. Decorators, generators, and advanced argument handling. These are the features that make experienced Python developers so productive." },
+      { time: 30, text: "Let's start with function basics and how they differ from JavaScript. You define a function with def instead of function. def greet(name): return f'Hello, {name}'. Python also has lambda for small anonymous functions: lambda x: x * 2." },
+      { time: 48, text: "Lambda is like JavaScript arrow functions but more limited. A lambda can only contain a single expression. No statements, no multi-line logic. For anything complex, you define a named function. Python intentionally keeps lambdas simple." },
+      { time: 64, text: "Now, argument handling in Python is much more flexible than JavaScript. You have positional arguments, keyword arguments, default values, *args for variable positional arguments, and **kwargs for variable keyword arguments." },
+      { time: 82, text: "Wait, can you explain *args and **kwargs? That syntax is confusing at first." },
+      { time: 88, text: "Sure. *args collects extra positional arguments into a tuple. If your function is def add(*args), you can call it with any number of arguments: add(1, 2, 3). Inside the function, args is the tuple (1, 2, 3)." },
+      { time: 106, text: "And **kwargs collects extra keyword arguments into a dictionary. def config(**kwargs) lets you call config(host='localhost', port=8080), and kwargs becomes {'host': 'localhost', 'port': 8080}. It's like JavaScript's rest parameters and object destructuring combined." },
+      { time: 128, text: "You can also force arguments to be keyword-only by putting them after a bare * in the parameter list. def process(data, *, verbose=False) means verbose can only be passed as a keyword argument. This prevents subtle bugs." },
+      { time: 148, text: "Now let's talk about decorators. This is one of Python's most distinctive features. A decorator is a function that wraps another function to modify its behavior. You apply it with the @ syntax above a function definition." },
+      { time: 166, text: "The classic example is a timer decorator. @timer above a function definition, and now that function automatically prints how long it took to run. You didn't change the function's code at all. The decorator adds behavior externally." },
+      { time: 184, text: "Under the hood, @timer above def my_func() is just syntactic sugar for my_func = timer(my_func). The decorator receives the function, wraps it in a new function that adds the timing logic, and returns the wrapper." },
+      { time: 204, text: "This is huge in Django. @login_required checks if a user is authenticated before running a view. @csrf_exempt skips CSRF checking. @cache_page caches the response. Decorators are everywhere in Python web frameworks." },
+      { time: 224, text: "You can also write decorators with arguments, which is a decorator factory. @cache(timeout=300) first calls cache(timeout=300) which returns the actual decorator, which then wraps your function. It's decorators all the way down." },
+      { time: 242, text: "Let's move to generators. A generator is a function that produces a sequence of values lazily, one at a time, instead of computing everything upfront and returning a list." },
+      { time: 256, text: "You create a generator by using yield instead of return. When you call a generator function, it doesn't run immediately. It returns a generator object. Each time you call next() on it or iterate over it, it runs until the next yield, produces that value, and pauses." },
+      { time: 276, text: "Why is that useful? Why not just return a list?" },
+      { time: 282, text: "Memory efficiency. Imagine processing a file with a billion lines. If you read all lines into a list, you need memory for a billion strings. A generator processes one line at a time. It's the difference between loading a whole movie into RAM versus streaming it." },
+      { time: 302, text: "Python has generator expressions too, which are like list comprehensions but with parentheses instead of brackets. (x * 2 for x in range(1000000)) creates a generator, not a list. Almost zero memory regardless of size." },
+      { time: 320, text: "range() itself is actually a lazy iterator in Python 3. range(1000000) doesn't create a million numbers in memory. It generates each number on demand. This is why Python 3 changed range from returning a list to returning an iterator." },
+      { time: 338, text: "Let's also cover closures, since they work slightly differently from JavaScript. A closure in Python captures variables from the enclosing scope, but there's a gotcha: if you want to modify a variable from the enclosing scope, you need the nonlocal keyword." },
+      { time: 358, text: "In JavaScript, you can freely modify variables from outer scopes in closures. In Python, assignment inside a function creates a local variable by default. nonlocal tells Python you mean the variable from the outer scope. It's more explicit." },
+      { time: 376, text: "Last topic: first-class functions. Functions in Python are objects. You can pass them as arguments, return them from other functions, store them in lists and dicts. map(str, [1, 2, 3]) passes the str function to map. Very functional programming style." },
+      { time: 396, text: "The built-in functions like map, filter, sorted with a key function, and functools.reduce give Python solid functional programming chops without needing a separate paradigm. It's practical functional programming." },
+      { time: 414, text: "To wrap up: Python functions support flexible arguments with *args and **kwargs, decorators for modifying behavior, generators for lazy evaluation, closures with nonlocal, and first-class function passing. These are the tools that make Python code concise and powerful." },
+      { time: 436, text: "That wraps up the Python fundamentals for the Django track. With these three episodes under your belt, you have the Python foundation you need to start building with Django. Thanks for listening!" }
+    ];
+  </script>
+  <script src="/pod/player.js"></script>
+
+</body>
+</html>

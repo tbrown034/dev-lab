@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 07 - Agents</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #f472b6; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>07</span> Agents &mdash; AI That Reasons and Acts</h1>
+    <a href="/ai-llm/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">An agent is a loop, not a call.</strong> Instead of "send prompt, get response," an agent reasons about what to do, does it, observes the result, and decides what to do next. Repeat until done.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>Mental Model: The Intern with a Checklist</h2>
+
+    <p>Imagine you hand an intern a task: "Research the mayor's campaign donors and write a summary." The intern doesn't do this in one step. They:</p>
+
+    <ol>
+      <li><strong>Think:</strong> "I need to find donor records. Let me search the FEC database."</li>
+      <li><strong>Act:</strong> Search the database.</li>
+      <li><strong>Observe:</strong> "Found 47 records. The top donors are..."</li>
+      <li><strong>Think:</strong> "I should cross-reference with our articles about these donors."</li>
+      <li><strong>Act:</strong> Search the article archive.</li>
+      <li><strong>Observe:</strong> "Found 3 articles mentioning donor conflicts of interest..."</li>
+      <li><strong>Think:</strong> "I have enough to write the summary."</li>
+      <li><strong>Act:</strong> Write the summary.</li>
+    </ol>
+
+    <p>That's an agent. Think &rarr; Act &rarr; Observe &rarr; repeat. The model is the "thinker," your tools are the "actions," and the tool results are the "observations."</p>
+
+    <div class="aha">
+      <p><strong>The key difference from tool use (Lesson 04):</strong> Tool use is one round &mdash; the model calls a tool and responds. An agent is <em>multiple rounds</em> of reasoning + tool use, where each round's observations inform the next round's thinking. The model decides when it has enough information to stop.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE REACT PATTERN                            -->
+    <!-- ============================================ -->
+
+    <h2>The ReAct Pattern</h2>
+
+    <p><strong>ReAct</strong> (Reasoning + Acting) is the most common agent pattern. The model alternates between reasoning about the task and taking actions:</p>
+
+    <pre><code><span class="comment">// ReAct prompt structure</span>
+const system = `You are a research agent for investigative journalists.
+
+You have access to these tools:
+- search_articles: Search the article archive
+- search_public_records: Search government databases
+- get_document: Retrieve a specific document
+
+For each step:
+1. THINK: Explain your reasoning about what to do next
+2. ACT: Use a tool to get information
+3. OBSERVE: The tool result will be provided
+
+Continue until you have enough information to answer.
+Then provide your final answer with citations.`;
+
+<span class="comment">// The agent loop (same as Lesson 04's tool loop, but with intent)</span>
+async function runAgent(task) {
+  let messages = [{ role: "user", content: task }];
+  let steps = 0;
+  const MAX_STEPS = 10;
+
+  while (steps &lt; MAX_STEPS) {
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 2048,
+      system,
+      tools,
+      messages
+    });
+
+    steps++;
+
+    if (response.stop_reason === "tool_use") {
+      <span class="comment">// Execute all tool calls</span>
+      const toolResults = [];
+      for (const block of response.content) {
+        if (block.type === "tool_use") {
+          const result = await executeTools(block.name, block.input);
+          toolResults.push({
+            type: "tool_result",
+            tool_use_id: block.id,
+            content: JSON.stringify(result)
+          });
+        }
+      }
+
+      messages.push({ role: "assistant", content: response.content });
+      messages.push({ role: "user", content: toolResults });
+      continue;
+    }
+
+    <span class="comment">// Agent decided it's done</span>
+    const text = response.content.find(b =&gt; b.type === "text");
+    return { answer: text?.text, steps };
+  }
+
+  return { answer: "Max steps reached", steps };
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>Always set a max steps limit.</strong> Without it, a confused agent could loop forever, burning through your API budget. 10&ndash;20 steps is typical. If the agent can't solve the problem in that many steps, it probably needs better tools or a clearer task.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- AGENT PATTERNS                               -->
+    <!-- ============================================ -->
+
+    <h2>Four Agent Patterns</h2>
+
+    <h3>1. ReAct (Reasoning + Acting)</h3>
+    <p>What we just built. The model reasons, acts, observes, and repeats. Best for open-ended research tasks.</p>
+
+    <h3>2. Plan-then-Execute</h3>
+    <p>The model first creates a plan, then executes each step. Better for complex, multi-stage tasks.</p>
+
+    <pre><code><span class="comment">// Plan-then-execute prompt</span>
+const system = `You are a research agent.
+
+When given a task:
+1. First, create a numbered PLAN with specific steps
+2. Then execute each step one at a time
+3. After each step, check if the plan needs adjustment
+4. When all steps are complete, synthesize the results`;
+
+<span class="comment">// The model will first output:
+// "Plan:
+//  1. Search for campaign finance records
+//  2. Identify top 10 donors
+//  3. Cross-reference with article archive
+//  4. Check for conflicts of interest
+//  5. Write summary
+//
+// Executing Step 1..."</span></code></pre>
+
+    <h3>3. Reflection</h3>
+    <p>After generating a response, a second pass critiques and improves it. Good for quality-sensitive tasks.</p>
+
+    <pre><code><span class="comment">// Reflection pattern: two calls</span>
+async function reflectiveAgent(task) {
+  <span class="comment">// First pass: generate</span>
+  const draft = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 2048,
+    system: "You are a research assistant. Generate a thorough answer.",
+    messages: [{ role: "user", content: task }]
+  });
+
+  <span class="comment">// Second pass: critique and improve</span>
+  const improved = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 2048,
+    system: `You are a critical editor. Review this draft for:
+- Unsupported claims (flag them)
+- Missing context or nuance
+- Logical gaps
+- Factual accuracy concerns
+Then rewrite an improved version.`,
+    messages: [{ role: "user", content: `Draft:\n${draft.content[0].text}\n\nOriginal task: ${task}` }]
+  });
+
+  return improved.content[0].text;
+}</code></pre>
+
+    <h3>4. Orchestrator</h3>
+    <p>A top-level agent that delegates subtasks to specialized sub-agents. For complex workflows.</p>
+
+    <pre><code><span class="comment">// Orchestrator: one model coordinates, specialized models execute</span>
+async function orchestrator(task) {
+  const plan = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1024,
+    system: `Break this task into subtasks. Return JSON:
+{ "subtasks": [{ "type": "research|analysis|writing", "description": "..." }] }`,
+    messages: [{ role: "user", content: task }]
+  });
+
+  const subtasks = JSON.parse(plan.content[0].text).subtasks;
+  const results = [];
+
+  for (const subtask of subtasks) {
+    <span class="comment">// Each subtask gets a specialized system prompt</span>
+    const systemPrompts = {
+      research: "You are a thorough researcher. Find and cite specific facts.",
+      analysis: "You are a data analyst. Identify patterns and anomalies.",
+      writing: "You are a journalist. Write clear, factual prose in AP Style."
+    };
+
+    const result = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1024,
+      system: systemPrompts[subtask.type],
+      messages: [{ role: "user", content: subtask.description + "\n\nContext: " + results.join("\n") }]
+    });
+
+    results.push(result.content[0].text);
+  }
+
+  return results;
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- SAFETY                                       -->
+    <!-- ============================================ -->
+
+    <h2>Agent Safety</h2>
+
+    <div class="warning">
+      <p><strong>Agents can do real things.</strong> If your tools can write files, send emails, or make API calls, a confused agent can cause real damage. Always:</p>
+    </div>
+
+    <ul>
+      <li><strong>Sandbox dangerous actions</strong> &mdash; require human approval for write operations</li>
+      <li><strong>Set step limits</strong> &mdash; prevent infinite loops</li>
+      <li><strong>Log everything</strong> &mdash; trace the agent's reasoning for debugging</li>
+      <li><strong>Use read-only tools first</strong> &mdash; searching is safe; writing isn't</li>
+      <li><strong>Test with mock tools</strong> &mdash; simulate before connecting real systems</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What's the difference between tool use and an agent?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Tool use is typically one round: the model calls a tool, gets the result, and responds. An agent is multiple rounds of reasoning + tool use, where each round's observations inform the next. The model autonomously decides what to do and when to stop.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What does ReAct stand for, and how does the pattern work?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Reasoning + Acting. The model alternates: (1) THINK about what to do, (2) ACT by calling a tool, (3) OBSERVE the result. Repeat until the task is complete. It's a loop of deliberate reasoning interleaved with concrete actions.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why is a step limit critical for agents?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Without a limit, a confused or stuck agent could loop forever, making API calls (costing money) without making progress. The limit is a safety valve that forces the agent to stop and report what it found, even if it didn't fully complete the task.</div>
+      </div>
+
+      <div class="question">
+        <p>4. When would you use the reflection pattern?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">For quality-sensitive tasks where accuracy matters more than speed: fact-checking, editorial review, legal analysis. The second pass catches errors, unsupported claims, and logical gaps that the first pass missed. It doubles the cost but significantly improves quality.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Research Agent</h4>
+      <ol>
+        <li>Create 3 tools: <code>search_articles</code>, <code>get_article_text</code>, and <code>search_public_records</code> (all with mock data)</li>
+        <li>Implement the ReAct agent loop with a 10-step limit</li>
+        <li>Log each step (thinking, tool called, result summary) so you can trace the agent's reasoning</li>
+        <li>Test with: "Investigate whether any of Mayor Johnson's campaign donors received city contracts in the last year"</li>
+      </ol>
+      <p style="margin-top: 0.75rem;"><strong>Bonus:</strong> Add the reflection pattern as a final step to critique the agent's findings before presenting them.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/ai-llm/lessons/06-rag-patterns/">&larr; RAG Patterns</a>
+      <a href="/ai-llm/lessons/08-structured-output/">Lesson 08: Structured Output &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

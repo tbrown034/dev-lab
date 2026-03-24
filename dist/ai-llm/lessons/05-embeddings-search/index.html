@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 05 - Embeddings &amp; Search</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #f472b6; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>05</span> Embeddings &amp; Search &mdash; GPS for Meaning</h1>
+    <a href="/ai-llm/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Keyword search finds words. Semantic search finds meaning.</strong> This lesson teaches you to build search that understands what you actually want, even when you don't use the right words.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>Mental Model: GPS Coordinates for Meaning</h2>
+
+    <p>Imagine every piece of text has GPS coordinates &mdash; not on a map, but in a <strong>meaning space</strong>. Texts about similar topics are close together. Texts about different topics are far apart.</p>
+
+    <ul>
+      <li>"The mayor announced budget cuts" and "City leader reduces spending" are <strong>near each other</strong> (same meaning, different words).</li>
+      <li>"The mayor announced budget cuts" and "Recipe for chocolate cake" are <strong>far apart</strong> (completely different topics).</li>
+    </ul>
+
+    <p>An <strong>embedding</strong> is this GPS coordinate: a list of numbers (a vector) that represents the meaning of a piece of text. Similar meanings produce similar vectors.</p>
+
+    <div class="aha">
+      <p><strong>Why this matters:</strong> Traditional keyword search for "budget reduction" won't find an article that says "spending cuts." Semantic search with embeddings WILL, because both phrases map to nearby coordinates in meaning space.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHAT IS A VECTOR                             -->
+    <!-- ============================================ -->
+
+    <h2>What Is a Vector?</h2>
+
+    <p>A vector is just a list of numbers. An embedding vector for text typically has 1,536 numbers (OpenAI) or similar dimensions. Each number captures one aspect of meaning.</p>
+
+    <pre><code><span class="comment">// Simplified 3D embedding (real ones have 1,536 dimensions)</span>
+"budget cuts"     → [0.82, 0.15, -0.43]
+"spending reduction" → [0.79, 0.18, -0.41]  <span class="comment">// Very close!</span>
+"chocolate cake"  → [-0.21, 0.89, 0.34]     <span class="comment">// Very far!</span>
+
+<span class="comment">// "Distance" between vectors = how different the meanings are
+// Close vectors = similar meaning
+// Far vectors = different meaning</span></code></pre>
+
+    <div class="callout">
+      <p><strong>You don't need to understand the math.</strong> The embedding model handles the conversion from text to vector. You just need to understand the concept: text &rarr; numbers &rarr; similarity comparison. The rest is plumbing.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- GENERATING EMBEDDINGS                        -->
+    <!-- ============================================ -->
+
+    <h2>Generating Embeddings</h2>
+
+    <p>To create embeddings, you call an embedding API. Anthropic partners with Voyage AI for embeddings, or you can use OpenAI's embedding model:</p>
+
+    <pre><code>import OpenAI from "openai";
+
+const openai = new OpenAI();
+
+<span class="comment">// Generate an embedding for a single text</span>
+const response = await openai.embeddings.create({
+  model: "text-embedding-3-small",
+  input: "The city council voted to reduce the police budget by 15%"
+});
+
+const embedding = response.data[0].embedding;
+console.log(embedding.length);  <span class="comment">// 1536 numbers</span>
+console.log(embedding.slice(0, 5)); <span class="comment">// [0.023, -0.041, 0.008, ...]</span></code></pre>
+
+    <pre><code><span class="comment">// Batch embedding — more efficient for multiple texts</span>
+const articles = [
+  "City council approves new budget",
+  "Mayor announces infrastructure plan",
+  "School board votes on curriculum changes",
+  "Police department gets new equipment"
+];
+
+const response = await openai.embeddings.create({
+  model: "text-embedding-3-small",
+  input: articles
+});
+
+const embeddings = response.data.map(d =&gt; d.embedding);
+<span class="comment">// embeddings[0] corresponds to articles[0], etc.</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- SIMILARITY SEARCH                            -->
+    <!-- ============================================ -->
+
+    <h2>Similarity Search: Finding the Closest Match</h2>
+
+    <p>To find which article is most similar to a query, compute the <strong>cosine similarity</strong> between the query's embedding and each article's embedding:</p>
+
+    <pre><code><span class="comment">// Cosine similarity: how aligned are two vectors?
+// 1.0 = identical meaning, 0 = unrelated, -1 = opposite</span>
+
+function cosineSimilarity(a, b) {
+  let dot = 0, normA = 0, normB = 0;
+  for (let i = 0; i &lt; a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+<span class="comment">// Search: embed the query, compare against all stored embeddings</span>
+async function search(query, articleEmbeddings, articles) {
+  const queryResponse = await openai.embeddings.create({
+    model: "text-embedding-3-small",
+    input: query
+  });
+  const queryEmbed = queryResponse.data[0].embedding;
+
+  const results = articles.map((article, i) =&gt; ({
+    article,
+    score: cosineSimilarity(queryEmbed, articleEmbeddings[i])
+  }));
+
+  return results.sort((a, b) =&gt; b.score - a.score);
+}
+
+const results = await search("government spending", embeddings, articles);
+console.log(results[0]);
+<span class="comment">// { article: "City council approves new budget", score: 0.87 }</span></code></pre>
+
+    <div class="aha">
+      <p><strong>This is the entire concept of semantic search.</strong> Embed your documents once, store the vectors, then embed each query and find the closest matches. No keyword matching. No boolean logic. Just "find me the texts whose <em>meaning</em> is closest to this query."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- VECTOR DATABASES                             -->
+    <!-- ============================================ -->
+
+    <h2>Vector Databases: Scaling Up</h2>
+
+    <p>For a few hundred documents, the loop above works. For thousands or millions, you need a <strong>vector database</strong> that indexes embeddings for fast similarity search:</p>
+
+    <table>
+      <tr><th>Database</th><th>Best For</th><th>Key Feature</th></tr>
+      <tr><td><strong>Pinecone</strong></td><td>Production SaaS</td><td>Fully managed, easy setup</td></tr>
+      <tr><td><strong>ChromaDB</strong></td><td>Local development</td><td>Runs in-process, no server needed</td></tr>
+      <tr><td><strong>pgvector</strong></td><td>Postgres users</td><td>Adds vector search to existing Postgres</td></tr>
+      <tr><td><strong>Weaviate</strong></td><td>Complex schemas</td><td>Hybrid keyword + semantic search</td></tr>
+    </table>
+
+    <pre><code><span class="comment">// Example with ChromaDB (great for prototyping)</span>
+import { ChromaClient } from "chromadb";
+
+const chroma = new ChromaClient();
+const collection = await chroma.createCollection({ name: "articles" });
+
+<span class="comment">// Add documents (ChromaDB can auto-embed them)</span>
+await collection.add({
+  ids: ["art-001", "art-002", "art-003"],
+  documents: [
+    "City council approves new budget with tax increase",
+    "Mayor announces plan to reduce homeless population",
+    "School board votes to add coding curriculum"
+  ]
+});
+
+<span class="comment">// Query — returns most similar documents</span>
+const results = await collection.query({
+  queryTexts: ["government spending decisions"],
+  nResults: 2
+});
+
+console.log(results.documents);
+<span class="comment">// [["City council approves new budget...", "Mayor announces plan..."]]</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- JOURNALISM USE CASE                          -->
+    <!-- ============================================ -->
+
+    <h2>Journalism Use Case: Searchable Archive</h2>
+
+    <p>Imagine searching your newspaper's archive not by keyword, but by concept:</p>
+
+    <ul>
+      <li>"stories about government accountability" &mdash; finds articles about audits, corruption, transparency, oversight, even if they never use the word "accountability"</li>
+      <li>"coverage of housing affordability" &mdash; finds articles about rent, mortgages, zoning, displacement, gentrification</li>
+      <li>"sources who've criticized the police department" &mdash; finds quotes and attributions across hundreds of articles</li>
+    </ul>
+
+    <div class="callout">
+      <p><strong>This is the foundation for RAG</strong> (Lesson 06). Once you can search by meaning, you can retrieve relevant documents and feed them to Claude as context. That's how you ground AI responses in your actual reporting.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What is an embedding?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A list of numbers (vector) that represents the meaning of a piece of text. Similar texts produce similar vectors. It's like GPS coordinates for meaning in a high-dimensional space.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why is semantic search better than keyword search for journalism?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Keyword search only finds exact word matches. Semantic search finds conceptually similar content regardless of specific wording. A search for "government spending" will find articles about "budget allocations," "fiscal policy," and "taxpayer funding" even if those exact words weren't in the query.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What is cosine similarity measuring?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">How aligned two vectors are in direction. A score of 1.0 means identical meaning, 0 means unrelated, -1 means opposite. It's the standard way to compare embeddings.</div>
+      </div>
+
+      <div class="question">
+        <p>4. When should you use a vector database vs. a simple loop?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A simple loop works for up to a few hundred documents. For thousands or millions, you need a vector database that uses indexing algorithms (like HNSW) for fast approximate nearest-neighbor search.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Semantic Article Search</h4>
+      <ol>
+        <li>Create an array of 10+ mock article snippets on different topics (politics, education, crime, business, sports)</li>
+        <li>Embed all articles using the OpenAI embedding API</li>
+        <li>Build a search function that takes a natural language query and returns the top 3 most relevant articles with similarity scores</li>
+        <li>Test with queries that use different words than the articles: "taxpayer money" should match a "budget" article, "student achievement" should match an "education" article</li>
+      </ol>
+      <p style="margin-top: 0.75rem;"><strong>Bonus:</strong> Use ChromaDB instead of manual cosine similarity for automatic embedding and indexing.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/ai-llm/lessons/04-tool-use/">&larr; Tool Use</a>
+      <a href="/ai-llm/lessons/06-rag-patterns/">Lesson 06: RAG Patterns &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 08 - Tailwind CSS v4</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #a855f7; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>08</span> Tailwind v4 &mdash; CSS-First Architecture</h1>
+    <a href="/css-design/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>You use Tailwind. Now understand it.</strong> Tailwind v4 is a complete rewrite. The JavaScript config file is gone. Everything is CSS-first. The Oxide engine is 10x faster. And if you've followed this course, the architecture will look familiar &mdash; it's built on the CSS features you just learned.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: Tailwind v4 Is a CSS Compiler</h2>
+
+    <p>Tailwind v3 was a JavaScript plugin that happened to generate CSS. Tailwind v4 is a CSS tool that happens to use Rust for speed. The mental model shift:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Tailwind v3 (JS-first)</h5>
+        <pre><code><span class="comment">// tailwind.config.js</span>
+module.exports = {
+  theme: {
+    colors: {
+      primary: '#a855f7',
+      surface: '#0e0e12',
+    },
+    extend: {
+      spacing: { '18': '4.5rem' },
+    },
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
+};
+
+<span class="comment">/* Config is JavaScript.
+   Build reads JS, generates CSS.
+   Customization = JS objects. */</span></code></pre>
+      </div>
+      <div>
+        <h5>Tailwind v4 (CSS-first)</h5>
+        <pre><code><span class="comment">/* app.css */</span>
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #a855f7;
+  --color-surface: #0e0e12;
+  --spacing-18: 4.5rem;
+}
+
+@plugin "@tailwindcss/forms";
+
+<span class="comment">/* Config is CSS.
+   Build reads CSS, generates CSS.
+   Customization = CSS custom properties.
+   No JS config file needed. */</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Tailwind v4 tokens are CSS custom properties.</strong> When you write <code>--color-primary: #a855f7</code> inside <code>@theme</code>, Tailwind generates the utility <code>text-primary</code>, <code>bg-primary</code>, <code>border-primary</code>, etc. AND it creates a CSS custom property <code>--color-primary</code> that you can use in your own CSS. The tokens live in CSS, not trapped in a JS config.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- @THEME DIRECTIVE                             -->
+    <!-- ============================================ -->
+
+    <h2>@theme: The New Config</h2>
+
+    <pre><code>@import "tailwindcss";
+
+@theme {
+  <span class="comment">/* Colors — generates text-*, bg-*, border-*, etc. utilities */</span>
+  --color-primary: #a855f7;
+  --color-primary-light: #c084fc;
+  --color-surface: #0e0e12;
+  --color-surface-2: #16161d;
+
+  <span class="comment">/* Spacing — generates p-*, m-*, gap-*, w-*, h-* utilities */</span>
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 4rem;
+
+  <span class="comment">/* Font families */</span>
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+
+  <span class="comment">/* Border radius */</span>
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  <span class="comment">/* Shadows */</span>
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.25);
+
+  <span class="comment">/* Animations */</span>
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+<span class="comment">/* Now you can use:
+   text-primary, bg-surface, p-md, gap-lg,
+   font-sans, rounded-md, shadow-card
+   AND var(--color-primary), var(--spacing-md), etc. */</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Connection to Lesson 05.</strong> The <code>@theme</code> directive is literally the "primitive tokens" layer from our design token architecture. Tailwind v4 takes those tokens and generates both utilities AND custom properties. This means your Tailwind config IS your design token system.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- @UTILITY DIRECTIVE                           -->
+    <!-- ============================================ -->
+
+    <h2>@utility: Custom Utilities</h2>
+
+    <p>In v3, creating custom utilities required a JavaScript plugin. In v4, it's pure CSS:</p>
+
+    <pre><code><span class="comment">/* Define a custom utility */</span>
+@utility text-balance {
+  text-wrap: balance;
+}
+
+<span class="comment">/* Now use it: &lt;h1 class="text-balance"&gt; */</span>
+
+<span class="comment">/* Utility with modifiers (responsive, hover, etc.) */</span>
+@utility glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+<span class="comment">/* Now use it: class="glass hover:glass md:glass" — modifiers work automatically */</span>
+
+<span class="comment">/* Utility with a value (functional utility) */</span>
+@utility tab-size-* {
+  tab-size: --value(--tab-size-*);
+}
+
+<span class="comment">/* Now use: class="tab-size-4" */</span></code></pre>
+
+    <div class="aha">
+      <p><strong>@utility gets ALL Tailwind modifiers for free.</strong> When you define a custom utility with <code>@utility</code>, it automatically works with <code>hover:</code>, <code>focus:</code>, <code>dark:</code>, responsive prefixes, and every other Tailwind modifier. No extra configuration. This is the power of the CSS-first approach.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- @VARIANT DIRECTIVE                           -->
+    <!-- ============================================ -->
+
+    <h2>@variant: Custom Modifiers</h2>
+
+    <pre><code><span class="comment">/* Create a custom variant */</span>
+@variant pointer-coarse (@media (pointer: coarse));
+@variant pointer-fine (@media (pointer: fine));
+
+<span class="comment">/* Use it: class="pointer-coarse:p-4 pointer-fine:p-2"
+   Touch devices get more padding, mouse users get less */</span>
+
+<span class="comment">/* Custom variant based on a data attribute */</span>
+@variant data-active (&[data-active="true"]);
+
+<span class="comment">/* Use it: class="data-active:bg-primary data-active:text-white" */</span>
+
+<span class="comment">/* Custom variant for container queries */</span>
+@variant @md (@container (min-width: 448px));
+
+<span class="comment">/* Use it: class="@md:grid-cols-2 @md:gap-4" */</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- THE LAYER SYSTEM                             -->
+    <!-- ============================================ -->
+
+    <h2>How Tailwind v4 Uses @layer Internally</h2>
+
+    <pre><code><span class="comment">/* Tailwind v4's internal layer structure */</span>
+@layer theme, base, components, utilities;
+
+<span class="comment">/* @layer theme — your @theme tokens + CSS custom properties */</span>
+<span class="comment">/* @layer base — reset + default styles */</span>
+<span class="comment">/* @layer components — @apply usage + component classes */</span>
+<span class="comment">/* @layer utilities — all utility classes */</span>
+
+<span class="comment">/* This is why utilities ALWAYS beat components:
+   The utilities layer has higher cascade priority.
+   Specificity doesn't matter.
+   .card .title in components layer loses to
+   .text-white in utilities layer. */</span>
+
+<span class="comment">/* Your own layers slot in: */</span>
+@layer base {
+  body { font-family: var(--font-sans); }
+}
+
+@layer components {
+  .card {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+  }
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>Connection to Lesson 01.</strong> Remember how <code>@layer</code> order beats specificity? That's exactly what Tailwind v4 relies on. Utilities are in the highest layer, so <code>text-white</code> always beats <code>.card .title { color: gray; }</code> regardless of specificity. The cascade architecture you learned in Lesson 01 is the engine that makes Tailwind work.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- OXIDE ENGINE                                 -->
+    <!-- ============================================ -->
+
+    <h2>The Oxide Engine: Why It's 10x Faster</h2>
+
+    <p>Tailwind v4's build engine is rewritten in Rust (the "Oxide" engine). Key architectural differences:</p>
+
+    <ul>
+      <li><strong>Lightning CSS</strong> replaces PostCSS for CSS parsing and transformation</li>
+      <li><strong>Content detection</strong> is built-in &mdash; no <code>content</code> config needed, it auto-detects your templates</li>
+      <li><strong>Zero-config</strong> &mdash; install and import, it just works</li>
+      <li><strong>Incremental builds</strong> &mdash; only reprocesses changed files</li>
+      <li><strong>CSS-native</strong> &mdash; no JavaScript AST parsing needed for the config</li>
+    </ul>
+
+    <pre><code><span class="comment">/* v4 setup — literally this simple */</span>
+
+<span class="comment">/* 1. Install */</span>
+<span class="comment">/* npm install tailwindcss@next @tailwindcss/vite */</span>
+
+<span class="comment">/* 2. Add to your CSS entry file */</span>
+@import "tailwindcss";
+
+<span class="comment">/* 3. Done. No config file. No content paths. No PostCSS config.
+   It scans your project, finds all class names, generates CSS. */</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- DARK MODE AND THEMING                        -->
+    <!-- ============================================ -->
+
+    <h2>Dark Mode and Multi-Theme in v4</h2>
+
+    <pre><code><span class="comment">/* Dark mode uses CSS custom properties under the hood */</span>
+@theme {
+  --color-bg: #f5f4f1;
+  --color-text: #1a1918;
+}
+
+@theme dark {
+  --color-bg: #060608;
+  --color-text: #e8e6f0;
+}
+
+<span class="comment">/* This generates:
+   :root { --color-bg: #f5f4f1; --color-text: #1a1918; }
+   @media (prefers-color-scheme: dark) {
+     :root { --color-bg: #060608; --color-text: #e8e6f0; }
+   }
+*/</span>
+
+<span class="comment">/* Or use class-based dark mode for manual toggle: */</span>
+@variant dark (&:where(.dark, .dark *));
+
+<span class="comment">/* Multi-brand theming — same pattern as Lesson 05's token layers */</span>
+@layer base {
+  [data-brand="news"] {
+    --color-primary: #ef4444;
+    --color-accent: #f97316;
+  }
+  [data-brand="sports"] {
+    --color-primary: #22c55e;
+    --color-accent: #10b981;
+  }
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- MIGRATION FROM V3                            -->
+    <!-- ============================================ -->
+
+    <h2>Key Differences from v3</h2>
+
+    <table>
+      <tr><th>Feature</th><th>v3</th><th>v4</th></tr>
+      <tr><td>Config</td><td><code>tailwind.config.js</code></td><td><code>@theme { }</code> in CSS</td></tr>
+      <tr><td>Custom utilities</td><td>JS plugin API</td><td><code>@utility</code> directive</td></tr>
+      <tr><td>Custom variants</td><td>JS plugin API</td><td><code>@variant</code> directive</td></tr>
+      <tr><td>Content paths</td><td>Manual in config</td><td>Auto-detected</td></tr>
+      <tr><td>PostCSS</td><td>Required</td><td>Not needed (uses Lightning CSS)</td></tr>
+      <tr><td>Dark mode</td><td><code>darkMode: 'class'</code> config</td><td><code>@theme dark { }</code> or <code>@variant</code></td></tr>
+      <tr><td>CSS cascade</td><td>Specificity-based</td><td><code>@layer</code>-based</td></tr>
+      <tr><td>Tokens</td><td>Locked in JS config</td><td>CSS custom properties, accessible everywhere</td></tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What's the fundamental architecture change from Tailwind v3 to v4?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">v3 was JS-first (JavaScript config file, PostCSS plugin). v4 is CSS-first (CSS <code>@theme</code> directive, no JS config needed, uses Lightning CSS and the Rust-based Oxide engine).</div>
+      </div>
+
+      <div class="question">
+        <p>2. Where do design tokens live in Tailwind v4?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">In the <code>@theme { }</code> block in your CSS file. They become both Tailwind utilities AND CSS custom properties. You can access them via utility classes (<code>text-primary</code>) or CSS (<code>var(--color-primary)</code>).</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why does <code>text-white</code> always beat <code>.card .title { color: gray; }</code> in Tailwind v4?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Tailwind v4 uses <code>@layer</code> internally. Utilities are in the <code>utilities</code> layer, which has higher cascade priority than the <code>components</code> layer. Layer order beats specificity, so the utility always wins regardless of selector complexity.</div>
+      </div>
+
+      <div class="question">
+        <p>4. How do you create a custom utility in v4 vs v3?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">v3: write a JavaScript plugin using the <code>addUtilities</code> API. v4: write <code>@utility name { property: value; }</code> in CSS. The v4 approach is simpler and automatically gets all modifier support (hover, responsive, etc.).</div>
+      </div>
+
+      <div class="question">
+        <p>5. What makes the Oxide engine faster than v3's build system?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Oxide is written in Rust (not JavaScript), uses Lightning CSS instead of PostCSS, auto-detects content files (no manual paths), does incremental builds, and doesn't need to parse JavaScript config. Combined, this yields roughly 10x faster build times.</div>
+      </div>
+    </div>
+
+    <div class="exercise">
+      <h4>Exercise: Build a Tailwind v4 Theme</h4>
+      <ol>
+        <li>Set up a basic Tailwind v4 project with <code>@import "tailwindcss"</code></li>
+        <li>Define a <code>@theme</code> block with: 4 colors, 3 spacing values, 2 font families, 2 border radii</li>
+        <li>Create a custom utility with <code>@utility</code> (e.g., a glass-morphism effect)</li>
+        <li>Create a custom variant with <code>@variant</code> (e.g., for a data attribute)</li>
+        <li>Build a card component using only your custom theme tokens</li>
+        <li>Verify the tokens are accessible as CSS custom properties in DevTools</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Tailwind v4 is CSS-first</strong> &mdash; <code>@theme</code> replaces <code>tailwind.config.js</code></li>
+      <li><strong>@theme tokens become CSS custom properties</strong> &mdash; usable everywhere, not locked in JS</li>
+      <li><strong>@utility creates custom utilities</strong> with all modifiers for free</li>
+      <li><strong>@variant creates custom modifiers</strong> from CSS</li>
+      <li><strong>@layer powers the cascade</strong> &mdash; utilities always beat components</li>
+      <li><strong>Oxide engine (Rust + Lightning CSS)</strong> is 10x faster than v3</li>
+      <li><strong>Zero config</strong> &mdash; install, import, go. No config file, no PostCSS, no content paths</li>
+      <li><strong>Tokens are the bridge</strong> between utility classes and raw CSS</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/css-design/lessons/07-animation-motion/">&larr; Lesson 07: Animation</a>
+      <a href="/css-design/lessons/09-design-tokens/">Lesson 09: Design Tokens &rarr;</a>
+    </div>
+  </div>
+</body>
+</html>

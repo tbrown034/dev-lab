@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 05 - Subqueries & CTEs</title>
+  <style>:root { --track-color: #3b82f6; }</style>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-Ch5wxeC6.svg">
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>05</span> Subqueries &amp; CTEs &mdash; Queries Inside Queries</h1>
+    <a href="/sql/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>Sometimes one query isn't enough.</strong> You need the answer from one query to feed into another. That's what subqueries and CTEs do &mdash; they let you build complex analysis step by step, like chaining <code>.then()</code> in a Promise chain.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model &mdash; Queries as Building Blocks</h2>
+
+    <p>Think of subqueries like function calls in JavaScript. A function returns a value, and you use that value in an expression. A subquery returns data (a single value, a list, or a table), and you use that data inside another query.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript (nested function calls)</h5>
+        <pre><code>// Step 1: get the average
+const avg = getAverage(articles.views);
+
+// Step 2: filter using that average
+const aboveAvg = articles.filter(
+  a =&gt; a.views &gt; avg
+);</code></pre>
+      </div>
+      <div>
+        <h5>SQL (subquery)</h5>
+        <pre><code>-- Steps 1 and 2 in one query
+SELECT *
+FROM articles
+WHERE views &gt; (
+  SELECT AVG(views) FROM articles
+);</code></pre>
+      </div>
+    </div>
+
+    <p>The inner query <code>SELECT AVG(views) FROM articles</code> runs first and returns a number. The outer query then uses that number in its WHERE clause. Nesting. Just like functions.</p>
+
+    <p>There are three places you can put subqueries:</p>
+    <ul>
+      <li><strong>In WHERE</strong> &mdash; filter based on another query's result</li>
+      <li><strong>In FROM</strong> &mdash; treat a query result as a temporary table</li>
+      <li><strong>In SELECT</strong> &mdash; compute a value for each row</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- SUBQUERIES IN WHERE                          -->
+    <!-- ============================================ -->
+
+    <h2>Subqueries in WHERE</h2>
+
+    <p>The most common use. The subquery returns a value (or a list), and you use it to filter rows.</p>
+
+    <h3>Scalar Subqueries &mdash; Return One Value</h3>
+
+    <p>A scalar subquery returns exactly one value (one row, one column). Use it anywhere you'd use a number or string.</p>
+
+    <pre><code>-- Articles with above-average views
+SELECT title, views
+FROM articles
+WHERE views &gt; (SELECT AVG(views) FROM articles);</code></pre>
+
+    <p>The subquery <code>(SELECT AVG(views) FROM articles)</code> returns a single number, say <code>3214</code>. The outer query becomes effectively <code>WHERE views > 3214</code>.</p>
+
+    <pre><code>-- Find the most recent article
+SELECT title, published_at
+FROM articles
+WHERE published_at = (
+  SELECT MAX(published_at) FROM articles
+);
+
+-- Articles by the author with the most views
+SELECT title, views
+FROM articles
+WHERE author_id = (
+  SELECT author_id
+  FROM articles
+  GROUP BY author_id
+  ORDER BY SUM(views) DESC
+  LIMIT 1
+);</code></pre>
+
+    <h3>IN Subqueries &mdash; Return a List</h3>
+
+    <p>When a subquery returns multiple values (one column, multiple rows), use <code>IN</code>:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma (nested where)</h5>
+        <pre><code>// Articles by politics-beat authors
+await prisma.article.findMany({
+  where: {
+    author: {
+      beat: 'politics',
+    },
+  },
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL (IN subquery)</h5>
+        <pre><code>-- Articles by politics-beat authors
+SELECT title
+FROM articles
+WHERE author_id IN (
+  SELECT id
+  FROM authors
+  WHERE beat = 'politics'
+);</code></pre>
+      </div>
+    </div>
+
+    <p>The inner query returns a list of author IDs: <code>(1, 5, 12)</code>. The outer query becomes <code>WHERE author_id IN (1, 5, 12)</code>.</p>
+
+    <pre><code>-- NOT IN: articles by authors NOT on the politics beat
+SELECT title
+FROM articles
+WHERE author_id NOT IN (
+  SELECT id FROM authors WHERE beat = 'politics'
+);</code></pre>
+
+    <div class="callout">
+      <p><strong>Watch out for NULLs with NOT IN.</strong> If the subquery returns any NULL values, <code>NOT IN</code> returns no rows at all. This is a notorious SQL gotcha. Use <code>NOT EXISTS</code> instead if NULLs are possible.</p>
+    </div>
+
+    <h3>EXISTS Subqueries &mdash; Check If Rows Exist</h3>
+
+    <p><code>EXISTS</code> returns true if the subquery finds at least one row. It doesn't care about the values &mdash; just whether anything matches.</p>
+
+    <pre><code>-- Authors who have written at least one article
+SELECT name
+FROM authors au
+WHERE EXISTS (
+  SELECT 1
+  FROM articles a
+  WHERE a.author_id = au.id
+);
+
+-- Authors who have NEVER written an article
+SELECT name
+FROM authors au
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM articles a
+  WHERE a.author_id = au.id
+);</code></pre>
+
+    <div class="aha">
+      <p><strong>EXISTS vs IN &mdash; when to use which?</strong> EXISTS is better when: (1) you just need to know if rows exist, not what they are, (2) the subquery might return NULLs (EXISTS handles them safely), (3) the subquery would return a huge list (EXISTS stops as soon as it finds one match). Use IN when the list is small and readable.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CORRELATED VS UNCORRELATED                   -->
+    <!-- ============================================ -->
+
+    <h2>Correlated vs Uncorrelated Subqueries</h2>
+
+    <p>This distinction matters for understanding performance and behavior.</p>
+
+    <h3>Uncorrelated &mdash; Independent Inner Query</h3>
+
+    <p>The inner query runs once, produces a result, and the outer query uses it. Like calling a function that has no reference to the outer scope:</p>
+
+    <pre><code>-- Uncorrelated: inner query runs ONCE
+SELECT title, views
+FROM articles
+WHERE views &gt; (SELECT AVG(views) FROM articles);
+-- The AVG is computed once, then reused for every row</code></pre>
+
+    <h3>Correlated &mdash; Inner Query References Outer Query</h3>
+
+    <p>The inner query references a column from the outer query, so it runs once per row. Like a closure that captures a variable from the enclosing scope:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript (closure analogy)</h5>
+        <pre><code>// For each author, find their
+// article with the most views
+authors.map(author =&gt; {
+  const topArticle = articles
+    .filter(a =&gt; a.author_id === author.id)
+    .sort((a, b) =&gt; b.views - a.views)
+    [0];
+  return { author, topArticle };
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL (correlated subquery)</h5>
+        <pre><code>-- For each article, check if it's
+-- the top article by its author
+SELECT title, views
+FROM articles a
+WHERE views = (
+  SELECT MAX(views)
+  FROM articles a2
+  WHERE a2.author_id = a.author_id
+);</code></pre>
+      </div>
+    </div>
+
+    <p>The inner query references <code>a.author_id</code> from the outer query. For each article, SQL runs the subquery with that specific author's ID to find the MAX views. This is powerful but can be slow on large datasets because the subquery runs once per row.</p>
+
+    <pre><code>-- Another correlated example:
+-- Articles with views above their category's average
+SELECT title, category, views
+FROM articles a
+WHERE views &gt; (
+  SELECT AVG(views)
+  FROM articles a2
+  WHERE a2.category = a.category
+);</code></pre>
+
+    <div class="callout">
+      <p><strong>Performance note:</strong> Correlated subqueries can be slow because they run once per row. Often you can rewrite them as JOINs or CTEs for better performance. The database optimizer sometimes does this automatically, but not always.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SUBQUERIES IN FROM                           -->
+    <!-- ============================================ -->
+
+    <h2>Subqueries in FROM &mdash; Derived Tables</h2>
+
+    <p>A subquery in the FROM clause creates a temporary table (called a "derived table") that you can query against. Think of it as creating a temporary variable that holds a dataset:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code>// Step 1: compute author stats
+const authorStats = authors.map(au =&gt; ({
+  name: au.name,
+  articleCount: articles.filter(
+    a =&gt; a.author_id === au.id
+  ).length,
+}));
+
+// Step 2: filter the computed stats
+const prolific = authorStats
+  .filter(s =&gt; s.articleCount &gt; 3);</code></pre>
+      </div>
+      <div>
+        <h5>SQL (derived table)</h5>
+        <pre><code>-- Step 1 is the subquery
+-- Step 2 is the outer query
+SELECT name, article_count
+FROM (
+  SELECT
+    au.name,
+    COUNT(a.id) AS article_count
+  FROM authors au
+  LEFT JOIN articles a
+    ON au.id = a.author_id
+  GROUP BY au.id, au.name
+) AS author_stats
+WHERE article_count &gt; 3;</code></pre>
+      </div>
+    </div>
+
+    <p>The subquery in FROM must have an alias (<code>AS author_stats</code>). You can then reference its columns like a regular table.</p>
+
+    <pre><code>-- More practical: find the top category by average views
+SELECT category, avg_views
+FROM (
+  SELECT
+    category,
+    ROUND(AVG(views)) AS avg_views,
+    COUNT(*) AS article_count
+  FROM articles
+  WHERE published = true
+  GROUP BY category
+) AS category_stats
+WHERE article_count &gt;= 2
+ORDER BY avg_views DESC
+LIMIT 1;</code></pre>
+
+    <div class="aha">
+      <p><strong>Derived tables solve the "can't filter on aggregates in WHERE" problem.</strong> You can't write <code>WHERE COUNT(*) > 3</code> because WHERE runs before GROUP BY. But you can compute the count in a subquery, then filter on it in the outer query. (HAVING also solves this, but derived tables are more flexible.)</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SUBQUERIES IN SELECT                         -->
+    <!-- ============================================ -->
+
+    <h2>Subqueries in SELECT &mdash; Computed Columns</h2>
+
+    <p>A scalar subquery in SELECT adds a computed column to each row. It runs once per row (it's correlated):</p>
+
+    <pre><code>SELECT
+  title,
+  views,
+  (SELECT AVG(views) FROM articles) AS overall_avg,
+  views - (SELECT AVG(views) FROM articles) AS diff_from_avg
+FROM articles
+ORDER BY diff_from_avg DESC;</code></pre>
+
+    <p>Result:</p>
+
+    <pre><code>| title                  | views | overall_avg | diff_from_avg |
+|------------------------|-------|-------------|---------------|
+| AI in the Newsroom     |  8900 |        3214 |          5686 |
+| Election Results 2024  |  5200 |        3214 |          1986 |
+| Budget Crisis Deepens  |  4100 |        3214 |           886 |
+| City Marathon Recap    |  3100 |        3214 |          -114 |
+| New Art Gallery Opens  |  1200 |        3214 |         -2014 |</code></pre>
+
+    <pre><code>-- Per-author article count alongside each article
+SELECT
+  a.title,
+  au.name,
+  (SELECT COUNT(*)
+   FROM articles a2
+   WHERE a2.author_id = a.author_id
+  ) AS author_total_articles
+FROM articles a
+LEFT JOIN authors au ON a.author_id = au.id;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- CTEs                                         -->
+    <!-- ============================================ -->
+
+    <h2>CTEs &mdash; Common Table Expressions (WITH)</h2>
+
+    <p>CTEs are the clean, readable alternative to nested subqueries. Instead of nesting queries inside queries (which gets messy fast), you define named temporary results at the top using <code>WITH</code>, then use them below.</p>
+
+    <p>Think of CTEs as <code>const</code> variables for queries:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript (named steps)</h5>
+        <pre><code>// Step 1: define intermediate result
+const authorStats = getAuthorStats();
+
+// Step 2: define another result
+const avgCount = average(
+  authorStats.map(a =&gt; a.count)
+);
+
+// Step 3: use both
+const aboveAvg = authorStats
+  .filter(a =&gt; a.count &gt; avgCount);</code></pre>
+      </div>
+      <div>
+        <h5>SQL (CTE with WITH)</h5>
+        <pre><code>-- Step 1
+WITH author_stats AS (
+  SELECT author_id, COUNT(*) AS cnt
+  FROM articles
+  GROUP BY author_id
+),
+-- Step 2
+avg_count AS (
+  SELECT AVG(cnt) AS val
+  FROM author_stats
+)
+-- Step 3
+SELECT au.name, s.cnt
+FROM author_stats s
+JOIN authors au ON s.author_id = au.id
+WHERE s.cnt &gt; (SELECT val FROM avg_count);</code></pre>
+      </div>
+    </div>
+
+    <p>The <code>WITH</code> clause defines one or more named queries. Each CTE can reference the ones defined before it. The final SELECT at the bottom uses them.</p>
+
+    <h3>CTE Syntax</h3>
+
+    <pre><code>WITH cte_name AS (
+  -- any SELECT query
+  SELECT ...
+),
+another_cte AS (
+  -- can reference cte_name
+  SELECT ... FROM cte_name ...
+)
+-- final query uses the CTEs
+SELECT ...
+FROM cte_name
+JOIN another_cte ON ...;</code></pre>
+
+    <div class="aha">
+      <p><strong>CTEs make complex queries readable.</strong> Compare a 3-level nested subquery (hard to read) to a CTE with 3 named steps (reads top to bottom like a story). They're the same logic, but CTEs are dramatically easier to understand and debug.</p>
+    </div>
+
+    <h3>When to Use CTEs vs Subqueries</h3>
+
+    <table>
+      <thead>
+        <tr><th>Use CTEs When</th><th>Use Subqueries When</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Query has multiple logical steps</td><td>Simple one-off filter or value lookup</td></tr>
+        <tr><td>You need to reference a result multiple times</td><td>Subquery result is used only once</td></tr>
+        <tr><td>Readability matters (always)</td><td>Query is short and self-explanatory</td></tr>
+        <tr><td>You're building up a complex analysis</td><td>You need a quick inline check</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- RECURSIVE CTEs                               -->
+    <!-- ============================================ -->
+
+    <h2>Recursive CTEs &mdash; Hierarchical Data</h2>
+
+    <p>Recursive CTEs handle tree-structured data: org charts, category hierarchies, threaded comments. The CTE calls itself to walk down the tree level by level.</p>
+
+    <pre><code>-- Org chart: employees table
+| id | name           | manager_id |
+|----|----------------|------------|
+|  1 | Diana (CEO)    |       NULL |
+|  2 | Sarah (Editor) |          1 |
+|  3 | Marcus (Writer)|          2 |
+|  4 | Priya (Writer) |          2 |
+|  5 | James (Intern) |          3 |</code></pre>
+
+    <pre><code>-- Get the full reporting chain for every employee
+WITH RECURSIVE org_tree AS (
+  -- Base case: start with the CEO (no manager)
+  SELECT id, name, manager_id, 0 AS depth,
+         name AS chain
+  FROM employees
+  WHERE manager_id IS NULL
+
+  UNION ALL
+
+  -- Recursive step: find each person's reports
+  SELECT e.id, e.name, e.manager_id, t.depth + 1,
+         t.chain || ' &gt; ' || e.name
+  FROM employees e
+  INNER JOIN org_tree t ON e.manager_id = t.id
+)
+SELECT name, depth, chain
+FROM org_tree
+ORDER BY chain;</code></pre>
+
+    <p>Result:</p>
+
+    <pre><code>| name           | depth | chain                                    |
+|----------------|-------|------------------------------------------|
+| Diana (CEO)    |     0 | Diana (CEO)                              |
+| Sarah (Editor) |     1 | Diana (CEO) &gt; Sarah (Editor)             |
+| Marcus (Writer)|     2 | Diana (CEO) &gt; Sarah (Editor) &gt; Marcus    |
+| James (Intern) |     3 | Diana (CEO) &gt; Sarah (Editor) &gt; Marcus &gt; James |
+| Priya (Writer) |     2 | Diana (CEO) &gt; Sarah (Editor) &gt; Priya     |</code></pre>
+
+    <p>The pattern: a <strong>base case</strong> (the top of the tree), <code>UNION ALL</code>, and a <strong>recursive step</strong> that joins back to the CTE itself. SQL runs the base case first, then repeats the recursive step until no new rows are found.</p>
+
+    <div class="callout">
+      <p><strong>Be careful with recursive CTEs.</strong> If your data has cycles (A reports to B, B reports to A), the recursion will loop forever. PostgreSQL will eventually stop with an error. Add a <code>WHERE depth &lt; 10</code> safeguard in the recursive step to prevent this.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRISMA VS RAW SQL                            -->
+    <!-- ============================================ -->
+
+    <h2>Prisma and Complex Queries</h2>
+
+    <p>Prisma can't express subqueries, CTEs, or recursive queries in its query builder. When you need these, you have two options:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma $queryRaw</h5>
+        <pre><code>// Use raw SQL inside Prisma
+const result = await prisma.$queryRaw`
+  WITH author_stats AS (
+    SELECT
+      author_id,
+      COUNT(*) AS article_count,
+      AVG(views) AS avg_views
+    FROM articles
+    GROUP BY author_id
+  )
+  SELECT
+    au.name,
+    s.article_count,
+    s.avg_views
+  FROM author_stats s
+  JOIN authors au ON s.author_id = au.id
+  WHERE s.article_count &gt; ${minCount}
+`;</code></pre>
+      </div>
+      <div>
+        <h5>When to use $queryRaw</h5>
+        <pre><code>// Use raw SQL when Prisma can't:
+//
+// 1. Subqueries
+//    WHERE col &gt; (SELECT AVG...)
+//
+// 2. CTEs (WITH ... AS)
+//    Complex multi-step analysis
+//
+// 3. Recursive queries
+//    Hierarchical data traversal
+//
+// 4. Window functions
+//    ROW_NUMBER, LAG, LEAD
+//
+// 5. Complex aggregations
+//    FILTER, conditional sums
+//
+// Prisma's query builder handles
+// 80% of cases. Raw SQL handles
+// the other 20%.</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The template literal is important.</strong> <code>prisma.$queryRaw</code> with a tagged template literal (backticks) automatically parameterizes your variables (<code>${minCount}</code>) to prevent SQL injection. Never use string concatenation with raw SQL.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRACTICAL                                    -->
+    <!-- ============================================ -->
+
+    <h2>Practical &mdash; Finding Above-Average Authors</h2>
+
+    <p>Here's a realistic analysis: find authors who produce more articles than the average author, along with their performance stats.</p>
+
+    <h3>Approach 1: Nested Subqueries</h3>
+
+    <pre><code>SELECT au.name, sub.article_count, sub.total_views
+FROM authors au
+INNER JOIN (
+  SELECT author_id,
+         COUNT(*) AS article_count,
+         SUM(views) AS total_views
+  FROM articles
+  WHERE published = true
+  GROUP BY author_id
+) sub ON au.id = sub.author_id
+WHERE sub.article_count &gt; (
+  SELECT AVG(author_count)
+  FROM (
+    SELECT COUNT(*) AS author_count
+    FROM articles
+    WHERE published = true
+    GROUP BY author_id
+  ) counts
+)
+ORDER BY sub.total_views DESC;</code></pre>
+
+    <p>That works but it's hard to read. The same logic with CTEs:</p>
+
+    <h3>Approach 2: CTEs (Much Cleaner)</h3>
+
+    <pre><code>WITH author_stats AS (
+  -- Step 1: count articles per author
+  SELECT
+    author_id,
+    COUNT(*) AS article_count,
+    SUM(views) AS total_views,
+    ROUND(AVG(views)) AS avg_views
+  FROM articles
+  WHERE published = true
+  GROUP BY author_id
+),
+avg_article_count AS (
+  -- Step 2: get the average article count across authors
+  SELECT AVG(article_count) AS avg_count
+  FROM author_stats
+)
+-- Step 3: filter to above-average authors
+SELECT
+  au.name,
+  s.article_count,
+  s.total_views,
+  s.avg_views,
+  a.avg_count AS newsroom_avg
+FROM author_stats s
+JOIN authors au ON s.author_id = au.id
+CROSS JOIN avg_article_count a
+WHERE s.article_count &gt; a.avg_count
+ORDER BY s.total_views DESC;</code></pre>
+
+    <p>Same result, but you can read it top-to-bottom like a story. Each CTE has a clear name and purpose.</p>
+
+    <h3>Bonus: Author Performance Report</h3>
+
+    <pre><code>WITH article_stats AS (
+  SELECT
+    author_id,
+    COUNT(*) AS total_articles,
+    COUNT(*) FILTER (WHERE published) AS published,
+    COUNT(*) FILTER (WHERE NOT published) AS drafts,
+    COALESCE(SUM(views), 0) AS total_views,
+    COALESCE(ROUND(AVG(views)), 0) AS avg_views,
+    MAX(published_at) AS last_published
+  FROM articles
+  GROUP BY author_id
+)
+SELECT
+  au.name,
+  au.beat,
+  COALESCE(s.total_articles, 0) AS total_articles,
+  COALESCE(s.published, 0) AS published,
+  COALESCE(s.drafts, 0) AS drafts,
+  COALESCE(s.total_views, 0) AS total_views,
+  s.avg_views,
+  s.last_published
+FROM authors au
+LEFT JOIN article_stats s ON au.id = s.author_id
+ORDER BY total_views DESC;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Quick Check</h4>
+
+      <div class="question">
+        <p>1. What's the difference between a correlated and uncorrelated subquery?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">An uncorrelated subquery runs once independently. A correlated subquery references the outer query, so it runs once per row of the outer query. Correlated subqueries are more flexible but slower.</div>
+      </div>
+
+      <div class="question">
+        <p>2. When would you use EXISTS instead of IN?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">Use EXISTS when: (1) you only care whether rows exist, not their values, (2) the subquery might return NULLs (NOT IN fails with NULLs, NOT EXISTS doesn't), (3) the subquery returns a large result set (EXISTS stops at the first match).</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why must subqueries in FROM have an alias?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">Because SQL needs a name to reference the derived table's columns. Without an alias, you'd have no way to refer to it in SELECT, WHERE, or JOIN clauses. It's like a variable name.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What is a CTE and why is it better than nested subqueries?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">A CTE (Common Table Expression) is a named temporary result defined with <code>WITH ... AS (...)</code>. It's better because: (1) reads top-to-bottom instead of inside-out, (2) you can reference a CTE multiple times, (3) each step has a descriptive name.</div>
+      </div>
+
+      <div class="question">
+        <p>5. How do you use raw SQL in Prisma?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>prisma.$queryRaw`SELECT ... WHERE col > ${variable}`</code>. Use the tagged template literal (backticks) to automatically parameterize variables and prevent SQL injection.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Practice Exercise</h4>
+      <p>Using tables: <code>articles</code> (id, title, author_id, category, views, word_count, published), <code>authors</code> (id, name, beat).</p>
+
+      <div class="question" style="margin-top: 1rem;">
+        <p><strong>A:</strong> Find all articles with above-average views (use a subquery).</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT title, views
+FROM articles
+WHERE views &gt; (SELECT AVG(views) FROM articles);</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>B:</strong> Find authors who have written at least one article in the 'politics' category (use EXISTS).</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT name
+FROM authors au
+WHERE EXISTS (
+  SELECT 1 FROM articles a
+  WHERE a.author_id = au.id
+    AND a.category = 'politics'
+);</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>C:</strong> Use a CTE to find each author's article count, then return only authors with more articles than the average author.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>WITH author_counts AS (
+  SELECT author_id, COUNT(*) AS cnt
+  FROM articles
+  GROUP BY author_id
+)
+SELECT au.name, ac.cnt
+FROM author_counts ac
+JOIN authors au ON ac.author_id = au.id
+WHERE ac.cnt &gt; (SELECT AVG(cnt) FROM author_counts);</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>D:</strong> For each article, show the title, views, and the overall average views as a separate column (use a subquery in SELECT).</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT
+  title,
+  views,
+  (SELECT ROUND(AVG(views)) FROM articles) AS avg_views,
+  views - (SELECT ROUND(AVG(views)) FROM articles) AS diff
+FROM articles
+ORDER BY diff DESC;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>E:</strong> Write a CTE that finds the top category by total views, then returns all articles in that category.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>WITH top_category AS (
+  SELECT category
+  FROM articles
+  WHERE published = true
+  GROUP BY category
+  ORDER BY SUM(views) DESC
+  LIMIT 1
+)
+SELECT a.title, a.views, a.category
+FROM articles a
+WHERE a.category = (SELECT category FROM top_category);</code></pre></div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHEAT SHEET                                  -->
+    <!-- ============================================ -->
+
+    <h2>Cheat Sheet</h2>
+
+    <pre><code>-- Scalar subquery in WHERE (returns one value)
+SELECT * FROM articles
+WHERE views &gt; (SELECT AVG(views) FROM articles);
+
+-- IN subquery (returns a list)
+SELECT * FROM articles
+WHERE author_id IN (SELECT id FROM authors WHERE beat = 'politics');
+
+-- EXISTS (check if rows exist)
+SELECT * FROM authors au
+WHERE EXISTS (SELECT 1 FROM articles WHERE author_id = au.id);
+
+-- NOT EXISTS (check if no rows exist)
+WHERE NOT EXISTS (SELECT 1 FROM articles WHERE author_id = au.id);
+
+-- Subquery in FROM (derived table)
+SELECT * FROM (
+  SELECT category, COUNT(*) AS cnt
+  FROM articles GROUP BY category
+) AS stats WHERE cnt &gt; 3;
+
+-- Subquery in SELECT (computed column)
+SELECT title, (SELECT AVG(views) FROM articles) AS avg
+FROM articles;
+
+-- CTE (Common Table Expression)
+WITH my_cte AS (
+  SELECT ... FROM ...
+)
+SELECT * FROM my_cte WHERE ...;
+
+-- Multiple CTEs
+WITH step1 AS (...),
+     step2 AS (SELECT ... FROM step1 ...)
+SELECT ... FROM step2;
+
+-- Recursive CTE
+WITH RECURSIVE tree AS (
+  SELECT ... WHERE parent IS NULL   -- base case
+  UNION ALL
+  SELECT ... FROM table             -- recursive step
+  JOIN tree ON ...
+)
+SELECT * FROM tree;
+
+-- Prisma raw SQL
+await prisma.$queryRaw`SELECT ... WHERE col &gt; ${value}`;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/sql/lessons/04-aggregation/">&larr; Lesson 04: Aggregation</a>
+      <a href="/sql/lessons/06-window-functions/">Lesson 06: Data Modification &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 08 - Indexes & Performance</title>
+  <style>:root { --track-color: #3b82f6; }</style>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-Ch5wxeC6.svg">
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>08</span> Indexes &amp; Performance &mdash; Making Queries Fast</h1>
+    <a href="/sql/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>Knowing SQL is one thing. Knowing <em>fast</em> SQL is another.</strong> In a newsroom database with millions of rows, the difference between 30 seconds and 30 milliseconds is the difference between a useful tool and an unusable one. Indexes are how you get from 30 seconds to 30 milliseconds.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model &mdash; Book Index Analogy</h2>
+
+    <p>Imagine you have a 500-page textbook and you need to find every mention of "PostgreSQL." You have two options:</p>
+
+    <ul>
+      <li><strong>Without an index:</strong> Read every page, start to finish, scanning for the word. This is a <em>sequential scan</em> (or "full table scan"). It works, but it's slow.</li>
+      <li><strong>With an index:</strong> Flip to the index at the back, look up "PostgreSQL," and go directly to pages 12, 47, 189, 301. Done in seconds.</li>
+    </ul>
+
+    <p>A database index works exactly the same way. It's a separate data structure that maps values to their row locations, so the database can jump directly to what it needs instead of scanning every row.</p>
+
+    <div class="aha">
+      <p><strong>The tradeoff is the same as a book index too.</strong> The index takes up extra pages (storage space). Every time the book is updated, the index needs updating too (write performance). But for lookups, it's dramatically faster. Worth it for columns you search frequently; wasteful for columns you rarely query.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HOW INDEXES WORK                             -->
+    <!-- ============================================ -->
+
+    <h2>How B-Tree Indexes Work</h2>
+
+    <p>The default index type in PostgreSQL is a <strong>B-tree</strong> (balanced tree). You don't need to understand the full data structure, but the mental model helps.</p>
+
+    <p>Think of a B-tree like a phone book organized alphabetically. To find "Martinez":</p>
+
+    <ol>
+      <li>Open to the middle of the book &mdash; you're at "K." Too early.</li>
+      <li>Open to the middle of the second half &mdash; you're at "P." Too late.</li>
+      <li>Open to the middle of K-P &mdash; you're at "M." Close.</li>
+      <li>A few more steps and you're at "Martinez."</li>
+    </ol>
+
+    <p>Each step cuts the remaining possibilities in half. For a table with 1 million rows, a B-tree index finds any value in about <strong>20 steps</strong> (log base 2 of 1,000,000). Without an index, it might need to check all 1,000,000 rows.</p>
+
+    <table>
+      <thead>
+        <tr><th>Table Size</th><th>Without Index (Seq Scan)</th><th>With B-tree Index</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1,000 rows</td><td>1,000 checks</td><td>~10 steps</td></tr>
+        <tr><td>100,000 rows</td><td>100,000 checks</td><td>~17 steps</td></tr>
+        <tr><td>1,000,000 rows</td><td>1,000,000 checks</td><td>~20 steps</td></tr>
+        <tr><td>10,000,000 rows</td><td>10,000,000 checks</td><td>~23 steps</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>B-trees handle more than equality.</strong> Because values are sorted, B-tree indexes work for <code>=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>, <code>BETWEEN</code>, <code>IN</code>, <code>LIKE 'prefix%'</code>, and <code>ORDER BY</code>. They do NOT help with <code>LIKE '%suffix'</code> (pattern doesn't start with a fixed prefix).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CREATING INDEXES                             -->
+    <!-- ============================================ -->
+
+    <h2>Creating and Dropping Indexes</h2>
+
+    <h3>Basic syntax</h3>
+
+    <pre><code>-- Create an index on a single column
+CREATE INDEX idx_articles_author_id
+ON articles (author_id);
+
+-- Create an index with a custom name
+CREATE INDEX idx_articles_published_date
+ON articles (published_date);
+
+-- Drop an index
+DROP INDEX idx_articles_author_id;</code></pre>
+
+    <p>The naming convention is <code>idx_tablename_columnname</code>. It's not required, but it makes your indexes self-documenting.</p>
+
+    <h3>Unique indexes</h3>
+
+    <pre><code>-- Unique index: enforces uniqueness + speeds up lookups
+CREATE UNIQUE INDEX idx_users_email
+ON users (email);
+
+-- This is essentially the same as adding a UNIQUE constraint
+-- but you get both the constraint and the performance benefit</code></pre>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma schema</h5>
+        <pre><code>model User {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+  name  String
+
+  @@index([name])
+}
+
+model Article {
+  id        Int @id @default(autoincrement())
+  authorId  Int
+  section   String
+  published Boolean
+
+  @@index([authorId])
+  @@index([section, published])
+}</code></pre>
+      </div>
+      <div>
+        <h5>SQL equivalent</h5>
+        <pre><code>-- @unique creates a unique index
+CREATE UNIQUE INDEX idx_users_email
+ON users (email);
+
+-- @@index creates a regular index
+CREATE INDEX idx_users_name
+ON users (name);
+
+
+CREATE INDEX idx_articles_author_id
+ON articles (author_id);
+
+CREATE INDEX idx_articles_section_published
+ON articles (section, published);</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Prisma creates indexes for you.</strong> When you add <code>@unique</code> or <code>@@index</code> in your schema and run <code>prisma migrate dev</code>, it generates <code>CREATE INDEX</code> SQL. Now you know what that migration is actually doing &mdash; and you can add indexes manually when you need to optimize queries Prisma doesn't know about.</p>
+    </div>
+
+    <h3>What's already indexed?</h3>
+
+    <p>PostgreSQL automatically creates indexes for:</p>
+    <ul>
+      <li><strong>Primary keys</strong> &mdash; every <code>@id</code> column gets a unique B-tree index</li>
+      <li><strong>Unique constraints</strong> &mdash; every <code>@unique</code> column gets a unique B-tree index</li>
+    </ul>
+
+    <p>You do NOT get automatic indexes on foreign keys. This is a common performance trap &mdash; joins on unindexed foreign keys are slow.</p>
+
+    <pre><code>-- Check what indexes exist on a table
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE tablename = 'articles';</code></pre>
+
+    <!-- ============================================ -->
+    <!-- COMPOSITE INDEXES                            -->
+    <!-- ============================================ -->
+
+    <h2>Composite Indexes &mdash; Column Order Matters</h2>
+
+    <p>A composite index covers multiple columns. The column order is critical because B-trees sort left to right.</p>
+
+    <pre><code>-- Composite index on (section, published_date)
+CREATE INDEX idx_articles_section_date
+ON articles (section, published_date);</code></pre>
+
+    <p>Think of it like a phone book sorted by <strong>last name, then first name</strong>. You can efficiently look up:</p>
+
+    <ul>
+      <li>Everyone named "Smith" (first column only) &mdash; works</li>
+      <li>Everyone named "Smith, John" (both columns) &mdash; works</li>
+      <li>Everyone named "John" regardless of last name (second column only) &mdash; does NOT work efficiently</li>
+    </ul>
+
+    <pre><code>-- This composite index: (section, published_date)
+-- HELPS these queries:
+WHERE section = 'news'                                  -- uses first column
+WHERE section = 'news' AND published_date &gt; '2024-01-01' -- uses both columns
+WHERE section = 'news' ORDER BY published_date           -- uses both columns
+
+-- DOES NOT HELP this query:
+WHERE published_date &gt; '2024-01-01'   -- skips the first column!</code></pre>
+
+    <div class="aha">
+      <p><strong>The leftmost prefix rule:</strong> A composite index on <code>(A, B, C)</code> can be used for queries on <code>(A)</code>, <code>(A, B)</code>, or <code>(A, B, C)</code>. But NOT for <code>(B)</code>, <code>(C)</code>, or <code>(B, C)</code> alone. Always put the most frequently filtered column first.</p>
+    </div>
+
+    <h3>Choosing column order</h3>
+
+    <p>Put the column with higher <strong>selectivity</strong> (more distinct values) first, especially if you filter on it with <code>=</code>. Then add columns used for range queries or sorting:</p>
+
+    <pre><code>-- Good: filter by section (=), then sort by date
+CREATE INDEX idx_articles_section_date
+ON articles (section, published_date DESC);
+
+-- Good: filter by author (=), then by published status (=), then sort
+CREATE INDEX idx_articles_author_pub_date
+ON articles (author_id, published, published_date DESC);
+
+-- The DESC in the index definition matches DESC queries efficiently</code></pre>
+
+    <!-- ============================================ -->
+    <!-- EXPLAIN AND EXPLAIN ANALYZE                  -->
+    <!-- ============================================ -->
+
+    <h2>EXPLAIN and EXPLAIN ANALYZE</h2>
+
+    <p>How do you know if your query is using an index? <code>EXPLAIN</code> shows you the database's plan <em>before</em> running the query. <code>EXPLAIN ANALYZE</code> actually runs it and shows real timing.</p>
+
+    <h3>EXPLAIN &mdash; the query plan</h3>
+
+    <pre><code>EXPLAIN SELECT * FROM articles WHERE author_id = 5;
+
+-- Without an index on author_id:
+-- Seq Scan on articles  (cost=0.00..1250.00 rows=50 width=200)
+--   Filter: (author_id = 5)
+
+-- With an index on author_id:
+-- Index Scan using idx_articles_author_id on articles  (cost=0.29..8.31 rows=50 width=200)
+--   Index Cond: (author_id = 5)</code></pre>
+
+    <p>Key things to look for:</p>
+
+    <table>
+      <thead>
+        <tr><th>Scan Type</th><th>Meaning</th><th>Speed</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>Seq Scan</code></td><td>Reading every row in the table</td><td>Slow on large tables</td></tr>
+        <tr><td><code>Index Scan</code></td><td>Using an index to find specific rows</td><td>Fast</td></tr>
+        <tr><td><code>Index Only Scan</code></td><td>Getting all data from the index itself</td><td>Fastest</td></tr>
+        <tr><td><code>Bitmap Index Scan</code></td><td>Using index to build a map, then fetching rows</td><td>Good for many matches</td></tr>
+      </tbody>
+    </table>
+
+    <h3>EXPLAIN ANALYZE &mdash; real execution time</h3>
+
+    <pre><code>EXPLAIN ANALYZE SELECT * FROM articles WHERE author_id = 5;
+
+-- Index Scan using idx_articles_author_id on articles
+--   (cost=0.29..8.31 rows=50 width=200)
+--   (actual time=0.015..0.089 rows=47 loops=1)
+--   Index Cond: (author_id = 5)
+-- Planning Time: 0.085 ms
+-- Execution Time: 0.112 ms</code></pre>
+
+    <p>The key numbers:</p>
+    <ul>
+      <li><code>actual time</code> &mdash; how long the scan took (in milliseconds)</li>
+      <li><code>rows</code> &mdash; how many rows were returned (compare to <code>rows=50</code> estimate)</li>
+      <li><code>Planning Time</code> &mdash; time to figure out the plan</li>
+      <li><code>Execution Time</code> &mdash; total time to run the query</li>
+    </ul>
+
+    <div class="callout">
+      <p><strong>EXPLAIN ANALYZE actually executes the query.</strong> If it's a <code>DELETE</code> or <code>UPDATE</code>, wrap it in a transaction you roll back: <code>BEGIN; EXPLAIN ANALYZE DELETE FROM ...; ROLLBACK;</code></p>
+    </div>
+
+    <h3>Reading a complex query plan</h3>
+
+    <pre><code>EXPLAIN ANALYZE
+SELECT a.title, u.name
+FROM articles a
+JOIN users u ON a.author_id = u.id
+WHERE a.section = 'news' AND a.published = true
+ORDER BY a.published_date DESC
+LIMIT 10;
+
+-- Limit  (actual time=0.050..0.085 rows=10)
+--   -&gt; Sort  (actual time=0.049..0.052 rows=10)
+--         Sort Key: a.published_date DESC
+--         -&gt; Nested Loop  (actual time=0.020..0.040 rows=42)
+--               -&gt; Index Scan using idx_articles_section_pub on articles a
+--                     (actual time=0.010..0.018 rows=42)
+--                     Index Cond: (section = 'news' AND published = true)
+--               -&gt; Index Scan using users_pkey on users u
+--                     (actual time=0.001..0.001 rows=1)
+--                     Index Cond: (id = a.author_id)</code></pre>
+
+    <p>Read the plan from the inside out (most indented first). Here the database:</p>
+    <ol>
+      <li>Used an index to find articles matching section='news' AND published=true (42 rows)</li>
+      <li>For each of those 42 rows, looked up the user by primary key (nested loop join)</li>
+      <li>Sorted the results by published_date DESC</li>
+      <li>Returned only the first 10</li>
+    </ol>
+
+    <!-- ============================================ -->
+    <!-- INDEX-ONLY SCANS                             -->
+    <!-- ============================================ -->
+
+    <h2>Index-Only Scans &mdash; The Fastest Reads</h2>
+
+    <p>An <strong>index-only scan</strong> happens when all the columns you need are IN the index itself, so the database never has to read the actual table rows. It's the fastest possible read.</p>
+
+    <pre><code>-- Create an index that covers section and published_date
+CREATE INDEX idx_articles_section_date
+ON articles (section, published_date);
+
+-- This query can be answered entirely from the index
+EXPLAIN SELECT section, published_date
+FROM articles
+WHERE section = 'news';
+-- Index Only Scan using idx_articles_section_date on articles
+--   Index Cond: (section = 'news')</code></pre>
+
+    <p>If your query also selects <code>title</code> or <code>views</code> (columns not in the index), it falls back to a regular Index Scan, which still has to read from the table.</p>
+
+    <h3>Covering indexes with INCLUDE</h3>
+
+    <p>PostgreSQL lets you add extra columns to an index that aren't used for sorting but are available for index-only scans:</p>
+
+    <pre><code>-- INCLUDE adds columns to the index leaf pages
+-- They're available for index-only scans but not for filtering
+CREATE INDEX idx_articles_section_covering
+ON articles (section, published_date)
+INCLUDE (title, views);
+
+-- Now this query can use an index-only scan
+SELECT section, published_date, title, views
+FROM articles
+WHERE section = 'news'
+ORDER BY published_date DESC;</code></pre>
+
+    <div class="callout">
+      <p><strong>Don't go overboard with INCLUDE.</strong> Every column you add makes the index larger, which means more storage and slower writes. Only include columns that appear in your most critical, most-run queries.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHEN NOT TO INDEX                            -->
+    <!-- ============================================ -->
+
+    <h2>When NOT to Index</h2>
+
+    <p>Indexes aren't free. Every index you add has costs:</p>
+
+    <ul>
+      <li><strong>Storage space:</strong> Each index is a separate data structure on disk</li>
+      <li><strong>Write speed:</strong> Every INSERT, UPDATE, and DELETE must update ALL indexes on that table</li>
+      <li><strong>Planning time:</strong> More indexes = more options for the query planner to evaluate</li>
+    </ul>
+
+    <p>Here's when indexes are a bad idea:</p>
+
+    <table>
+      <thead>
+        <tr><th>Situation</th><th>Why an Index Hurts</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Small tables (&lt;1,000 rows)</td><td>Sequential scan is already fast enough. The overhead of using an index might actually be slower.</td></tr>
+        <tr><td>Columns with low cardinality</td><td>A <code>boolean</code> column has only 2 values. An index won't narrow things down much.</td></tr>
+        <tr><td>Write-heavy tables with rare reads</td><td>Logs, events, audit trails &mdash; you're paying the write cost on every insert but rarely querying.</td></tr>
+        <tr><td>Columns you never filter/sort on</td><td>An index on <code>bio</code> or <code>description</code> is wasteful if you never use them in WHERE or ORDER BY.</td></tr>
+        <tr><td>Frequently updated columns</td><td>Every update to the column means updating the index too. The cost can outweigh the benefit.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="aha">
+      <p><strong>Rule of thumb:</strong> Index columns that appear in WHERE, JOIN ON, and ORDER BY clauses of your most frequent queries. Don't index everything "just in case." Start with no indexes (besides the automatic ones on primary keys and unique constraints), then add them when EXPLAIN shows a problem.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARTIAL AND EXPRESSION INDEXES               -->
+    <!-- ============================================ -->
+
+    <h2>Partial and Expression Indexes</h2>
+
+    <h3>Partial indexes</h3>
+
+    <p>A partial index only indexes rows that match a condition. If you frequently query only published articles, why index the drafts?</p>
+
+    <pre><code>-- Only index published articles
+CREATE INDEX idx_articles_published_only
+ON articles (published_date DESC)
+WHERE published = true;
+
+-- This query uses the partial index
+SELECT * FROM articles
+WHERE published = true
+ORDER BY published_date DESC
+LIMIT 20;
+
+-- This query CANNOT use it (doesn't match the WHERE condition)
+SELECT * FROM articles
+WHERE published = false;</code></pre>
+
+    <p>Partial indexes are smaller and faster because they contain fewer rows. They're perfect when you have a common filter that eliminates most of the table.</p>
+
+    <h3>Expression indexes</h3>
+
+    <p>You can index the result of an expression or function:</p>
+
+    <pre><code>-- Index on lowercase email (for case-insensitive lookups)
+CREATE INDEX idx_users_email_lower
+ON users (LOWER(email));
+
+-- This query can now use the index
+SELECT * FROM users
+WHERE LOWER(email) = 'sarah@newsroom.com';
+
+-- Index on year extracted from a date
+CREATE INDEX idx_articles_year
+ON articles (EXTRACT(YEAR FROM published_date));
+
+-- This query uses it
+SELECT * FROM articles
+WHERE EXTRACT(YEAR FROM published_date) = 2024;</code></pre>
+
+    <div class="callout">
+      <p><strong>The expression in the query must match the expression in the index exactly.</strong> If your index is on <code>LOWER(email)</code>, your WHERE clause must use <code>LOWER(email)</code>, not <code>email</code> or <code>UPPER(email)</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRISMA vs RAW INDEX                          -->
+    <!-- ============================================ -->
+
+    <h2>Prisma @@index vs Raw CREATE INDEX</h2>
+
+    <p>Prisma's <code>@@index</code> covers the basics. But raw SQL gives you more options:</p>
+
+    <table>
+      <thead>
+        <tr><th>Feature</th><th>Prisma @@index</th><th>Raw CREATE INDEX</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Basic single-column index</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td>Composite index</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td>Unique index</td><td>@@unique / @unique</td><td>CREATE UNIQUE INDEX</td></tr>
+        <tr><td>Partial index (WHERE)</td><td>No</td><td>Yes</td></tr>
+        <tr><td>Expression index</td><td>No</td><td>Yes</td></tr>
+        <tr><td>INCLUDE columns</td><td>No</td><td>Yes</td></tr>
+        <tr><td>Sort order (ASC/DESC)</td><td>Limited</td><td>Yes</td></tr>
+        <tr><td>GIN/GiST index types</td><td>type: parameter</td><td>Yes</td></tr>
+      </tbody>
+    </table>
+
+    <p>When Prisma's built-in options aren't enough, you can add raw SQL in your migrations:</p>
+
+    <pre><code>// In prisma/migrations/add_partial_index/migration.sql
+CREATE INDEX idx_articles_published_recent
+ON articles (published_date DESC)
+WHERE published = true;
+
+CREATE INDEX idx_users_email_lower
+ON users (LOWER(email));</code></pre>
+
+    <!-- ============================================ -->
+    <!-- PRACTICAL: OPTIMIZING QUERIES                -->
+    <!-- ============================================ -->
+
+    <h2>Practical: Optimizing Slow Newsroom Queries</h2>
+
+    <p>Let's walk through a real optimization scenario. You have a newsroom CMS with these tables and a query that's running slow.</p>
+
+    <pre><code>-- The slow query: "Show me the latest 20 published articles in the 'news' section"
+-- Table has 500,000 articles
+EXPLAIN ANALYZE
+SELECT a.title, a.published_date, u.name AS author
+FROM articles a
+JOIN users u ON a.author_id = u.id
+WHERE a.section = 'news'
+  AND a.published = true
+ORDER BY a.published_date DESC
+LIMIT 20;
+
+-- Result WITHOUT indexes:
+-- Seq Scan on articles  (actual time=0.015..1847.230 rows=20)
+-- Execution Time: 1847.582 ms   &lt;-- almost 2 seconds!</code></pre>
+
+    <p>Step by step optimization:</p>
+
+    <pre><code>-- Step 1: Add an index on the WHERE columns
+CREATE INDEX idx_articles_section_pub
+ON articles (section, published);
+
+-- Execution Time: 245.102 ms  (7x faster, but still slow)
+
+-- Step 2: Add published_date to the index for sorting
+CREATE INDEX idx_articles_section_pub_date
+ON articles (section, published, published_date DESC);
+
+-- Execution Time: 0.892 ms  (2000x faster than the original!)
+
+-- Step 3: Make sure the JOIN column is indexed
+CREATE INDEX idx_articles_author_id
+ON articles (author_id);
+
+-- Execution Time: 0.341 ms  (final result)
+
+-- Step 4 (optional): Add a partial index for even better performance
+DROP INDEX idx_articles_section_pub_date;
+CREATE INDEX idx_articles_published_news
+ON articles (published_date DESC)
+WHERE section = 'news' AND published = true;
+
+-- Execution Time: 0.125 ms  (the partial index is even smaller)</code></pre>
+
+    <div class="aha">
+      <p><strong>From 1.8 seconds to 0.1 milliseconds.</strong> That's a 14,000x improvement from adding the right indexes. This is why understanding indexes matters &mdash; it's the difference between a page that loads instantly and one that times out.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Quick Check</h4>
+
+      <div class="question">
+        <p>1. What's the book analogy for a database index?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">An index at the back of a book. Instead of reading every page (sequential scan), you look up the term in the index and jump directly to the right pages (index scan). It takes extra space and needs updating when the book changes, but makes lookups dramatically faster.</div>
+      </div>
+
+      <div class="question">
+        <p>2. You have a composite index on <code>(section, published_date)</code>. Will <code>WHERE published_date = '2024-01-01'</code> use the index?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">No. A composite index follows the leftmost prefix rule. It can be used for queries on <code>(section)</code> or <code>(section, published_date)</code>, but NOT <code>(published_date)</code> alone because it skips the first column.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What's the difference between <code>EXPLAIN</code> and <code>EXPLAIN ANALYZE</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>EXPLAIN</code> shows the planned execution strategy without running the query. <code>EXPLAIN ANALYZE</code> actually runs the query and shows real timing data. Use <code>EXPLAIN ANALYZE</code> for accurate performance measurement, but be careful with DELETE/UPDATE (wrap in a transaction and ROLLBACK).</div>
+      </div>
+
+      <div class="question">
+        <p>4. Why shouldn't you index a boolean column like <code>published</code> by itself?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">Boolean columns have only 2 distinct values (low cardinality). An index can only narrow results to roughly half the table, which often isn't selective enough for the index to be worthwhile. The database might still choose a sequential scan. However, booleans work well as PART of a composite index or in a partial index condition.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What does Prisma's <code>@@index</code> generate under the hood?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">A <code>CREATE INDEX</code> SQL statement in the migration file. <code>@@index([authorId])</code> becomes <code>CREATE INDEX idx_... ON table (author_id)</code>. Prisma handles basic indexes but can't create partial indexes, expression indexes, or covering indexes &mdash; you need raw SQL for those.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Practice Exercise</h4>
+      <p>You have a table <code>articles</code> (500K rows) with columns: <code>id</code>, <code>title</code>, <code>author_id</code>, <code>section</code>, <code>published</code>, <code>views</code>, <code>published_date</code>. Currently only the primary key <code>id</code> has an index.</p>
+
+      <div class="question" style="margin-top: 1rem;">
+        <p><strong>A:</strong> A query <code>WHERE author_id = 42</code> is slow. Write the index to fix it.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>CREATE INDEX idx_articles_author_id
+ON articles (author_id);</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>B:</strong> The newsroom's homepage runs <code>WHERE section = 'news' AND published = true ORDER BY published_date DESC LIMIT 10</code>. Design the optimal index.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>-- Option 1: Composite index
+CREATE INDEX idx_articles_section_pub_date
+ON articles (section, published, published_date DESC);
+
+-- Option 2: Partial index (even better for this specific query)
+CREATE INDEX idx_articles_news_published
+ON articles (published_date DESC)
+WHERE section = 'news' AND published = true;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>C:</strong> Users search for articles by title using <code>WHERE LOWER(title) LIKE 'breaking%'</code>. Write an expression index that helps.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>CREATE INDEX idx_articles_title_lower
+ON articles (LOWER(title) varchar_pattern_ops);
+-- varchar_pattern_ops enables prefix pattern matching with LIKE</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>D:</strong> How would you check if your new index is actually being used?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>EXPLAIN ANALYZE
+SELECT * FROM articles
+WHERE section = 'news' AND published = true
+ORDER BY published_date DESC
+LIMIT 10;
+
+-- Look for "Index Scan" or "Index Only Scan" in the output
+-- If you see "Seq Scan", the index isn't being used</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>E:</strong> Write the Prisma schema equivalent for indexing <code>author_id</code> and a composite index on <code>(section, published)</code>.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>model Article {
+  id            Int      @id @default(autoincrement())
+  title         String
+  authorId      Int
+  section       String
+  published     Boolean
+  views         Int
+  publishedDate DateTime
+
+  @@index([authorId])
+  @@index([section, published])
+}</code></pre></div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHEAT SHEET                                  -->
+    <!-- ============================================ -->
+
+    <h2>Cheat Sheet</h2>
+
+    <pre><code>-- Create an index
+CREATE INDEX idx_name ON table (column);
+CREATE INDEX idx_name ON table (col1, col2);     -- composite
+CREATE UNIQUE INDEX idx_name ON table (column);  -- unique
+
+-- Drop an index
+DROP INDEX idx_name;
+
+-- Partial index (only index rows matching condition)
+CREATE INDEX idx_name ON table (column)
+WHERE condition = true;
+
+-- Expression index
+CREATE INDEX idx_name ON table (LOWER(column));
+
+-- Covering index (include extra columns for index-only scans)
+CREATE INDEX idx_name ON table (col1)
+INCLUDE (col2, col3);
+
+-- Check existing indexes
+SELECT indexname, indexdef
+FROM pg_indexes
+WHERE tablename = 'your_table';
+
+-- Analyze query performance
+EXPLAIN SELECT ...;             -- show the plan
+EXPLAIN ANALYZE SELECT ...;     -- run it and show timing
+
+-- Safely analyze destructive queries
+BEGIN;
+EXPLAIN ANALYZE DELETE FROM ...;
+ROLLBACK;
+
+-- Prisma equivalents
+-- @unique        = CREATE UNIQUE INDEX
+-- @@index([col]) = CREATE INDEX
+-- Raw SQL in migrations for partial/expression indexes</code></pre>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/sql/lessons/07-data-types-constraints/">&larr; Lesson 07: Data Types &amp; Constraints</a>
+      <a href="/sql/lessons/09-postgres-specific/">Lesson 09: PostgreSQL-Specific Features &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

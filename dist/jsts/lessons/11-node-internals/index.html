@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 11 - Node.js Internals</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #eab308; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>11</span> Node.js Internals &mdash; The Printing Press</h1>
+    <a href="/jsts/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Node.js is V8 + libuv + a standard library.</strong> You've used the browser's event loop. Node has its own, with different phases and different capabilities. Understanding it is essential for server-side TypeScript.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: The Printing Press</h2>
+
+    <p>If the browser is a newsroom (lesson 01), Node.js is the <strong>printing press</strong>. It handles the heavy machinery: reading files from disk, opening network connections, compressing data, managing databases. The newsroom (V8) writes the stories. The press (libuv) handles all the physical operations that involve waiting for real-world I/O.</p>
+
+    <p>Node's event loop has <strong>phases</strong>, unlike the browser's simpler model. Understanding these phases tells you exactly when your callbacks will fire.</p>
+
+    <!-- ============================================ -->
+    <!-- NODE EVENT LOOP                              -->
+    <!-- ============================================ -->
+
+    <h2>The Node.js Event Loop (libuv)</h2>
+
+    <p>Node's event loop runs in 6 phases, in order:</p>
+
+    <pre><code><span class="comment">// The 6 phases of Node's event loop (each tick):</span>
+
+<span class="comment">// 1. TIMERS</span>
+<span class="comment">//    Execute callbacks from setTimeout() and setInterval()</span>
+
+<span class="comment">// 2. PENDING CALLBACKS</span>
+<span class="comment">//    Execute I/O callbacks deferred to the next iteration</span>
+
+<span class="comment">// 3. IDLE / PREPARE</span>
+<span class="comment">//    Internal use only</span>
+
+<span class="comment">// 4. POLL</span>
+<span class="comment">//    Retrieve new I/O events. Execute I/O callbacks.</span>
+<span class="comment">//    Node will BLOCK here if nothing else is scheduled.</span>
+
+<span class="comment">// 5. CHECK</span>
+<span class="comment">//    Execute setImmediate() callbacks</span>
+
+<span class="comment">// 6. CLOSE CALLBACKS</span>
+<span class="comment">//    Execute close event callbacks (socket.on('close', ...))</span>
+
+<span class="comment">// Between EVERY phase: drain the microtask queue</span>
+<span class="comment">//   (process.nextTick first, then Promises)</span>
+</code></pre>
+
+    <h3>setTimeout vs setImmediate</h3>
+
+    <pre><code><span class="comment">// In the main module, order is non-deterministic:</span>
+setTimeout(() =&gt; console.log("timeout"), 0);
+setImmediate(() =&gt; console.log("immediate"));
+<span class="comment">// Could be either order! Depends on how long setup takes.</span>
+
+<span class="comment">// Inside an I/O callback, setImmediate always fires first:</span>
+const fs = require('fs');
+fs.readFile('/etc/hosts', () =&gt; {
+  setTimeout(() =&gt; console.log("timeout"), 0);
+  setImmediate(() =&gt; console.log("immediate"));
+});
+<span class="comment">// Always: "immediate" then "timeout"</span>
+<span class="comment">// Because after the poll phase, the check phase (setImmediate) runs</span>
+<span class="comment">// before looping back to the timers phase (setTimeout)</span>
+</code></pre>
+
+    <h3>process.nextTick vs queueMicrotask</h3>
+
+    <pre><code><span class="comment">// process.nextTick runs BEFORE other microtasks (Promise.then)</span>
+Promise.resolve().then(() =&gt; console.log("promise"));
+process.nextTick(() =&gt; console.log("nextTick"));
+
+<span class="comment">// Output: "nextTick", "promise"</span>
+<span class="comment">// nextTick has its own separate queue that drains first</span>
+</code></pre>
+
+    <div class="warning">
+      <p><strong>Avoid recursive <code>process.nextTick</code>.</strong> Since nextTick runs between every event loop phase and drains completely, recursive nextTick calls will starve the event loop. I/O callbacks, timers, and everything else will wait indefinitely. Use <code>setImmediate</code> for recursive scheduling instead.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STREAMS                                      -->
+    <!-- ============================================ -->
+
+    <h2>Streams</h2>
+
+    <p>Streams are Node's most powerful abstraction. Instead of loading an entire file into memory, streams process data in chunks:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Without streams (bad for large files)</h5>
+        <pre><code>import { readFile, writeFile } from 'fs/promises';
+
+<span class="comment">// Loads ENTIRE file into memory</span>
+const data = await readFile('huge.csv', 'utf-8');
+const processed = data.toUpperCase();
+await writeFile('output.csv', processed);
+
+<span class="comment">// 2GB file = 2GB in memory</span></code></pre>
+      </div>
+      <div>
+        <h5>With streams (constant memory)</h5>
+        <pre><code>import { createReadStream, createWriteStream }
+  from 'fs';
+import { Transform } from 'stream';
+
+const upper = new Transform({
+  transform(chunk, enc, cb) {
+    cb(null, chunk.toString().toUpperCase());
+  }
+});
+
+createReadStream('huge.csv')
+  .pipe(upper)
+  .pipe(createWriteStream('output.csv'));
+<span class="comment">// Constant ~64KB memory usage</span></code></pre>
+      </div>
+    </div>
+
+    <h3>The 4 Stream Types</h3>
+
+    <pre><code>import { Readable, Writable, Transform, Duplex } from 'stream';
+
+<span class="comment">// 1. Readable — source of data</span>
+<span class="comment">//    Examples: fs.createReadStream, http.IncomingMessage, process.stdin</span>
+
+<span class="comment">// 2. Writable — destination for data</span>
+<span class="comment">//    Examples: fs.createWriteStream, http.ServerResponse, process.stdout</span>
+
+<span class="comment">// 3. Transform — reads AND writes, modifying data in transit</span>
+<span class="comment">//    Examples: zlib.createGzip(), crypto.createCipher()</span>
+
+<span class="comment">// 4. Duplex — reads AND writes independently (like a phone call)</span>
+<span class="comment">//    Examples: net.Socket, WebSocket</span>
+</code></pre>
+
+    <h3>Modern Stream API (async iterators)</h3>
+
+    <pre><code>import { createReadStream } from 'fs';
+import { createInterface } from 'readline';
+
+<span class="comment">// Streams are async iterables!</span>
+const fileStream = createReadStream('articles.jsonl', 'utf-8');
+const lines = createInterface({ input: fileStream });
+
+for await (const line of lines) {
+  const article = JSON.parse(line);
+  console.log(article.title);
+}
+
+<span class="comment">// Or use stream/consumers (Node 16+)</span>
+import { text, json, arrayBuffer } from 'stream/consumers';
+
+const body = await text(response.body);   <span class="comment">// Consume a ReadableStream as text</span>
+const data = await json(response.body);   <span class="comment">// Consume as parsed JSON</span>
+</code></pre>
+
+    <div class="aha">
+      <p><strong>Streams and async generators are the same pattern.</strong> In lesson 06, you learned that async generators yield values over time. Node streams do the same thing &mdash; that's why streams implement the async iterator protocol. <code>for await (const chunk of stream)</code> is the modern way to consume streams.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WORKER THREADS                               -->
+    <!-- ============================================ -->
+
+    <h2>Worker Threads</h2>
+
+    <p>JavaScript is single-threaded, but Node can spawn additional threads for CPU-intensive work:</p>
+
+    <pre><code><span class="comment">// main.ts — the main thread</span>
+import { Worker, isMainThread, parentPort, workerData } from 'worker_threads';
+
+if (isMainThread) {
+  <span class="comment">// Spawn a worker</span>
+  const worker = new Worker('./worker.ts', {
+    workerData: { articles: largeDataset }
+  });
+
+  worker.on('message', (result) =&gt; {
+    console.log('Worker finished:', result);
+  });
+
+  worker.on('error', (err) =&gt; {
+    console.error('Worker error:', err);
+  });
+}
+
+<span class="comment">// worker.ts — runs on a separate thread</span>
+import { parentPort, workerData } from 'worker_threads';
+
+const { articles } = workerData;
+
+<span class="comment">// CPU-intensive work that won't block the main event loop</span>
+const processed = articles.map(article =&gt; ({
+  ...article,
+  wordCount: article.body.split(/\s+/).length,
+  readingTime: Math.ceil(article.body.split(/\s+/).length / 200),
+}));
+
+parentPort?.postMessage(processed);
+</code></pre>
+
+    <h3>When to Use Workers</h3>
+
+    <pre><code><span class="comment">// USE workers for:</span>
+<span class="comment">// - CPU-intensive computation (parsing, compression, image processing)</span>
+<span class="comment">// - Heavy data transformation</span>
+<span class="comment">// - Cryptographic operations</span>
+
+<span class="comment">// DON'T use workers for:</span>
+<span class="comment">// - I/O operations (the event loop handles these efficiently)</span>
+<span class="comment">// - Simple async tasks (network requests, file reads)</span>
+<span class="comment">// - Low-overhead operations (the cost of spawning a worker outweighs the benefit)</span>
+</code></pre>
+
+    <div class="callout">
+      <p><strong>SharedArrayBuffer</strong> allows workers to share memory directly (no copying). Combined with <code>Atomics</code> for synchronization, this enables high-performance parallel processing. But it's advanced territory &mdash; message passing with <code>postMessage</code> is simpler and sufficient for most use cases.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PERFORMANCE                                  -->
+    <!-- ============================================ -->
+
+    <h2>Performance Profiling</h2>
+
+    <pre><code><span class="comment">// Built-in performance hooks</span>
+import { performance, PerformanceObserver } from 'perf_hooks';
+
+<span class="comment">// Measure execution time</span>
+performance.mark('start');
+await processArticles();
+performance.mark('end');
+performance.measure('processArticles', 'start', 'end');
+
+const observer = new PerformanceObserver((list) =&gt; {
+  for (const entry of list.getEntries()) {
+    console.log(`${entry.name}: ${entry.duration.toFixed(2)}ms`);
+  }
+});
+observer.observe({ entryTypes: ['measure'] });
+
+<span class="comment">// Memory usage</span>
+const usage = process.memoryUsage();
+console.log({
+  heapUsed: `${(usage.heapUsed / 1024 / 1024).toFixed(2)} MB`,
+  heapTotal: `${(usage.heapTotal / 1024 / 1024).toFixed(2)} MB`,
+  rss: `${(usage.rss / 1024 / 1024).toFixed(2)} MB`,
+});
+
+<span class="comment">// CPU profiling from the command line</span>
+<span class="comment">// node --prof app.js</span>
+<span class="comment">// node --prof-process isolate-0x*.log &gt; profile.txt</span>
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- NODE BUILT-INS                               -->
+    <!-- ============================================ -->
+
+    <h2>Essential Node Built-ins for CLI Tools</h2>
+
+    <pre><code>import { resolve, join, basename, extname, dirname } from 'path';
+import { readFile, writeFile, readdir, stat, mkdir } from 'fs/promises';
+import { existsSync } from 'fs';
+import { argv, exit, cwd, env } from 'process';
+
+<span class="comment">// Path manipulation</span>
+const filePath = resolve(cwd(), 'src', 'index.ts');
+const name = basename(filePath);       <span class="comment">// "index.ts"</span>
+const ext = extname(filePath);         <span class="comment">// ".ts"</span>
+const dir = dirname(filePath);         <span class="comment">// ".../src"</span>
+
+<span class="comment">// Directory operations</span>
+await mkdir('output', { recursive: true });  <span class="comment">// mkdir -p</span>
+const files = await readdir('src', { withFileTypes: true });
+const tsFiles = files.filter(f =&gt; f.isFile() && f.name.endsWith('.ts'));
+
+<span class="comment">// Environment and process</span>
+const port = env.PORT || '3000';
+const args = argv.slice(2);             <span class="comment">// CLI arguments after node script.js</span>
+
+<span class="comment">// Exit codes</span>
+if (!args.length) {
+  console.error('Usage: cli &lt;command&gt;');
+  exit(1);
+}
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Knowledge Check</h4>
+
+      <div class="question">
+        <p>1. Why does <code>setImmediate</code> always run before <code>setTimeout(fn, 0)</code> inside an I/O callback?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer">Inside an I/O callback, you're in the <strong>poll phase</strong>. After the poll phase completes, the event loop moves to the <strong>check phase</strong> (where <code>setImmediate</code> callbacks run). Only after completing the full loop does it reach the <strong>timers phase</strong> again (where <code>setTimeout</code> callbacks run). So <code>setImmediate</code> fires in the current tick; <code>setTimeout</code> fires in the next tick.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why use streams instead of <code>readFile</code> for large files?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer"><code>readFile</code> loads the entire file into memory as a single buffer. For a 2GB file, that's 2GB of memory. Streams process data in chunks (typically 64KB), so memory usage stays constant regardless of file size. Streams also start processing immediately &mdash; you don't wait for the entire file to load before working on the first chunk.</div>
+      </div>
+
+      <div class="question">
+        <p>3. When should you use worker threads vs the event loop?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer">Use <strong>worker threads</strong> for CPU-bound work (computation, parsing, compression) that would block the event loop. Use the <strong>event loop</strong> for I/O-bound work (network, filesystem, database). The event loop handles I/O extremely efficiently via non-blocking callbacks. Workers add overhead (thread creation, message serialization) that only pays off for heavy computation.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a File Processing Pipeline</h4>
+      <p>Create a Node.js script that:</p>
+      <ol>
+        <li>Reads all <code>.md</code> files from a directory (using <code>readdir</code> + <code>readFile</code>)</li>
+        <li>Processes them through a Transform stream that counts words and extracts titles</li>
+        <li>Writes a summary JSON file with: filename, word count, title, and reading time estimate</li>
+        <li>Uses <code>pipeline()</code> from <code>stream/promises</code> for proper error handling</li>
+      </ol>
+      <pre><code>import { pipeline } from 'stream/promises';
+import { Transform } from 'stream';
+
+<span class="comment">// Your pipeline should handle errors gracefully</span>
+<span class="comment">// and work with any number of files</span>
+<span class="comment">// Bonus: add a progress indicator using process.stdout.write</span></code></pre>
+      <p><strong>Bonus:</strong> Use a worker thread for the word counting if the file is over 1MB.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/jsts/lessons/10-testing-patterns/">&larr; Testing Patterns</a>
+      <a href="/jsts/lessons/12-capstone/">Capstone &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

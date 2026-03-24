@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 08 - Lines, Areas & Time Series</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #f97316; }</style>
+  <style>
+    .demo button { background: var(--track-color); color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 0.25rem; font-weight: 600; }
+    .demo button:hover { background: #fb923c; }
+    .demo button.secondary { background: var(--info); color: #000; }
+    .demo button.green { background: var(--success); color: #000; }
+    .demo .controls { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .legend-item { display: inline-flex; align-items: center; gap: 0.4rem; margin-right: 1rem; font-size: 0.8rem; color: var(--text-muted); }
+    .legend-item span { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+  </style>
+  <script type="module" crossorigin src="/assets/d3_lessons_08-arcs-pies-BjEVT3qo.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/init-tutor-Cq4VzOVI.js">
+  <link rel="modulepreload" crossorigin href="/assets/transform-DGvXF_4U.js">
+  <link rel="modulepreload" crossorigin href="/assets/defaultLocale-_QQJJ3OD.js">
+  <link rel="modulepreload" crossorigin href="/assets/linear-Bvwc2yJx.js">
+  <link rel="modulepreload" crossorigin href="/assets/nice-CjghwxBw.js">
+  <link rel="modulepreload" crossorigin href="/assets/defaultLocale-B7YgYLP2.js">
+  <link rel="modulepreload" crossorigin href="/assets/time-CvmHSMq6.js">
+  <link rel="modulepreload" crossorigin href="/assets/extent-Ccx1MofX.js">
+  <link rel="modulepreload" crossorigin href="/assets/select-PKtlUnGw.js">
+  <link rel="modulepreload" crossorigin href="/assets/axis-rlX7cRMw.js">
+  <link rel="modulepreload" crossorigin href="/assets/array-C1TrskLm.js">
+  <link rel="modulepreload" crossorigin href="/assets/line-Ds-cSQ6A.js">
+  <link rel="modulepreload" crossorigin href="/assets/monotone-CrhWzKu2.js">
+  <link rel="modulepreload" crossorigin href="/assets/step-Uci-j-lr.js">
+  <link rel="modulepreload" crossorigin href="/assets/basis-UEinyaHF.js">
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>08</span> Lines, Areas &amp; Time Series</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Mental Model:</strong> Path generators are cookie cutters. You give them data (the dough), and they stamp out an SVG path string (the shape). <code>d3.line()</code> makes a line shape; <code>d3.area()</code> makes a filled shape. You never write path commands by hand.</p>
+
+    <h2>d3.line() &mdash; One Path From Many Points</h2>
+
+    <pre><code><span class="comment">// A line generator is a function factory</span>
+const line = d3.line()
+  .x(d =&gt; xScale(d.date))     <span class="comment">// how to get X from each data point</span>
+  .y(d =&gt; yScale(d.value));    <span class="comment">// how to get Y from each data point</span>
+
+<span class="comment">// Feed it data, get back a path string</span>
+line(data)  <span class="comment">// → "M0,150 L50,120 L100,80 L150,90..."</span>
+
+<span class="comment">// Use it to set the "d" attribute of a &lt;path&gt;</span>
+svg.append("path")
+  .datum(data)                  <span class="comment">// .datum() not .data()!</span>
+  .attr("d", line)              <span class="comment">// line(data) runs automatically</span>
+  .attr("fill", "none")
+  .attr("stroke", "#f97316")
+  .attr("stroke-width", 2);</code></pre>
+
+    <h3>.datum() vs .data()</h3>
+
+    <div class="callout">
+      <p><strong>Key distinction:</strong> <code>.data(array)</code> = one element per array item (bars, circles). <code>.datum(array)</code> = one element from the entire array (a single line or area path). A line chart is ONE <code>&lt;path&gt;</code> element that uses ALL the data points, so you bind with <code>.datum()</code>.</p>
+    </div>
+
+    <h2>d3.area() &mdash; Filled Region</h2>
+
+    <pre><code>const area = d3.area()
+  .x(d =&gt; xScale(d.date))
+  .y0(height)                   <span class="comment">// bottom edge (baseline)</span>
+  .y1(d =&gt; yScale(d.value))     <span class="comment">// top edge (data line)</span>
+  .curve(d3.curveMonotoneX);
+
+svg.append("path")
+  .datum(data)
+  .attr("d", area)
+  .attr("fill", "#f9731622")    <span class="comment">// semi-transparent fill</span>
+  .attr("stroke", "none");</code></pre>
+
+    <h2>Curve Types</h2>
+
+    <p>The <code>.curve()</code> method controls how points are connected:</p>
+    <ul>
+      <li><code>curveLinear</code> &mdash; straight line segments (default, most accurate)</li>
+      <li><code>curveMonotoneX</code> &mdash; smooth, preserves monotonicity (best for time series)</li>
+      <li><code>curveStep</code> &mdash; staircase pattern (good for discrete values)</li>
+      <li><code>curveBasis</code> &mdash; very smooth but doesn't pass through points (aesthetic only)</li>
+    </ul>
+
+    <div class="aha">
+      <p><strong>For journalism, use curveLinear or curveMonotoneX.</strong> Basis and cardinal curves create values between data points that never existed in the data. For factual reporting, that is misleading. curveMonotoneX is the safe "smooth" option &mdash; it passes through every data point.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 1: ANIMATED LINE CHART                  -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Approval Rating Over Time</h2>
+
+    <div class="demo">
+      <h4>Live: Presidential approval rating (simulated polling data)</h4>
+      <div id="line-chart"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 2: AREA CHART WITH CONFIDENCE BAND      -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Area Chart with Confidence Band</h2>
+
+    <div class="demo">
+      <h4>Live: Economic indicator with uncertainty range</h4>
+      <div id="area-chart"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 3: CURVE COMPARISON                     -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Curve Type Comparison</h2>
+    <p>Same data, different curve interpolations. Notice how some curves create false peaks and valleys.</p>
+
+    <div class="demo">
+      <h4>Live: Same 8 data points, 4 different curves</h4>
+      <svg id="curve-compare" viewBox="0 0 700 400"></svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What is the difference between <code>.datum(data)</code> and <code>.data(data)</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>.datum(data)</code> binds the entire dataset to a single element (used for line/area paths). <code>.data(data)</code> binds each array item to a separate element (used for bars, circles). A line chart is one path element using all points, so it needs <code>.datum()</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What does <code>d3.line()</code> actually return?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A <strong>function</strong>. When you call that function with an array of data, it returns an SVG path string (the <code>d</code> attribute). The <code>.x()</code> and <code>.y()</code> accessors tell it how to extract coordinates from each data point.</div>
+      </div>
+
+      <div class="question">
+        <p>3. In <code>d3.area()</code>, what do <code>.y0()</code> and <code>.y1()</code> define?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>.y0()</code> defines the bottom edge of the filled area (usually the baseline at <code>height</code>). <code>.y1()</code> defines the top edge (your data values). The area is the filled region between y0 and y1. For a confidence band, both y0 and y1 can be data-driven.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Why should journalists prefer <code>curveMonotoneX</code> over <code>curveBasis</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>curveMonotoneX</code> passes through every data point and preserves monotonicity (no false peaks). <code>curveBasis</code> creates a smooth line that does NOT pass through the data points &mdash; it can show values that never existed. For factual reporting, creating phantom data points is unacceptable.</div>
+      </div>
+
+      <div class="question">
+        <p>5. How do you create an animated "line drawing" effect?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use SVG's <code>stroke-dasharray</code> and <code>stroke-dashoffset</code>. Set both to the path's total length (via <code>path.node().getTotalLength()</code>), making the line invisible. Then transition <code>stroke-dashoffset</code> to 0, which "draws" the line from start to end.</div>
+      </div>
+
+      <div class="question">
+        <p>6. You need to show the difference between two data series (e.g., projected vs actual). Which generator works best?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>d3.area()</code> with <code>.y0()</code> set to one series and <code>.y1()</code> set to the other. This fills the gap between the two lines, visually highlighting the difference. This is commonly used for confidence bands, margin of error, and projected vs. actual comparisons.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Line Chart</h4>
+      <p>Create a time series line chart from this polling data:</p>
+      <ol>
+        <li>Use the margins convention, scaleTime for X, scaleLinear for Y</li>
+        <li>Draw the line with <code>d3.line()</code> and <code>.datum()</code></li>
+        <li>Add an area fill underneath with <code>d3.area()</code></li>
+        <li>Add dots at each data point using <code>.data().join("circle")</code></li>
+        <li>Animate the line drawing with stroke-dasharray trick</li>
+        <li>Add axes with formatted labels</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>d3.line()</strong> takes data, returns a path string</li>
+      <li><strong>d3.area()</strong> fills between two boundaries (y0 and y1)</li>
+      <li><strong>.datum()</strong> binds entire array to one element (vs .data() for many)</li>
+      <li><strong>curveMonotoneX</strong> is the safe smooth curve for journalism</li>
+      <li><strong>Animated drawing</strong> uses stroke-dasharray/dashoffset trick</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/07-lines-areas/">&larr; Lesson 07: Enter/Update/Exit</a>
+      <a href="/d3/lessons/09-maps-geo/">Lesson 09: Arcs &amp; Pies &rarr;</a>
+    </div>
+  </div>
+
+
+</body>
+</html>

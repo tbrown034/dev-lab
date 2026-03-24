@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn Coding — Trevor Brown</title>
+  <style>
+    /* ─── HERO ─── */
+    .hero {
+      position: relative;
+      padding: 8rem 2rem 6rem;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -40%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      height: 900px;
+      background: radial-gradient(ellipse at center,
+        rgba(249, 115, 22, 0.06) 0%,
+        rgba(74, 222, 128, 0.03) 40%,
+        transparent 70%
+      );
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .hero-kicker {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      animation: reveal 0.8s var(--ease-out-expo) both;
+    }
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 2rem;
+      animation: reveal 0.8s var(--ease-out-expo) 0.1s both;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent-d3);
+    }
+    .hero-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      animation: reveal 0.8s var(--ease-out-expo) 0.2s both;
+    }
+    .hero-body p {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: var(--text-dim);
+    }
+    .hero-body p strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+    .hero-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      align-self: start;
+    }
+    .stat {
+      background: var(--surface);
+      padding: 1.25rem 1.5rem;
+    }
+    .stat .num {
+      font-family: var(--serif);
+      font-size: 2.2rem;
+      font-weight: 400;
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .stat .label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* ─── TRACK CARDS ─── */
+    .tracks {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 3rem;
+    }
+    .track {
+      background: var(--surface);
+      padding: 2.25rem;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .track:hover { background: var(--surface-2); }
+    .track::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 2px;
+    }
+    .track[data-color="d3"]::after { background: linear-gradient(90deg, var(--accent-d3), transparent); }
+    .track[data-color="django"]::after { background: linear-gradient(90deg, var(--accent-django), transparent); }
+    .track[data-color="sql"]::after { background: linear-gradient(90deg, var(--accent-sql), transparent); }
+
+    .track .track-icon {
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 1.1rem;
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+    .track[data-color="d3"] .track-icon { background: rgba(249,115,22,0.12); color: var(--accent-d3); }
+    .track[data-color="django"] .track-icon { background: rgba(34,197,94,0.12); color: var(--accent-django); }
+    .track[data-color="sql"] .track-icon { background: rgba(59,130,246,0.12); color: var(--accent-sql); }
+
+    .track h3 {
+      font-family: var(--sans);
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .track .track-desc {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+    }
+    .track .track-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 1.25rem;
+    }
+    .track .track-tag {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.04em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .track[data-color="d3"] .track-tag { background: rgba(249,115,22,0.1); color: var(--accent-d3); }
+    .track[data-color="django"] .track-tag { background: rgba(34,197,94,0.1); color: var(--accent-django); }
+    .track[data-color="sql"] .track-tag { background: rgba(59,130,246,0.1); color: var(--accent-sql); }
+
+    .track .track-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .track .track-status {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .track[data-color="d3"] .track-status { color: var(--accent-d3); }
+    .track[data-color="django"] .track-status { color: var(--accent-django); }
+    .track[data-color="sql"] .track-status { color: var(--accent-sql); }
+    .track .track-port {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* ─── PLANNED TRACKS ─── */
+    .planned {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 4rem;
+    }
+    .planned-track {
+      background: var(--surface);
+      padding: 1.75rem;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+    .planned-track:hover { opacity: 0.85; }
+    .planned-track .plan-icon {
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 0.9rem;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .planned-track[data-color="jsts"] .plan-icon { background: rgba(234,179,8,0.1); color: var(--accent-jsts); }
+    .planned-track[data-color="react"] .plan-icon { background: rgba(6,182,212,0.1); color: var(--accent-react); }
+    .planned-track[data-color="css"] .plan-icon { background: rgba(168,85,247,0.1); color: var(--accent-css); }
+    .planned-track[data-color="ai"] .plan-icon { background: rgba(244,114,182,0.1); color: var(--accent-ai); }
+    .planned-track h3 {
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+    .planned-track p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ─── FEATURES ─── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 4rem;
+    }
+    .feature {
+      background: var(--surface);
+      padding: 2rem 1.75rem;
+      transition: background 0.3s;
+    }
+    .feature:hover { background: var(--surface-2); }
+    .feature .feat-icon {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      line-height: 1;
+    }
+    .feature h3 {
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .feature p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* ─── QUOTE ─── */
+    .quote-section {
+      max-width: 1280px;
+      margin: 0 auto 4rem;
+      padding: 0 2rem;
+    }
+    .quote-block {
+      border-left: 2px solid var(--accent-d3);
+      padding: 2rem 0 2rem 2.5rem;
+      max-width: 680px;
+    }
+    .quote-block blockquote {
+      font-family: var(--serif);
+      font-size: 1.6rem;
+      font-style: italic;
+      line-height: 1.5;
+      color: var(--text-dim);
+      margin-bottom: 0.75rem;
+    }
+    .quote-block cite {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-style: normal;
+      letter-spacing: 0.04em;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 1024px) {
+      .tracks { grid-template-columns: 1fr; }
+      .planned { grid-template-columns: repeat(2, 1fr); }
+      .features { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .hero { padding: 5rem 1.5rem 3rem; }
+      .hero-body { grid-template-columns: 1fr; gap: 2rem; }
+      .hero-stats { grid-template-columns: repeat(4, 1fr); }
+      .planned { grid-template-columns: 1fr; }
+      .features { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .hero-stats { grid-template-columns: repeat(2, 1fr); }
+      .features { grid-template-columns: 1fr; }
+    }
+  </style>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/shell-B2-DeMgN.css">
+</head>
+<body>
+
+  <!-- ─── HEADER ─── -->
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <span class="dot"></span>
+        Learn Coding
+      </a>
+      <nav>
+        <a href="/courses/">Courses</a>
+        <span class="sep">&middot;</span>
+        <a href="/feed/">The Scroll</a>
+        <span class="sep">/</span>
+        <a href="/pod/">The Pod</a>
+        <span class="sep">&middot;</span>
+        <a href="/about/">About</a>
+      </nav>
+      <div class="header-actions">
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <button class="hamburger" aria-label="Menu">
+          <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+          <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── MOBILE NAV ─── -->
+  <div class="mobile-nav" id="mobile-nav">
+    <a href="/courses/">Courses</a>
+    <a href="/feed/">The Scroll</a>
+    <a href="/pod/">The Pod</a>
+    <a href="/about/">About</a>
+  </div>
+
+  <!-- ─── HERO ─── -->
+  <div class="hero">
+    <div class="hero-inner">
+      <div class="hero-kicker">Personal learning ecosystem &mdash; 2026</div>
+      <h1>I don't just take courses.<br>I <em>build</em> them.</h1>
+      <div class="hero-body">
+        <div>
+          <p>
+            After 15 years as an <strong>investigative journalist</strong>,
+            I taught myself web development &mdash; React, Next.js, TypeScript, Tailwind.
+            Now I'm going deep on <strong>D3.js</strong>, <strong>Python</strong>, and <strong>SQL</strong>
+            for a potential role at Tenga, a chain of broadcast TV networks.
+          </p>
+          <p style="margin-top: 1rem;">
+            This is how I learn: by building full learning environments from scratch &mdash;
+            lessons, games, AI tutors, sandboxes, real data journalism projects &mdash;
+            all designed around how my brain actually works.
+          </p>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><div class="num">36</div><div class="label">Lessons</div></div>
+          <div class="stat"><div class="num">7</div><div class="label">Tracks</div></div>
+          <div class="stat"><div class="num">10</div><div class="label">Games</div></div>
+          <div class="stat"><div class="num">6</div><div class="label">AI Skills</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ACTIVE TRACKS ─── -->
+  <section id="tracks">
+    <div class="section-header reveal-on-scroll">
+      <h2>Active Tracks</h2>
+      <span class="count">3 platforms running</span>
+    </div>
+
+    <div class="tracks reveal-on-scroll">
+      <a href="/d3/" class="track" data-color="d3">
+        <div class="track-icon">D3</div>
+        <h3>Learn D3.js</h3>
+        <p class="track-desc">Expert-level data visualization. SVG, scales, maps, transitions, and interactive graphics. Build broadcast-ready election dashboards.</p>
+        <div class="track-tags">
+          <span class="track-tag">12 Lessons</span>
+          <span class="track-tag">10 Games</span>
+          <span class="track-tag">AI Tutor</span>
+          <span class="track-tag">Workstation</span>
+        </div>
+        <div class="track-footer">
+          <span class="track-status">Active &middot; Complete</span>
+          <span class="track-port">/d3/</span>
+        </div>
+      </a>
+
+      <a href="/django/" class="track" data-color="django">
+        <div class="track-icon">Dj</div>
+        <h3>Learn Python + Django</h3>
+        <p class="track-desc">Python first, Django second. 5 lessons of pure Python taught through JS analogies, then 7 lessons building full-stack apps.</p>
+        <div class="track-tags">
+          <span class="track-tag">5 Python</span>
+          <span class="track-tag">7 Django</span>
+          <span class="track-tag">AI Tutor</span>
+          <span class="track-tag">JS &#8596; Py</span>
+        </div>
+        <div class="track-footer">
+          <span class="track-status">Active &middot; 12 lessons</span>
+          <span class="track-port">/django/</span>
+        </div>
+      </a>
+
+      <a href="/sql/" class="track" data-color="sql">
+        <div class="track-icon">SQL</div>
+        <h3>Learn SQL + PostgreSQL</h3>
+        <p class="track-desc">Raw SQL mastery. SELECT to window functions, taught through Prisma ORM analogies. PostgreSQL-specific features and optimization.</p>
+        <div class="track-tags">
+          <span class="track-tag">12 Lessons</span>
+          <span class="track-tag">AI Tutor</span>
+          <span class="track-tag">Prisma &#8596; SQL</span>
+        </div>
+        <div class="track-footer">
+          <span class="track-status">Active &middot; 12 lessons</span>
+          <span class="track-port">/sql/</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- ─── MORE COURSES ─── -->
+    <div class="section-header reveal-on-scroll">
+      <h2>More Courses</h2>
+      <span class="count">4 more</span>
+    </div>
+
+    <div class="planned reveal-on-scroll">
+      <a href="/jsts/" class="planned-track" data-color="jsts" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">JS</div>
+        <h3>JavaScript + TypeScript</h3>
+        <p>Advanced ES2024+, TypeScript generics, Node.js internals, testing strategies.</p>
+      </a>
+      <a href="/react/" class="planned-track" data-color="react" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">Rx</div>
+        <h3>React + Frameworks</h3>
+        <p>React 19, Next.js 15 App Router, Vite internals, Svelte comparison.</p>
+      </a>
+      <a href="/css-design/" class="planned-track" data-color="css" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">CSS</div>
+        <h3>CSS + Design Systems</h3>
+        <p>Container queries, Tailwind v4, design tokens, broadcast TV graphics.</p>
+      </a>
+      <a href="/ai-llm/" class="planned-track" data-color="ai" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">AI</div>
+        <h3>AI + LLMs</h3>
+        <p>Claude API, prompt engineering, RAG, embeddings, ethical AI in journalism.</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- ─── QUOTE ─── -->
+  <div class="quote-section reveal-on-scroll">
+    <div class="quote-block">
+      <blockquote>I don't want to memorize syntax &mdash; I want to understand why things work so I can build anything.</blockquote>
+      <cite>&mdash; The philosophy behind every lesson</cite>
+    </div>
+  </div>
+
+  <!-- ─── FEATURES ─── -->
+  <section>
+    <div class="section-header reveal-on-scroll">
+      <h2>Learning Tools</h2>
+      <span class="count">built into every platform</span>
+    </div>
+
+    <div class="features reveal-on-scroll">
+      <div class="feature">
+        <div class="feat-icon">&#x2726;</div>
+        <h3>AI Tutor</h3>
+        <p>Context-aware Claude chatbot on every page. Knows the lesson, the concepts, and your progress.</p>
+      </div>
+      <div class="feature">
+        <div class="feat-icon">&#x21C4;</div>
+        <h3>Explain It Back</h3>
+        <p>Feynman technique. The AI asks you to explain concepts in your own words, then pushes deeper.</p>
+      </div>
+      <div class="feature">
+        <div class="feat-icon">&#x266B;</div>
+        <h3>Audio Mode</h3>
+        <p>Listen to lessons passively. Section-by-section playback with speed controls for second-screen learning.</p>
+      </div>
+      <div class="feature">
+        <div class="feat-icon">&#x25CE;</div>
+        <h3>Skill Test</h3>
+        <p>AI-generated adaptive assessment. 10 questions, difficulty scaling, score history. Beat your best.</p>
+      </div>
+      <a href="/feed/" class="feature" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="feat-icon">&#x21F5;</div>
+        <h3>The Scroll</h3>
+        <p>Replace doomscrolling with learning. Interview Qs, hot takes, tips, and bugs from the dev timeline. Comment and the AI claps back.</p>
+      </a>
+      <a href="/pod/" class="feature" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="feat-icon">&#x266A;</div>
+        <h3>The Pod</h3>
+        <p>AI-generated podcast episodes that break down each lesson into conversational audio. Learn on the go, one topic at a time.</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- ─── FOOTER ─── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">
+        <p><strong>Trevor Brown</strong> &middot; Investigative journalist &amp; web developer</p>
+        <p>Built with Vite, D3.js, Claude API, and an unreasonable amount of curiosity.</p>
+      </div>
+      <div class="footer-right">
+        <div class="cmd">npm run dev</div>
+        <p>Each track runs its own dev server.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ─── SCRIPTS ─── -->
+  <script>
+    // Scroll reveal
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+
+    // Theme toggle
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+
+    // Hamburger menu
+    const hamburger = document.querySelector('.hamburger');
+    const mobileNav = document.getElementById('mobile-nav');
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('active');
+      mobileNav.classList.toggle('open');
+      document.body.style.overflow = mobileNav.classList.contains('open') ? 'hidden' : '';
+    });
+    mobileNav.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('active');
+        mobileNav.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    });
+  </script>
+
+</body>
+</html>

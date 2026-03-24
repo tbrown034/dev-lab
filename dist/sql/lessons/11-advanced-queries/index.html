@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 11 - Transactions & Concurrency</title>
+  <style>:root { --track-color: #3b82f6; }</style>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-Ch5wxeC6.svg">
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>11</span> Transactions &amp; Concurrency</h1>
+    <a href="/sql/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>Transactions are the database's undo button.</strong> You've been running individual queries. But what happens when you need three queries to succeed together &mdash; or not at all? That's what transactions solve.</p>
+
+    <!-- ============================================ -->
+    <!-- WHAT ARE TRANSACTIONS                       -->
+    <!-- ============================================ -->
+
+    <h2>What Are Transactions?</h2>
+
+    <p>Here's the mental model: a <strong>transaction</strong> is a group of queries wrapped in an "all-or-nothing" guarantee. Either every query in the group succeeds, or none of them take effect. The database treats them as a single atomic operation.</p>
+
+    <p>Think about transferring an article from one author to another. You need two operations:</p>
+    <ol>
+      <li>Remove the article from Author A's assignments</li>
+      <li>Add the article to Author B's assignments</li>
+    </ol>
+
+    <p>What if step 1 succeeds but step 2 fails (maybe Author B's ID doesn't exist)? Without a transaction, you'd have an article with no author &mdash; data corruption. Transactions prevent this.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Without transaction (dangerous)</h5>
+        <pre><code>-- Step 1 succeeds
+UPDATE articles
+SET author_id = NULL
+WHERE id = 42;
+
+-- Step 2 FAILS (author 999 doesn't exist)
+UPDATE articles
+SET author_id = 999
+WHERE id = 42;
+-- ERROR! But step 1 already happened.
+-- Article 42 now has no author!</code></pre>
+      </div>
+      <div>
+        <h5>With transaction (safe)</h5>
+        <pre><code>BEGIN;
+
+UPDATE articles
+SET author_id = NULL
+WHERE id = 42;
+
+UPDATE articles
+SET author_id = 999
+WHERE id = 42;
+-- ERROR! But because we're in a
+-- transaction, step 1 is ROLLED BACK.
+-- Article 42 still has its original author.
+
+ROLLBACK; -- (happens automatically on error)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The bank transfer analogy:</strong> Transferring $100 from checking to savings requires two operations: debit $100 from checking, credit $100 to savings. If the debit succeeds but the credit fails, you've lost $100. Transactions guarantee both happen or neither happens. That's why banks were among the first to use relational databases.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- BEGIN, COMMIT, ROLLBACK                     -->
+    <!-- ============================================ -->
+
+    <h2>BEGIN, COMMIT, ROLLBACK</h2>
+
+    <p>Three commands control transactions:</p>
+
+    <table>
+      <thead>
+        <tr><th>Command</th><th>What It Does</th><th>Analogy</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>BEGIN</code></td><td>Start a transaction</td><td>Open a draft in Google Docs</td></tr>
+        <tr><td><code>COMMIT</code></td><td>Save all changes permanently</td><td>Click "Publish"</td></tr>
+        <tr><td><code>ROLLBACK</code></td><td>Undo everything since BEGIN</td><td>Click "Discard draft"</td></tr>
+      </tbody>
+    </table>
+
+    <pre><code>-- The basic pattern
+BEGIN;
+
+-- Do your work (nothing is permanent yet)
+INSERT INTO articles (title, body, author_id)
+VALUES ('Breaking Story', 'Content here...', 5);
+
+UPDATE users
+SET article_count = article_count + 1
+WHERE id = 5;
+
+-- Everything looks good? Make it permanent.
+COMMIT;
+
+-- If something went wrong, undo everything:
+-- ROLLBACK;</code></pre>
+
+    <p>Key behavior to understand:</p>
+    <ul>
+      <li>Between <code>BEGIN</code> and <code>COMMIT</code>, your changes are only visible to your session. Other connections can't see them yet.</li>
+      <li>If your session disconnects before <code>COMMIT</code>, the transaction is automatically rolled back.</li>
+      <li>If any query errors inside a transaction, PostgreSQL marks the transaction as "aborted" &mdash; you can only <code>ROLLBACK</code> at that point.</li>
+    </ul>
+
+    <h3>SAVEPOINT &mdash; Partial Rollbacks</h3>
+
+    <p>Sometimes you want to undo part of a transaction without losing everything. <code>SAVEPOINT</code> creates a checkpoint you can roll back to:</p>
+
+    <pre><code>BEGIN;
+
+INSERT INTO articles (title, body, author_id)
+VALUES ('Story 1', 'Content...', 5);
+
+SAVEPOINT before_story_2;
+
+INSERT INTO articles (title, body, author_id)
+VALUES ('Story 2', 'More content...', 999);
+-- ERROR: author 999 doesn't exist!
+
+-- Roll back just to the savepoint (Story 1 is preserved)
+ROLLBACK TO SAVEPOINT before_story_2;
+
+-- Continue with the transaction
+INSERT INTO articles (title, body, author_id)
+VALUES ('Story 2', 'More content...', 3);
+
+COMMIT; -- Both Story 1 and Story 2 are saved</code></pre>
+
+    <div class="callout">
+      <p><strong>Every single query is a transaction.</strong> When you run a lone <code>UPDATE</code> outside of a BEGIN/COMMIT block, PostgreSQL wraps it in an implicit transaction automatically. That's why individual queries are atomic &mdash; they either fully complete or fully fail.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ACID PROPERTIES                             -->
+    <!-- ============================================ -->
+
+    <h2>ACID &mdash; The Four Guarantees</h2>
+
+    <p>ACID is the acronym for the four properties that make database transactions reliable. It's not abstract theory &mdash; these are the practical guarantees you rely on every time you use a database.</p>
+
+    <table>
+      <thead>
+        <tr><th>Property</th><th>What It Means</th><th>Plain English</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>A</strong>tomicity</td><td>All or nothing</td><td>All queries in a transaction succeed, or none do. No partial results.</td></tr>
+        <tr><td><strong>C</strong>onsistency</td><td>Rules are always satisfied</td><td>Constraints (NOT NULL, UNIQUE, foreign keys) are enforced. You can't end up in an invalid state.</td></tr>
+        <tr><td><strong>I</strong>solation</td><td>Transactions don't interfere</td><td>Two users editing at the same time can't corrupt each other's work.</td></tr>
+        <tr><td><strong>D</strong>urability</td><td>Committed = saved forever</td><td>Once COMMIT returns, the data survives power outages, crashes, anything.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="aha">
+      <p><strong>Think of ACID like saving a file.</strong> Atomicity = the entire file saves, not half of it. Consistency = the file format is always valid. Isolation = two programs can't corrupt the file by writing simultaneously. Durability = once saved, it survives a crash.</p>
+    </div>
+
+    <p>The one that's most nuanced is <strong>Isolation</strong>. How much isolation do you want? More isolation = slower. Less isolation = risk of weird bugs. That's where isolation levels come in.</p>
+
+    <!-- ============================================ -->
+    <!-- ISOLATION LEVELS                            -->
+    <!-- ============================================ -->
+
+    <h2>Isolation Levels</h2>
+
+    <p>Isolation levels answer this question: <em>what can one transaction see of another transaction's uncommitted or just-committed changes?</em> PostgreSQL supports three levels:</p>
+
+    <h3>READ COMMITTED (Default)</h3>
+
+    <p>Each query within the transaction sees the most recently committed data at the moment that query starts. This is PostgreSQL's default and what you'll use 95% of the time.</p>
+
+    <pre><code>-- Session A                        -- Session B
+BEGIN;                              BEGIN;
+SELECT views FROM articles
+WHERE id = 1;
+-- Result: 100
+                                    UPDATE articles SET views = 200
+                                    WHERE id = 1;
+                                    COMMIT;
+SELECT views FROM articles
+WHERE id = 1;
+-- Result: 200 (sees B's commit!)
+COMMIT;</code></pre>
+
+    <p>Notice that Session A gets different results for the same query within one transaction. That's called a <strong>non-repeatable read</strong>. Usually fine, but sometimes a problem.</p>
+
+    <h3>REPEATABLE READ</h3>
+
+    <p>The transaction sees a snapshot of the database from when it started. No changes from other transactions are visible, even if committed.</p>
+
+    <pre><code>-- Set isolation level at transaction start
+BEGIN ISOLATION LEVEL REPEATABLE READ;
+
+SELECT views FROM articles WHERE id = 1;
+-- Result: 100
+
+-- Even if another session updates and commits views to 200...
+
+SELECT views FROM articles WHERE id = 1;
+-- Still 100! (frozen snapshot from transaction start)
+
+COMMIT;</code></pre>
+
+    <div class="callout">
+      <p><strong>Use REPEATABLE READ when you need consistent reads.</strong> For example, generating a report: you don't want the numbers changing halfway through because another user published articles. The report sees a consistent snapshot.</p>
+    </div>
+
+    <h3>SERIALIZABLE</h3>
+
+    <p>The strictest level. Transactions behave as if they ran one after another (serially), even though they actually run concurrently. If two transactions conflict, one will be rolled back.</p>
+
+    <pre><code>BEGIN ISOLATION LEVEL SERIALIZABLE;
+
+-- If this transaction conflicts with another,
+-- PostgreSQL will abort one of them with:
+-- ERROR: could not serialize access
+-- Your app needs to catch this and retry.
+
+COMMIT;</code></pre>
+
+    <table>
+      <thead>
+        <tr><th>Level</th><th>Speed</th><th>Consistency</th><th>When to Use</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>READ COMMITTED</code></td><td>Fastest</td><td>Good enough</td><td>Most operations (default)</td></tr>
+        <tr><td><code>REPEATABLE READ</code></td><td>Medium</td><td>Snapshot</td><td>Reports, analytics</td></tr>
+        <tr><td><code>SERIALIZABLE</code></td><td>Slowest</td><td>Perfect</td><td>Financial transactions</td></tr>
+      </tbody>
+    </table>
+
+    <div class="aha">
+      <p><strong>Real talk:</strong> You'll use READ COMMITTED for almost everything. REPEATABLE READ for reports. SERIALIZABLE almost never, unless you're building something where money is on the line. Don't over-engineer isolation levels.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LOCKING                                     -->
+    <!-- ============================================ -->
+
+    <h2>Locking</h2>
+
+    <p>When two transactions try to modify the same row at the same time, the database uses <strong>locks</strong> to prevent corruption. Think of it like a bathroom door lock &mdash; only one person at a time.</p>
+
+    <h3>Row Locks (Automatic)</h3>
+
+    <p>PostgreSQL automatically locks rows when you UPDATE or DELETE them. Other transactions that try to modify the same row will wait until the first transaction commits or rolls back.</p>
+
+    <pre><code>-- Session A                        -- Session B
+BEGIN;                              BEGIN;
+UPDATE articles SET views = 500
+WHERE id = 1;
+-- Row 1 is now locked
+                                    UPDATE articles SET views = 600
+                                    WHERE id = 1;
+                                    -- WAITS... (blocked by A's lock)
+
+COMMIT; -- releases the lock
+                                    -- Now B's update proceeds
+                                    COMMIT;</code></pre>
+
+    <h3>Explicit Row Locking with SELECT FOR UPDATE</h3>
+
+    <p><code>SELECT ... FOR UPDATE</code> locks the selected rows, preventing other transactions from modifying them. Use this when you need to read a value, compute something, and write it back without interference:</p>
+
+    <pre><code>BEGIN;
+
+-- Lock the row so nobody else can change it while we work
+SELECT views FROM articles
+WHERE id = 1
+FOR UPDATE;
+-- Result: 100
+
+-- Now we can safely increment (no race condition)
+UPDATE articles
+SET views = views + 1
+WHERE id = 1;
+
+COMMIT;</code></pre>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Without FOR UPDATE (race condition)</h5>
+        <pre><code>-- Session A reads views = 100
+-- Session B reads views = 100
+-- Session A writes views = 101
+-- Session B writes views = 101
+-- Expected: 102, Got: 101!</code></pre>
+      </div>
+      <div>
+        <h5>With FOR UPDATE (safe)</h5>
+        <pre><code>-- Session A locks row, reads 100
+-- Session B tries to lock, WAITS
+-- Session A writes 101, commits
+-- Session B locks row, reads 101
+-- Session B writes 102, commits</code></pre>
+      </div>
+    </div>
+
+    <h3>Table Locks</h3>
+
+    <p>For bulk operations, you sometimes need to lock an entire table. This is rare but useful for maintenance:</p>
+
+    <pre><code>-- Lock entire table (blocks all other writes)
+BEGIN;
+LOCK TABLE articles IN EXCLUSIVE MODE;
+
+-- Do bulk operation
+UPDATE articles SET featured = false;
+UPDATE articles SET featured = true
+WHERE views &gt; 10000 AND published = true;
+
+COMMIT; -- releases the lock</code></pre>
+
+    <h3>Deadlocks</h3>
+
+    <p>A <strong>deadlock</strong> happens when two transactions are each waiting for the other to release a lock. PostgreSQL detects this and kills one of them:</p>
+
+    <pre><code>-- Session A                        -- Session B
+BEGIN;                              BEGIN;
+UPDATE articles SET views = 1
+WHERE id = 1;                       UPDATE articles SET views = 2
+-- Locks row 1                      WHERE id = 2;
+                                    -- Locks row 2
+UPDATE articles SET views = 1
+WHERE id = 2;                       UPDATE articles SET views = 2
+-- WAITS for B's lock on row 2      WHERE id = 1;
+                                    -- WAITS for A's lock on row 1
+
+-- DEADLOCK! PostgreSQL detects it and kills one transaction:
+-- ERROR: deadlock detected</code></pre>
+
+    <div class="aha">
+      <p><strong>How to avoid deadlocks:</strong> Always lock rows in the same order. If you need to update articles 1 and 2, always update 1 first, then 2. If all your code follows the same ordering, two transactions can never form a circular wait.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRISMA TRANSACTIONS                         -->
+    <!-- ============================================ -->
+
+    <h2>Prisma.$transaction() vs Raw SQL</h2>
+
+    <p>Prisma gives you two ways to run transactions. Here's how they map to the SQL you just learned:</p>
+
+    <h3>Sequential Transactions (Array)</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>// All succeed or all fail
+const [article, updatedUser] =
+  await prisma.$transaction([
+    prisma.article.create({
+      data: {
+        title: 'Story',
+        body: 'Content...',
+        authorId: 5,
+      },
+    }),
+    prisma.user.update({
+      where: { id: 5 },
+      data: {
+        articleCount: { increment: 1 },
+      },
+    }),
+  ]);</code></pre>
+      </div>
+      <div>
+        <h5>SQL equivalent</h5>
+        <pre><code>BEGIN;
+
+INSERT INTO articles (title, body, author_id)
+VALUES ('Story', 'Content...', 5);
+
+UPDATE users
+SET article_count = article_count + 1
+WHERE id = 5;
+
+COMMIT;</code></pre>
+      </div>
+    </div>
+
+    <h3>Interactive Transactions (Callback)</h3>
+
+    <p>When you need to read data mid-transaction and make decisions based on it:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>await prisma.$transaction(async (tx) =&gt; {
+  // Read within the transaction
+  const author = await tx.user.findUnique({
+    where: { id: 5 },
+  });
+
+  if (!author.active) {
+    throw new Error('Author inactive');
+    // Throwing = ROLLBACK
+  }
+
+  await tx.article.update({
+    where: { id: 42 },
+    data: { authorId: 5 },
+  });
+});
+// If no error thrown = COMMIT</code></pre>
+      </div>
+      <div>
+        <h5>SQL equivalent</h5>
+        <pre><code>BEGIN;
+
+SELECT active FROM users WHERE id = 5;
+-- Check result in application code
+
+-- If not active:
+ROLLBACK;
+
+-- If active:
+UPDATE articles
+SET author_id = 5
+WHERE id = 42;
+
+COMMIT;</code></pre>
+      </div>
+    </div>
+
+    <h3>Prisma Transaction Options</h3>
+
+    <pre><code>// Set timeout and isolation level
+await prisma.$transaction(
+  async (tx) =&gt; {
+    // ... your operations
+  },
+  {
+    maxWait: 5000,       // Max time to wait to start (ms)
+    timeout: 10000,      // Max time for the transaction (ms)
+    isolationLevel: 'RepeatableRead', // Isolation level
+  }
+);
+
+// Available isolation levels in Prisma:
+// 'ReadCommitted' (default)
+// 'RepeatableRead'
+// 'Serializable'</code></pre>
+
+    <div class="callout">
+      <p><strong>When to use raw SQL transactions over Prisma:</strong> When you need <code>SELECT FOR UPDATE</code>, explicit locking, savepoints, or table locks. Prisma's <code>$transaction</code> covers most cases, but complex locking scenarios require <code>prisma.$queryRaw</code> inside a transaction.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRACTICAL: SAFE OPERATIONS                  -->
+    <!-- ============================================ -->
+
+    <h2>Practical &mdash; Safe Newsroom Operations</h2>
+
+    <p>Let's build the transaction patterns a newsroom CMS would need:</p>
+
+    <h3>Transferring an Article Between Authors</h3>
+
+    <pre><code>-- Safely reassign an article from one author to another
+BEGIN;
+
+-- Lock the article row so no one else can modify it
+SELECT id, author_id FROM articles
+WHERE id = 42
+FOR UPDATE;
+
+-- Verify the new author exists and is active
+SELECT id, active FROM users
+WHERE id = 8 AND active = true;
+-- If no rows returned, ROLLBACK
+
+-- Update the article's author
+UPDATE articles
+SET author_id = 8,
+    updated_at = NOW()
+WHERE id = 42;
+
+-- Log the transfer
+INSERT INTO article_events (article_id, event_type, details, occurred_at)
+VALUES (42, 'author_transfer',
+  '{"from_author": 5, "to_author": 8}', NOW());
+
+-- Decrement old author's count, increment new author's count
+UPDATE users SET article_count = article_count - 1 WHERE id = 5;
+UPDATE users SET article_count = article_count + 1 WHERE id = 8;
+
+COMMIT;</code></pre>
+
+    <h3>Bulk Publishing with Validation</h3>
+
+    <pre><code>-- Publish all articles for a specific edition
+BEGIN;
+
+-- Snapshot: count how many we expect to publish
+SELECT COUNT(*) AS expected
+FROM articles
+WHERE edition_id = 12 AND published = false;
+
+-- Publish them all
+UPDATE articles
+SET published = true,
+    published_at = NOW()
+WHERE edition_id = 12 AND published = false;
+
+-- Verify the count matches (sanity check)
+-- In application code: compare expected vs actual rows updated
+-- If mismatch: ROLLBACK
+
+-- Log the bulk publish event
+INSERT INTO edition_events (edition_id, event_type, article_count, occurred_at)
+VALUES (12, 'bulk_publish',
+  (SELECT COUNT(*) FROM articles WHERE edition_id = 12 AND published = true),
+  NOW());
+
+COMMIT;</code></pre>
+
+    <h3>The Prisma Version</h3>
+
+    <pre><code>// Transferring an article between authors in Prisma
+async function transferArticle(articleId, fromAuthorId, toAuthorId) {
+  await prisma.$transaction(async (tx) =&gt; {
+    // Verify article exists
+    const article = await tx.article.findUniqueOrThrow({
+      where: { id: articleId },
+    });
+
+    if (article.authorId !== fromAuthorId) {
+      throw new Error('Article does not belong to this author');
+    }
+
+    // Verify new author is active
+    const newAuthor = await tx.user.findFirst({
+      where: { id: toAuthorId, active: true },
+    });
+
+    if (!newAuthor) {
+      throw new Error('Target author not found or inactive');
+    }
+
+    // Do the transfer
+    await tx.article.update({
+      where: { id: articleId },
+      data: { authorId: toAuthorId },
+    });
+
+    // Update counts
+    await tx.user.update({
+      where: { id: fromAuthorId },
+      data: { articleCount: { decrement: 1 } },
+    });
+
+    await tx.user.update({
+      where: { id: toAuthorId },
+      data: { articleCount: { increment: 1 } },
+    });
+  });
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- COMMON PITFALLS                             -->
+    <!-- ============================================ -->
+
+    <h2>Common Transaction Pitfalls</h2>
+
+    <ul>
+      <li><strong>Long-running transactions:</strong> Keep transactions short. A transaction that runs for 30 seconds holds locks for 30 seconds, blocking other users. Do your computation before starting the transaction, then do the writes quickly.</li>
+      <li><strong>Forgetting to COMMIT:</strong> If you open a transaction in a database tool (like pgAdmin) and forget to COMMIT, the locks stay held indefinitely. Other queries will hang. Always COMMIT or ROLLBACK.</li>
+      <li><strong>Network calls inside transactions:</strong> Never make HTTP requests or send emails inside a transaction. If the external service is slow, your transaction holds locks for that entire time. Do it after COMMIT.</li>
+      <li><strong>Assuming auto-retry:</strong> When a transaction fails due to a serialization error or deadlock, the database does not retry it. Your application code must catch the error and retry.</li>
+    </ul>
+
+    <pre><code>// Retry pattern for serialization failures
+async function withRetry(fn, maxRetries = 3) {
+  for (let attempt = 1; attempt &lt;= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      // P2034 = Prisma's serialization failure code
+      if (error.code === 'P2034' && attempt &lt; maxRetries) {
+        console.log(`Retry attempt ${attempt}...`);
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+// Usage
+await withRetry(() =&gt;
+  prisma.$transaction(async (tx) =&gt; {
+    // ... critical operations
+  }, { isolationLevel: 'Serializable' })
+);</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                        -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Quick Check</h4>
+
+      <div class="question">
+        <p>1. What happens to a transaction if your database connection drops before COMMIT?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">The transaction is automatically rolled back. All changes since BEGIN are undone. This is part of the Atomicity guarantee &mdash; if anything prevents a commit (error, crash, disconnect), nothing is saved.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What does <code>SELECT ... FOR UPDATE</code> do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">It locks the selected rows so that no other transaction can UPDATE or DELETE them until the current transaction finishes (COMMIT or ROLLBACK). Other transactions that try to modify those rows will wait.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What's the difference between <code>READ COMMITTED</code> and <code>REPEATABLE READ</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">READ COMMITTED: each query sees the latest committed data (so the same query run twice might return different results if someone committed changes between them). REPEATABLE READ: the entire transaction sees a snapshot from when it started (same query always returns same results within the transaction).</div>
+      </div>
+
+      <div class="question">
+        <p>4. How does Prisma's <code>$transaction([...])</code> differ from <code>$transaction(async (tx) => { ... })</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">The array form runs all queries sequentially without reading intermediate results. The callback form lets you read data mid-transaction and make decisions (conditionals, lookups) based on results, which maps to interactive SQL transactions.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What is a deadlock and how do you prevent it?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">A deadlock is when two transactions are each waiting for a lock the other holds &mdash; a circular wait. PostgreSQL detects and kills one. Prevent it by always acquiring locks in the same consistent order (e.g., always update the lower ID first).</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                    -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Practice Exercise</h4>
+      <p>You have tables: <code>articles</code> (id, title, author_id, published, views), <code>users</code> (id, name, article_count, active), and <code>article_events</code> (id, article_id, event_type, details, occurred_at).</p>
+
+      <div class="question" style="margin-top: 1rem;">
+        <p><strong>A:</strong> Write a transaction that publishes article #15, sets its <code>published_at</code> to now, and logs a "published" event in <code>article_events</code>.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>BEGIN;
+
+UPDATE articles
+SET published = true, published_at = NOW()
+WHERE id = 15;
+
+INSERT INTO article_events (article_id, event_type, occurred_at)
+VALUES (15, 'published', NOW());
+
+COMMIT;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>B:</strong> Write a transaction using <code>SELECT FOR UPDATE</code> to safely increment the view count for article #7 (avoiding race conditions).</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>BEGIN;
+
+SELECT views FROM articles WHERE id = 7 FOR UPDATE;
+
+UPDATE articles
+SET views = views + 1
+WHERE id = 7;
+
+COMMIT;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>C:</strong> Write the Prisma interactive transaction equivalent of exercise A.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>await prisma.$transaction(async (tx) =&gt; {
+  await tx.article.update({
+    where: { id: 15 },
+    data: {
+      published: true,
+      publishedAt: new Date(),
+    },
+  });
+
+  await tx.articleEvent.create({
+    data: {
+      articleId: 15,
+      eventType: 'published',
+      occurredAt: new Date(),
+    },
+  });
+});</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>D:</strong> What isolation level would you use for generating a monthly analytics report that reads from articles, users, and events tables? Why?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">REPEATABLE READ. You want a consistent snapshot so the numbers don't change while you're generating the report. If someone publishes articles mid-report, you don't want half your queries to include them and half not to.<pre><code>BEGIN ISOLATION LEVEL REPEATABLE READ;
+-- All your report queries here see a consistent snapshot
+SELECT COUNT(*) FROM articles WHERE ...;
+SELECT SUM(views) FROM articles WHERE ...;
+COMMIT;</code></pre></div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHEAT SHEET                                  -->
+    <!-- ============================================ -->
+
+    <h2>Cheat Sheet</h2>
+
+    <pre><code>-- Basic transaction
+BEGIN;
+-- ... queries ...
+COMMIT;    -- save everything
+ROLLBACK;  -- undo everything
+
+-- Savepoints (partial rollback)
+SAVEPOINT my_savepoint;
+ROLLBACK TO SAVEPOINT my_savepoint;
+
+-- Isolation levels
+BEGIN ISOLATION LEVEL READ COMMITTED;     -- default
+BEGIN ISOLATION LEVEL REPEATABLE READ;    -- snapshot
+BEGIN ISOLATION LEVEL SERIALIZABLE;       -- strictest
+
+-- Row locking
+SELECT * FROM table WHERE id = 1 FOR UPDATE;  -- exclusive lock
+SELECT * FROM table WHERE id = 1 FOR SHARE;   -- shared lock
+
+-- Table locking (rare)
+LOCK TABLE table_name IN EXCLUSIVE MODE;
+
+-- Prisma transactions
+// Array form (simple)
+await prisma.$transaction([query1, query2]);
+
+// Callback form (interactive)
+await prisma.$transaction(async (tx) =&gt; {
+  const data = await tx.model.findUnique(...);
+  await tx.model.update(...);
+});
+
+// With options
+await prisma.$transaction(fn, {
+  maxWait: 5000,
+  timeout: 10000,
+  isolationLevel: 'RepeatableRead',
+});</code></pre>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/sql/lessons/10-database-design/">&larr; Lesson 10: Views, Functions &amp; Triggers</a>
+      <a href="/sql/lessons/12-capstone/">Lesson 12: Real-World Patterns &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

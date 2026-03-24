@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Courses — Learn Coding</title>
+  <style>
+    /* ─── HERO ─── */
+    .hero {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 5rem 2rem 3rem;
+    }
+    .hero-kicker {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+    .hero p {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: var(--text-dim);
+      max-width: 560px;
+    }
+
+    /* ─── CONTENT ─── */
+    .content {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 2rem 5rem;
+    }
+
+    /* ─── ACTIVE COURSE CARDS ─── */
+    .courses-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 4rem;
+    }
+    .course-card {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 2.25rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, transform 0.25s var(--ease-out-expo);
+    }
+    .course-card:hover { transform: translateY(-3px); }
+    .course-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+    .course-card[data-color="d3"]::before { background: linear-gradient(90deg, var(--accent-d3), transparent 80%); }
+    .course-card[data-color="d3"]:hover { border-color: var(--accent-d3); }
+    .course-card[data-color="django"]::before { background: linear-gradient(90deg, var(--accent-django), transparent 80%); }
+    .course-card[data-color="django"]:hover { border-color: var(--accent-django); }
+    .course-card[data-color="sql"]::before { background: linear-gradient(90deg, var(--accent-sql), transparent 80%); }
+    .course-card[data-color="sql"]:hover { border-color: var(--accent-sql); }
+    .course-card[data-color="jsts"]::before { background: linear-gradient(90deg, var(--accent-jsts), transparent 80%); }
+    .course-card[data-color="jsts"]:hover { border-color: var(--accent-jsts); }
+    .course-card[data-color="react"]::before { background: linear-gradient(90deg, var(--accent-react), transparent 80%); }
+    .course-card[data-color="react"]:hover { border-color: var(--accent-react); }
+    .course-card[data-color="css"]::before { background: linear-gradient(90deg, var(--accent-css), transparent 80%); }
+    .course-card[data-color="css"]:hover { border-color: var(--accent-css); }
+    .course-card[data-color="ai"]::before { background: linear-gradient(90deg, var(--accent-ai), transparent 80%); }
+    .course-card[data-color="ai"]:hover { border-color: var(--accent-ai); }
+
+    .course-icon {
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 1.1rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.25rem;
+    }
+    .course-card[data-color="d3"] .course-icon { background: rgba(249,115,22,0.12); color: var(--accent-d3); }
+    .course-card[data-color="django"] .course-icon { background: rgba(34,197,94,0.12); color: var(--accent-django); }
+    .course-card[data-color="sql"] .course-icon { background: rgba(59,130,246,0.12); color: var(--accent-sql); }
+    .course-card[data-color="jsts"] .course-icon { background: rgba(234,179,8,0.12); color: var(--accent-jsts); }
+    .course-card[data-color="react"] .course-icon { background: rgba(6,182,212,0.12); color: var(--accent-react); }
+    .course-card[data-color="css"] .course-icon { background: rgba(168,85,247,0.12); color: var(--accent-css); }
+    .course-card[data-color="ai"] .course-icon { background: rgba(244,114,182,0.12); color: var(--accent-ai); }
+
+    .course-card h3 {
+      font-family: var(--sans);
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .course-card .course-desc {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      line-height: 1.65;
+      margin-bottom: 1.25rem;
+    }
+    .course-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-bottom: 1.25rem;
+    }
+    .course-tag {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.04em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .course-card[data-color="d3"] .course-tag { background: rgba(249,115,22,0.1); color: var(--accent-d3); }
+    .course-card[data-color="django"] .course-tag { background: rgba(34,197,94,0.1); color: var(--accent-django); }
+    .course-card[data-color="sql"] .course-tag { background: rgba(59,130,246,0.1); color: var(--accent-sql); }
+    .course-card[data-color="jsts"] .course-tag { background: rgba(234,179,8,0.1); color: var(--accent-jsts); }
+    .course-card[data-color="react"] .course-tag { background: rgba(6,182,212,0.1); color: var(--accent-react); }
+    .course-card[data-color="css"] .course-tag { background: rgba(168,85,247,0.1); color: var(--accent-css); }
+    .course-card[data-color="ai"] .course-tag { background: rgba(244,114,182,0.1); color: var(--accent-ai); }
+
+    .course-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .course-status {
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .course-card[data-color="d3"] .course-status { color: var(--accent-d3); }
+    .course-card[data-color="django"] .course-status { color: var(--accent-django); }
+    .course-card[data-color="sql"] .course-status { color: var(--accent-sql); }
+    .course-card[data-color="jsts"] .course-status { color: var(--accent-jsts); }
+    .course-card[data-color="react"] .course-status { color: var(--accent-react); }
+    .course-card[data-color="css"] .course-status { color: var(--accent-css); }
+    .course-card[data-color="ai"] .course-status { color: var(--accent-ai); }
+    .course-lessons {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* ─── PLANNED CARDS ─── */
+    .planned-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .planned-card {
+      background: var(--surface);
+      padding: 1.75rem;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+    .planned-card:hover { opacity: 0.85; }
+    .planned-icon {
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 0.9rem;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .planned-card[data-color="jsts"] .planned-icon { background: rgba(234,179,8,0.1); color: var(--accent-jsts); }
+    .planned-card[data-color="react"] .planned-icon { background: rgba(6,182,212,0.1); color: var(--accent-react); }
+    .planned-card[data-color="css"] .planned-icon { background: rgba(168,85,247,0.1); color: var(--accent-css); }
+    .planned-card[data-color="ai"] .planned-icon { background: rgba(244,114,182,0.1); color: var(--accent-ai); }
+    .planned-card h3 {
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+    .planned-card p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 2rem;
+      text-align: center;
+    }
+    footer p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    footer a {
+      color: var(--accent-d3);
+      text-decoration: none;
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 1024px) {
+      .courses-grid { grid-template-columns: 1fr; }
+      .planned-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .hero { padding: 3.5rem 1.5rem 2rem; }
+      .content { padding: 0 1.5rem 3rem; }
+      .planned-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/shell-B2-DeMgN.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">Learn Coding</a>
+      <div class="header-right">
+        <a href="/" class="back-link">&larr; Home</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-kicker">Pick a course &mdash; go deep</div>
+    <h1>Courses</h1>
+    <p>Seven courses, each a full learning environment &mdash; lessons, AI tutors, sandboxes, real projects &mdash; built around how I actually learn.</p>
+  </div>
+
+  <div class="content">
+
+    <div class="section-header">
+      <h2>Active</h2>
+      <span class="count">3 courses</span>
+    </div>
+
+    <div class="courses-grid">
+      <a href="/d3/" class="course-card" data-color="d3">
+        <div class="course-icon">D3</div>
+        <h3>Learn D3.js</h3>
+        <p class="course-desc">Expert-level data visualization. SVG, scales, maps, transitions, and interactive graphics. Build broadcast-ready election dashboards.</p>
+        <div class="course-tags">
+          <span class="course-tag">13 Lessons</span>
+          <span class="course-tag">10 Games</span>
+          <span class="course-tag">AI Tutor</span>
+          <span class="course-tag">Workstation</span>
+        </div>
+        <div class="course-footer">
+          <span class="course-status">Active &middot; Complete</span>
+          <span class="course-lessons">/d3/</span>
+        </div>
+      </a>
+
+      <a href="/django/" class="course-card" data-color="django">
+        <div class="course-icon">Dj</div>
+        <h3>Learn Python + Django</h3>
+        <p class="course-desc">Python first, Django second. 5 lessons of pure Python taught through JS analogies, then 7 lessons building full-stack apps.</p>
+        <div class="course-tags">
+          <span class="course-tag">5 Python</span>
+          <span class="course-tag">7 Django</span>
+          <span class="course-tag">AI Tutor</span>
+          <span class="course-tag">JS &harr; Py</span>
+        </div>
+        <div class="course-footer">
+          <span class="course-status">Active &middot; 12 lessons</span>
+          <span class="course-lessons">/django/</span>
+        </div>
+      </a>
+
+      <a href="/sql/" class="course-card" data-color="sql">
+        <div class="course-icon">SQL</div>
+        <h3>Learn SQL + PostgreSQL</h3>
+        <p class="course-desc">Raw SQL mastery. SELECT to window functions, taught through Prisma ORM analogies. PostgreSQL-specific features and optimization.</p>
+        <div class="course-tags">
+          <span class="course-tag">12 Lessons</span>
+          <span class="course-tag">AI Tutor</span>
+          <span class="course-tag">Prisma &harr; SQL</span>
+        </div>
+        <div class="course-footer">
+          <span class="course-status">Active &middot; 12 lessons</span>
+          <span class="course-lessons">/sql/</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-header">
+      <h2>New</h2>
+      <span class="count">4 courses</span>
+    </div>
+
+    <div class="courses-grid">
+      <a href="/jsts/" class="course-card" data-color="jsts">
+        <div class="course-icon">JS</div>
+        <h3>JavaScript + TypeScript</h3>
+        <p class="course-desc">Advanced ES2024+, TypeScript generics, Node.js internals, testing strategies. The deep dive you skipped when you learned by building.</p>
+        <div class="course-tags">
+          <span class="course-tag">13 Lessons</span>
+          <span class="course-tag">AI Tutor</span>
+          <span class="course-tag">Engine Internals</span>
+        </div>
+        <div class="course-footer">
+          <span class="course-status">Active &middot; 13 lessons</span>
+          <span class="course-lessons">/jsts/</span>
+        </div>
+      </a>
+
+      <a href="/react/" class="course-card" data-color="react">
+        <div class="course-icon">Rx</div>
+        <h3>React + Frameworks</h3>
+        <p class="course-desc">React 19 internals, Fiber architecture, Server Components, Next.js 15 App Router, framework comparison. Beyond the tutorials.</p>
+        <div class="course-tags">
+          <span class="course-tag">13 Lessons</span>
+          <span class="course-tag">AI Tutor</span>
+          <span class="course-tag">RSC Deep Dive</span>
+        </div>
+        <div class="course-footer">
+          <span class="course-status">Active &middot; 13 lessons</span>
+          <span class="course-lessons">/react/</span>
+        </div>
+      </a>
+
+      <a href="/css-design/" class="course-card" data-color="css">
+        <div class="course-icon">CSS</div>
+        <h3>CSS + Design Systems</h3>
+        <p class="course-desc">Modern CSS deep dive, Tailwind v4, design tokens, component systems, and broadcast TV graphics. The visual layer, mastered.</p>
+        <div class="course-tags">
+          <span class="course-tag">13 Lessons</span>
+          <span class="course-tag">AI Tutor</span>
+          <span class="course-tag">Broadcast Graphics</span>
+        </div>
+        <div class="course-footer">
+          <span class="course-status">Active &middot; 13 lessons</span>
+          <span class="course-lessons">/css-design/</span>
+        </div>
+      </a>
+
+      <a href="/ai-llm/" class="course-card" data-color="ai">
+        <div class="course-icon">AI</div>
+        <h3>AI + LLMs</h3>
+        <p class="course-desc">Claude API, prompt engineering, RAG, embeddings, agents, and ethical AI in journalism. Build AI-powered tools for the newsroom.</p>
+        <div class="course-tags">
+          <span class="course-tag">13 Lessons</span>
+          <span class="course-tag">AI Tutor</span>
+          <span class="course-tag">Newsroom AI</span>
+        </div>
+        <div class="course-footer">
+          <span class="course-status">Active &middot; 13 lessons</span>
+          <span class="course-lessons">/ai-llm/</span>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <footer>
+    <p><a href="/">Learn Coding</a> &mdash; Trevor Brown &middot; 2026</p>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+    else if (window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.setAttribute('data-theme', 'light');
+    toggle.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  </script>
+
+</body>
+</html>

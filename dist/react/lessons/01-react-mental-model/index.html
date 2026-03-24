@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 01 - The React Mental Model</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #06b6d4; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>01</span> The React Mental Model &mdash; UI as a Function of State</h1>
+    <a href="/react/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">You've used React. Now understand it.</strong> This lesson establishes the core mental model that every other lesson builds on. React isn't a template engine. It's a rendering pipeline that transforms state into UI.</p>
+
+    <!-- ============================================ -->
+    <!-- THE CORE EQUATION                            -->
+    <!-- ============================================ -->
+
+    <h2>The Core Equation: UI = f(state)</h2>
+
+    <p>Every React application, from a todo list to Facebook's news feed, is built on one idea:</p>
+
+    <pre><code>UI = f(state)</code></pre>
+
+    <p>Your entire user interface is the <strong>output</strong> of a function. The input is state. Change the state, call the function again, get a new UI. That's it. That's React.</p>
+
+    <p>This sounds simple, but the implications are enormous. Let's unpack them using an analogy you'll appreciate.</p>
+
+    <div class="aha">
+      <p><strong>The newspaper analogy.</strong> Think of React like a newspaper's printing process. You don't modify yesterday's paper by crossing out words and writing new ones in the margins. You write a new edition. The entire front page is regenerated from the current state of the world. React works the same way &mdash; it doesn't patch the old UI. It describes the entire new UI from scratch, then figures out what changed.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DECLARATIVE VS IMPERATIVE                    -->
+    <!-- ============================================ -->
+
+    <h2>Declarative vs Imperative: Why the Distinction Matters</h2>
+
+    <p>You've heard this before. Let's make it concrete.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Imperative (jQuery / vanilla JS)</h5>
+        <pre><code><span class="comment">// Step-by-step instructions:</span>
+const btn = document.getElementById('btn');
+const count = document.getElementById('count');
+let n = 0;
+
+btn.addEventListener('click', () =&gt; {
+  n++;
+  count.textContent = n;
+  if (n &gt; 10) {
+    count.style.color = 'red';
+  }
+  if (n === 1) {
+    const badge = document.createElement('span');
+    badge.textContent = ' click!';
+    count.appendChild(badge);
+  }
+});</code></pre>
+      </div>
+      <div>
+        <h5>Declarative (React)</h5>
+        <pre><code><span class="comment">// Describe the result:</span>
+function Counter() {
+  const [n, setN] = useState(0);
+
+  return (
+    &lt;div&gt;
+      &lt;button onClick={() =&gt; setN(n + 1)}&gt;
+        Click
+      &lt;/button&gt;
+      &lt;span style={{ color: n &gt; 10 ? 'red' : 'white' }}&gt;
+        {n}
+        {n === 1 &amp;&amp; &lt;span&gt; click!&lt;/span&gt;}
+      &lt;/span&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+      </div>
+    </div>
+
+    <p>The imperative version tells the browser <em>how</em> to update: find this element, change this text, add this class. The declarative version says <em>what</em> the UI should look like for any given state, and React figures out the DOM mutations needed to get there.</p>
+
+    <div class="callout">
+      <p><strong>Why this matters beyond philosophy:</strong> Declarative code is easier to reason about because each render is independent. You don't need to trace a chain of mutations to understand the current UI. Given state X, the UI is always Y. This is the same reason pure functions are easier to test than stateful procedures &mdash; same input, same output, every time.</p>
+    </div>
+
+    <h3>The cost of declarative</h3>
+
+    <p>Nothing is free. The declarative model means React has to:</p>
+
+    <ol>
+      <li><strong>Call your component function on every render</strong> &mdash; it re-runs the entire function body, not just the "changed parts"</li>
+      <li><strong>Diff the output</strong> against the previous output to find what actually changed (reconciliation)</li>
+      <li><strong>Batch the DOM mutations</strong> to minimize layout thrashing</li>
+    </ol>
+
+    <p>Steps 2 and 3 are where React earns its keep. Step 1 is where performance problems usually live &mdash; because your function body might be doing expensive work on every render. We'll cover this in Lesson 08.</p>
+
+    <!-- ============================================ -->
+    <!-- COMPONENTS AS FUNCTIONS                      -->
+    <!-- ============================================ -->
+
+    <h2>Components Are Functions (Really)</h2>
+
+    <p>A React component is literally a function that takes props and returns JSX. This isn't a metaphor. Let's trace what happens:</p>
+
+    <pre><code><span class="comment">// This is just a function.</span>
+function Article({ title, author, date }: ArticleProps) {
+  const formatted = new Date(date).toLocaleDateString();
+
+  return (
+    &lt;article&gt;
+      &lt;h2&gt;{title}&lt;/h2&gt;
+      &lt;p&gt;By {author} &middot; {formatted}&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+
+    <p>When React renders this component, it literally calls <code>Article({ title: "...", author: "...", date: "..." })</code>. The return value is a JavaScript object &mdash; not HTML, not DOM nodes. It's a description of what the UI should look like. React calls this a "React element."</p>
+
+    <pre><code><span class="comment">// What Article() actually returns (simplified):</span>
+{
+  type: 'article',
+  props: {
+    children: [
+      { type: 'h2', props: { children: 'Breaking: Budget Bill...' } },
+      { type: 'p', props: { children: 'By Trevor Brown · Mar 18, 2026' } }
+    ]
+  }
+}</code></pre>
+
+    <div class="aha">
+      <p><strong>JSX is syntactic sugar for function calls.</strong> When you write <code>&lt;Article title="..." /&gt;</code>, Babel/SWC transforms it into <code>React.createElement(Article, { title: "..." })</code> (or the modern <code>jsx()</code> runtime). The angle brackets are just a nicer way to write nested function calls. Understanding this demystifies everything about React &mdash; conditional rendering, lists, composition. They're all just JavaScript expressions inside a function.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE RENDER CYCLE                             -->
+    <!-- ============================================ -->
+
+    <h2>The Render Cycle: What Actually Happens</h2>
+
+    <p>When you call <code>setState</code>, React doesn't immediately update the DOM. Here's the actual sequence:</p>
+
+    <ol>
+      <li><strong>Trigger:</strong> Something causes a re-render (setState, context change, parent re-render)</li>
+      <li><strong>Render Phase:</strong> React calls your component function to get new JSX. This is pure computation &mdash; no side effects, no DOM access.</li>
+      <li><strong>Reconciliation:</strong> React diffs the new element tree against the previous one. It builds a list of changes needed.</li>
+      <li><strong>Commit Phase:</strong> React applies the minimal set of DOM mutations. This is where the actual browser DOM gets updated.</li>
+      <li><strong>Effects:</strong> After the DOM is painted, useEffect callbacks run.</li>
+    </ol>
+
+    <div class="callout">
+      <p><strong>The render phase is not the same as rendering to the screen.</strong> This trips people up constantly. "Rendering" in React means calling your function. The DOM update happens later, in the commit phase. Your component can "render" (be called) multiple times and React might throw away the result if something higher-priority comes in. This is the foundation of concurrent features.</p>
+    </div>
+
+    <h3>A concrete example</h3>
+
+    <pre><code>function NewsFilter({ articles }: Props) {
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState&lt;'date' | 'relevance'&gt;('date');
+
+  <span class="comment">// This runs on EVERY render — but that's OK (usually)</span>
+  const filtered = articles
+    .filter(a =&gt; a.title.toLowerCase().includes(query.toLowerCase()))
+    .sort((a, b) =&gt; sort === 'date'
+      ? b.date.getTime() - a.date.getTime()
+      : b.score - a.score
+    );
+
+  return (
+    &lt;div&gt;
+      &lt;input value={query} onChange={e =&gt; setQuery(e.target.value)} /&gt;
+      &lt;select value={sort} onChange={e =&gt; setSort(e.target.value)}&gt;
+        &lt;option value="date"&gt;Date&lt;/option&gt;
+        &lt;option value="relevance"&gt;Relevance&lt;/option&gt;
+      &lt;/select&gt;
+      {filtered.map(a =&gt; &lt;ArticleCard key={a.id} article={a} /&gt;)}
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+    <p>Every time the user types a character, React calls this entire function. The <code>filtered</code> array is recomputed from scratch. Is that wasteful? Usually not &mdash; JavaScript is fast. Filtering 100 articles takes microseconds. You'd need thousands of items with complex computation before this becomes a problem.</p>
+
+    <div class="aha">
+      <p><strong>Don't optimize for problems you don't have.</strong> The React model encourages you to write straightforward code and only optimize when you measure a real issue. This is the opposite of premature optimization &mdash; it's engineering discipline. Like a good editor: don't cut the story until you know what's slow. Profile first, optimize second.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- COMPOSITION                                  -->
+    <!-- ============================================ -->
+
+    <h2>Composition: The Power of Functions Calling Functions</h2>
+
+    <p>Since components are functions, they compose exactly like functions do. This is React's killer feature &mdash; not the virtual DOM, not hooks. Composition.</p>
+
+    <pre><code><span class="comment">// Small, focused components</span>
+function Avatar({ src, name }: AvatarProps) {
+  return &lt;img src={src} alt={name} className="avatar" /&gt;;
+}
+
+function Byline({ author, date }: BylineProps) {
+  return (
+    &lt;div className="byline"&gt;
+      &lt;Avatar src={author.photo} name={author.name} /&gt;
+      &lt;span&gt;{author.name}&lt;/span&gt;
+      &lt;time&gt;{date}&lt;/time&gt;
+    &lt;/div&gt;
+  );
+}
+
+function ArticleCard({ article }: CardProps) {
+  return (
+    &lt;article&gt;
+      &lt;h3&gt;{article.title}&lt;/h3&gt;
+      &lt;Byline author={article.author} date={article.date} /&gt;
+      &lt;p&gt;{article.excerpt}&lt;/p&gt;
+    &lt;/article&gt;
+  );
+}
+
+<span class="comment">// Compose them into a page</span>
+function HomePage({ articles }: PageProps) {
+  return (
+    &lt;main&gt;
+      {articles.map(a =&gt; &lt;ArticleCard key={a.id} article={a} /&gt;)}
+    &lt;/main&gt;
+  );
+}</code></pre>
+
+    <p>Each component is a self-contained unit that knows how to render itself given its props. The parent doesn't know or care about the implementation details of its children. This is the same principle as modular journalism: the headline desk doesn't need to know how the infographics team builds their charts. They just need to know what data to pass down.</p>
+
+    <h3>The children pattern</h3>
+
+    <p>The most powerful composition pattern is <code>children</code>. It lets you create wrapper components that don't need to know what they're wrapping:</p>
+
+    <pre><code>function Card({ children, variant = 'default' }: CardProps) {
+  return (
+    &lt;div className={`card card--${variant}`}&gt;
+      {children}
+    &lt;/div&gt;
+  );
+}
+
+<span class="comment">// Use it to wrap anything:</span>
+&lt;Card variant="featured"&gt;
+  &lt;ArticleCard article={leadStory} /&gt;
+&lt;/Card&gt;
+
+&lt;Card variant="sidebar"&gt;
+  &lt;WeatherWidget /&gt;
+&lt;/Card&gt;</code></pre>
+
+    <div class="callout">
+      <p><strong>Composition over configuration.</strong> When you're tempted to add a prop like <code>showAvatar</code>, <code>showDate</code>, <code>showExcerpt</code> to a component, stop. That's configuration, not composition. Instead, create smaller components that the consumer assembles. This keeps each piece simple and testable.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- IMMUTABILITY                                 -->
+    <!-- ============================================ -->
+
+    <h2>Immutability: Why React Needs New References</h2>
+
+    <p>React detects state changes by comparing references, not deep-comparing values. This is why you can't mutate state directly:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Broken: Mutating state</h5>
+        <pre><code><span class="comment">// React won't re-render!</span>
+const [articles, setArticles] = useState([]);
+
+function addArticle(article) {
+  articles.push(article); <span class="comment">// mutation</span>
+  setArticles(articles);  <span class="comment">// same ref</span>
+}</code></pre>
+      </div>
+      <div>
+        <h5>Correct: New reference</h5>
+        <pre><code><span class="comment">// New array = new reference = re-render</span>
+const [articles, setArticles] = useState([]);
+
+function addArticle(article) {
+  setArticles(prev =&gt; [
+    ...prev,
+    article  <span class="comment">// spread into new array</span>
+  ]);
+}</code></pre>
+      </div>
+    </div>
+
+    <p>When you call <code>setArticles(articles)</code> with the same array reference, React's comparison says "same object, nothing changed" and skips the re-render. Even though you pushed a new item into it. React checks <code>Object.is(prevState, newState)</code> &mdash; a reference equality check, not a deep comparison.</p>
+
+    <div class="aha">
+      <p><strong>Why reference equality?</strong> Deep comparison is expensive &mdash; O(n) for arrays, recursive for nested objects. Reference equality is O(1). React made a deliberate tradeoff: require immutable updates, but make change detection blazing fast. This is why the entire ecosystem uses immutable patterns, spread operators, and libraries like Immer.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- UNIDIRECTIONAL DATA FLOW                     -->
+    <!-- ============================================ -->
+
+    <h2>Unidirectional Data Flow</h2>
+
+    <p>Data in React flows one direction: parent to child via props. If a child needs to communicate upward, the parent passes a callback function as a prop.</p>
+
+    <pre><code><span class="comment">// Parent owns the state</span>
+function SearchPage() {
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState([]);
+
+  return (
+    &lt;div&gt;
+      &lt;SearchBar value={query} onChange={setQuery} /&gt;
+      &lt;ResultsList results={results} /&gt;
+    &lt;/div&gt;
+  );
+}
+
+<span class="comment">// Child communicates up via callback</span>
+function SearchBar({ value, onChange }: SearchBarProps) {
+  return (
+    &lt;input
+      value={value}
+      onChange={e =&gt; onChange(e.target.value)}
+      placeholder="Search articles..."
+    /&gt;
+  );
+}</code></pre>
+
+    <p>This is constraining by design. You always know where state lives and how it changes. In a newsroom analogy: the editor (parent) decides what goes on the page. Reporters (children) can pitch stories (call callbacks), but the editor makes the final decision (updates state).</p>
+
+    <div class="callout">
+      <p><strong>When unidirectional flow breaks down:</strong> When many unrelated components need the same state, passing props through intermediate components ("prop drilling") becomes painful. That's when you reach for Context (lesson 04) or external state managers. But start with props &mdash; most "prop drilling" complaints come from not composing components well enough.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What does "UI = f(state)" mean in practice?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Your component function is called with the current state, and it returns JSX describing the complete UI for that state. React then diffs this against the previous output and applies the minimum DOM changes. The UI is always a deterministic function of the current state.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What's the difference between the "render phase" and the "commit phase"?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The render phase is when React calls your component functions to get new JSX &mdash; it's pure computation with no side effects. The commit phase is when React applies the actual DOM mutations. The render phase can be interrupted (concurrent mode); the commit phase cannot.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why does <code>array.push(item); setState(array)</code> not trigger a re-render?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because <code>push</code> mutates the existing array, so the reference doesn't change. React uses <code>Object.is()</code> to compare the old and new state. Same reference = no change detected = no re-render. You need to create a new array: <code>setState([...array, item])</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>4. A component renders 500 items in a list. Should you immediately wrap it in React.memo?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">No. First measure whether it's actually slow. Rendering 500 simple list items is typically fast (&lt; 16ms). React.memo adds comparison overhead on every render. Only memoize after profiling shows the component is a bottleneck.</div>
+      </div>
+
+      <div class="question">
+        <p>5. Why does React use unidirectional data flow instead of two-way binding?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Predictability. With unidirectional flow, you always know where state lives and how it gets updated. Two-way binding (like Angular's ngModel) can create invisible update cycles where changing one thing triggers changes elsewhere. React makes data flow explicit at the cost of more boilerplate.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Trace the Render</h4>
+      <p>Add a <code>console.log('Rendering ArticleList')</code> at the top of several component functions in one of your projects. Then interact with the UI. Answer these questions:</p>
+      <ol>
+        <li>Which components re-render when you type in a search field? Are any of them unnecessary?</li>
+        <li>How many times does the parent re-render vs the child when you click a button in the child?</li>
+        <li>If you move state down to the component that actually uses it, do fewer components re-render?</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">This exercise builds intuition about React's rendering behavior. You'll use this intuition in every lesson that follows.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/react/lessons/00-syllabus/">&larr; Lesson 00: Syllabus</a>
+      <a href="/react/lessons/02-fiber-reconciliation/">Lesson 02: Fiber &amp; Reconciliation &rarr;</a>
+    </div>
+  </div>
+</body>
+</html>

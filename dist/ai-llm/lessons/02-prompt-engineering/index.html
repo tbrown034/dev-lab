@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 02 - Prompt Engineering</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #f472b6; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>02</span> Prompt Engineering &mdash; Talking to Models</h1>
+    <a href="/ai-llm/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">The most important skill in AI development.</strong> A great prompt can make a mediocre model perform brilliantly. A bad prompt can make the best model useless.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>Mental Model: The Briefing Document</h2>
+
+    <p>As a journalist, you've briefed editors, sources, and producers. You know that the quality of the brief determines the quality of the output. Prompting works exactly the same way.</p>
+
+    <p>A prompt is a <strong>briefing document for an AI</strong>. It tells the model: who you are, what you need, what format to use, what to avoid, and what good output looks like. The more precise the brief, the better the result.</p>
+
+    <div class="aha">
+      <p><strong>The mindset shift:</strong> Stop thinking "How do I ask this question?" Start thinking "How do I brief this assistant so they can't get it wrong?"</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SYSTEM PROMPTS                               -->
+    <!-- ============================================ -->
+
+    <h2>System Prompts: Setting the Stage</h2>
+
+    <p>The <strong>system prompt</strong> is a special message that sets the model's behavior for the entire conversation. It's like the standing orders for a newsroom: always active, always in effect.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Weak system prompt</h5>
+        <pre><code>"You are a helpful assistant."
+
+<span class="comment">// Too vague. The model has no
+// constraints, no personality,
+// no specific expertise.</span></code></pre>
+      </div>
+      <div>
+        <h5>Strong system prompt</h5>
+        <pre><code>"You are a fact-checking assistant
+for an investigative journalism team.
+
+Rules:
+- Always cite sources by name and date
+- Flag claims that can't be verified
+- Use AP Style
+- Never speculate — say 'unverified'
+  if you can't confirm
+- Keep responses under 200 words"
+
+<span class="comment">// Specific role, clear rules,
+// constraints, style guide.</span></code></pre>
+      </div>
+    </div>
+
+    <p>The system prompt goes in the <code>system</code> parameter of the API call (we'll see this in Lesson 03). It's separate from the user's messages and gets special treatment by the model.</p>
+
+    <div class="callout">
+      <p><strong>Pro tip:</strong> Write your system prompt like a job description. Include: the role, the audience, the format, what to do, and what NOT to do. The "what NOT to do" is often more important than the positive instructions.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FEW-SHOT PROMPTING                           -->
+    <!-- ============================================ -->
+
+    <h2>Few-Shot Prompting: Show, Don't Tell</h2>
+
+    <p>Instead of explaining what you want, <strong>show the model examples</strong>. This is called few-shot prompting (zero-shot = no examples, one-shot = one example, few-shot = several examples).</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Zero-shot (just instructions)</h5>
+        <pre><code>"Extract the person's name, title,
+and organization from this text."
+
+<span class="comment">// The model guesses the format.
+// Sometimes JSON, sometimes prose,
+// sometimes a table.</span></code></pre>
+      </div>
+      <div>
+        <h5>Few-shot (with examples)</h5>
+        <pre><code>"Extract structured data:
+
+Input: 'Sarah Chen, a senior
+reporter at The Post'
+Output: {
+  name: 'Sarah Chen',
+  title: 'senior reporter',
+  org: 'The Post'
+}
+
+Input: 'interviewed Mayor Johnson'
+Output: {
+  name: 'Johnson',
+  title: 'Mayor',
+  org: null
+}
+
+Input: [YOUR TEXT HERE]"
+
+<span class="comment">// Exact format. Every time.</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Why this works:</strong> Remember from Lesson 01 &mdash; the model predicts the next token based on patterns. When you show it a pattern (input &rarr; output, input &rarr; output), it continues that pattern. It's literally what it's designed to do.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAIN OF THOUGHT                             -->
+    <!-- ============================================ -->
+
+    <h2>Chain-of-Thought: Making the Model Show Its Work</h2>
+
+    <p>For complex tasks, telling the model to <strong>think step by step</strong> dramatically improves accuracy. This is called chain-of-thought (CoT) prompting.</p>
+
+    <pre><code><span class="comment">// WITHOUT chain-of-thought:</span>
+"Is this claim true or false: 'The US national debt
+exceeded $30 trillion for the first time in 2022.'"
+→ "True." <span class="comment">// Might be wrong. No reasoning shown.</span>
+
+<span class="comment">// WITH chain-of-thought:</span>
+"Analyze this claim step by step:
+1. Identify the specific factual assertions
+2. State what you know about each assertion
+3. Note any uncertainties
+4. Provide your assessment
+
+Claim: 'The US national debt exceeded $30 trillion
+for the first time in 2022.'"
+
+→ "Step 1: The claim asserts that (a) the debt
+exceeded $30T and (b) this happened first in 2022.
+Step 2: The US national debt crossed $30T in
+January 2022 according to Treasury data...
+Step 3: My training data confirms this timeline...
+Step 4: This claim appears accurate."</code></pre>
+
+    <p>The model's reasoning is visible, checkable, and more likely to be correct. It's the difference between a source saying "yes" and a source saying "yes, because X, Y, and Z."</p>
+
+    <div class="callout">
+      <p><strong>When to use CoT:</strong> Math problems, fact-checking, multi-step reasoning, classification with edge cases, and any task where you'd want to see the work. For simple tasks (reformatting text, translation), CoT adds unnecessary tokens and cost.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STRUCTURED OUTPUT                            -->
+    <!-- ============================================ -->
+
+    <h2>Structured Output: Getting Parseable Results</h2>
+
+    <p>When you're building applications (not chatting), you need output your code can parse. The trick: be extremely specific about the format.</p>
+
+    <pre><code><span class="comment">// Prompt that produces parseable output:</span>
+`Analyze this article and respond with ONLY valid JSON.
+No markdown, no explanation, just the JSON object.
+
+Schema:
+{
+  "headline": "string - a suggested headline",
+  "summary": "string - 2 sentence summary",
+  "sources_cited": ["string array of source names"],
+  "fact_check_flags": ["string array of claims to verify"],
+  "tone": "neutral | positive | negative | mixed"
+}
+
+Article:
+${articleText}`</code></pre>
+
+    <div class="aha">
+      <p><strong>The pattern:</strong> Specify the exact schema. Say "respond with ONLY valid JSON." Include an example of the expected shape. This is so important that Lesson 08 is entirely devoted to structured output patterns.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PROMPT PATTERNS                              -->
+    <!-- ============================================ -->
+
+    <h2>Prompt Patterns Cheat Sheet</h2>
+
+    <table>
+      <tr><th>Pattern</th><th>When to Use</th><th>Key Phrase</th></tr>
+      <tr><td><strong>Role assignment</strong></td><td>Always</td><td>"You are a [role] who [constraints]"</td></tr>
+      <tr><td><strong>Few-shot</strong></td><td>Format-sensitive tasks</td><td>"Here are examples: ..."</td></tr>
+      <tr><td><strong>Chain-of-thought</strong></td><td>Complex reasoning</td><td>"Think step by step"</td></tr>
+      <tr><td><strong>Output format</strong></td><td>Parseable results</td><td>"Respond with ONLY valid JSON"</td></tr>
+      <tr><td><strong>Negative constraints</strong></td><td>Preventing bad behavior</td><td>"Do NOT include/mention/assume..."</td></tr>
+      <tr><td><strong>Persona grounding</strong></td><td>Consistent voice</td><td>"Write as if you are [persona]"</td></tr>
+      <tr><td><strong>Decomposition</strong></td><td>Multi-part tasks</td><td>"First do X, then do Y, finally Z"</td></tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- COMMON MISTAKES                              -->
+    <!-- ============================================ -->
+
+    <h2>Common Prompting Mistakes</h2>
+
+    <ol>
+      <li><strong>Being vague.</strong> "Summarize this" vs. "Write a 2-sentence summary for a news brief, AP Style, past tense."</li>
+      <li><strong>No examples.</strong> If the format matters, show the model what you want. Don't describe it; demonstrate it.</li>
+      <li><strong>Ignoring the system prompt.</strong> Put persistent instructions in the system prompt, not repeated in every user message.</li>
+      <li><strong>Asking for perfection.</strong> "Make sure there are absolutely zero errors" doesn't help. Specific checks do: "Verify all dates against the source material."</li>
+      <li><strong>Overloading one prompt.</strong> If you need five different things, make five API calls. Don't ask the model to do everything at once.</li>
+    </ol>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What's the difference between a system prompt and a user prompt?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The system prompt sets the model's overall behavior and personality for the entire conversation (like standing orders). The user prompt is the specific request or input for that turn. System prompts are set once; user prompts change every message.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why does few-shot prompting work so well?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because LLMs predict the next token by continuing patterns. When you show input-output examples, the model recognizes the pattern and continues it with your new input. You're leveraging the model's core mechanism rather than fighting it.</div>
+      </div>
+
+      <div class="question">
+        <p>3. When should you NOT use chain-of-thought prompting?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">For simple, well-defined tasks like text reformatting, translation, or simple extraction. CoT adds unnecessary tokens (cost and latency) when the task doesn't require multi-step reasoning.</div>
+      </div>
+
+      <div class="question">
+        <p>4. You want the model to return JSON. What's the most reliable way to ensure it?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Specify the exact schema, say "respond with ONLY valid JSON, no markdown," and provide an example of the expected output shape. For maximum reliability, use the API's JSON mode (Lesson 08).</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Prompt Engineering for Journalism</h4>
+      <p>Write three prompts (system + user) for these journalism tasks. Focus on specificity and constraints:</p>
+      <ol>
+        <li><strong>Source extractor:</strong> Given a news article, extract every named source with their title, organization, and what they said (direct or paraphrased).</li>
+        <li><strong>Headline generator:</strong> Given a lead paragraph, generate 5 headline options in different styles (breaking news, feature, analytical, clickbait, SEO-optimized).</li>
+        <li><strong>Fact-check assistant:</strong> Given a claim, break it into verifiable sub-claims and rate each on a confidence scale.</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">Don't run these yet &mdash; we'll use the API in Lesson 03. For now, practice the craft of writing precise prompts.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/ai-llm/lessons/01-how-llms-work/">&larr; How LLMs Work</a>
+      <a href="/ai-llm/lessons/03-claude-api/">Lesson 03: The Claude API &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

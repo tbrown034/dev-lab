@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 03 - Closures &amp; Scope</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #eab308; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>03</span> Closures &amp; Scope &mdash; The Backpack Every Function Carries</h1>
+    <a href="/jsts/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Closures are the single most important concept in JavaScript.</strong> They power React hooks, the module pattern, event handlers, callbacks, and currying. If you understand closures, you understand why JavaScript works the way it does.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: The Reporter's Backpack</h2>
+
+    <p>When a journalist leaves a beat, they take their contacts with them. The beat might be over, the newsroom might have moved on, but the reporter still has the phone numbers, the notes, the context from that assignment in their backpack.</p>
+
+    <p>A closure works the same way. When a function is created inside another function, it packs a backpack with all the variables from its birth environment. Even after the outer function returns and its scope "disappears," the inner function still has access to everything it packed.</p>
+
+    <div class="aha">
+      <p><strong>A closure is not a special syntax.</strong> It's an automatic behavior. Every function in JavaScript is a closure. The question is: does it reference variables from an outer scope? If yes, those variables survive as long as the function does.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LEXICAL SCOPE                                -->
+    <!-- ============================================ -->
+
+    <h2>Lexical Scope: Where You Were Born Matters</h2>
+
+    <p><strong>Lexical</strong> means "relating to the source code text." Lexical scope means: a function's scope is determined by where it was <em>written</em>, not where it's <em>called</em>.</p>
+
+    <pre><code>const newsroom = "CNN";
+
+function getReporter() {
+  const beat = "politics";
+
+  function report() {
+    <span class="comment">// report() can access both `beat` and `newsroom`</span>
+    <span class="comment">// because of where it was WRITTEN, not where it's called</span>
+    console.log(`${beat} reporter at ${newsroom}`);
+  }
+
+  return report;
+}
+
+const myReporter = getReporter();
+myReporter();  <span class="comment">// "politics reporter at CNN"</span>
+
+<span class="comment">// getReporter() has already returned</span>
+<span class="comment">// its local scope should be "gone"</span>
+<span class="comment">// but report() still has `beat` in its backpack</span>
+</code></pre>
+
+    <h3>The Scope Chain</h3>
+
+    <p>When JavaScript looks up a variable, it follows a chain:</p>
+
+    <ol>
+      <li>Check the current function's local scope</li>
+      <li>Check the enclosing function's scope</li>
+      <li>Check the next enclosing scope... and so on</li>
+      <li>Check the global scope</li>
+      <li>If not found anywhere: <code>ReferenceError</code></li>
+    </ol>
+
+    <pre><code>const global = "I'm global";
+
+function outer() {
+  const outerVar = "I'm in outer";
+
+  function middle() {
+    const middleVar = "I'm in middle";
+
+    function inner() {
+      <span class="comment">// inner can see: middleVar, outerVar, global</span>
+      console.log(global, outerVar, middleVar);
+    }
+
+    inner();
+  }
+
+  middle();
+  <span class="comment">// outer CANNOT see middleVar (scope only goes UP, not DOWN)</span>
+}
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- CLOSURES IN PRACTICE                         -->
+    <!-- ============================================ -->
+
+    <h2>Closures in Practice</h2>
+
+    <h3>1. Data Privacy (The Module Pattern)</h3>
+
+    <p>Before ES modules, closures were the ONLY way to create private variables in JavaScript:</p>
+
+    <pre><code>function createCounter() {
+  let count = 0;  <span class="comment">// private — no one can access this directly</span>
+
+  return {
+    increment() { count++; },
+    decrement() { count--; },
+    getCount()  { return count; }
+  };
+}
+
+const counter = createCounter();
+counter.increment();
+counter.increment();
+counter.getCount();  <span class="comment">// 2</span>
+counter.count;       <span class="comment">// undefined — can't access directly</span>
+</code></pre>
+
+    <div class="aha">
+      <p><strong>React hooks are closures.</strong> When you call <code>useState(0)</code>, React returns a getter (the value) and a setter. The actual state value is stored in a closure inside React's fiber tree. You can't access it directly &mdash; only through the functions React gives you. Same pattern as <code>createCounter()</code> above.</p>
+    </div>
+
+    <h3>2. Function Factories</h3>
+
+    <pre><code>function createMultiplier(factor) {
+  return function(number) {
+    return number * factor;  <span class="comment">// factor is in the backpack</span>
+  };
+}
+
+const double = createMultiplier(2);
+const triple = createMultiplier(3);
+
+double(5);  <span class="comment">// 10</span>
+triple(5);  <span class="comment">// 15</span>
+
+<span class="comment">// Each returned function has its OWN backpack</span>
+<span class="comment">// with its OWN value of `factor`</span>
+</code></pre>
+
+    <h3>3. Event Handlers</h3>
+
+    <pre><code>function setupButton(buttonId, message) {
+  const button = document.getElementById(buttonId);
+
+  button.addEventListener('click', function() {
+    <span class="comment">// This handler closes over `message`</span>
+    <span class="comment">// Even though setupButton has already returned</span>
+    alert(message);
+  });
+}
+
+setupButton('btn-1', 'Hello!');
+setupButton('btn-2', 'Goodbye!');
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- HOISTING                                     -->
+    <!-- ============================================ -->
+
+    <h2>Hoisting: The Pre-Publication Edit</h2>
+
+    <p>Before your code runs, JavaScript makes a first pass and "hoists" declarations to the top of their scope. But different declarations hoist differently:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>var — hoisted and initialized to undefined</h5>
+        <pre><code>console.log(x); <span class="comment">// undefined</span>
+var x = 5;
+console.log(x); <span class="comment">// 5</span>
+
+<span class="comment">// JavaScript sees this as:</span>
+<span class="comment">// var x = undefined;</span>
+<span class="comment">// console.log(x);</span>
+<span class="comment">// x = 5;</span></code></pre>
+      </div>
+      <div>
+        <h5>let/const — hoisted but NOT initialized (TDZ)</h5>
+        <pre><code>console.log(y); <span class="comment">// ReferenceError!</span>
+let y = 5;
+
+<span class="comment">// The "Temporal Dead Zone" (TDZ):</span>
+<span class="comment">// y exists in scope but can't</span>
+<span class="comment">// be accessed until declaration</span></code></pre>
+      </div>
+    </div>
+
+    <h3>Function Hoisting</h3>
+
+    <pre><code><span class="comment">// Function DECLARATIONS are fully hoisted</span>
+sayHello();  <span class="comment">// Works!</span>
+function sayHello() { console.log("Hello"); }
+
+<span class="comment">// Function EXPRESSIONS are NOT</span>
+sayGoodbye();  <span class="comment">// TypeError: sayGoodbye is not a function</span>
+const sayGoodbye = function() { console.log("Goodbye"); };
+
+<span class="comment">// Arrow functions behave like function expressions</span>
+greet();  <span class="comment">// TypeError</span>
+const greet = () =&gt; console.log("Hi");
+</code></pre>
+
+    <div class="callout">
+      <p><strong>Rule of thumb:</strong> Use <code>const</code> for everything. Use <code>let</code> only when you need to reassign. Never use <code>var</code>. This eliminates hoisting confusion entirely.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE CLASSIC LOOP PROBLEM                     -->
+    <!-- ============================================ -->
+
+    <h2>The Classic Loop Closure Problem</h2>
+
+    <p>This is the most common closure bug, and understanding it proves you understand closures:</p>
+
+    <pre><code><span class="comment">// THE BUG</span>
+for (var i = 0; i &lt; 3; i++) {
+  setTimeout(() =&gt; console.log(i), 100);
+}
+<span class="comment">// Output: 3, 3, 3 (not 0, 1, 2!)</span>
+
+<span class="comment">// WHY: var is function-scoped. All three callbacks</span>
+<span class="comment">// close over the SAME `i`. By the time they run,</span>
+<span class="comment">// the loop is done and i === 3.</span>
+</code></pre>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Fix 1: use let (block scope)</h5>
+        <pre><code>for (let i = 0; i &lt; 3; i++) {
+  setTimeout(() =&gt; console.log(i), 100);
+}
+<span class="comment">// Output: 0, 1, 2</span>
+<span class="comment">// Each iteration gets its</span>
+<span class="comment">// own block-scoped `i`</span></code></pre>
+      </div>
+      <div>
+        <h5>Fix 2: IIFE (the old way)</h5>
+        <pre><code>for (var i = 0; i &lt; 3; i++) {
+  (function(j) {
+    setTimeout(() =&gt; console.log(j), 100);
+  })(i);
+}
+<span class="comment">// Output: 0, 1, 2</span>
+<span class="comment">// Each IIFE creates a new</span>
+<span class="comment">// scope with its own `j`</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>This is why <code>let</code> was invented.</strong> The loop closure problem was so common and confusing that TC39 (the JavaScript standards committee) introduced block scoping specifically to solve it. Understanding the <em>why</em> behind <code>let</code> vs <code>var</code> is more valuable than just knowing "use let."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STALE CLOSURES                               -->
+    <!-- ============================================ -->
+
+    <h2>Stale Closures (The React Hook Trap)</h2>
+
+    <p>Closures capture values at creation time. If the value changes later, the closure still has the old value:</p>
+
+    <pre><code><span class="comment">// In React, this is the "stale closure" problem</span>
+function Timer() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() =&gt; {
+    const id = setInterval(() =&gt; {
+      <span class="comment">// This closure captured `count` as 0</span>
+      <span class="comment">// It will ALWAYS log 0, never the updated value</span>
+      console.log(count);
+    }, 1000);
+    return () =&gt; clearInterval(id);
+  }, []); <span class="comment">// Empty deps: effect runs once, closure captures once</span>
+
+  return &lt;button onClick={() =&gt; setCount(c =&gt; c + 1)}&gt;{count}&lt;/button&gt;;
+}
+</code></pre>
+
+    <pre><code><span class="comment">// FIX: Use the functional updater or add count to deps</span>
+useEffect(() =&gt; {
+  const id = setInterval(() =&gt; {
+    setCount(c =&gt; c + 1); <span class="comment">// Functional updater — no closure needed</span>
+  }, 1000);
+  return () =&gt; clearInterval(id);
+}, []);
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- IIFE                                         -->
+    <!-- ============================================ -->
+
+    <h2>IIFE: Immediately Invoked Function Expressions</h2>
+
+    <pre><code><span class="comment">// Classic IIFE pattern</span>
+(function() {
+  const secret = "hidden";
+  console.log(secret);  <span class="comment">// "hidden"</span>
+})();
+
+<span class="comment">// secret is not accessible here</span>
+console.log(secret);  <span class="comment">// ReferenceError</span>
+
+<span class="comment">// Modern alternative: block scope</span>
+{
+  const secret = "hidden";
+  console.log(secret);  <span class="comment">// "hidden"</span>
+}
+<span class="comment">// secret is not accessible here either</span>
+</code></pre>
+
+    <div class="callout">
+      <p><strong>IIFEs are mostly historical.</strong> Before ES modules and <code>let/const</code>, IIFEs were the only way to create private scope. You'll see them in legacy code and library source. In modern code, use modules and block scope instead.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Knowledge Check</h4>
+
+      <div class="question">
+        <p>1. What does this print and why?</p>
+        <pre><code>function outer() {
+  let x = 10;
+  function inner() { console.log(x); }
+  x = 20;
+  return inner;
+}
+outer()();</code></pre>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer"><strong>20.</strong> The closure captures a <em>reference</em> to <code>x</code>, not a snapshot of its value. By the time <code>inner()</code> runs, <code>x</code> has been reassigned to 20.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why does <code>let</code> fix the classic loop closure problem but <code>var</code> doesn't?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer"><code>var</code> is function-scoped &mdash; one variable shared across all iterations. <code>let</code> is block-scoped &mdash; each loop iteration creates a new binding. Each closure captures a different <code>i</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>3. In React, why does an empty dependency array in useEffect sometimes cause stale data?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer">The effect callback is a closure that captures state values at the time the effect runs. With <code>[]</code>, the effect runs once (on mount), so the closure always has the initial state values. When state updates, the closure still holds the old values because it was never re-created.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Closure-Based State Manager</h4>
+      <p>Create a <code>createStore(initialState)</code> function that returns an object with:</p>
+      <ul>
+        <li><code>getState()</code> &mdash; returns the current state</li>
+        <li><code>setState(newState)</code> &mdash; merges new state with current state</li>
+        <li><code>subscribe(listener)</code> &mdash; registers a callback; returns an unsubscribe function</li>
+      </ul>
+      <p>This is a simplified Redux. All state should be private (only accessible through closures).</p>
+      <pre><code>const store = createStore({ count: 0, name: "Trevor" });
+const unsub = store.subscribe(state =&gt; console.log(state));
+store.setState({ count: 1 }); <span class="comment">// logs: { count: 1, name: "Trevor" }</span>
+unsub(); <span class="comment">// unsubscribe</span>
+store.setState({ count: 2 }); <span class="comment">// no log (unsubscribed)</span>
+store.getState(); <span class="comment">// { count: 2, name: "Trevor" }</span></code></pre>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/jsts/lessons/02-types-coercion/">&larr; Types &amp; Coercion</a>
+      <a href="/jsts/lessons/04-prototypes-classes/">Prototypes &amp; Classes &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

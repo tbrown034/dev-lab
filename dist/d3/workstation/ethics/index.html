@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code of Ethics — Data Visualization — Learn D3</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    body {
+      line-height: 1.7;
+    }
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #f97316; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover { background: #f97316; color: #000; border-color: #f97316; }
+    .nav a.active { background: #f472b6; color: #000; border-color: #f472b6; }
+
+    .content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 3rem 2rem 5rem;
+    }
+    .kicker {
+      color: #f97316;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .content > h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    .content > h1 em { color: #f97316; font-style: normal; }
+    .subtitle {
+      color: #888;
+      font-size: 1.05rem;
+      margin-bottom: 2rem;
+      max-width: 600px;
+    }
+    .byline {
+      color: #666;
+      font-size: 0.85rem;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #222;
+    }
+    .byline strong { color: #ccc; }
+
+    h2 {
+      color: #f97316;
+      font-size: 1.3rem;
+      margin: 3rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    h3 {
+      color: #e5e5e5;
+      font-size: 1rem;
+      margin: 2rem 0 0.75rem;
+    }
+    p { color: #bbb; margin-bottom: 1rem; font-size: 0.95rem; }
+    ul, ol { margin-left: 1.5rem; margin-bottom: 1.25rem; }
+    li { color: #bbb; margin-bottom: 0.5rem; font-size: 0.95rem; }
+    li strong { color: #e5e5e5; }
+
+    .principle {
+      background: #141414;
+      border: 1px solid #222;
+      border-left: 3px solid #f97316;
+      border-radius: 0 8px 8px 0;
+      padding: 1.25rem 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .principle .number {
+      color: #f97316;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .principle h4 {
+      color: #e5e5e5;
+      font-size: 1.05rem;
+      margin: 0.25rem 0 0.5rem;
+    }
+    .principle p { color: #999; margin: 0; font-size: 0.9rem; }
+
+    .pillar {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .pillar h4 {
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+    .pillar.truth h4 { color: #f97316; }
+    .pillar.harm h4 { color: #4ade80; }
+    .pillar.independence h4 { color: #818cf8; }
+    .pillar.transparency h4 { color: #f472b6; }
+    .pillar ul { margin-bottom: 0; }
+    .pillar li { font-size: 0.88rem; }
+
+    blockquote {
+      border-left: 3px solid #333;
+      padding: 0.75rem 1.25rem;
+      margin: 1.25rem 0;
+      color: #888;
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+
+    .checklist {
+      background: #0d1a0d;
+      border: 1px solid #4ade8044;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    .checklist h4 { color: #4ade80; margin-bottom: 1rem; }
+    .checklist li { color: #bbb; }
+    .checklist li::marker { color: #4ade80; }
+
+    .source-list {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    .source-list h4 { color: #818cf8; margin-bottom: 0.75rem; }
+    .source-list li { font-size: 0.85rem; color: #888; }
+    .source-list li strong { color: #ccc; }
+
+    .signature {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid #222;
+      color: #666;
+      font-size: 0.85rem;
+    }
+    .signature strong { color: #ccc; }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Learn <span>D3</span>.js</h1>
+    <div class="meta">Data Journalism Workstation</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/d3/">Home</a>
+    <a href="/d3/projects/">Portfolio</a>
+    <a href="/d3/workstation/save-act/">SAVE Act</a>
+    <a href="/d3/workstation/absentee-voting/">Mail Voting</a>
+    <a href="/d3/workstation/ethics/" class="active">Ethics</a>
+  </nav>
+
+  <div class="content">
+    <div class="kicker">Data Journalism Standards</div>
+    <h1>My Code of <em>Ethics</em></h1>
+    <p class="subtitle">Principles I follow when turning data into visual stories. Adapted from SPJ, Alberto Cairo, ProPublica, the AP, and 15 years of investigative reporting.</p>
+    <div class="byline">By <strong>Trevor Brown</strong> &middot; Investigative Journalist &middot; 2026</div>
+
+    <!-- ─── TEN PRINCIPLES ─── -->
+    <h2>The Ten Principles</h2>
+
+    <div class="principle">
+      <div class="number">Principle 01</div>
+      <h4>Data is evidence, not decoration</h4>
+      <p>Every number in a visualization should be traceable to a primary source. If I can't cite where a data point came from, it doesn't go in the chart. I treat data with the same rigor I'd treat a source's quote in a story.</p>
+    </div>
+
+    <div class="principle">
+      <div class="number">Principle 02</div>
+      <h4>The chart must not lie — even by omission</h4>
+      <p>A misleading axis, a cherry-picked date range, or an un-normalized map is the visual equivalent of quoting someone out of context. I design charts that show the full picture, even when the full picture is more complicated than the simple narrative.</p>
+    </div>
+
+    <div class="principle">
+      <div class="number">Principle 03</div>
+      <h4>Let the data lead, not the narrative</h4>
+      <p>I don't start with a conclusion and find data to support it. I start with the data and follow where it goes — even when it contradicts what I expected or hoped to find. The story is in the data, not the other way around.</p>
+    </div>
+
+    <div class="principle">
+      <div class="number">Principle 04</div>
+      <h4>Context is not optional</h4>
+      <p>A single data point without context is meaningless at best, dangerous at worst. Every chart needs baselines, comparisons, time ranges, and annotations that help the reader understand not just what the data says, but what it means.</p>
+    </div>
+
+    <div class="principle">
+      <div class="number">Principle 05</div>
+      <h4>Show your work</h4>
+      <p>Methodology should be documented, data sources should be cited, and limitations should be disclosed — on every single graphic. If another journalist can't reproduce my analysis, I haven't been transparent enough.</p>
+    </div>
+
+    <div class="principle">
+      <div class="number">Principle 06</div>
+      <h4>Design for understanding, not impressiveness</h4>
+      <p>A visualization that looks stunning but can't be understood in the time available to the audience is functionally misleading. On broadcast TV, that means 3-5 seconds. Clarity always wins over cleverness.</p>
+    </div>
+
+    <div class="principle">
+      <div class="number">Principle 07</div>
+      <h4>Say what you don't know</h4>
+      <p>Every dataset has gaps, limitations, and assumptions. I state explicitly what the data cannot tell you — not just what it can. Uncertainty is information, and hiding it is dishonest.</p>
+    </div>
+
+    <div class="principle">
+      <div class="number">Principle 08</div>
+      <h4>Design choices are editorial choices</h4>
+      <p>Scale type, color palette, map projection, chart type — each is an editorial decision that shapes how the audience perceives the data. I make these choices deliberately, justify them when asked, and default to the most honest representation.</p>
+    </div>
+
+    <div class="principle">
+      <div class="number">Principle 09</div>
+      <h4>Build for everyone</h4>
+      <p>Accessible color palettes, clear labels, responsive layouts, and plain language. Data stories should be understandable by the broadest possible audience, not just people with technical backgrounds.</p>
+    </div>
+
+    <div class="principle">
+      <div class="number">Principle 10</div>
+      <h4>Correct fast, correct publicly</h4>
+      <p>When I make a mistake — and I will — I fix it immediately, visibly, and without excuses. An uncorrected error in a visualization is a lie that compounds every time someone views it.</p>
+    </div>
+
+    <!-- ─── SPJ PILLARS ─── -->
+    <h2>SPJ Code of Ethics — Applied to Data Viz</h2>
+
+    <div class="pillar truth">
+      <h4>Seek Truth and Report It</h4>
+      <ul>
+        <li><strong>Verify data before visualizing it.</strong> Use primary sources whenever possible.</li>
+        <li><strong>Never deliberately distort facts or context, including visual information.</strong></li>
+        <li>Provide context. Take special care not to misrepresent or oversimplify.</li>
+        <li>Neither speed nor format excuses inaccuracy.</li>
+      </ul>
+    </div>
+
+    <div class="pillar harm">
+      <h4>Minimize Harm</h4>
+      <ul>
+        <li>Consider whether visualizations could be used to target or stereotype communities.</li>
+        <li>Balance the public's need for information against potential harm.</li>
+        <li>When mapping demographic data, consider privacy implications.</li>
+      </ul>
+    </div>
+
+    <div class="pillar independence">
+      <h4>Act Independently</h4>
+      <ul>
+        <li>Don't let the desired narrative drive chart design choices.</li>
+        <li>Choose chart types based on what best represents the data, not what supports a thesis.</li>
+        <li>Disclose any data limitations that could affect interpretation.</li>
+      </ul>
+    </div>
+
+    <div class="pillar transparency">
+      <h4>Be Accountable and Transparent</h4>
+      <ul>
+        <li>Show your work. Include methodology, sources, and limitations.</li>
+        <li>Respond to questions about accuracy, clarity, and fairness.</li>
+        <li>Acknowledge and correct mistakes promptly.</li>
+      </ul>
+    </div>
+
+    <!-- ─── CAIRO ─── -->
+    <h2>Alberto Cairo's Five Qualities</h2>
+    <p>From <em>The Truthful Art</em> — every visualization I build should be:</p>
+    <ol>
+      <li><strong>Truthful</strong> — Based on thorough research and honest data</li>
+      <li><strong>Functional</strong> — Accomplishes its communicative purpose clearly</li>
+      <li><strong>Beautiful</strong> — Aesthetically purposeful, not decorative</li>
+      <li><strong>Insightful</strong> — Reveals something the raw numbers alone don't show</li>
+      <li><strong>Enlightening</strong> — Combines all four to create genuine understanding</li>
+    </ol>
+
+    <!-- ─── D3 SPECIFIC ─── -->
+    <h2>D3.js-Specific Standards</h2>
+    <p>D3 gives total control over every pixel. That means total responsibility.</p>
+
+    <h3>Scales</h3>
+    <ul>
+      <li>Bar charts: <strong>always start the y-axis at zero.</strong></li>
+      <li>Linear vs. log vs. sqrt — each tells a different story. Justify the choice.</li>
+      <li>Never stretch aspect ratios to exaggerate trends.</li>
+    </ul>
+
+    <h3>Maps</h3>
+    <ul>
+      <li>Map projections are editorial decisions. Document which projection and why.</li>
+      <li><strong>Choropleths must use normalized data</strong> (per capita, percentages) — never raw counts.</li>
+      <li>Color classification method (equal intervals, quantiles, natural breaks) affects what patterns the reader sees.</li>
+    </ul>
+
+    <h3>Color</h3>
+    <ul>
+      <li>Use colorblind-safe palettes. Avoid pure red-green contrasts.</li>
+      <li>Be intentional about political color associations.</li>
+      <li>Ensure differences are distinguishable in grayscale.</li>
+    </ul>
+
+    <h3>Animation</h3>
+    <ul>
+      <li>Use to aid comprehension, never to dazzle.</li>
+      <li>Don't imply continuity or causation where none exists.</li>
+      <li>For broadcast: if it can't be understood in 3-5 seconds, simplify.</li>
+    </ul>
+
+    <!-- ─── ELECTION DATA ─── -->
+    <h2>Election & Political Data Standards</h2>
+    <p>Given my focus on voting rights, elections, and public policy data, I hold myself to these additional standards:</p>
+    <ul>
+      <li><strong>Frame carefully.</strong> Use "reliance on" and "exposure to" — not overclaims about what "will" happen.</li>
+      <li><strong>Show uncertainty.</strong> Polling data and projections are probabilistic, not deterministic.</li>
+      <li><strong>Full time series.</strong> Always show the complete available range; if zooming in, provide the broader context alongside.</li>
+      <li><strong>Distinguish precisely</strong> between "registered voters," "votes cast," and "eligible voters."</li>
+      <li><strong>Normalize everything.</strong> Raw vote counts on a map are almost always misleading.</li>
+      <li><strong>Geographic fairness.</strong> Land area is not population. Consider cartograms or proportional approaches for election data.</li>
+    </ul>
+
+    <!-- ─── CHECKLIST ─── -->
+    <div class="checklist">
+      <h4>Pre-Publication Checklist</h4>
+      <ol>
+        <li>Is every data point traceable to a cited primary source?</li>
+        <li>Does the y-axis start at zero on bar charts?</li>
+        <li>Is map data normalized (per capita/percentage)?</li>
+        <li>Are colors accessible for colorblind viewers?</li>
+        <li>Is the time range complete and not cherry-picked?</li>
+        <li>Are limitations and methodology documented?</li>
+        <li>Would a non-expert correctly understand this in under 10 seconds?</li>
+        <li>Does the chart look the same if I swap my assumptions?</li>
+        <li>Have I shown this to someone unfamiliar with the topic?</li>
+        <li>Would I stand behind every design choice if questioned on air?</li>
+      </ol>
+    </div>
+
+    <!-- ─── SOURCES ─── -->
+    <div class="source-list">
+      <h4>Influences & References</h4>
+      <ul>
+        <li><strong>SPJ Code of Ethics</strong> — Society of Professional Journalists</li>
+        <li><strong>The Truthful Art</strong> & <strong>How Charts Lie</strong> — Alberto Cairo</li>
+        <li><strong>ProPublica Code of Ethics</strong> — ProPublica</li>
+        <li><strong>AP Stylebook</strong> — Data Journalism chapter (2017+)</li>
+        <li><strong>IRE / NICAR</strong> — Investigative Reporters and Editors</li>
+        <li><strong>Sigma Awards</strong> — Global data journalism standards</li>
+        <li><strong>Fundamentals of Data Visualization</strong> — Claus Wilke</li>
+        <li><strong>15 years of investigative reporting</strong> — the instincts carry over</li>
+      </ul>
+    </div>
+
+    <div class="signature">
+      <strong>Trevor Brown</strong><br>
+      Investigative Journalist & Data Visualization Developer<br>
+      Last updated: March 2026
+    </div>
+  </div>
+
+</body>
+</html>

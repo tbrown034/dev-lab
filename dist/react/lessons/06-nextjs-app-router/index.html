@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 06 - Next.js App Router</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #06b6d4; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>06</span> Next.js App Router &mdash; The File System Is the API</h1>
+    <a href="/react/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">You've used the App Router.</strong> Now understand its architecture. Layouts, loading states, error boundaries, parallel routes, and intercepting routes &mdash; each is a carefully designed primitive that solves a specific UX problem. This lesson maps those problems to those solutions.</p>
+
+    <!-- ============================================ -->
+    <!-- THE FILE SYSTEM CONVENTIONS                  -->
+    <!-- ============================================ -->
+
+    <h2>The File Convention System</h2>
+
+    <p>App Router uses special filenames as declarations. Each file in a route directory serves a specific architectural purpose:</p>
+
+    <pre><code>app/
+  layout.tsx       <span class="comment">→ Root layout (wraps all pages, never re-renders on navigation)</span>
+  page.tsx         <span class="comment">→ Home page (/)</span>
+  loading.tsx      <span class="comment">→ Suspense fallback for the page</span>
+  error.tsx        <span class="comment">→ Error boundary for the page</span>
+  not-found.tsx    <span class="comment">→ 404 page</span>
+
+  articles/
+    layout.tsx     <span class="comment">→ Articles layout (persists across article navigation)</span>
+    page.tsx       <span class="comment">→ Articles list (/articles)</span>
+    loading.tsx    <span class="comment">→ Loading state for articles list</span>
+
+    [slug]/
+      page.tsx     <span class="comment">→ Single article (/articles/budget-bill-passes)</span>
+      loading.tsx  <span class="comment">→ Loading state for individual article</span>
+      error.tsx    <span class="comment">→ Error boundary for individual article</span>
+
+  (dashboard)/     <span class="comment">→ Route group (parentheses = no URL segment)</span>
+    analytics/
+      page.tsx     <span class="comment">→ /analytics (not /dashboard/analytics)</span>
+    settings/
+      page.tsx     <span class="comment">→ /settings</span></code></pre>
+
+    <div class="aha">
+      <p><strong>Each special file maps to a React concept.</strong> <code>layout.tsx</code> is a component that wraps its children and preserves state across navigations. <code>loading.tsx</code> is a Suspense boundary. <code>error.tsx</code> is an Error Boundary. <code>page.tsx</code> is the actual content. You're not learning Next.js conventions &mdash; you're learning React patterns expressed as files.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LAYOUTS                                      -->
+    <!-- ============================================ -->
+
+    <h2>Layouts: Persistent UI That Never Re-Renders</h2>
+
+    <p>A layout wraps its children. When you navigate between pages that share a layout, the layout does not re-render. Its state persists.</p>
+
+    <pre><code><span class="comment">// app/articles/layout.tsx</span>
+export default function ArticlesLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    &lt;div className="articles-layout"&gt;
+      &lt;aside&gt;
+        &lt;ArticlesSidebar /&gt;  {/* Stays mounted during navigation */}
+      &lt;/aside&gt;
+      &lt;main&gt;
+        {children}  {/* This swaps when navigating between articles */}
+      &lt;/main&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+    <p>When the user navigates from <code>/articles/climate-report</code> to <code>/articles/budget-bill</code>, only the <code>page.tsx</code> content swaps. The sidebar, any scroll position in the sidebar, any expanded/collapsed state &mdash; all preserved. This is not a hack. It's the architecture.</p>
+
+    <div class="callout">
+      <p><strong>Root layout is special.</strong> <code>app/layout.tsx</code> is the only required layout. It must include <code>&lt;html&gt;</code> and <code>&lt;body&gt;</code> tags. It wraps every page in your application and is the place for global providers, analytics scripts, and fonts. It never unmounts during a client-side navigation.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LOADING STATES                               -->
+    <!-- ============================================ -->
+
+    <h2>Loading States: Automatic Suspense Boundaries</h2>
+
+    <p>Creating a <code>loading.tsx</code> file automatically wraps the corresponding <code>page.tsx</code> in a React Suspense boundary. The loading component shows instantly while the page's async data loads.</p>
+
+    <pre><code><span class="comment">// app/articles/[slug]/loading.tsx</span>
+export default function ArticleLoading() {
+  return (
+    &lt;div className="article-skeleton"&gt;
+      &lt;div className="skeleton-title" /&gt;
+      &lt;div className="skeleton-byline" /&gt;
+      &lt;div className="skeleton-body"&gt;
+        &lt;div className="skeleton-line" /&gt;
+        &lt;div className="skeleton-line" /&gt;
+        &lt;div className="skeleton-line short" /&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+
+<span class="comment">// What Next.js generates behind the scenes:</span>
+&lt;Suspense fallback={&lt;ArticleLoading /&gt;}&gt;
+  &lt;ArticlePage /&gt;
+&lt;/Suspense&gt;</code></pre>
+
+    <p>The beauty of this: the layout renders immediately. The sidebar is usable. Only the page content shows a loading state. The user gets a responsive, interactive shell while the expensive data fetching happens.</p>
+
+    <!-- ============================================ -->
+    <!-- ERROR BOUNDARIES                             -->
+    <!-- ============================================ -->
+
+    <h2>Error Boundaries: Granular Error Handling</h2>
+
+    <p><code>error.tsx</code> creates an error boundary around the page. When an error occurs, only the affected section shows the error UI &mdash; the rest of the application continues working.</p>
+
+    <pre><code><span class="comment">// app/articles/[slug]/error.tsx</span>
+'use client'; <span class="comment">// Error components MUST be client components</span>
+
+export default function ArticleError({
+  error,
+  reset,
+}: {
+  error: Error &amp; { digest?: string };
+  reset: () =&gt; void;
+}) {
+  return (
+    &lt;div className="error-state"&gt;
+      &lt;h2&gt;Something went wrong loading this article&lt;/h2&gt;
+      &lt;p&gt;{error.message}&lt;/p&gt;
+      &lt;button onClick={() =&gt; reset()}&gt;
+        Try again
+      &lt;/button&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>Error boundaries must be Client Components.</strong> This seems counterintuitive, but it makes sense: error boundaries need to catch errors during rendering and maintain state (the error itself, the "try again" handler). These are browser-side concerns. The <code>reset()</code> function re-renders the error boundary's children, retrying the failed render.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARALLEL ROUTES                              -->
+    <!-- ============================================ -->
+
+    <h2>Parallel Routes: Multiple Pages in One Layout</h2>
+
+    <p>Parallel routes let a single layout render multiple "slots" simultaneously. Each slot has its own loading and error states. Think of it as a multi-pane dashboard where each pane loads independently.</p>
+
+    <pre><code>app/
+  dashboard/
+    layout.tsx          <span class="comment">→ Renders @analytics, @activity, and children</span>
+    page.tsx            <span class="comment">→ Main content</span>
+    @analytics/
+      page.tsx          <span class="comment">→ Analytics pane (loads independently)</span>
+      loading.tsx       <span class="comment">→ Analytics skeleton</span>
+      error.tsx         <span class="comment">→ Analytics error state</span>
+    @activity/
+      page.tsx          <span class="comment">→ Activity feed pane</span>
+      loading.tsx       <span class="comment">→ Activity skeleton</span></code></pre>
+
+    <pre><code><span class="comment">// app/dashboard/layout.tsx</span>
+export default function DashboardLayout({
+  children,
+  analytics,
+  activity,
+}: {
+  children: React.ReactNode;
+  analytics: React.ReactNode;
+  activity: React.ReactNode;
+}) {
+  return (
+    &lt;div className="dashboard-grid"&gt;
+      &lt;main&gt;{children}&lt;/main&gt;
+      &lt;aside className="analytics"&gt;{analytics}&lt;/aside&gt;
+      &lt;aside className="activity"&gt;{activity}&lt;/aside&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+    <div class="aha">
+      <p><strong>Parallel routes solve the "waterfall" problem.</strong> Without them, if your dashboard needs data from three APIs, they load sequentially: fetch A, render, fetch B, render, fetch C, render. With parallel routes, each slot is its own Suspense boundary. All three fetch simultaneously, and each pane renders as soon as its data arrives. The slowest API doesn't block the fastest.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- INTERCEPTING ROUTES                          -->
+    <!-- ============================================ -->
+
+    <h2>Intercepting Routes: Modals Done Right</h2>
+
+    <p>Intercepting routes let you "intercept" a navigation and show a different view &mdash; typically a modal. The URL updates, but you stay on the current page with the intercepted content in a modal. If the user refreshes or shares the URL, they get the full page version.</p>
+
+    <pre><code>app/
+  articles/
+    page.tsx                <span class="comment">→ Article list</span>
+    [slug]/
+      page.tsx              <span class="comment">→ Full article page (direct navigation)</span>
+    (.)articles/[slug]/
+      page.tsx              <span class="comment">→ Article modal (intercepted from list)</span></code></pre>
+
+    <p>The <code>(.)</code> prefix means "intercept routes at the same level." When the user clicks an article from the list, instead of navigating to the full article page, Next.js shows the article in a modal overlay. The URL changes to <code>/articles/slug</code>. If the user refreshes, they see the full page version at that URL.</p>
+
+    <pre><code><span class="comment">// app/articles/(.)articles/[slug]/page.tsx — the modal version</span>
+import { Modal } from '@/components/modal';
+
+export default async function ArticleModal({ params }) {
+  const article = await getArticle(params.slug);
+
+  return (
+    &lt;Modal&gt;
+      &lt;h1&gt;{article.title}&lt;/h1&gt;
+      &lt;p&gt;{article.excerpt}&lt;/p&gt;
+      &lt;a href={`/articles/${params.slug}`}&gt;Read full article&lt;/a&gt;
+    &lt;/Modal&gt;
+  );
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>This is the Instagram pattern.</strong> Click a photo from the grid: modal opens, URL changes. Refresh: see the full photo page. Share the URL: recipient sees the full page. This pattern used to require complex client-side routing logic. With intercepting routes, it's a file system convention.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CACHING AND REVALIDATION                     -->
+    <!-- ============================================ -->
+
+    <h2>Caching: The Most Misunderstood Part</h2>
+
+    <p>Next.js App Router has multiple caching layers. Understanding them is critical for debugging "why isn't my data updating?"</p>
+
+    <table>
+      <tr><th>Cache</th><th>Where</th><th>What</th><th>Duration</th></tr>
+      <tr><td><strong>Request Memoization</strong></td><td>Server</td><td>Deduplicate identical fetches in one render</td><td>One request lifecycle</td></tr>
+      <tr><td><strong>Data Cache</strong></td><td>Server</td><td>Cached fetch() responses</td><td>Until revalidated</td></tr>
+      <tr><td><strong>Full Route Cache</strong></td><td>Server</td><td>Static HTML + RSC payload</td><td>Until revalidated</td></tr>
+      <tr><td><strong>Router Cache</strong></td><td>Client</td><td>RSC payloads for visited routes</td><td>Session (or 30s/5min)</td></tr>
+    </table>
+
+    <pre><code><span class="comment">// Control caching per-fetch</span>
+const articles = await fetch('https://api.example.com/articles', {
+  next: { revalidate: 60 },  <span class="comment">// Revalidate every 60 seconds</span>
+});
+
+const user = await fetch('https://api.example.com/user', {
+  cache: 'no-store',  <span class="comment">// Never cache — always fresh</span>
+});
+
+<span class="comment">// Control caching at the route level</span>
+export const dynamic = 'force-dynamic'; <span class="comment">// Opt out of static generation</span>
+export const revalidate = 3600;         <span class="comment">// Revalidate every hour</span></code></pre>
+
+    <pre><code><span class="comment">// Revalidate from Server Actions</span>
+'use server';
+
+export async function publishArticle(formData: FormData) {
+  await db.article.create({ /* ... */ });
+
+  revalidatePath('/articles');     <span class="comment">// Invalidate specific path</span>
+  revalidateTag('articles');       <span class="comment">// Invalidate by cache tag</span>
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What happens to a layout component when the user navigates between its child pages?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Nothing. The layout does not re-render. Its state persists. Only the children (page.tsx content) swaps. This is why layouts are ideal for navigation sidebars, persistent headers, and shared state that shouldn't reset on navigation.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What React concept does loading.tsx implement?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A Suspense boundary. Next.js wraps the page component in <code>&lt;Suspense fallback={&lt;Loading /&gt;}&gt;</code>. The loading component renders immediately while the async page component resolves. This is React Suspense expressed as a file convention.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why must error.tsx be a Client Component?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Error boundaries need to catch rendering errors and maintain state (the error object, the reset function). They need event handlers for the "try again" button. These are all client-side concerns that require "use client." Server Components can't use hooks or event handlers.</div>
+      </div>
+
+      <div class="question">
+        <p>4. How do parallel routes prevent loading waterfalls?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Each parallel route slot (@analytics, @activity) is its own Suspense boundary. They fetch data simultaneously and render independently. One slow API doesn't block others. Each slot shows its own loading state and resolves when ready.</div>
+      </div>
+
+      <div class="question">
+        <p>5. Your article list shows stale data after publishing a new article. Which caches might be involved?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Three possible caches: the Data Cache (server-side cached fetch response), the Full Route Cache (cached static page), and the Router Cache (client-side cached RSC payload). You need to call <code>revalidatePath('/articles')</code> or <code>revalidateTag('articles')</code> in your publish server action to bust the server caches, and the router cache will pick up the fresh data on the next navigation.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Dashboard with All Patterns</h4>
+      <ol>
+        <li>Create a dashboard with a persistent sidebar layout</li>
+        <li>Add three parallel route slots that fetch data independently</li>
+        <li>Add loading.tsx for each slot with skeleton UI</li>
+        <li>Add error.tsx to one slot &mdash; simulate an error and verify only that slot shows the error state</li>
+        <li>Bonus: Add an intercepting route for a detail modal</li>
+      </ol>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/react/lessons/05-server-components/">&larr; Lesson 05: Server Components</a>
+      <a href="/react/lessons/07-data-fetching/">Lesson 07: Data Fetching &rarr;</a>
+    </div>
+  </div>
+</body>
+</html>

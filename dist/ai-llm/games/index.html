@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI/LLM Games & Quizzes - Learn AI</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.25rem; font-weight: 600; }
+    .header h1 span { color: #f472b6; }
+    .header .meta { color: #888; font-size: 0.8rem; }
+    .header .meta a { color: #f472b6; text-decoration: none; }
+
+    /* ── Tab Bar ── */
+    .tab-bar {
+      display: flex;
+      gap: 0.35rem;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-bottom: 1px solid #222;
+      scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex-shrink: 0;
+      padding: 0.55rem 0.85rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #aaa;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+    .tab-btn:hover { border-color: #555; color: #ddd; }
+    .tab-btn.active {
+      background: #f472b6;
+      color: #000;
+      border-color: #f472b6;
+      font-weight: 600;
+    }
+
+    /* ── Game Panels ── */
+    .game-panel {
+      display: none;
+      padding: 1.25rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .game-panel.active { display: block; }
+
+    .game-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .game-subtitle {
+      color: #888;
+      font-size: 0.82rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Score Bar ── */
+    .score-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .score-item {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 6px;
+      padding: 0.5rem 0.85rem;
+      font-size: 0.82rem;
+    }
+    .score-item .label { color: #888; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .score-item .value { color: #f472b6; font-weight: 600; font-size: 1.1rem; }
+    .score-item .value.green { color: #4ade80; }
+    .score-item .value.purple { color: #818cf8; }
+    .score-item .value.pink { color: #f472b6; }
+
+    /* ── Question Card ── */
+    .question-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .question-card pre {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #ddd;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      margin: 0.75rem 0;
+    }
+
+    /* ── Choice Buttons ── */
+    .choices {
+      display: grid;
+      gap: 0.6rem;
+    }
+    .choices.two-col {
+      grid-template-columns: 1fr 1fr;
+    }
+    .choice-btn {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      color: #ddd;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+      min-height: 48px;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+    }
+    .choice-btn:hover { border-color: #555; background: #222; }
+    .choice-btn:active { transform: scale(0.98); }
+    .choice-btn.correct {
+      border-color: #4ade80;
+      background: #4ade8015;
+      color: #4ade80;
+    }
+    .choice-btn.wrong {
+      border-color: #ef4444;
+      background: #ef444415;
+      color: #ef4444;
+    }
+    .choice-btn.highlight {
+      border-color: #4ade80;
+      background: #4ade8010;
+    }
+    .choice-btn:disabled { cursor: default; opacity: 0.85; }
+    .choice-btn code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+    }
+
+    /* ── Explanation Box ── */
+    .explanation {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 0.75rem;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: #ccc;
+      display: none;
+    }
+    .explanation.show { display: block; }
+    .explanation strong { color: #4ade80; }
+
+    /* ── Next Button ── */
+    .next-btn {
+      display: none;
+      width: 100%;
+      padding: 0.85rem;
+      background: #f472b6;
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.75rem;
+      min-height: 48px;
+      transition: background 0.15s;
+    }
+    .next-btn:hover { background: #f9a8d4; }
+    .next-btn.show { display: block; }
+
+    /* ── Start / Reset Button ── */
+    .start-btn {
+      width: 100%;
+      padding: 1rem;
+      background: #f472b6;
+      border: none;
+      border-radius: 8px;
+      color: #000;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 48px;
+      margin: 1rem 0;
+    }
+    .start-btn:hover { background: #f9a8d4; }
+
+    /* ── Slider Controls ── */
+    .slider-group {
+      margin: 0.75rem 0;
+    }
+    .slider-group label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #aaa;
+      margin-bottom: 0.35rem;
+    }
+    .slider-group label span { color: #f472b6; font-weight: 600; }
+    .slider-group input[type="range"] {
+      width: 100%;
+      accent-color: #f472b6;
+    }
+
+    /* ── AI Response Box ── */
+    .ai-response {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 0.75rem 0;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #ccc;
+    }
+    .ai-response .typing {
+      display: inline-block;
+      animation: blink 0.8s infinite;
+    }
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+    .ai-response .role-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── Token Display ── */
+    .token-display {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 3px;
+      margin: 0.75rem 0;
+      padding: 1rem;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 8px;
+    }
+    .token {
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: 'SF Mono', monospace;
+      cursor: default;
+      transition: all 0.15s;
+    }
+    .token:hover { transform: scale(1.1); }
+
+    /* ── Speed Round ── */
+    .speed-timer {
+      font-size: 2rem;
+      font-weight: 600;
+      text-align: center;
+      color: #f472b6;
+      margin: 0.5rem 0;
+    }
+    .speed-timer.danger { color: #ef4444; }
+    .tf-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .tf-btn {
+      padding: 1.25rem;
+      border-radius: 8px;
+      border: 2px solid;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 60px;
+      transition: all 0.1s;
+    }
+    .tf-btn.true-btn {
+      background: #4ade8015;
+      border-color: #4ade80;
+      color: #4ade80;
+    }
+    .tf-btn.false-btn {
+      background: #ef444415;
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+    .tf-btn:active { transform: scale(0.96); }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      height: 4px;
+      background: #222;
+      border-radius: 2px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: #f472b6;
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+
+    /* ── Schema Builder ── */
+    .schema-preview {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'SF Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: #ccc;
+      overflow-x: auto;
+      margin: 0.75rem 0;
+    }
+
+    /* ── Similarity Bars ── */
+    .similarity-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.35rem 0;
+    }
+    .similarity-bar .label { font-size: 0.78rem; color: #aaa; width: 120px; flex-shrink: 0; }
+    .similarity-bar .bar {
+      flex: 1;
+      height: 16px;
+      background: #1a1a1a;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .similarity-bar .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+    .similarity-bar .score { font-size: 0.75rem; color: #f472b6; font-weight: 600; width: 40px; text-align: right; }
+
+    /* ── Results List ── */
+    .results-list {
+      margin-top: 1rem;
+    }
+    .result-item {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 0.4rem;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .result-item .icon { flex-shrink: 0; font-size: 1rem; }
+    .result-item.wrong { border-color: #ef444444; }
+    .result-item.right { border-color: #4ade8044; }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .header { padding: 0.75rem 1rem; }
+      .game-panel { padding: 1rem; }
+      .question-card pre { font-size: 0.72rem; padding: 0.75rem; }
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+</head>
+<body>
+  <div class="header">
+    <h1>AI <span>Games</span></h1>
+    <div class="meta"><a href="/ai-llm/">Home</a></div>
+  </div>
+
+  <div class="tab-bar" id="tabBar"></div>
+
+  <!-- All 10 game panels -->
+  <div class="game-panel" id="panel-prompt">
+    <div class="game-title">Prompt Engineering Challenge</div>
+    <div class="game-subtitle">Choose the best prompt technique for each scenario</div>
+    <div class="score-bar" id="prompt-score"></div>
+    <div class="progress-bar"><div class="fill" id="prompt-progress"></div></div>
+    <div class="question-card" id="prompt-question"></div>
+    <div class="choices" id="prompt-choices"></div>
+    <div class="explanation" id="prompt-explanation"></div>
+    <button class="next-btn" id="prompt-next">Next Challenge</button>
+  </div>
+
+  <div class="game-panel" id="panel-tokens">
+    <div class="game-title">Token Counter</div>
+    <div class="game-subtitle">Estimate how many tokens this text uses</div>
+    <div class="score-bar" id="tokens-score"></div>
+    <div class="question-card" id="tokens-question"></div>
+    <div class="choices" id="tokens-choices"></div>
+    <div class="explanation" id="tokens-explanation"></div>
+    <button class="next-btn" id="tokens-next">Next Text</button>
+  </div>
+
+  <div class="game-panel" id="panel-temperature">
+    <div class="game-title">Temperature Tuner</div>
+    <div class="game-subtitle">See how temperature affects output. Pick the best setting.</div>
+    <div class="score-bar" id="temperature-score"></div>
+    <div class="question-card" id="temperature-question"></div>
+    <div class="choices" id="temperature-choices"></div>
+    <div class="explanation" id="temperature-explanation"></div>
+    <button class="next-btn" id="temperature-next">Next Scenario</button>
+  </div>
+
+  <div class="game-panel" id="panel-tooluse">
+    <div class="game-title">Tool Use Schema Builder</div>
+    <div class="game-subtitle">Build the correct tool schema for the task</div>
+    <div class="score-bar" id="tooluse-score"></div>
+    <div class="progress-bar"><div class="fill" id="tooluse-progress"></div></div>
+    <div class="question-card" id="tooluse-question"></div>
+    <div class="choices" id="tooluse-choices"></div>
+    <div class="explanation" id="tooluse-explanation"></div>
+    <button class="next-btn" id="tooluse-next">Next Schema</button>
+  </div>
+
+  <div class="game-panel" id="panel-embedding">
+    <div class="game-title">Embedding Similarity Matcher</div>
+    <div class="game-subtitle">Which text is semantically closest to the query?</div>
+    <div class="score-bar" id="embedding-score"></div>
+    <div class="question-card" id="embedding-question"></div>
+    <div class="choices" id="embedding-choices"></div>
+    <div class="explanation" id="embedding-explanation"></div>
+    <button class="next-btn" id="embedding-next">Next Query</button>
+  </div>
+
+  <div class="game-panel" id="panel-rag">
+    <div class="game-title">RAG Pipeline Debugger</div>
+    <div class="game-subtitle">Find the issue in the retrieval-augmented generation pipeline</div>
+    <div class="score-bar" id="rag-score"></div>
+    <div class="progress-bar"><div class="fill" id="rag-progress"></div></div>
+    <div class="question-card" id="rag-question"></div>
+    <div class="choices" id="rag-choices"></div>
+    <div class="explanation" id="rag-explanation"></div>
+    <button class="next-btn" id="rag-next">Next Bug</button>
+  </div>
+
+  <div class="game-panel" id="panel-systemprompt">
+    <div class="game-title">System Prompt A/B Test</div>
+    <div class="game-subtitle">Which system prompt produces better results for the task?</div>
+    <div class="score-bar" id="systemprompt-score"></div>
+    <div class="question-card" id="systemprompt-question"></div>
+    <div class="choices two-col" id="systemprompt-choices"></div>
+    <div class="explanation" id="systemprompt-explanation"></div>
+    <button class="next-btn" id="systemprompt-next">Next Test</button>
+  </div>
+
+  <div class="game-panel" id="panel-hallucination">
+    <div class="game-title">Hallucination Detector</div>
+    <div class="game-subtitle">Spot the fabricated or incorrect claim in the AI response</div>
+    <div class="score-bar" id="hallucination-score"></div>
+    <div class="progress-bar"><div class="fill" id="hallucination-progress"></div></div>
+    <div class="question-card" id="hallucination-question"></div>
+    <div class="choices" id="hallucination-choices"></div>
+    <div class="explanation" id="hallucination-explanation"></div>
+    <button class="next-btn" id="hallucination-next">Next Response</button>
+  </div>
+
+  <div class="game-panel" id="panel-context">
+    <div class="game-title">Context Window Optimizer</div>
+    <div class="game-subtitle">What's the best strategy for fitting content into the context window?</div>
+    <div class="score-bar" id="context-score"></div>
+    <div class="question-card" id="context-question"></div>
+    <div class="choices" id="context-choices"></div>
+    <div class="explanation" id="context-explanation"></div>
+    <button class="next-btn" id="context-next">Next Strategy</button>
+  </div>
+
+  <div class="game-panel" id="panel-ethics">
+    <div class="game-title">Ethics Scenario Quiz</div>
+    <div class="game-subtitle">Navigate ethical dilemmas in AI-powered journalism</div>
+    <div class="score-bar" id="ethics-score"></div>
+    <div class="progress-bar"><div class="fill" id="ethics-progress"></div></div>
+    <div class="question-card" id="ethics-question"></div>
+    <div class="choices" id="ethics-choices"></div>
+    <div class="explanation" id="ethics-explanation"></div>
+    <button class="next-btn" id="ethics-next">Next Scenario</button>
+  </div>
+
+
+  <script>
+    // =============================================
+    //  TAB SYSTEM
+    // =============================================
+    const tabs = [
+      { id: 'prompt', label: 'Prompts' },
+      { id: 'tokens', label: 'Tokens' },
+      { id: 'temperature', label: 'Temperature' },
+      { id: 'tooluse', label: 'Tool Use' },
+      { id: 'embedding', label: 'Embeddings' },
+      { id: 'rag', label: 'RAG Debug' },
+      { id: 'systemprompt', label: 'System Prompt' },
+      { id: 'hallucination', label: 'Hallucination' },
+      { id: 'context', label: 'Context' },
+      { id: 'ethics', label: 'Ethics' },
+    ];
+
+    const tabBar = document.getElementById('tabBar');
+    let activeTab = localStorage.getItem('ai-games-tab') || 'prompt';
+
+    tabs.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'tab-btn' + (t.id === activeTab ? ' active' : '');
+      btn.textContent = t.label;
+      btn.dataset.tab = t.id;
+      btn.addEventListener('click', () => switchTab(t.id));
+      tabBar.appendChild(btn);
+    });
+
+    function switchTab(id) {
+      activeTab = id;
+      localStorage.setItem('ai-games-tab', id);
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+      document.querySelectorAll('.game-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
+      if (id === 'prompt' && !promptStarted) initPrompt();
+      if (id === 'tokens' && !tokensStarted) initTokens();
+      if (id === 'temperature' && !tempStarted) initTemperature();
+      if (id === 'tooluse' && !toolStarted) initToolUse();
+      if (id === 'embedding' && !embedStarted) initEmbedding();
+      if (id === 'rag' && !ragStarted) initRag();
+      if (id === 'systemprompt' && !spStarted) initSystemPrompt();
+      if (id === 'hallucination' && !halStarted) initHallucination();
+      if (id === 'context' && !ctxStarted) initContext();
+      if (id === 'ethics' && !ethicsStarted) initEthics();
+    }
+
+    // ── Helpers ──
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    function renderScore(containerId, items) {
+      const c = document.getElementById(containerId);
+      c.innerHTML = items.map(it =>
+        `<div class="score-item"><div class="label">${it.label}</div><div class="value ${it.cls || ''}">${it.value}</div></div>`
+      ).join('');
+    }
+    function saveHigh(key, val) {
+      const prev = parseInt(localStorage.getItem(key) || '0');
+      if (val > prev) localStorage.setItem(key, val);
+      return Math.max(prev, val);
+    }
+    function getHigh(key) { return parseInt(localStorage.getItem(key) || '0'); }
+
+    function makeQuizEngine(prefix, questions, total) {
+      let started = false, score = 0, q = 0;
+      function init() {
+        started = true; score = 0; q = 0;
+        show();
+      }
+      function show() {
+        if (q >= total) {
+          const best = saveHigh(`ai-${prefix}-best`, score);
+          renderScore(`${prefix}-score`, [{ label: 'Final', value: score + '/' + total, cls: 'green' }, { label: 'Best', value: best + '/' + total, cls: 'purple' }]);
+          document.getElementById(`${prefix}-question`).innerHTML = '<p style="text-align:center;color:#4ade80;font-size:1.1rem;">Round complete!</p>';
+          document.getElementById(`${prefix}-choices`).innerHTML = '';
+          document.getElementById(`${prefix}-next`).classList.remove('show');
+          return;
+        }
+        const item = questions[q];
+        renderScore(`${prefix}-score`, [{ label: 'Score', value: score }, { label: 'Question', value: (q + 1) + '/' + total }]);
+        const prog = document.getElementById(`${prefix}-progress`);
+        if (prog) prog.style.width = ((q / total) * 100) + '%';
+        document.getElementById(`${prefix}-question`).innerHTML = item.html || `<p style="color:#ccc;font-size:0.9rem;">${item.question}</p>${item.code ? '<pre>' + item.code + '</pre>' : ''}`;
+        const options = shuffle(item.options);
+        const choicesEl = document.getElementById(`${prefix}-choices`);
+        choicesEl.innerHTML = options.map(o => `<button class="choice-btn" data-val="${o}">${o}</button>`).join('');
+        document.getElementById(`${prefix}-explanation`).classList.remove('show');
+        document.getElementById(`${prefix}-next`).classList.remove('show');
+
+        choicesEl.querySelectorAll('.choice-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            choicesEl.querySelectorAll('.choice-btn').forEach(b => {
+              b.disabled = true;
+              if (b.dataset.val === item.answer) b.classList.add('correct');
+              else if (b === btn && b.dataset.val !== item.answer) b.classList.add('wrong');
+            });
+            if (btn.dataset.val === item.answer) score++;
+            const expl = document.getElementById(`${prefix}-explanation`);
+            expl.innerHTML = `<strong>${item.answer}</strong><br>${item.explain}`;
+            expl.classList.add('show');
+            document.getElementById(`${prefix}-next`).classList.add('show');
+          });
+        });
+      }
+      document.getElementById(`${prefix}-next`).addEventListener('click', () => { q++; show(); });
+      return { init, isStarted: () => started };
+    }
+
+    // =============================================
+    //  1. PROMPT ENGINEERING CHALLENGE
+    // =============================================
+    let promptStarted = false;
+    const promptQuestions = [
+      { question: 'You need the model to classify news articles into exactly 5 categories. What technique works best?', answer: 'Few-shot prompting with examples of each category', options: ['Few-shot prompting with examples of each category', 'Just say "classify this article"', 'Set temperature to 0', 'Use a longer system prompt'], explain: 'Few-shot prompting shows the model concrete examples, establishing the pattern. This is more reliable than zero-shot for classification.' },
+      { question: 'The model keeps adding disclaimers to its responses. How do you fix this?', answer: 'Add "Do not include disclaimers or caveats" to the system prompt', options: ['Add "Do not include disclaimers or caveats" to the system prompt', 'Increase temperature', 'Switch to a smaller model', 'Add more context'], explain: 'Direct negative instructions in the system prompt are effective at removing unwanted behaviors like excessive disclaimers.' },
+      { question: 'You need the model to think step-by-step before answering a complex question. What technique?', answer: 'Chain-of-thought prompting', options: ['Chain-of-thought prompting', 'Zero-shot prompting', 'Reducing max tokens', 'Using retrieval augmentation'], explain: 'Chain-of-thought prompting asks the model to reason step-by-step, which improves accuracy on complex reasoning tasks.' },
+      { question: 'Your prompt returns inconsistent JSON formats. What is the best fix?', answer: 'Provide a JSON schema and example in the prompt', options: ['Provide a JSON schema and example in the prompt', 'Set temperature to 1.0', 'Make the prompt shorter', 'Use a different model'], explain: 'Giving the model a clear schema and example anchors the output format, dramatically reducing structural inconsistencies.' },
+      { question: 'You want the model to play the role of a fact-checker. What should you put in the system prompt?', answer: 'Define the role, rules for verification, and output format', options: ['Define the role, rules for verification, and output format', 'Just say "You are a fact-checker"', 'List every possible fact', 'Set max tokens to 100'], explain: 'Effective system prompts define the persona, constraints, behavior rules, and expected output format.' },
+      { question: 'The model is hallucinating dates in historical summaries. Best mitigation?', answer: 'Use RAG to ground the response in source documents', options: ['Use RAG to ground the response in source documents', 'Increase temperature', 'Use a larger context window', 'Add "be accurate" to the prompt'], explain: 'RAG (Retrieval-Augmented Generation) provides real source documents for the model to reference, dramatically reducing hallucinations.' },
+      { question: 'You need to extract structured data from unstructured text. Best approach?', answer: 'Provide the output schema and use extraction-focused prompting', options: ['Provide the output schema and use extraction-focused prompting', 'Ask the model to summarize', 'Use embeddings', 'Set temperature to maximum'], explain: 'Structured extraction works best when you define the exact schema (fields, types) and instruct the model to extract matching data.' },
+      { question: 'Your prompt works in testing but fails in production with long inputs. Why?', answer: 'The input exceeds the context window, causing truncation', options: ['The input exceeds the context window, causing truncation', 'The API is down', 'Temperature is too low', 'The model was updated'], explain: 'Long inputs can exceed the model context window. The text gets truncated, losing critical information near the end.' },
+    ];
+    const promptEngine = makeQuizEngine('prompt', promptQuestions, 8);
+    function initPrompt() { promptStarted = true; promptEngine.init(); }
+
+    // =============================================
+    //  2. TOKEN COUNTER
+    // =============================================
+    let tokensStarted = false;
+    const tokenQuestions = [
+      { question: 'How many tokens is the word "hello"?', answer: '1 token', options: ['1 token', '2 tokens', '5 tokens', '3 tokens'], explain: 'Common words like "hello" are typically a single token. Tokenizers learn frequent words as whole units.' },
+      { question: 'How many tokens is "antidisestablishmentarianism"?', answer: '6-8 tokens', options: ['6-8 tokens', '1 token', '28 tokens (one per letter)', '2 tokens'], explain: 'Long, uncommon words get split into subword pieces. This word breaks into multiple BPE tokens.' },
+      { question: 'Approximately how many tokens are in 750 words of English text?', answer: '~1,000 tokens', options: ['~1,000 tokens', '~750 tokens', '~3,000 tokens', '~500 tokens'], explain: 'A common rule of thumb: 1 token is roughly 0.75 words, or 4 characters. So 750 words is approximately 1,000 tokens.' },
+      { question: 'Which costs more tokens: "New York City" or "NYC"?', answer: '"New York City" (3 tokens vs 1)', options: ['"New York City" (3 tokens vs 1)', 'They cost the same', '"NYC" costs more', 'Neither uses tokens'], explain: '"New York City" is 3 separate tokens. "NYC" is typically 1 token. Abbreviations can save token budget.' },
+      { question: 'Do whitespace and punctuation use tokens?', answer: 'Yes, but they are often merged with adjacent text', options: ['Yes, but they are often merged with adjacent text', 'No, they are free', 'Each space is 1 token', 'Only punctuation costs tokens'], explain: 'BPE tokenizers often merge spaces with the following word (e.g., " the" is one token). Punctuation also uses tokens.' },
+      { question: 'JSON output with many keys — does the structure use tokens?', answer: 'Yes, curly braces, quotes, colons, and commas all cost tokens', options: ['Yes, curly braces, quotes, colons, and commas all cost tokens', 'No, only the values count', 'Only the keys count', 'JSON is compressed before tokenizing'], explain: 'Every character in JSON output costs tokens. Structural characters (braces, quotes, colons) add up significantly.' },
+      { question: 'Code typically uses more or fewer tokens per line than English prose?', answer: 'More tokens per line (special chars, variable names)', options: ['More tokens per line (special chars, variable names)', 'Fewer tokens per line', 'About the same', 'Code is not tokenized'], explain: 'Code has special characters, camelCase splits, and syntax tokens that increase token count per line.' },
+      { question: 'What is the approximate context window of Claude 3.5 Sonnet?', answer: '200,000 tokens', options: ['200,000 tokens', '4,096 tokens', '32,000 tokens', '1,000,000 tokens'], explain: 'Claude 3.5 Sonnet supports approximately 200K tokens, enabling processing of very long documents.' },
+    ];
+    const tokenEngine = makeQuizEngine('tokens', tokenQuestions, 8);
+    function initTokens() { tokensStarted = true; tokenEngine.init(); }
+
+    // =============================================
+    //  3. TEMPERATURE TUNER
+    // =============================================
+    let tempStarted = false;
+    const tempQuestions = [
+      { question: 'You need to extract a date from a document. What temperature?', answer: 'temperature: 0 (deterministic)', options: ['temperature: 0 (deterministic)', 'temperature: 0.5', 'temperature: 1.0 (creative)', 'temperature: 1.5'], explain: 'Data extraction requires precision and consistency. Temperature 0 gives the most deterministic output.' },
+      { question: 'You want the model to brainstorm creative headline ideas. What temperature?', answer: 'temperature: 0.8-1.0', options: ['temperature: 0.8-1.0', 'temperature: 0', 'temperature: 0.2', 'temperature: 2.0'], explain: 'Creative tasks benefit from higher temperature, which increases variety. 0.8-1.0 gives good creativity without incoherence.' },
+      { question: 'What does temperature control in an LLM?', answer: 'The randomness of token selection from the probability distribution', options: ['The randomness of token selection from the probability distribution', 'The speed of generation', 'The maximum output length', 'The model size'], explain: 'Temperature scales the logits before softmax. Lower = more deterministic (peaked distribution), higher = more random (flat distribution).' },
+      { question: 'Temperature is 0. The model sees two tokens with equal probability. What happens?', answer: 'The model picks one consistently (implementation-dependent)', options: ['The model picks one consistently (implementation-dependent)', 'It outputs both', 'It crashes', 'It picks randomly'], explain: 'At temperature 0, the model is deterministic. With exactly equal probabilities, implementation-specific tie-breaking applies.' },
+      { question: 'You are building a code generation tool. Recommended temperature?', answer: 'temperature: 0-0.2 (low)', options: ['temperature: 0-0.2 (low)', 'temperature: 0.7', 'temperature: 1.0', 'temperature: 1.5'], explain: 'Code generation needs precision. Low temperature reduces the chance of syntax errors and logical mistakes.' },
+      { question: 'What happens at temperature > 1.0?', answer: 'Output becomes increasingly random and potentially incoherent', options: ['Output becomes increasingly random and potentially incoherent', 'Model becomes more accurate', 'Response gets shorter', 'Nothing changes'], explain: 'Temperature > 1 flattens the probability distribution further, making unlikely tokens almost as probable as likely ones.' },
+      { question: 'For a customer support chatbot with scripted answers, what temperature?', answer: 'temperature: 0 (consistent responses)', options: ['temperature: 0 (consistent responses)', 'temperature: 0.5', 'temperature: 1.0', 'temperature: 0.8'], explain: 'Customer support needs consistent, reliable answers. Temperature 0 ensures the same question always gets the same answer.' },
+      { question: 'What is top_p (nucleus sampling) and how does it relate to temperature?', answer: 'top_p limits the token pool to a cumulative probability threshold', options: ['top_p limits the token pool to a cumulative probability threshold', 'top_p is the same as temperature', 'top_p controls output length', 'top_p sets the learning rate'], explain: 'top_p filters tokens by cumulative probability. E.g., top_p=0.9 only considers tokens making up the top 90% of probability mass.' },
+    ];
+    const tempEngine = makeQuizEngine('temperature', tempQuestions, 8);
+    function initTemperature() { tempStarted = true; tempEngine.init(); }
+
+    // =============================================
+    //  4. TOOL USE SCHEMA BUILDER
+    // =============================================
+    let toolStarted = false;
+    const toolQuestions = [
+      { question: 'You want the model to search a database. What is required in the tool schema?', answer: 'name, description, and input_schema with parameters', options: ['name, description, and input_schema with parameters', 'Just the function name', 'Only the return type', 'A full code implementation'], explain: 'Tool use requires a name, human-readable description, and a JSON Schema for input parameters so the model knows what arguments to provide.' },
+      { question: 'The model should call a weather API. Which parameter type for "city"?', answer: 'type: "string"', options: ['type: "string"', 'type: "number"', 'type: "boolean"', 'type: "array"'], explain: 'City names are strings. The schema should specify type: "string" with a description like "The city name to look up weather for."' },
+      { question: 'How do you mark a tool parameter as optional?', answer: 'Omit it from the "required" array in the schema', options: ['Omit it from the "required" array in the schema', 'Set optional: true', 'Use a question mark after the name', 'Add a default value'], explain: 'JSON Schema uses a "required" array. Parameters not listed in "required" are optional.' },
+      { question: 'What happens when the model decides to use a tool?', answer: 'It returns a tool_use content block with the tool name and input', options: ['It returns a tool_use content block with the tool name and input', 'It executes the tool directly', 'It pauses and waits', 'It generates the API response'], explain: 'The model does not execute tools — it returns a structured tool_use block. Your application code then executes the tool and returns the result.' },
+      { question: 'The model is calling the wrong tool. How do you fix it?', answer: 'Improve the tool descriptions to be more specific', options: ['Improve the tool descriptions to be more specific', 'Remove all other tools', 'Increase temperature', 'Add more parameters'], explain: 'Clear, specific tool descriptions help the model choose the right tool. Describe when and why to use each tool.' },
+      { question: 'How do you pass tool results back to the model?', answer: 'Send a tool_result content block in the next user message', options: ['Send a tool_result content block in the next user message', 'Append it to the system prompt', 'Call the API again from scratch', 'The tool runs automatically'], explain: 'After executing a tool, you send the result back as a tool_result block, allowing the model to incorporate the output.' },
+      { question: 'What is "forced tool use" in the Anthropic API?', answer: 'Setting tool_choice to require a specific tool', options: ['Setting tool_choice to require a specific tool', 'Putting the tool in the system prompt', 'Increasing max tokens', 'Running the tool before calling the model'], explain: 'tool_choice: {type: "tool", name: "tool_name"} forces the model to use that specific tool, bypassing its own decision logic.' },
+      { question: 'Can a model call multiple tools in a single response?', answer: 'Yes, it can return multiple tool_use blocks', options: ['Yes, it can return multiple tool_use blocks', 'No, only one tool per response', 'Only with parallel tool use enabled', 'Only in streaming mode'], explain: 'Models can return multiple tool_use content blocks in one response when multiple tools are needed.' },
+    ];
+    const toolEngine = makeQuizEngine('tooluse', toolQuestions, 8);
+    function initToolUse() { toolStarted = true; toolEngine.init(); }
+
+    // =============================================
+    //  5. EMBEDDING SIMILARITY MATCHER
+    // =============================================
+    let embedStarted = false;
+    const embedQuestions = [
+      { question: 'Query: "How to make coffee"<br>Which text is most semantically similar?', answer: 'A guide to brewing the perfect espresso', options: ['A guide to brewing the perfect espresso', 'The history of coffee beans in Ethiopia', 'JavaScript coffee shop inventory system', 'Coffee table furniture designs'], explain: 'Embedding similarity captures semantic meaning. "Brewing espresso" is about the same concept (making coffee) even with different words.' },
+      { question: 'Query: "climate change effects"<br>Which is most similar?', answer: 'Rising global temperatures impact ecosystems', options: ['Rising global temperatures impact ecosystems', 'How to change your car climate controls', 'Weather forecast for next week', 'Political debate about energy policy'], explain: 'Semantic embeddings understand that "climate change effects" and "rising temperatures impacting ecosystems" share deep meaning.' },
+      { question: 'What do embedding vectors represent?', answer: 'A numerical representation of semantic meaning in high-dimensional space', options: ['A numerical representation of semantic meaning in high-dimensional space', 'The word count of the text', 'A compressed version of the text', 'The language of the text'], explain: 'Embeddings map text to dense vectors where similar meanings cluster together in the vector space.' },
+      { question: 'What similarity metric is most common for comparing embeddings?', answer: 'Cosine similarity', options: ['Cosine similarity', 'Euclidean distance', 'Hamming distance', 'Jaccard index'], explain: 'Cosine similarity measures the angle between vectors, making it scale-invariant. It ranges from -1 (opposite) to 1 (identical).' },
+      { question: 'Embedding dimension for a typical model is roughly:', answer: '768-1536 dimensions', options: ['768-1536 dimensions', '2-3 dimensions', '50,000 dimensions', '1 dimension'], explain: 'Common embedding models output vectors of 768, 1024, or 1536 dimensions. Higher dimensions capture more nuance.' },
+      { question: '"bank" in "river bank" vs "bank" in "bank account" — do embeddings handle this?', answer: 'Yes, contextual embeddings capture different meanings of the same word', options: ['Yes, contextual embeddings capture different meanings of the same word', 'No, they always produce the same vector', 'Only with special processing', 'Only word2vec handles this'], explain: 'Modern contextual embedding models (like those used by Claude) embed the full sentence, so "bank" gets different vectors based on context.' },
+      { question: 'Your RAG system retrieves irrelevant documents. What embedding-related fix?', answer: 'Try a different embedding model or chunk size', options: ['Try a different embedding model or chunk size', 'Increase temperature', 'Use a larger LLM', 'Add more documents'], explain: 'Poor retrieval often stems from embedding model quality or chunk size. Different models have different strengths, and chunk size affects what gets compared.' },
+      { question: 'Can you use embeddings to detect duplicate content?', answer: 'Yes, near-duplicate texts will have very high cosine similarity (>0.95)', options: ['Yes, near-duplicate texts will have very high cosine similarity (>0.95)', 'No, embeddings only work for search', 'Only with exact string matching', 'Only for images'], explain: 'Embeddings excel at near-duplicate detection. Even paraphrased content will have high similarity scores.' },
+    ];
+    const embedEngine = makeQuizEngine('embedding', embedQuestions, 8);
+    function initEmbedding() { embedStarted = true; embedEngine.init(); }
+
+    // =============================================
+    //  6. RAG PIPELINE DEBUGGER
+    // =============================================
+    let ragStarted = false;
+    const ragQuestions = [
+      { question: 'The RAG system retrieves relevant documents but the answer is still wrong. Where is the bug?', answer: 'The LLM is not properly grounded — improve the prompt to cite retrieved chunks', options: ['The LLM is not properly grounded — improve the prompt to cite retrieved chunks', 'The embedding model is broken', 'The vector database is down', 'The documents are too short'], explain: 'If retrieval is good but answers are wrong, the generation step is the issue. Adding "only use the provided context" to the prompt helps ground the model.' },
+      { question: 'Documents are 50 pages each. Retrieval returns bad results. What is likely wrong?', answer: 'Chunks are too large — the embedding loses granularity', options: ['Chunks are too large — the embedding loses granularity', 'The model is too small', 'Temperature is too high', 'The API key is wrong'], explain: 'Embedding a 50-page document as one chunk dilutes the semantic signal. Splitting into smaller, focused chunks improves retrieval quality.' },
+      { question: 'What is "chunk overlap" and why use it?', answer: 'Repeating text at chunk boundaries to preserve context across splits', options: ['Repeating text at chunk boundaries to preserve context across splits', 'Storing chunks in multiple databases', 'Running the query multiple times', 'Compressing chunk data'], explain: 'Chunk overlap (e.g., 200-token overlap) ensures that sentences split across chunk boundaries are still represented in at least one chunk.' },
+      { question: 'Your RAG returns the right documents but the model says "I don\'t have enough information." Why?', answer: 'The retrieved chunks may be placed after the model\'s effective attention span', options: ['The retrieved chunks may be placed after the model\'s effective attention span', 'The model is lying', 'The database is empty', 'Temperature is 0'], explain: 'Models can struggle with information in the middle of very long contexts ("lost in the middle"). Place key retrieved context near the beginning or end.' },
+      { question: 'Hybrid search combines which two retrieval methods?', answer: 'Vector (semantic) search + keyword (BM25) search', options: ['Vector (semantic) search + keyword (BM25) search', 'Two different LLMs', 'Embeddings + fine-tuning', 'SQL + NoSQL databases'], explain: 'Hybrid search combines semantic understanding (vectors) with exact keyword matching (BM25), covering both meaning and specific terms.' },
+      { question: 'How do you evaluate RAG quality?', answer: 'Measure retrieval recall/precision and answer faithfulness to retrieved context', options: ['Measure retrieval recall/precision and answer faithfulness to retrieved context', 'Count the number of API calls', 'Check response time only', 'Ask the model to grade itself'], explain: 'Good RAG evaluation checks: (1) did retrieval find the right documents? (2) did the model faithfully use them without hallucinating?' },
+      { question: 'Your RAG system works for English but fails for Spanish documents. Likely cause?', answer: 'The embedding model was not trained on multilingual data', options: ['The embedding model was not trained on multilingual data', 'Spanish has more tokens', 'The vector database does not support Unicode', 'Temperature needs to be higher'], explain: 'Monolingual embedding models produce poor vectors for unseen languages. Use a multilingual embedding model for cross-language RAG.' },
+      { question: 'What is "re-ranking" in a RAG pipeline?', answer: 'A second-pass model that reorders retrieved chunks by relevance', options: ['A second-pass model that reorders retrieved chunks by relevance', 'Sorting documents alphabetically', 'Running the query again', 'Embedding the query twice'], explain: 'Re-rankers use a cross-encoder to score query-document pairs more accurately than embedding similarity alone, improving top-k selection.' },
+    ];
+    const ragEngine = makeQuizEngine('rag', ragQuestions, 8);
+    function initRag() { ragStarted = true; ragEngine.init(); }
+
+    // =============================================
+    //  7. SYSTEM PROMPT A/B TEST
+    // =============================================
+    let spStarted = false;
+    let spScore = 0, spQ = 0, spTotal = 8;
+
+    const spQuestions = [
+      { task: 'Summarize news articles in 2 sentences', a: 'You summarize news.', b: 'You are a senior news editor. Summarize each article in exactly 2 sentences: the first states the key event, the second provides critical context. Use AP style. No opinions.', winner: 'b', explain: 'Prompt B is specific about format (2 sentences), structure (event + context), style (AP), and constraints (no opinions).' },
+      { task: 'Translate interview transcripts from Spanish to English', a: 'You are a professional translator specializing in journalism. Translate the interview transcript from Spanish to English, preserving the speaker\'s tone and colloquialisms. Mark uncertain translations with [?].', b: 'Translate this from Spanish to English. Make it sound natural.', winner: 'a', explain: 'Prompt A specifies the domain (journalism), preservation goals (tone, colloquialisms), and error handling ([?] markers).' },
+      { task: 'Classify social media posts as positive, negative, or neutral', a: 'Classify sentiment as POSITIVE, NEGATIVE, or NEUTRAL. Respond with only the label.', b: 'You are a sentiment analysis tool. Read the social media post and determine if it is positive, negative, or neutral. Consider sarcasm, irony, and context. Output JSON: {"sentiment": "...", "confidence": 0.0-1.0, "reasoning": "..."}', winner: 'b', explain: 'Prompt B handles edge cases (sarcasm, irony), provides structured output with confidence scores, and includes reasoning for debugging.' },
+      { task: 'Generate questions for a political candidate interview', a: 'You are an investigative journalist preparing for a political interview. Generate pointed, specific questions based on the candidate\'s voting record and public statements. Avoid softballs. Each question should be answerable with verifiable facts.', b: 'Generate some interview questions for a politician.', winner: 'a', explain: 'Prompt A defines the persona (investigative journalist), approach (pointed, specific), source material (voting record), and quality bar (verifiable).' },
+      { task: 'Extract key facts from a legal document', a: 'Extract facts from this legal document. Return a list.', b: 'You are a legal analyst. Extract all verifiable facts from this document. For each fact, include: the exact quote, page reference if available, and a confidence level (high/medium/low). Distinguish between stated facts and interpretations.', winner: 'b', explain: 'Prompt B requires citations, confidence levels, and distinguishes facts from interpretations — critical for legal document analysis.' },
+      { task: 'Write social media posts for a news organization', a: 'You are a social media editor for a major news organization. Write posts that are factual, engaging, and under 280 characters. Never sensationalize. Include relevant hashtags. Match the tone: breaking = urgent, features = conversational.', b: 'Write a tweet about this news story. Make it catchy and use hashtags.', winner: 'a', explain: 'Prompt A establishes editorial standards, character limits, tone guidelines per content type, and anti-sensationalism constraints.' },
+      { task: 'Proofread and fact-check an article draft', a: 'Check this article for errors.', b: 'You are a copy editor and fact-checker. Review this draft for: (1) grammatical errors, (2) factual claims that need verification, (3) logical inconsistencies, (4) missing attribution. Format findings as a numbered list with line references.', winner: 'b', explain: 'Prompt B breaks the task into specific categories, requires line references, and covers both copy editing and fact-checking.' },
+      { task: 'Create a daily news briefing from multiple sources', a: 'You are a briefing compiler for a newsroom. Synthesize the provided sources into a 5-item daily briefing. Each item: 1 headline (under 10 words), 2-3 sentence summary, source attribution. Prioritize by public impact. Flag conflicting reports between sources.', b: 'Summarize today\'s news from these sources into a briefing.', winner: 'a', explain: 'Prompt A defines structure (5 items), format (headline + summary + source), prioritization criteria (public impact), and conflict handling.' },
+    ];
+
+    function initSystemPrompt() {
+      spStarted = true;
+      spScore = 0; spQ = 0;
+      showSP();
+    }
+
+    function showSP() {
+      if (spQ >= spTotal) {
+        const best = saveHigh('ai-sp-best', spScore);
+        renderScore('systemprompt-score', [{ label: 'Final', value: spScore + '/' + spTotal, cls: 'green' }, { label: 'Best', value: best + '/' + spTotal, cls: 'purple' }]);
+        document.getElementById('systemprompt-question').innerHTML = '<p style="text-align:center;color:#4ade80;">Round complete!</p>';
+        document.getElementById('systemprompt-choices').innerHTML = '';
+        document.getElementById('systemprompt-next').classList.remove('show');
+        return;
+      }
+      const q = spQuestions[spQ];
+      renderScore('systemprompt-score', [{ label: 'Score', value: spScore }, { label: 'Test', value: (spQ + 1) + '/' + spTotal }]);
+      document.getElementById('systemprompt-question').innerHTML = `<p style="color:#aaa;font-size:0.85rem;margin-bottom:0.75rem;">Task: <span style="color:#f472b6;font-weight:600;">${q.task}</span></p><p style="color:#888;font-size:0.8rem;">Which system prompt is better?</p>`;
+
+      const choicesEl = document.getElementById('systemprompt-choices');
+      choicesEl.innerHTML = `
+        <button class="choice-btn" data-val="a" style="flex-direction:column;align-items:flex-start;gap:0.35rem;">
+          <span style="color:#f472b6;font-weight:600;font-size:0.7rem;">PROMPT A</span>
+          <span style="font-size:0.78rem;">${q.a}</span>
+        </button>
+        <button class="choice-btn" data-val="b" style="flex-direction:column;align-items:flex-start;gap:0.35rem;">
+          <span style="color:#818cf8;font-weight:600;font-size:0.7rem;">PROMPT B</span>
+          <span style="font-size:0.78rem;">${q.b}</span>
+        </button>`;
+
+      document.getElementById('systemprompt-explanation').classList.remove('show');
+      document.getElementById('systemprompt-next').classList.remove('show');
+
+      choicesEl.querySelectorAll('.choice-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          choicesEl.querySelectorAll('.choice-btn').forEach(b => {
+            b.disabled = true;
+            if (b.dataset.val === q.winner) b.classList.add('correct');
+            else if (b === btn && b.dataset.val !== q.winner) b.classList.add('wrong');
+          });
+          if (btn.dataset.val === q.winner) spScore++;
+          const expl = document.getElementById('systemprompt-explanation');
+          expl.innerHTML = `<strong>Prompt ${q.winner.toUpperCase()} wins</strong><br>${q.explain}`;
+          expl.classList.add('show');
+          document.getElementById('systemprompt-next').classList.add('show');
+        });
+      });
+    }
+
+    document.getElementById('systemprompt-next').addEventListener('click', () => { spQ++; showSP(); });
+
+    // =============================================
+    //  8. HALLUCINATION DETECTOR
+    // =============================================
+    let halStarted = false;
+    const halQuestions = [
+      { question: 'An AI writes: "The 28th Amendment to the US Constitution, ratified in 2023, guarantees internet access." What is wrong?', answer: 'There is no 28th Amendment — this is fabricated', options: ['There is no 28th Amendment — this is fabricated', 'The year is wrong', 'The content is wrong', 'Nothing is wrong'], explain: 'As of early 2025, there is no 28th Amendment. The model fabricated both the amendment and its content.' },
+      { question: 'AI response about a news event: "According to a 2024 report by the Institute for Media Studies at Harvard..." Is this suspicious?', answer: 'Yes — verify the institution and report exist before citing', options: ['Yes — verify the institution and report exist before citing', 'No, Harvard is a real school', 'Only if the data seems wrong', 'AI never makes up sources'], explain: 'LLMs frequently fabricate specific institutions, reports, and citations. Always verify that named sources actually exist.' },
+      { question: 'The model says a specific law was "passed unanimously by Congress." How do you verify?', answer: 'Check official Congressional records (congress.gov)', options: ['Check official Congressional records (congress.gov)', 'Ask the model if it is sure', 'Increase temperature and re-run', 'Accept it — LLMs know laws'], explain: 'Official records are the ground truth. "Unanimously" is a specific, verifiable claim that should be checked against roll call votes.' },
+      { question: 'AI generates statistics: "67.3% of journalists use AI tools daily." Red flag?', answer: 'Yes — highly specific statistics without a source are likely fabricated', options: ['Yes — highly specific statistics without a source are likely fabricated', 'No, the number seems reasonable', 'Only if it is over 80%', 'Statistics are always accurate'], explain: 'Suspiciously precise statistics without attribution are a classic hallucination pattern. The model generates plausible-sounding numbers.' },
+      { question: 'The model quotes a person. How is this risky?', answer: 'Fabricated quotes attributed to real people can be defamatory', options: ['Fabricated quotes attributed to real people can be defamatory', 'Quotes are always accurate', 'Only famous people are at risk', 'The model has access to all quotes'], explain: 'LLMs can generate plausible-sounding quotes and attribute them to real people. This is legally risky (defamation) and journalistically unethical.' },
+      { question: 'AI says: "Python 4.0 was released in January 2025 with major syntax changes." How do you assess?', answer: 'Check the official Python release history — this is likely hallucinated', options: ['Check the official Python release history — this is likely hallucinated', 'Accept it, the model is up to date', 'The syntax changes part is suspicious', 'Ask the model for the changelog'], explain: 'As of the model knowledge cutoff, Python 4.0 does not exist. This is a classic fabrication of plausible future events.' },
+      { question: 'What is the best safeguard against hallucination in production?', answer: 'Retrieval augmentation (RAG) with source verification', options: ['Retrieval augmentation (RAG) with source verification', 'Higher temperature', 'Longer system prompts', 'Using a smaller model'], explain: 'RAG grounds responses in real documents, and source verification ensures cited information actually appears in the retrieved context.' },
+      { question: 'The AI says "Studies show..." but does not name specific studies. Issue?', answer: 'Vague appeals to authority are a hallucination warning sign', options: ['Vague appeals to authority are a hallucination warning sign', 'It is fine if the claim is reasonable', 'The model is being appropriately cautious', 'All AI responses cite vaguely'], explain: '"Studies show" without specific citations is a common pattern when the model is generating plausible-sounding but unverifiable claims.' },
+    ];
+    const halEngine = makeQuizEngine('hallucination', halQuestions, 8);
+    function initHallucination() { halStarted = true; halEngine.init(); }
+
+    // =============================================
+    //  9. CONTEXT WINDOW OPTIMIZER
+    // =============================================
+    let ctxStarted = false;
+    const ctxQuestions = [
+      { question: 'You have 50 documents but only 20K tokens of context. Best strategy?', answer: 'Retrieve and rank only the most relevant chunks', options: ['Retrieve and rank only the most relevant chunks', 'Concatenate all documents and truncate', 'Summarize all 50 documents first', 'Split into 50 API calls'], explain: 'Retrieval + ranking selects only the most relevant content, maximizing information density within the token budget.' },
+      { question: 'Your input is 180K tokens and the model supports 200K. What is the risk?', answer: 'Very little room for output — the model may truncate its response', options: ['Very little room for output — the model may truncate its response', 'No risk, it fits', 'The model will crash', 'Input will be compressed'], explain: 'Input + output share the context window. 180K input leaves only 20K for output, which may force truncation of long responses.' },
+      { question: 'A long conversation is hitting the context limit. What is the best approach?', answer: 'Summarize earlier conversation turns and keep recent ones verbatim', options: ['Summarize earlier conversation turns and keep recent ones verbatim', 'Delete the first message', 'Start a new conversation', 'Increase max tokens'], explain: 'Sliding window with summarization preserves context from early turns while keeping recent, detailed messages intact.' },
+      { question: 'System prompt is 5K tokens. Is that too long?', answer: 'It depends — long system prompts are fine if each part is necessary', options: ['It depends — long system prompts are fine if each part is necessary', 'Yes, keep it under 500 tokens', 'No, longer is always better', 'System prompts do not count against context'], explain: 'System prompts do count against the context window. 5K is acceptable if the instructions are essential, but prune any redundancy.' },
+      { question: 'What is "lost in the middle" in long-context models?', answer: 'Models attend less to information in the middle of long inputs', options: ['Models attend less to information in the middle of long inputs', 'The middle of the response is truncated', 'Tokens in the middle cost more', 'The model forgets its system prompt'], explain: 'Research shows models attend most to the beginning and end of inputs. Critical information placed in the middle may be missed.' },
+      { question: 'How should you order retrieved documents in the prompt?', answer: 'Most relevant documents first (or first and last)', options: ['Most relevant documents first (or first and last)', 'Alphabetically', 'Longest first', 'Random order is fine'], explain: 'Due to the "lost in the middle" effect, place the most relevant content at the beginning or end of the context for best results.' },
+      { question: 'Your API call costs are high. What reduces token usage without hurting quality?', answer: 'Use concise prompts, remove redundant examples, and set appropriate max_tokens', options: ['Use concise prompts, remove redundant examples, and set appropriate max_tokens', 'Switch to a free model', 'Reduce temperature', 'Send requests less often'], explain: 'Token optimization includes trimming prompt verbosity, reducing few-shot examples when possible, and capping max_tokens to avoid over-generation.' },
+      { question: 'Can you use multiple smaller API calls instead of one large one?', answer: 'Yes — map-reduce and chain-of-density patterns work well', options: ['Yes — map-reduce and chain-of-density patterns work well', 'No, it will lose context', 'Only with fine-tuned models', 'This always costs more'], explain: 'Map-reduce processes chunks separately then combines results. Chain-of-density iteratively refines a summary. Both handle long documents effectively.' },
+    ];
+    const ctxEngine = makeQuizEngine('context', ctxQuestions, 8);
+    function initContext() { ctxStarted = true; ctxEngine.init(); }
+
+    // =============================================
+    //  10. ETHICS SCENARIO QUIZ
+    // =============================================
+    let ethicsStarted = false;
+    const ethicsQuestions = [
+      { question: 'A reporter uses AI to write an entire article and publishes it under their byline without disclosure. Is this ethical?', answer: 'No — AI-generated content requires disclosure under most newsroom policies', options: ['No — AI-generated content requires disclosure under most newsroom policies', 'Yes, the reporter reviewed it', 'Only if the article is accurate', 'It depends on the publication'], explain: 'Major journalism organizations (AP, NYT, WaPo) require disclosure of AI assistance. Transparency is a core journalistic principle.' },
+      { question: 'An AI tool generates a realistic image of a public figure in a compromising situation. What is the ethical concern?', answer: 'Deepfakes can cause reputational harm and spread disinformation', options: ['Deepfakes can cause reputational harm and spread disinformation', 'It is fine if labeled as AI-generated', 'Only illegal if used commercially', 'No concern if it is clearly satire'], explain: 'AI-generated images of real people raise serious ethical and legal issues around consent, defamation, and disinformation.' },
+      { question: 'You use AI to analyze public social media posts for a story. Ethical?', answer: 'Generally yes, but consider context collapse and vulnerable populations', options: ['Generally yes, but consider context collapse and vulnerable populations', 'Always fine — it is public data', 'Never ethical to scrape social media', 'Only with written consent'], explain: 'Public posts can be analyzed, but journalists should consider whether users expected their posts to be aggregated and analyzed at scale.' },
+      { question: 'An AI model trained on news archives shows racial bias in crime reporting suggestions. What should you do?', answer: 'Audit the outputs, document the bias, and implement guardrails', options: ['Audit the outputs, document the bias, and implement guardrails', 'Ignore it — the AI is reflecting the data', 'Switch to a different model', 'Only use the AI for non-crime stories'], explain: 'AI bias reflects historical biases in training data. Responsible use requires auditing, documenting, and mitigating identified biases.' },
+      { question: 'Using AI to generate interview questions based on a source\'s social media history. Concern?', answer: 'Privacy implications — surveillance-like profiling of individuals', options: ['Privacy implications — surveillance-like profiling of individuals', 'No concern — it is public information', 'Only concerning for private citizens', 'The AI might get facts wrong'], explain: 'Aggregating a person\'s digital footprint for questioning raises privacy concerns, even with public data, due to the power asymmetry.' },
+      { question: 'AI-assisted fact-checking finds that a popular politician\'s claim is false. The AI might be wrong. How do you proceed?', answer: 'Use AI as a starting point, then verify with primary sources and experts', options: ['Use AI as a starting point, then verify with primary sources and experts', 'Publish the AI\'s verdict immediately', 'Ignore the AI finding', 'Ask the AI to double-check itself'], explain: 'AI should assist, not replace, human judgment. Fact-checks require primary source verification before publication.' },
+      { question: 'A newsroom wants to use AI to moderate reader comments. What is the key concern?', answer: 'AI moderation can suppress legitimate speech and amplify existing biases', options: ['AI moderation can suppress legitimate speech and amplify existing biases', 'AI will be too lenient', 'Comments do not need moderation', 'AI moderation is always fair'], explain: 'Automated moderation can disproportionately flag certain dialects, cultural references, or viewpoints. Human oversight is essential.' },
+      { question: 'A source asks if their conversation with a reporter will be fed into an AI system. The answer is yes. What is required?', answer: 'Informed consent — the source must know how their information will be processed', options: ['Informed consent — the source must know how their information will be processed', 'No disclosure needed for AI tools', 'Only disclose if asked', 'Just anonymize the data'], explain: 'Informed consent is fundamental. Sources should know if their information will be processed by AI systems, especially third-party ones.' },
+    ];
+    const ethicsEngine = makeQuizEngine('ethics', ethicsQuestions, 8);
+    function initEthics() { ethicsStarted = true; ethicsEngine.init(); }
+
+    // =============================================
+    //  INIT: activate the saved/default tab
+    // =============================================
+    switchTab(activeTab);
+  </script>
+</body>
+</html>

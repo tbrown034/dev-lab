@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 08 - Structured Output</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #f472b6; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>08</span> Structured Output &mdash; Reliable Data from Text</h1>
+    <a href="/ai-llm/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">When you're building applications, you need data, not prose.</strong> This lesson covers every technique for getting reliable, parseable, schema-validated output from Claude.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>Mental Model: The Form vs. The Essay</h2>
+
+    <p>When you interview a source, you get unstructured information &mdash; quotes, anecdotes, context. But your CMS needs structured data: headline, byline, section, tags, body. Structured output is the process of converting freeform AI responses into data your code can reliably consume.</p>
+
+    <div class="aha">
+      <p><strong>The spectrum:</strong> At one end is freeform text (chat responses). At the other end is perfectly typed, schema-validated JSON. Most production AI features need something closer to the JSON end. This lesson teaches you how to get there.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- BASIC JSON OUTPUT                            -->
+    <!-- ============================================ -->
+
+    <h2>Level 1: Prompt-Based JSON</h2>
+
+    <p>The simplest approach: ask for JSON in the prompt.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Fragile approach</h5>
+        <pre><code>"Extract the sources from
+this article."
+
+<span class="comment">// Response might be:
+// - A bulleted list
+// - A paragraph
+// - JSON
+// - A table
+// Unpredictable!</span></code></pre>
+      </div>
+      <div>
+        <h5>Reliable approach</h5>
+        <pre><code>"Extract sources from this article.
+Respond with ONLY a JSON array.
+No markdown, no explanation.
+
+Schema:
+[{
+  name: string,
+  title: string | null,
+  org: string | null,
+  quote_type: 'direct' | 'paraphrase'
+}]"
+
+<span class="comment">// Consistent JSON every time</span></code></pre>
+      </div>
+    </div>
+
+    <pre><code>const response = await client.messages.create({
+  model: "claude-sonnet-4-20250514",
+  max_tokens: 1024,
+  system: `You are a data extraction assistant.
+Always respond with ONLY valid JSON. No markdown code fences.
+No explanation before or after the JSON.`,
+  messages: [{
+    role: "user",
+    content: `Extract all named sources from this article.
+
+Schema: [{ "name": "string", "title": "string|null", "org": "string|null", "quote_type": "direct|paraphrase" }]
+
+Article:
+${articleText}`
+  }]
+});
+
+<span class="comment">// Parse the response</span>
+const sources = JSON.parse(response.content[0].text);
+console.log(sources);
+<span class="comment">// [{ name: "Sarah Chen", title: "spokesperson", org: "City Hall", quote_type: "direct" }, ...]</span></code></pre>
+
+    <div class="callout">
+      <p><strong>The "no markdown" instruction matters.</strong> Without it, the model often wraps JSON in <code>```json ... ```</code> code fences, which breaks <code>JSON.parse()</code>. Be explicit: "No markdown code fences, no explanation, just the JSON."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TOOL-BASED STRUCTURED OUTPUT                 -->
+    <!-- ============================================ -->
+
+    <h2>Level 2: Tool-Based Structured Output</h2>
+
+    <p>A more reliable approach: define a "tool" whose input schema IS your desired output format. The model is forced to fill the schema:</p>
+
+    <pre><code>const response = await client.messages.create({
+  model: "claude-sonnet-4-20250514",
+  max_tokens: 1024,
+  system: "Extract structured data from news articles.",
+  tools: [{
+    name: "save_article_analysis",
+    description: "Save the structured analysis of a news article",
+    input_schema: {
+      type: "object",
+      properties: {
+        headline: { type: "string", description: "The article's headline" },
+        summary: { type: "string", description: "2-3 sentence summary" },
+        sources: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              name: { type: "string" },
+              title: { type: "string" },
+              org: { type: "string" },
+              quote_type: { type: "string", enum: ["direct", "paraphrase", "background"] }
+            },
+            required: ["name", "quote_type"]
+          }
+        },
+        topics: {
+          type: "array",
+          items: { type: "string" },
+          description: "Key topics covered"
+        },
+        sentiment: {
+          type: "string",
+          enum: ["positive", "negative", "neutral", "mixed"]
+        }
+      },
+      required: ["headline", "summary", "sources", "topics", "sentiment"]
+    }
+  }],
+  tool_choice: { type: "tool", name: "save_article_analysis" },
+  messages: [{ role: "user", content: `Analyze this article:\n\n${articleText}` }]
+});
+
+<span class="comment">// The response is guaranteed to match the schema</span>
+const analysis = response.content.find(b =&gt; b.type === "tool_use").input;
+console.log(analysis.headline);
+console.log(analysis.sources);
+console.log(analysis.sentiment);</code></pre>
+
+    <div class="aha">
+      <p><strong><code>tool_choice: { type: "tool", name: "..." }</code> is the key.</strong> This forces the model to call that specific tool, meaning its output MUST conform to the tool's input schema. It's the most reliable way to get structured output from Claude.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ZOD VALIDATION                               -->
+    <!-- ============================================ -->
+
+    <h2>Level 3: Zod Schema Validation</h2>
+
+    <p>Even with tool-based output, you should validate the data before using it. <strong>Zod</strong> is the industry standard for TypeScript/JavaScript schema validation:</p>
+
+    <pre><code>import { z } from "zod";
+
+<span class="comment">// Define the schema</span>
+const SourceSchema = z.object({
+  name: z.string(),
+  title: z.string().nullable(),
+  org: z.string().nullable(),
+  quote_type: z.enum(["direct", "paraphrase", "background"])
+});
+
+const ArticleAnalysis = z.object({
+  headline: z.string().min(1),
+  summary: z.string().min(10),
+  sources: z.array(SourceSchema),
+  topics: z.array(z.string()).min(1),
+  sentiment: z.enum(["positive", "negative", "neutral", "mixed"])
+});
+
+<span class="comment">// Validate the model's output</span>
+function parseAnalysis(raw) {
+  const result = ArticleAnalysis.safeParse(raw);
+
+  if (result.success) {
+    return result.data;  <span class="comment">// Typed, validated data</span>
+  } else {
+    console.error("Validation failed:", result.error.issues);
+    return null;  <span class="comment">// Handle gracefully</span>
+  }
+}
+
+<span class="comment">// Usage</span>
+const toolOutput = response.content.find(b =&gt; b.type === "tool_use").input;
+const validated = parseAnalysis(toolOutput);
+
+if (validated) {
+  <span class="comment">// Safe to use — all fields are typed and validated</span>
+  console.log(`${validated.sources.length} sources found`);
+  console.log(`Sentiment: ${validated.sentiment}`);
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>Why validate at all if the tool schema constrains output?</strong> Defense in depth. Models occasionally produce malformed output, especially with complex nested schemas. Zod catches these edge cases and gives you clear error messages instead of runtime crashes in production.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRACTICAL PATTERNS                           -->
+    <!-- ============================================ -->
+
+    <h2>Practical Extraction Patterns</h2>
+
+    <h3>Pattern: Entity Extraction</h3>
+    <pre><code><span class="comment">// Extract people, organizations, locations from an article</span>
+const entities = {
+  name: "extract_entities",
+  description: "Extract named entities from text",
+  input_schema: {
+    type: "object",
+    properties: {
+      people: { type: "array", items: { type: "object", properties: {
+        name: { type: "string" },
+        role: { type: "string" },
+        first_mention: { type: "string", description: "The sentence where they first appear" }
+      }, required: ["name"] }},
+      organizations: { type: "array", items: { type: "string" } },
+      locations: { type: "array", items: { type: "string" } },
+      dates: { type: "array", items: { type: "object", properties: {
+        date: { type: "string" },
+        context: { type: "string" }
+      }}}
+    },
+    required: ["people", "organizations", "locations"]
+  }
+};</code></pre>
+
+    <h3>Pattern: Claim Extraction for Fact-Checking</h3>
+    <pre><code><span class="comment">// Extract verifiable claims from an article</span>
+const claims = {
+  name: "extract_claims",
+  description: "Extract factual claims that can be verified",
+  input_schema: {
+    type: "object",
+    properties: {
+      claims: { type: "array", items: { type: "object", properties: {
+        claim: { type: "string", description: "The factual assertion" },
+        source_in_article: { type: "string", description: "Who made this claim" },
+        verifiability: { type: "string", enum: ["easily_verifiable", "requires_research", "subjective"] },
+        suggested_sources: { type: "array", items: { type: "string" }, description: "Where to verify" }
+      }, required: ["claim", "verifiability"] }}
+    },
+    required: ["claims"]
+  }
+};</code></pre>
+
+    <!-- ============================================ -->
+    <!-- RETRY STRATEGIES                             -->
+    <!-- ============================================ -->
+
+    <h2>When Parsing Fails: Retry Strategies</h2>
+
+    <pre><code>async function extractWithRetry(text, schema, maxRetries = 2) {
+  for (let attempt = 0; attempt &lt;= maxRetries; attempt++) {
+    try {
+      const response = await client.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 2048,
+        tools: [schema],
+        tool_choice: { type: "tool", name: schema.name },
+        messages: [{ role: "user", content: text }]
+      });
+
+      const output = response.content.find(b =&gt; b.type === "tool_use").input;
+      const validated = ArticleAnalysis.safeParse(output);
+
+      if (validated.success) return validated.data;
+
+      console.warn(`Attempt ${attempt + 1} validation failed:`, validated.error.issues);
+    } catch (error) {
+      console.warn(`Attempt ${attempt + 1} error:`, error.message);
+    }
+  }
+
+  return null; <span class="comment">// All retries failed</span>
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What's the most reliable way to get structured JSON from Claude?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Define a tool whose input_schema matches your desired output format, and use tool_choice to force the model to call that tool. The model's output must conform to the schema. Then validate with Zod for defense in depth.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What does <code>tool_choice: { type: "tool", name: "..." }</code> do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It forces the model to call that specific tool instead of choosing whether to use a tool or respond with text. This guarantees the output matches the tool's input schema.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why validate with Zod even when using tool-based output?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Defense in depth. Models can occasionally produce output that technically matches the JSON schema but has semantic issues (empty strings where content is expected, wrong enum values, etc.). Zod catches these edge cases before they cause runtime errors.</div>
+      </div>
+
+      <div class="question">
+        <p>4. When should you use prompt-based JSON vs. tool-based structured output?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use prompt-based JSON for quick prototyping or when the schema is very simple. Use tool-based output for production code, complex schemas, or when reliability is critical. Tool-based is always more reliable but requires more setup.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Article Analysis Pipeline</h4>
+      <ol>
+        <li>Define a comprehensive article analysis schema using a tool (headline, summary, sources, claims, topics, sentiment, entities)</li>
+        <li>Define matching Zod schemas for validation</li>
+        <li>Build a function that takes an article and returns validated, typed analysis data</li>
+        <li>Add retry logic for when validation fails</li>
+        <li>Test with 3 different article styles: breaking news, feature, and opinion</li>
+      </ol>
+      <p style="margin-top: 0.75rem;"><strong>Bonus:</strong> Add a "confidence" field to each extracted source, and have the model rate how confident it is about the extraction (high/medium/low).</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/ai-llm/lessons/07-agents/">&larr; Agents</a>
+      <a href="/ai-llm/lessons/09-streaming-ux/">Lesson 09: Streaming UX &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

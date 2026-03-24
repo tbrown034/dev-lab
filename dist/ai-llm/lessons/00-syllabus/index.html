@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 00 - The Syllabus</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #f472b6; }</style>
+  <style>
+    strong { color: var(--text); }
+    em { color: var(--track-color); font-style: normal; font-weight: 400; }
+
+    td:first-child { color: var(--track-color); font-family: var(--mono); font-size: 0.8rem; font-weight: 600; width: 3rem; }
+    td:nth-child(2) { color: var(--text); font-weight: 400; }
+
+    .week-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      padding: 1.25rem 0.5rem 0.35rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .goals {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .goal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+    .goal h4 {
+      font-size: 0.85rem;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+    }
+    .goal p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>00</span> The Syllabus</h1>
+    <a href="/ai-llm/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p>This is not a course you watch. It's one you <strong>build inside of</strong>. Every lesson was designed around one question: how do you go from "I use Claude" to "I build with Claude"?</p>
+
+    <div class="aha">
+      <p><strong>The rule:</strong> mental models first, syntax second. You won't memorize API signatures. You'll learn the <em>why</em> behind every pattern so you can derive the <em>how</em> on the fly.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHAT YOU'LL BE ABLE TO DO                    -->
+    <!-- ============================================ -->
+
+    <h2>What You'll Be Able to Do</h2>
+
+    <p>After 12 lessons, you should be able to:</p>
+
+    <div class="goals">
+      <div class="goal">
+        <h4>Explain how LLMs actually work</h4>
+        <p>Tokens, attention, context windows, temperature &mdash; not just vocabulary, but real understanding of what happens when you hit "send."</p>
+      </div>
+      <div class="goal">
+        <h4>Build AI-powered applications</h4>
+        <p>From single API calls to multi-turn agents with tool use, RAG pipelines, and streaming UX.</p>
+      </div>
+      <div class="goal">
+        <h4>Write prompts that actually work</h4>
+        <p>System prompts, few-shot patterns, chain-of-thought, structured output. Engineering, not guessing.</p>
+      </div>
+      <div class="goal">
+        <h4>Ship a journalism AI tool</h4>
+        <p>The capstone: an AI-powered newsroom assistant that searches sources, checks facts, and drafts stories with citations.</p>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HOW LESSONS WORK                             -->
+    <!-- ============================================ -->
+
+    <h2>How Lessons Work</h2>
+
+    <p>Each lesson follows the same structure:</p>
+
+    <ol>
+      <li><strong>Mental model first.</strong> An analogy or concept that makes the new idea click before you see any code.</li>
+      <li><strong>Core concepts.</strong> The 2&ndash;3 things you need to understand deeply. Explained through comparisons to what you already know &mdash; React, JavaScript, journalism workflows.</li>
+      <li><strong>Code examples.</strong> Real Anthropic SDK (JavaScript) code. Short, focused, with inline explanations.</li>
+      <li><strong>Side-by-side comparisons.</strong> The wrong way vs. the right way. Naive approach vs. production approach.</li>
+      <li><strong>Quiz.</strong> Quick checks: "Can you explain this back?" Click to reveal answers.</li>
+      <li><strong>Exercise.</strong> Something to build. Small enough to finish in one sitting, meaty enough to prove understanding.</li>
+    </ol>
+
+    <div class="callout">
+      <p>Every page also has an <strong>AI Tutor</strong> in the corner. It knows which lesson you're on, what concepts you've covered, and can explain things differently if you're stuck.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODELS                            -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Models</h2>
+
+    <p>AI is hard to learn because the marketing is louder than the engineering. These analogies cut through the hype:</p>
+
+    <ul>
+      <li><strong>An LLM</strong> is a <em>very sophisticated autocomplete</em> &mdash; it predicts the next token based on everything before it. Not magic, not sentient. Pattern matching at superhuman scale.</li>
+      <li><strong>A prompt</strong> is a <em>briefing document</em> &mdash; the same way you'd brief a new reporter on a story. Context, constraints, examples, desired output format.</li>
+      <li><strong>Tool use</strong> is giving the model <em>a phone and a rolodex</em> &mdash; it can't browse the web itself, but you can let it call functions that do.</li>
+      <li><strong>RAG</strong> is an <em>open-book exam</em> &mdash; instead of relying on what the model memorized during training, you hand it the relevant pages right before it answers.</li>
+      <li><strong>An agent</strong> is an <em>intern with a checklist</em> &mdash; it reasons about what to do next, does it, checks the result, and decides the next step. Loop until done.</li>
+      <li><strong>Embeddings</strong> are <em>GPS coordinates for meaning</em> &mdash; similar ideas are close together in vector space, even if the words are completely different.</li>
+      <li><strong>Evals</strong> are <em>unit tests for vibes</em> &mdash; you can't assert exact output, but you can measure whether the model is getting better or worse across many examples.</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- THE ROADMAP                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Roadmap</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Lesson</th>
+          <th>Core Concept</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="3" class="week-label">Week 1 &mdash; Foundations</td></tr>
+        <tr>
+          <td>01</td>
+          <td>How LLMs Work</td>
+          <td>Transformers, attention, tokens, context windows.</td>
+        </tr>
+        <tr>
+          <td>02</td>
+          <td>Prompt Engineering</td>
+          <td>System prompts, few-shot, chain-of-thought.</td>
+        </tr>
+        <tr>
+          <td>03</td>
+          <td>The Claude API</td>
+          <td>Anthropic SDK, messages, streaming, conversations.</td>
+        </tr>
+        <tr>
+          <td>04</td>
+          <td>Tool Use</td>
+          <td>Function calling, multi-turn tools, error handling.</td>
+        </tr>
+        <tr><td colspan="3" class="week-label">Week 2 &mdash; Retrieval &amp; Architecture</td></tr>
+        <tr>
+          <td>05</td>
+          <td>Embeddings &amp; Search</td>
+          <td>Vectors, similarity, semantic search.</td>
+        </tr>
+        <tr>
+          <td>06</td>
+          <td>RAG Patterns</td>
+          <td>Chunking, indexing, retrieval, citations.</td>
+        </tr>
+        <tr>
+          <td>07</td>
+          <td>Agents</td>
+          <td>ReAct, planning, Claude Agent SDK.</td>
+        </tr>
+        <tr>
+          <td>08</td>
+          <td>Structured Output</td>
+          <td>JSON mode, Zod, reliable extraction.</td>
+        </tr>
+        <tr><td colspan="3" class="week-label">Week 3 &mdash; Production &amp; Ship</td></tr>
+        <tr>
+          <td>09</td>
+          <td>Streaming UX</td>
+          <td>SSE, progressive rendering, typing indicators.</td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td>Eval &amp; Testing</td>
+          <td>Benchmarks, regression testing, prompt versioning.</td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td>Ethics &amp; Journalism</td>
+          <td>Bias, fact-checking, transparency, responsible use.</td>
+        </tr>
+        <tr>
+          <td>12</td>
+          <td>Capstone</td>
+          <td>AI-powered newsroom assistant. Everything combined.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- WHY THIS ORDER                               -->
+    <!-- ============================================ -->
+
+    <h2>Why This Order</h2>
+
+    <p>The curriculum is designed as a stack where each layer depends on the one below:</p>
+
+    <ol>
+      <li><strong>Understand the machine</strong> (Lesson 01) &mdash; you can't prompt well if you don't know what a token is.</li>
+      <li><strong>Talk to it well</strong> (Lesson 02) &mdash; prompting is the foundation of every AI application.</li>
+      <li><strong>Call it from code</strong> (Lessons 03&ndash;04) &mdash; API + tools turn prompts into applications.</li>
+      <li><strong>Give it knowledge</strong> (Lessons 05&ndash;06) &mdash; embeddings + RAG solve the "it makes stuff up" problem.</li>
+      <li><strong>Let it act</strong> (Lesson 07) &mdash; agents chain tools and reasoning into autonomous workflows.</li>
+      <li><strong>Make it reliable</strong> (Lessons 08&ndash;10) &mdash; structured output, streaming, and evals make it production-ready.</li>
+      <li><strong>Use it responsibly</strong> (Lesson 11) &mdash; ethics and journalism-specific considerations.</li>
+      <li><strong>Build the thing</strong> (Lesson 12) &mdash; the capstone puts it all together.</li>
+    </ol>
+
+    <!-- ============================================ -->
+    <!-- PREREQUISITES                                -->
+    <!-- ============================================ -->
+
+    <h2>Prerequisites</h2>
+
+    <p>You should be comfortable with:</p>
+
+    <ul>
+      <li><strong>JavaScript fundamentals</strong> &mdash; async/await, objects, arrays, destructuring, ES modules.</li>
+      <li><strong>Node.js basics</strong> &mdash; <code>npm install</code>, running scripts, environment variables.</li>
+      <li><strong>The command line</strong> &mdash; navigating directories, running commands, reading output.</li>
+    </ul>
+
+    <p>You do <strong>not</strong> need prior experience with AI, machine learning, Python, or data science. That's what we're here for.</p>
+
+    <div class="aha">
+      <p><strong>Ready?</strong> Start with Lesson 01. You'll understand how LLMs actually work before you write a single line of AI code.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/ai-llm/">&larr; Track Home</a>
+      <a href="/ai-llm/lessons/01-how-llms-work/">Lesson 01: How LLMs Work &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

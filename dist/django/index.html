@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn Python + Django — Trevor's Workshop</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    /* ─── Page-specific tokens ─── */
+    :root {
+      --accent: #22c55e;
+      --accent-green: #4ade80;
+      --accent-purple: #818cf8;
+      --accent-pink: #f472b6;
+      --accent-orange: #f97316;
+    }
+
+    /* ─── Section header override ─── */
+    .section-header { padding-top: 0; margin-bottom: 1.5rem; }
+    .section-header h2 { font-size: 1.6rem; }
+    .section-header .count { font-size: 0.65rem; }
+
+    /* ─── NAV ─── */
+    .nav {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav a {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.03em;
+      padding: 0.35rem 0.65rem;
+      border-radius: 5px;
+      color: var(--text-dim);
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+    .nav a:hover { color: var(--text); background: var(--surface-2); }
+    .nav a.active { background: var(--accent); color: #000; border-color: var(--accent); }
+    .nav .sep {
+      width: 1px;
+      background: var(--border);
+      margin: 0 0.35rem;
+      align-self: stretch;
+    }
+
+    /* ─── CURRICULUM ZONE ─── */
+    .curriculum {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem 0;
+    }
+
+    /* ─── LESSON LIST ─── */
+    .lesson-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .lesson-row {
+      background: var(--surface);
+      padding: 1.15rem 1.75rem;
+      text-decoration: none;
+      color: inherit;
+      display: grid;
+      grid-template-columns: 3rem 1fr auto;
+      gap: 1.25rem;
+      align-items: center;
+      transition: background 0.15s;
+    }
+    .lesson-row:hover { background: var(--surface-2); }
+    .lesson-row .num {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-align: center;
+    }
+    .lesson-row h3 {
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .lesson-row .desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+      line-height: 1.45;
+    }
+    .lesson-row .week-tag {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      background: var(--surface-2);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    /* ─── SPACES ZONE ─── */
+    .spaces-zone {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      margin-top: 3rem;
+      padding: 3rem 0;
+    }
+    .spaces-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+    .spaces-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+    }
+    .space-card {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.75rem;
+      background: var(--bg);
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .space-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+    .space-card[data-color="purple"]::before { background: var(--accent-purple); }
+    .space-card[data-color="purple"]:hover { border-color: var(--accent-purple); }
+    .space-card[data-color="green"]::before { background: var(--accent-green); }
+    .space-card[data-color="green"]:hover { border-color: var(--accent-green); }
+    .space-card[data-color="pink"]::before { background: var(--accent-pink); }
+    .space-card[data-color="pink"]:hover { border-color: var(--accent-pink); }
+    .space-card[data-color="orange"]::before { background: var(--accent-orange); }
+    .space-card[data-color="orange"]:hover { border-color: var(--accent-orange); }
+    .space-card .space-label {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+    .space-card[data-color="purple"] .space-label { color: var(--accent-purple); }
+    .space-card[data-color="green"] .space-label { color: var(--accent-green); }
+    .space-card[data-color="pink"] .space-label { color: var(--accent-pink); }
+    .space-card[data-color="orange"] .space-label { color: var(--accent-orange); }
+    .space-card h3 {
+      font-family: var(--sans);
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+    .space-card p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+    .space-card .space-stat {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 0.75rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ─── EXTRAS ZONE (mapping table, code demo) ─── */
+    .extras-zone {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 3rem 2rem 4rem;
+    }
+    .extras-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 1.25rem;
+    }
+    .extras-card h3 {
+      font-family: var(--serif);
+      font-size: 1.2rem;
+      font-weight: 400;
+      margin-bottom: 0.5rem;
+    }
+    .extras-card .hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.55;
+    }
+    .mapping-table {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .mapping-table .col-header {
+      padding: 0.75rem 1rem;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+    }
+    .mapping-table .col-header.js { background: var(--surface-2); color: var(--accent-purple); }
+    .mapping-table .col-header.py { background: var(--surface-2); color: var(--accent); }
+    .mapping-table .cell {
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+    }
+    .mapping-table .cell.js { background: var(--surface); }
+    .mapping-table .cell.py { background: var(--surface); }
+    .mapping-table .cell code {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      background: var(--surface-2);
+      padding: 0.1rem 0.4rem;
+      border-radius: 3px;
+    }
+    .code-demo {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+    .code-demo .comment { color: var(--text-muted); }
+    .code-demo .keyword { color: #c084fc; }
+    .code-demo .string { color: var(--accent); }
+    .code-demo .function { color: #60a5fa; }
+    .code-demo .decorator { color: var(--accent-pink); }
+    .code-demo .class-name { color: #fbbf24; }
+    .code-demo .builtin { color: var(--accent); }
+
+    @media (max-width: 1024px) {
+      .spaces-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .nav { padding: 0.75rem 1.5rem; }
+      .curriculum { padding: 2rem 1.5rem 0; }
+      .spaces-inner { padding: 0 1.5rem; }
+      .extras-zone { padding: 2rem 1.5rem 3rem; }
+      .lesson-row { grid-template-columns: 2.5rem 1fr; }
+      .lesson-row .week-tag { display: none; }
+      .spaces-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/shell-B2-DeMgN.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/django/" class="logo">Learn <span class="accent">Python</span> + Django</a>
+      <div class="header-right">
+        <a href="/" class="back-link">&larr; Home</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <a href="/django/" class="active">Home</a>
+    <a href="/django/lessons/01-python-fundamentals/">01 Basics</a>
+    <a href="/django/lessons/02-python-collections/">02 Collections</a>
+    <a href="/django/lessons/03-python-functions/">03 Functions</a>
+    <a href="/django/lessons/04-python-oop/">04 OOP</a>
+    <a href="/django/lessons/05-python-data-files/">05 Data</a>
+    <a href="/django/lessons/06-django-quickstart/">06 Django</a>
+    <a href="/django/lessons/07-models-orm/">07 Models</a>
+    <a href="/django/lessons/08-views-urls/">08 Views</a>
+    <a href="/django/lessons/09-templates-forms/">09 Templates</a>
+    <a href="/django/lessons/10-rest-api/">10 REST</a>
+    <a href="/django/lessons/11-auth-testing-deploy/">11 Auth</a>
+    <a href="/django/lessons/12-capstone/">12 Capstone</a>
+    <div class="sep"></div>
+    <a href="/django/references/use-cases/">Use Cases</a>
+    <a href="/django/games/">Games</a>
+    <a href="/django/projects/">Portfolio</a>
+    <div class="sep"></div>
+    <a href="/feed/">The Scroll</a>
+    <a href="/pod/">The Pod</a>
+  </nav>
+
+  <!-- ═══ CURRICULUM ═══ -->
+  <div class="curriculum">
+
+    <div class="section-header">
+      <h2>Phase 1: Python</h2>
+      <span class="count">5 lessons &middot; Python fundamentals</span>
+    </div>
+
+    <div class="lesson-list">
+      <a href="/django/lessons/01-python-fundamentals/" class="lesson-row">
+        <div class="num">01</div>
+        <div>
+          <h3>Python Fundamentals</h3>
+          <div class="desc">Variables, types, strings, operators — everything from JS translated to Python syntax.</div>
+        </div>
+        <span class="week-tag">Python</span>
+      </a>
+      <a href="/django/lessons/02-python-collections/" class="lesson-row">
+        <div class="num">02</div>
+        <div>
+          <h3>Collections &amp; Control Flow</h3>
+          <div class="desc">Lists, dicts, tuples, sets, loops, comprehensions. Arrays and objects, Python-style.</div>
+        </div>
+        <span class="week-tag">Python</span>
+      </a>
+      <a href="/django/lessons/03-python-functions/" class="lesson-row">
+        <div class="num">03</div>
+        <div>
+          <h3>Functions &amp; Modules</h3>
+          <div class="desc">def, *args/**kwargs, lambda, imports, pip, virtual environments. Functions and npm, translated.</div>
+        </div>
+        <span class="week-tag">Python</span>
+      </a>
+      <a href="/django/lessons/04-python-oop/" class="lesson-row">
+        <div class="num">04</div>
+        <div>
+          <h3>Object-Oriented Programming</h3>
+          <div class="desc">Classes, inheritance, decorators, dunder methods, dataclasses. JS class syntax to Python OOP.</div>
+        </div>
+        <span class="week-tag">Python</span>
+      </a>
+      <a href="/django/lessons/05-python-data-files/" class="lesson-row">
+        <div class="num">05</div>
+        <div>
+          <h3>Data &amp; File Handling</h3>
+          <div class="desc">File I/O, JSON, CSV, error handling, requests, regex. Node fs/path to Python os/pathlib.</div>
+        </div>
+        <span class="week-tag">Python</span>
+      </a>
+    </div>
+
+    <div class="section-header">
+      <h2>Phase 2: Django</h2>
+      <span class="count">7 lessons &middot; Django framework</span>
+    </div>
+
+    <div class="lesson-list">
+      <a href="/django/lessons/06-django-quickstart/" class="lesson-row">
+        <div class="num">06</div>
+        <div>
+          <h3>Django Quickstart</h3>
+          <div class="desc">Your first Django project. How it maps to Next.js: routing, views, templates, settings.</div>
+        </div>
+        <span class="week-tag">Django</span>
+      </a>
+      <a href="/django/lessons/07-models-orm/" class="lesson-row">
+        <div class="num">07</div>
+        <div>
+          <h3>Models &amp; ORM</h3>
+          <div class="desc">Django's database layer. Like Prisma but built-in. Migrations, querysets, relationships.</div>
+        </div>
+        <span class="week-tag">Django</span>
+      </a>
+      <a href="/django/lessons/08-views-urls/" class="lesson-row">
+        <div class="num">08</div>
+        <div>
+          <h3>Views &amp; URLs</h3>
+          <div class="desc">Function views, class-based views, URL patterns. API routes to Django views.</div>
+        </div>
+        <span class="week-tag">Django</span>
+      </a>
+      <a href="/django/lessons/09-templates-forms/" class="lesson-row">
+        <div class="num">09</div>
+        <div>
+          <h3>Templates &amp; Forms</h3>
+          <div class="desc">Django template language + form handling. JSX to DTL, React forms to Django forms.</div>
+        </div>
+        <span class="week-tag">Django</span>
+      </a>
+      <a href="/django/lessons/10-rest-api/" class="lesson-row">
+        <div class="num">10</div>
+        <div>
+          <h3>REST APIs (DRF)</h3>
+          <div class="desc">Django REST Framework — like tRPC or Next.js API routes with superpowers.</div>
+        </div>
+        <span class="week-tag">Django</span>
+      </a>
+      <a href="/django/lessons/11-auth-testing-deploy/" class="lesson-row">
+        <div class="num">11</div>
+        <div>
+          <h3>Auth, Testing &amp; Deployment</h3>
+          <div class="desc">Django auth, pytest, and getting to production. NextAuth to Django, Jest to pytest, Vercel to gunicorn.</div>
+        </div>
+        <span class="week-tag">Django</span>
+      </a>
+      <a href="/django/lessons/12-capstone/" class="lesson-row">
+        <div class="num">12</div>
+        <div>
+          <h3>Capstone Project</h3>
+          <div class="desc">Everything combined. Build a full Newsroom Data Dashboard from scratch.</div>
+        </div>
+        <span class="week-tag">Django</span>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- ═══ SPACES ═══ -->
+  <div class="spaces-zone">
+    <div class="spaces-inner">
+
+      <div class="section-header">
+        <h2>Spaces</h2>
+        <span class="count">Practice, build, listen</span>
+      </div>
+
+      <div class="spaces-grid">
+        <a href="/django/references/use-cases/" class="space-card" data-color="purple">
+          <div class="space-label">Reference</div>
+          <h3>Use Cases</h3>
+          <p>Real-world mini-demos: REST APIs, admin dashboards, form handling, authentication flows, and more.</p>
+          <div class="space-stat">15 live demos</div>
+        </a>
+        <a href="/django/games/" class="space-card" data-color="green">
+          <div class="space-label">Practice</div>
+          <h3>Games &amp; Quizzes</h3>
+          <p>ORM quiz, URL matcher, template tag challenge, model builder, speed round. Reinforcement through play.</p>
+          <div class="space-stat">10 games</div>
+        </a>
+        <a href="/django/projects/" class="space-card" data-color="pink">
+          <div class="space-label">Portfolio</div>
+          <h3>Interview Projects</h3>
+          <p>Production-quality Django apps: newsroom CMS, data API, investigative dashboard, real-time feed.</p>
+          <div class="space-stat">4 projects</div>
+        </a>
+        <a href="/feed/" class="space-card" data-color="orange">
+          <div class="space-label">Social</div>
+          <h3>The Scroll</h3>
+          <p>Replace doomscrolling with learning. Interview Qs, hot takes, tips from the dev timeline.</p>
+          <div class="space-stat">Infinite feed</div>
+        </a>
+        <a href="/pod/" class="space-card" data-color="orange">
+          <div class="space-label">Audio</div>
+          <h3>The Pod</h3>
+          <p>AI-generated podcast episodes that turn each lesson into conversational audio you can learn from on the go.</p>
+          <div class="space-stat">12+ episodes</div>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ EXTRAS (mapping table + code demo) ═══ -->
+  <div class="extras-zone">
+
+    <div class="extras-card">
+      <h3>The Translation: Next.js &rarr; Django</h3>
+      <p class="hint">You already know full-stack web development. Django just uses different words for the same ideas.</p>
+      <div class="mapping-table">
+        <div class="col-header js">Next.js / React</div>
+        <div class="col-header py">Django / Python</div>
+        <div class="cell js"><code>npx create-next-app</code></div>
+        <div class="cell py"><code>django-admin startproject</code></div>
+        <div class="cell js"><code>npm install</code> / <code>package.json</code></div>
+        <div class="cell py"><code>pip install</code> / <code>requirements.txt</code></div>
+        <div class="cell js"><code>node_modules/</code></div>
+        <div class="cell py"><code>venv/</code> (virtual environment)</div>
+        <div class="cell js"><code>next.config.js</code></div>
+        <div class="cell py"><code>settings.py</code></div>
+        <div class="cell js">File-based routing (<code>app/</code>)</div>
+        <div class="cell py"><code>urls.py</code> (explicit routing)</div>
+        <div class="cell js">API routes / Server Components</div>
+        <div class="cell py"><code>views.py</code></div>
+        <div class="cell js">JSX templates</div>
+        <div class="cell py">Django templates (<code>.html</code>)</div>
+        <div class="cell js">Prisma schema</div>
+        <div class="cell py"><code>models.py</code></div>
+        <div class="cell js"><code>npm run dev</code></div>
+        <div class="cell py"><code>python manage.py runserver</code></div>
+        <div class="cell js">Vercel deploy</div>
+        <div class="cell py">gunicorn + nginx / Docker</div>
+      </div>
+    </div>
+
+    <div class="extras-card">
+      <h3>Sample Django View</h3>
+      <p class="hint">By the end of this course, code like this will read like English.</p>
+      <div class="code-demo">
+        <span class="comment"># views.py — this is like a Next.js API route</span><br>
+        <span class="keyword">from</span> django.http <span class="keyword">import</span> JsonResponse<br>
+        <span class="keyword">from</span> .models <span class="keyword">import</span> <span class="class-name">Article</span><br>
+        <br>
+        <span class="keyword">def</span> <span class="function">latest_articles</span>(request):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># Like: const articles = await prisma.article.findMany()</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;articles = <span class="class-name">Article</span>.objects.<span class="function">filter</span>(<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;published=<span class="builtin">True</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;).<span class="function">order_by</span>(<span class="string">'-created_at'</span>)[:<span class="builtin">10</span>]<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="comment"># Like: return NextResponse.json(data)</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;data = [{<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'title'</span>: a.title,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'author'</span>: a.author.name,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="string">'date'</span>: a.created_at.isoformat(),<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;} <span class="keyword">for</span> a <span class="keyword">in</span> articles]<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> <span class="function">JsonResponse</span>({<span class="string">'articles'</span>: data})
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Theme toggle
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  </script>
+
+
+</body>
+</html>

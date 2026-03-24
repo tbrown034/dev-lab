@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAG &amp; Embeddings — The Pod</title>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/shell-B2-DeMgN.css">
+  <link rel="stylesheet" crossorigin href="/assets/episode-FuyZZf_I.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">The Pod</a>
+      <div class="header-right">
+        <a href="/pod/" class="back-link">&larr; All Episodes</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="episode-page" data-accent="var(--accent-ai)">
+
+    <div class="episode-header">
+      <span class="episode-track-badge ai">AI &mdash; Episode 03</span>
+      <h1>RAG &amp; Embeddings</h1>
+      <p class="episode-subtitle">Retrieval-augmented generation, vector databases, and semantic search.</p>
+      <span class="episode-duration-badge">~13 min</span>
+    </div>
+
+    <div class="player-container">
+      <audio id="episode-audio" preload="metadata">
+        <source src="/audio/ai/03-rag-and-embeddings.mp3" type="audio/mpeg">
+      </audio>
+
+      <div class="player">
+        <div class="player-controls">
+          <button class="player-btn skip-btn" id="skip-back" aria-label="Skip back 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+          <button class="player-btn play-btn" id="play-pause" aria-label="Play">
+            <svg class="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg class="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <button class="player-btn skip-btn" id="skip-forward" aria-label="Skip forward 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+        </div>
+
+        <div class="player-progress">
+          <span class="player-time" id="current-time">0:00</span>
+          <div class="progress-bar-container" id="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <input type="range" class="progress-scrubber" id="scrubber" min="0" max="1000" value="0" step="1">
+          </div>
+          <span class="player-time" id="duration">0:00</span>
+        </div>
+
+        <div class="player-extras">
+          <div class="speed-control">
+            <button class="speed-btn" id="speed-btn">1x</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="transcript-container">
+      <div class="transcript-header">
+        <h2>Transcript</h2>
+        <button class="auto-scroll-toggle active" id="auto-scroll-toggle" aria-label="Toggle auto-scroll">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          Auto-scroll
+        </button>
+      </div>
+      <div class="transcript" id="transcript"></div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>The Pod &mdash; part of <a href="/">Learn Coding</a> by Trevor Brown</p>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+
+    const TRANSCRIPT = [
+      { time: 0, text: "Welcome back to The Pod. I'm Alex, and today we're tackling one of the hottest topics in applied AI: RAG, which stands for retrieval-augmented generation, and the embeddings that make it possible." },
+      { time: 16, text: "I'm Sam, and this episode is for anyone who's wondered how those 'chat with your PDF' or 'ask questions about your codebase' tools actually work. The answer is RAG, and it's surprisingly elegant." },
+      { time: 30, text: "Let's start with the problem RAG solves. LLMs have a knowledge cutoff. They don't know about your company's internal docs, your latest product updates, or anything that happened after training. How do you make an LLM knowledgeable about your specific data?" },
+      { time: 48, text: "You could fine-tune the model, which is expensive and slow. Or you could do something much simpler: just paste the relevant information into the prompt. That's basically what RAG does, but in a smart, scalable way." },
+      { time: 64, text: "The RAG pipeline has three steps. First, retrieve relevant documents from your knowledge base. Second, augment the prompt by adding those documents as context. Third, generate a response using the LLM with that enriched context." },
+      { time: 82, text: "Retrieve, augment, generate. RAG. Simple concept, but the retrieve step is where all the magic and complexity lives. How do you find the right documents?" },
+      { time: 94, text: "That's where embeddings come in. An embedding is a way to represent text as a vector, a list of numbers. Each piece of text gets converted into, say, a 1536-dimensional vector. And here's the key insight: similar texts have similar vectors." },
+      { time: 114, text: "Wait, what does 'similar vectors' actually mean?" },
+      { time: 120, text: "Think of it in two dimensions first. If you plotted words on a graph, 'king' and 'queen' would be close together. 'Dog' and 'cat' would be close. 'Refrigerator' would be far from all of them. Embeddings do this but in 1536 dimensions, capturing incredibly nuanced relationships." },
+      { time: 140, text: "The similarity is measured using cosine similarity or dot product. Two vectors pointing in the same direction have high cosine similarity. This gives you semantic search rather than keyword search. 'How to fix a slow database' matches 'query optimization techniques' even though they share no words." },
+      { time: 162, text: "That's the game changer. Traditional search is keyword-based. You have to guess the exact words the document uses. Semantic search understands meaning. You search for what you mean, not what you literally type." },
+      { time: 178, text: "So here's the full RAG workflow. First, offline: you take all your documents, split them into chunks, generate embeddings for each chunk, and store those embeddings in a vector database." },
+      { time: 194, text: "Chunking is a whole art in itself. You can split by paragraphs, by token count, or by semantic boundaries. Too small and you lose context. Too big and you dilute the relevance. Most people start with chunks of 500 to 1000 tokens with some overlap." },
+      { time: 214, text: "Then at query time: the user asks a question, you embed that question using the same embedding model, search the vector database for the most similar chunks, grab the top 3 to 5 results, stuff them into the prompt as context, and send it to the LLM." },
+      { time: 234, text: "The LLM doesn't need to memorize your data. It just needs to read the relevant chunks you hand it and answer based on that context. It's like an open-book exam versus a closed-book exam." },
+      { time: 250, text: "What vector databases are people actually using?" },
+      { time: 256, text: "Pinecone is popular as a managed service. Chroma is great for local development. Weaviate and Qdrant are solid open-source options. pgvector lets you add vector search to PostgreSQL if you're already using it. And for quick prototypes, you can even store embeddings in memory with NumPy." },
+      { time: 278, text: "For the embedding models themselves, OpenAI's text-embedding-3-small and text-embedding-3-large are popular. But there are excellent open-source options too, like models from Sentence Transformers that you can run locally." },
+      { time: 296, text: "Let's talk about some common pitfalls. The biggest one is chunk quality. If your chunks are poorly split, like cutting a paragraph in half, the embeddings won't capture the full meaning and retrieval suffers." },
+      { time: 312, text: "Another pitfall is not including enough context in each chunk. If a chunk says 'this feature is available in the pro plan,' but the document title saying 'Pricing Guide for Product X' got separated, the chunk is ambiguous. Include metadata like the document title and section headers." },
+      { time: 332, text: "There's also the 'lost in the middle' problem. When you put too many retrieved chunks into the prompt, the LLM tends to focus on the first and last chunks and ignore the middle. Keep your context focused, usually three to five chunks is the sweet spot." },
+      { time: 352, text: "Hybrid search is worth mentioning too. Combining keyword search with semantic search often outperforms either alone. You get the precision of exact matches plus the recall of semantic similarity." },
+      { time: 368, text: "What about evaluation? How do you know if your RAG system is working well?" },
+      { time: 374, text: "You measure two things: retrieval quality and generation quality. For retrieval, are you finding the right chunks? Precision and recall. For generation, is the answer correct and grounded in the retrieved context? Does it hallucinate? You need test questions with known answers." },
+      { time: 394, text: "To wrap up: RAG lets you give LLMs access to your private data without fine-tuning. Embeddings convert text to vectors for semantic search. The pipeline is embed, store, retrieve, augment, generate. And getting chunking right is the single most important implementation detail." },
+      { time: 414, text: "RAG is one of those techniques that bridges the gap between impressive demos and actual production AI systems. It's how most real-world LLM applications work today." },
+      { time: 428, text: "That wraps up the AI track. If you're building anything with LLMs, understanding RAG and embeddings is essential. Thanks for listening, everyone!" }
+    ];
+  </script>
+  <script src="/pod/player.js"></script>
+
+</body>
+</html>

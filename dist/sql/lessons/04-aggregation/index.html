@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 04 - Aggregation & GROUP BY</title>
+  <style>:root { --track-color: #3b82f6; }</style>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-Ch5wxeC6.svg">
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>04</span> Aggregation &amp; GROUP BY &mdash; Crunching Numbers</h1>
+    <a href="/sql/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>This is where SQL becomes a data analysis superpower.</strong> Aggregation turns thousands of rows into meaningful summaries: totals, averages, counts. It's the difference between "here are 50,000 rows" and "here's what they mean."</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model &mdash; Reduce, Not Map</h2>
+
+    <p>You know <code>Array.map()</code> &mdash; it transforms each item. Aggregation is more like <code>Array.reduce()</code> &mdash; it takes many items and boils them down to one value. COUNT takes 1000 rows and gives you the number <code>1000</code>. AVG takes all the salaries and gives you one average.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript reduce</h5>
+        <pre><code>// Count all articles
+articles.length;
+
+// Sum all views
+articles.reduce((sum, a) =&gt; sum + a.views, 0);
+
+// Average views
+const total = articles.reduce(
+  (sum, a) =&gt; sum + a.views, 0
+);
+const avg = total / articles.length;</code></pre>
+      </div>
+      <div>
+        <h5>SQL aggregates</h5>
+        <pre><code>-- Count all articles
+SELECT COUNT(*) FROM articles;
+
+-- Sum all views
+SELECT SUM(views) FROM articles;
+
+-- Average views
+SELECT AVG(views) FROM articles;</code></pre>
+      </div>
+    </div>
+
+    <p>SQL does in one line what takes multiple lines of JavaScript. And it does it on the database server, where the data already lives &mdash; no need to pull millions of rows into your app's memory.</p>
+
+    <!-- ============================================ -->
+    <!-- THE FIVE AGGREGATE FUNCTIONS                 -->
+    <!-- ============================================ -->
+
+    <h2>The Five Aggregate Functions</h2>
+
+    <p>Here's our data for this lesson:</p>
+
+    <pre><code>-- articles table
+| id | title                  | author_id | category   | word_count | views | published |
+|----|------------------------|-----------|------------|------------|-------|-----------|
+|  1 | Election Results 2024  |         1 | politics   |       1200 |  5200 | true      |
+|  2 | City Marathon Recap    |         2 | sports     |        800 |  3100 | true      |
+|  3 | AI in the Newsroom     |         3 | technology |       2100 |  8900 | true      |
+|  4 | Budget Crisis Deepens  |         1 | politics   |       1500 |  4100 | true      |
+|  5 | New Art Gallery Opens  |         4 | culture    |        600 |  1200 | true      |
+|  6 | Draft: Tech Review     |         3 | technology |        400 |     0 | false     |
+|  7 | Draft: Sports Column   |         2 | sports     |        300 |     0 | false     |</code></pre>
+
+    <table>
+      <thead>
+        <tr><th>Function</th><th>What It Does</th><th>JavaScript Equivalent</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>COUNT(*)</code></td><td>Count all rows</td><td><code>array.length</code></td></tr>
+        <tr><td><code>COUNT(column)</code></td><td>Count non-NULL values</td><td><code>array.filter(x => x.col != null).length</code></td></tr>
+        <tr><td><code>SUM(column)</code></td><td>Add up all values</td><td><code>array.reduce((s, x) => s + x.col, 0)</code></td></tr>
+        <tr><td><code>AVG(column)</code></td><td>Calculate the average</td><td><code>sum / count</code></td></tr>
+        <tr><td><code>MIN(column)</code></td><td>Smallest value</td><td><code>Math.min(...array.map(x => x.col))</code></td></tr>
+        <tr><td><code>MAX(column)</code></td><td>Largest value</td><td><code>Math.max(...array.map(x => x.col))</code></td></tr>
+      </tbody>
+    </table>
+
+    <pre><code>-- All five in one query
+SELECT
+  COUNT(*) AS total_articles,
+  SUM(views) AS total_views,
+  AVG(views) AS avg_views,
+  MIN(views) AS min_views,
+  MAX(views) AS max_views
+FROM articles
+WHERE published = true;</code></pre>
+
+    <p>Result:</p>
+
+    <pre><code>| total_articles | total_views | avg_views | min_views | max_views |
+|----------------|-------------|-----------|-----------|-----------|
+|              5 |       22500 |      4500 |      1200 |      8900 |</code></pre>
+
+    <div class="callout">
+      <p><strong>COUNT(*) vs COUNT(column).</strong> <code>COUNT(*)</code> counts all rows, including those with NULLs. <code>COUNT(column)</code> counts only rows where that column is not NULL. <code>COUNT(DISTINCT column)</code> counts unique non-NULL values. These are three different things.</p>
+    </div>
+
+    <h3>Prisma Equivalents</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>const result = await prisma.article.aggregate({
+  _count: { _all: true },
+  _sum: { views: true },
+  _avg: { views: true },
+  _min: { views: true },
+  _max: { views: true },
+  where: { published: true },
+});
+// result._count._all = 5
+// result._avg.views = 4500</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT
+  COUNT(*) AS total,
+  SUM(views) AS total_views,
+  AVG(views) AS avg_views,
+  MIN(views) AS min_views,
+  MAX(views) AS max_views
+FROM articles
+WHERE published = true;</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>AVG ignores NULLs.</strong> If you have values [100, 200, NULL], <code>AVG</code> returns 150 (averages 100 and 200, ignores the NULL). If you want NULLs treated as 0, use <code>AVG(COALESCE(column, 0))</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- GROUP BY                                     -->
+    <!-- ============================================ -->
+
+    <h2>GROUP BY &mdash; Aggregating by Category</h2>
+
+    <p>Without GROUP BY, aggregates collapse the entire table into one row. GROUP BY splits the table into buckets first, then runs the aggregate on each bucket separately.</p>
+
+    <p>Think of it like sorting your laundry into piles by color, then counting each pile.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript (lodash-style)</h5>
+        <pre><code>// Group by category, count each
+const grouped = {};
+articles.forEach(a =&gt; {
+  if (!grouped[a.category]) {
+    grouped[a.category] = [];
+  }
+  grouped[a.category].push(a);
+});
+
+Object.entries(grouped).map(
+  ([cat, items]) =&gt; ({
+    category: cat,
+    count: items.length,
+  })
+);</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT
+  category,
+  COUNT(*) AS article_count
+FROM articles
+GROUP BY category;</code></pre>
+      </div>
+    </div>
+
+    <p>Result:</p>
+
+    <pre><code>| category   | article_count |
+|------------|---------------|
+| politics   |             2 |
+| sports     |             2 |
+| technology |             2 |
+| culture    |             1 |</code></pre>
+
+    <p>SQL did in 3 lines what took 12 lines of JavaScript. That's the power of GROUP BY.</p>
+
+    <h3>Multiple Aggregates per Group</h3>
+
+    <pre><code>SELECT
+  category,
+  COUNT(*) AS article_count,
+  SUM(views) AS total_views,
+  ROUND(AVG(word_count)) AS avg_word_count,
+  MAX(views) AS top_article_views
+FROM articles
+WHERE published = true
+GROUP BY category
+ORDER BY total_views DESC;</code></pre>
+
+    <p>Result:</p>
+
+    <pre><code>| category   | article_count | total_views | avg_word_count | top_article_views |
+|------------|---------------|-------------|----------------|-------------------|
+| politics   |             2 |        9300 |           1350 |              5200 |
+| technology |             1 |        8900 |           2100 |              8900 |
+| sports     |             1 |        3100 |            800 |              3100 |
+| culture    |             1 |        1200 |            600 |              1200 |</code></pre>
+
+    <div class="aha">
+      <p><strong>The GROUP BY rule:</strong> Every column in SELECT must either be (1) in the GROUP BY clause, or (2) inside an aggregate function. You can't SELECT <code>title</code> when grouping by <code>category</code> because there are multiple titles per category &mdash; SQL wouldn't know which one to show.</p>
+    </div>
+
+    <h3>Prisma groupBy</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>const result = await prisma.article.groupBy({
+  by: ['category'],
+  _count: { _all: true },
+  _avg: { word_count: true },
+  _sum: { views: true },
+  where: { published: true },
+  orderBy: { _sum: { views: 'desc' } },
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT
+  category,
+  COUNT(*) AS count,
+  AVG(word_count) AS avg_words,
+  SUM(views) AS total_views
+FROM articles
+WHERE published = true
+GROUP BY category
+ORDER BY total_views DESC;</code></pre>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HAVING                                       -->
+    <!-- ============================================ -->
+
+    <h2>HAVING &mdash; Filtering Groups</h2>
+
+    <p>WHERE filters individual rows <em>before</em> grouping. HAVING filters groups <em>after</em> aggregation. Think of it as: WHERE is a bouncer at the door (checks each person), HAVING is a bouncer for the VIP section (checks the whole group).</p>
+
+    <pre><code>-- WHERE: filter rows before grouping
+-- "Only count published articles"
+SELECT category, COUNT(*) AS article_count
+FROM articles
+WHERE published = true
+GROUP BY category;
+
+-- HAVING: filter groups after aggregation
+-- "Only show categories with more than 1 article"
+SELECT category, COUNT(*) AS article_count
+FROM articles
+WHERE published = true
+GROUP BY category
+HAVING COUNT(*) &gt; 1;</code></pre>
+
+    <p>Result with HAVING:</p>
+
+    <pre><code>| category | article_count |
+|----------|---------------|
+| politics |             2 |</code></pre>
+
+    <p>Only politics has more than 1 published article, so it's the only group that passes the HAVING filter.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript equivalent</h5>
+        <pre><code>// WHERE = filter before grouping
+const published = articles
+  .filter(a =&gt; a.published);
+
+// GROUP BY = group the remaining
+const groups = groupBy(published, 'category');
+
+// HAVING = filter after grouping
+const result = Object.entries(groups)
+  .filter(([cat, items]) =&gt;
+    items.length &gt; 1
+  );</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT category, COUNT(*) AS cnt
+FROM articles
+WHERE published = true
+GROUP BY category
+HAVING COUNT(*) &gt; 1;</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>WHERE vs HAVING:</strong> Use WHERE for conditions on individual columns (<code>WHERE views > 100</code>). Use HAVING for conditions on aggregated results (<code>HAVING COUNT(*) > 5</code>). You can't use column aliases in HAVING &mdash; repeat the aggregate function.</p>
+    </div>
+
+    <h3>HAVING with Multiple Conditions</h3>
+
+    <pre><code>-- Categories with more than 1 article AND average views above 3000
+SELECT
+  category,
+  COUNT(*) AS article_count,
+  ROUND(AVG(views)) AS avg_views
+FROM articles
+WHERE published = true
+GROUP BY category
+HAVING COUNT(*) &gt; 1
+  AND AVG(views) &gt; 3000;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- AGGREGATION WITH JOINS                       -->
+    <!-- ============================================ -->
+
+    <h2>Aggregation with JOINs</h2>
+
+    <p>This is where things get really powerful. Combine JOINs from Lesson 03 with aggregates to answer questions across tables: "How many articles has each author written?"</p>
+
+    <pre><code>-- Articles per author
+SELECT
+  au.name AS author,
+  COUNT(a.id) AS article_count,
+  COALESCE(SUM(a.views), 0) AS total_views
+FROM authors au
+LEFT JOIN articles a ON au.id = a.author_id
+GROUP BY au.id, au.name
+ORDER BY article_count DESC;</code></pre>
+
+    <p>Result:</p>
+
+    <pre><code>| author        | article_count | total_views |
+|---------------|---------------|-------------|
+| Sarah Chen    |             2 |        9300 |
+| Marcus Rivera |             2 |        3100 |
+| Priya Patel   |             2 |        8900 |
+| James Wilson  |             1 |        1200 |</code></pre>
+
+    <div class="aha">
+      <p><strong>Notice the LEFT JOIN.</strong> We start from <code>authors</code> and LEFT JOIN <code>articles</code>, so authors with zero articles still show up (with 0 for count and views). If we used INNER JOIN, those authors would vanish. Always think about which JOIN type matches your question.</p>
+    </div>
+
+    <h3>Filtering Aggregated JOINs</h3>
+
+    <pre><code>-- Authors who have written more than 1 published article
+SELECT
+  au.name AS author,
+  COUNT(a.id) AS published_count
+FROM authors au
+INNER JOIN articles a
+  ON au.id = a.author_id
+WHERE a.published = true
+GROUP BY au.id, au.name
+HAVING COUNT(a.id) &gt; 1;</code></pre>
+
+    <p>The query pipeline: FROM (authors) &rarr; JOIN (articles) &rarr; WHERE (published only) &rarr; GROUP BY (per author) &rarr; HAVING (more than 1) &rarr; SELECT (name, count).</p>
+
+    <!-- ============================================ -->
+    <!-- CONDITIONAL AGGREGATION                      -->
+    <!-- ============================================ -->
+
+    <h2>Conditional Aggregation &mdash; CASE Inside Aggregates</h2>
+
+    <p>From Lesson 02, you learned CASE expressions. Combined with aggregates, they let you count or sum subsets in a single query &mdash; no need for multiple queries.</p>
+
+    <pre><code>SELECT
+  au.name AS author,
+  COUNT(*) AS total_articles,
+  COUNT(CASE WHEN a.published = true THEN 1 END) AS published,
+  COUNT(CASE WHEN a.published = false THEN 1 END) AS drafts,
+  COALESCE(SUM(CASE WHEN a.published = true THEN a.views END), 0) AS published_views
+FROM authors au
+LEFT JOIN articles a ON au.id = a.author_id
+GROUP BY au.id, au.name
+ORDER BY published_views DESC;</code></pre>
+
+    <p>Result:</p>
+
+    <pre><code>| author        | total_articles | published | drafts | published_views |
+|---------------|----------------|-----------|--------|-----------------|
+| Priya Patel   |              2 |         1 |      1 |            8900 |
+| Sarah Chen    |              2 |         2 |      0 |            9300 |
+| Marcus Rivera |              2 |         1 |      1 |            3100 |
+| James Wilson  |              1 |         1 |      0 |            1200 |</code></pre>
+
+    <p>One query, four different metrics per author. This pattern is essential for building dashboards and generating reports.</p>
+
+    <div class="callout">
+      <p><strong>PostgreSQL shortcut: FILTER.</strong> PostgreSQL has a cleaner syntax for conditional aggregation: <code>COUNT(*) FILTER (WHERE published = true)</code>. It's equivalent to <code>COUNT(CASE WHEN published = true THEN 1 END)</code> but more readable.</p>
+    </div>
+
+    <pre><code>-- Same query using FILTER (PostgreSQL only)
+SELECT
+  au.name AS author,
+  COUNT(*) AS total_articles,
+  COUNT(*) FILTER (WHERE a.published = true) AS published,
+  COUNT(*) FILTER (WHERE a.published = false) AS drafts
+FROM authors au
+LEFT JOIN articles a ON au.id = a.author_id
+GROUP BY au.id, au.name;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- SQL EXECUTION ORDER                          -->
+    <!-- ============================================ -->
+
+    <h2>SQL Execution Order</h2>
+
+    <p>SQL doesn't execute in the order you write it. Understanding the actual execution order makes GROUP BY and HAVING click:</p>
+
+    <pre><code>-- Writing order:       Execution order:
+SELECT   (5)            FROM     (1)  -- pick the table
+FROM     (1)            WHERE    (2)  -- filter individual rows
+WHERE    (2)            GROUP BY (3)  -- bucket into groups
+GROUP BY (3)            HAVING   (4)  -- filter groups
+HAVING   (4)            SELECT   (5)  -- pick columns & compute
+ORDER BY (6)            ORDER BY (6)  -- sort results
+LIMIT    (7)            LIMIT    (7)  -- cap the count</code></pre>
+
+    <div class="aha">
+      <p><strong>This is why you can't use aliases in WHERE or HAVING.</strong> SELECT runs after WHERE and GROUP BY. So the alias doesn't exist yet. You <em>can</em> use aliases in ORDER BY because it runs after SELECT. (PostgreSQL is actually lenient about this, but standard SQL is strict.)</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRACTICAL                                    -->
+    <!-- ============================================ -->
+
+    <h2>Practical &mdash; Newsroom Analytics Dashboard</h2>
+
+    <p>Let's build the queries a newsroom editor would want on their dashboard:</p>
+
+    <h3>1. Articles per Author (Top Performers)</h3>
+
+    <pre><code>SELECT
+  au.name,
+  COUNT(a.id) AS articles,
+  ROUND(AVG(a.views)) AS avg_views,
+  SUM(a.views) AS total_views
+FROM authors au
+INNER JOIN articles a ON au.id = a.author_id
+WHERE a.published = true
+GROUP BY au.id, au.name
+ORDER BY total_views DESC;</code></pre>
+
+    <h3>2. Average Word Count by Category</h3>
+
+    <pre><code>SELECT
+  category,
+  ROUND(AVG(word_count)) AS avg_word_count,
+  MIN(word_count) AS shortest,
+  MAX(word_count) AS longest,
+  COUNT(*) AS article_count
+FROM articles
+WHERE published = true
+GROUP BY category
+ORDER BY avg_word_count DESC;</code></pre>
+
+    <h3>3. Publishing Activity by Month</h3>
+
+    <pre><code>SELECT
+  DATE_TRUNC('month', published_at) AS month,
+  COUNT(*) AS articles_published,
+  SUM(views) AS monthly_views,
+  ROUND(AVG(word_count)) AS avg_length
+FROM articles
+WHERE published = true
+GROUP BY DATE_TRUNC('month', published_at)
+ORDER BY month DESC;</code></pre>
+
+    <div class="callout">
+      <p><strong>DATE_TRUNC</strong> rounds a timestamp to the specified precision ('month', 'week', 'year', etc.). It's a PostgreSQL function that's incredibly useful for time-series grouping. It turns <code>2024-03-15 14:30:00</code> into <code>2024-03-01 00:00:00</code>.</p>
+    </div>
+
+    <h3>4. Category Performance with Engagement Tiers</h3>
+
+    <pre><code>SELECT
+  category,
+  COUNT(*) AS articles,
+  SUM(views) AS total_views,
+  CASE
+    WHEN AVG(views) &gt; 5000 THEN 'High'
+    WHEN AVG(views) &gt; 2000 THEN 'Medium'
+    ELSE 'Low'
+  END AS engagement_tier
+FROM articles
+WHERE published = true
+GROUP BY category
+ORDER BY total_views DESC;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Quick Check</h4>
+
+      <div class="question">
+        <p>1. What's the difference between <code>COUNT(*)</code> and <code>COUNT(column)</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>COUNT(*)</code> counts all rows regardless of NULL values. <code>COUNT(column)</code> counts only rows where that column is not NULL. Use <code>COUNT(DISTINCT column)</code> for unique non-NULL values.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What's the difference between WHERE and HAVING?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">WHERE filters individual rows before grouping. HAVING filters groups after aggregation. Use WHERE for column values (<code>WHERE views > 100</code>), HAVING for aggregate results (<code>HAVING COUNT(*) > 5</code>).</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why can't you <code>SELECT title</code> when <code>GROUP BY category</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">Because there are multiple titles per category. SQL doesn't know which one to show. Every column in SELECT must be in GROUP BY or inside an aggregate function (like <code>MAX(title)</code>).</div>
+      </div>
+
+      <div class="question">
+        <p>4. What Prisma method is equivalent to SQL GROUP BY?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>prisma.model.groupBy({ by: ['column'], _count: true })</code>. Prisma also has <code>.aggregate()</code> for simple aggregations without grouping.</div>
+      </div>
+
+      <div class="question">
+        <p>5. How does AVG handle NULL values?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">AVG ignores NULLs. If values are [100, 200, NULL], AVG returns 150 (not 100). If you want NULLs treated as 0, use <code>AVG(COALESCE(column, 0))</code>.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Practice Exercise</h4>
+      <p>Using the tables from this lesson: <code>articles</code> (id, title, author_id, category, word_count, views, published) and <code>authors</code> (id, name, beat).</p>
+
+      <div class="question" style="margin-top: 1rem;">
+        <p><strong>A:</strong> Count the total number of published articles.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT COUNT(*) AS published_count
+FROM articles
+WHERE published = true;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>B:</strong> Find the average word count for each category. Order by average descending.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT
+  category,
+  ROUND(AVG(word_count)) AS avg_word_count
+FROM articles
+GROUP BY category
+ORDER BY avg_word_count DESC;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>C:</strong> Find authors who have written more than 1 article. Show their name and article count.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT au.name, COUNT(a.id) AS article_count
+FROM authors au
+INNER JOIN articles a ON au.id = a.author_id
+GROUP BY au.id, au.name
+HAVING COUNT(a.id) &gt; 1;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>D:</strong> For each author, show total articles, total views, and what percentage of their articles are published.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT
+  au.name,
+  COUNT(a.id) AS total_articles,
+  COALESCE(SUM(a.views), 0) AS total_views,
+  ROUND(
+    100.0 * COUNT(CASE WHEN a.published THEN 1 END)
+    / COUNT(a.id)
+  ) AS published_pct
+FROM authors au
+LEFT JOIN articles a ON au.id = a.author_id
+GROUP BY au.id, au.name
+ORDER BY total_views DESC;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>E:</strong> Which categories have a total view count above 5000? Show category, article count, and total views.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT
+  category,
+  COUNT(*) AS article_count,
+  SUM(views) AS total_views
+FROM articles
+WHERE published = true
+GROUP BY category
+HAVING SUM(views) &gt; 5000
+ORDER BY total_views DESC;</code></pre></div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHEAT SHEET                                  -->
+    <!-- ============================================ -->
+
+    <h2>Cheat Sheet</h2>
+
+    <pre><code>-- Aggregate functions
+SELECT COUNT(*) FROM table;              -- count all rows
+SELECT COUNT(column) FROM table;         -- count non-NULL values
+SELECT COUNT(DISTINCT column) FROM table;-- count unique values
+SELECT SUM(column) FROM table;           -- total
+SELECT AVG(column) FROM table;           -- average (ignores NULLs)
+SELECT MIN(column) FROM table;           -- smallest
+SELECT MAX(column) FROM table;           -- largest
+
+-- GROUP BY: aggregate per group
+SELECT category, COUNT(*)
+FROM articles
+GROUP BY category;
+
+-- HAVING: filter groups
+SELECT category, COUNT(*) AS cnt
+FROM articles
+GROUP BY category
+HAVING COUNT(*) &gt; 3;
+
+-- Aggregate + JOIN
+SELECT au.name, COUNT(a.id) AS articles
+FROM authors au
+LEFT JOIN articles a ON au.id = a.author_id
+GROUP BY au.id, au.name;
+
+-- Conditional aggregation
+COUNT(CASE WHEN condition THEN 1 END)
+SUM(CASE WHEN condition THEN column END)
+
+-- PostgreSQL FILTER syntax
+COUNT(*) FILTER (WHERE condition)
+
+-- Execution order
+-- FROM &rarr; WHERE &rarr; GROUP BY &rarr; HAVING &rarr; SELECT &rarr; ORDER BY &rarr; LIMIT</code></pre>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/sql/lessons/03-joins/">&larr; Lesson 03: JOINs</a>
+      <a href="/sql/lessons/05-subqueries/">Lesson 05: Subqueries &amp; CTEs &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

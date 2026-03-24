@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 06 - Data Modification</title>
+  <style>:root { --track-color: #3b82f6; }</style>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-Ch5wxeC6.svg">
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>06</span> Data Modification &mdash; INSERT, UPDATE, DELETE</h1>
+    <a href="/sql/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>You've been reading data for five lessons.</strong> Now it's time to write, change, and remove it. In Prisma, you use <code>.create()</code>, <code>.update()</code>, and <code>.delete()</code>. The SQL behind those methods is straightforward once you know the patterns.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model &mdash; CRUD in SQL</h2>
+
+    <p>Every web app does four things with data: <strong>C</strong>reate, <strong>R</strong>ead, <strong>U</strong>pdate, <strong>D</strong>elete. You've mastered Read (SELECT). The other three are simpler than SELECT &mdash; they have fewer options and fewer clauses.</p>
+
+    <table>
+      <thead>
+        <tr><th>Operation</th><th>SQL</th><th>Prisma</th><th>Risk Level</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Create</td><td><code>INSERT INTO</code></td><td><code>.create()</code></td><td>Low &mdash; adds data</td></tr>
+        <tr><td>Read</td><td><code>SELECT</code></td><td><code>.findMany()</code></td><td>None &mdash; just reads</td></tr>
+        <tr><td>Update</td><td><code>UPDATE ... SET</code></td><td><code>.update()</code></td><td>Medium &mdash; changes data</td></tr>
+        <tr><td>Delete</td><td><code>DELETE FROM</code></td><td><code>.delete()</code></td><td>High &mdash; removes data</td></tr>
+      </tbody>
+    </table>
+
+    <div class="aha">
+      <p><strong>The golden rule of data modification:</strong> Always use a WHERE clause with UPDATE and DELETE. Without WHERE, you affect EVERY row in the table. In production, run a SELECT with the same WHERE clause first to preview which rows you'll change.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- INSERT                                       -->
+    <!-- ============================================ -->
+
+    <h2>INSERT &mdash; Adding Data</h2>
+
+    <h3>Single Row Insert</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>const article = await prisma.article.create({
+  data: {
+    title: 'Breaking: City Council Vote',
+    body: 'The city council voted...',
+    category: 'politics',
+    author_id: 1,
+    published: true,
+  },
+});
+// Returns the created record with id</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>INSERT INTO articles
+  (title, body, category, author_id, published)
+VALUES
+  ('Breaking: City Council Vote',
+   'The city council voted...',
+   'politics',
+   1,
+   true);
+
+-- To get the created record back:
+INSERT INTO articles (title, body, category)
+VALUES ('...', '...', 'politics')
+RETURNING *;</code></pre>
+      </div>
+    </div>
+
+    <p><code>RETURNING *</code> is a PostgreSQL feature that returns the inserted row, including auto-generated columns like <code>id</code> and <code>created_at</code>. This is what Prisma uses behind the scenes when <code>.create()</code> returns the full object.</p>
+
+    <pre><code>-- Return only specific columns
+INSERT INTO articles (title, body, category)
+VALUES ('New Story', 'Content here...', 'culture')
+RETURNING id, title, created_at;</code></pre>
+
+    <h3>Multiple Row Insert</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>await prisma.article.createMany({
+  data: [
+    { title: 'Story A', body: '...',
+      category: 'politics' },
+    { title: 'Story B', body: '...',
+      category: 'sports' },
+    { title: 'Story C', body: '...',
+      category: 'culture' },
+  ],
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>INSERT INTO articles
+  (title, body, category)
+VALUES
+  ('Story A', '...', 'politics'),
+  ('Story B', '...', 'sports'),
+  ('Story C', '...', 'culture')
+RETURNING id, title;</code></pre>
+      </div>
+    </div>
+
+    <p>Multiple VALUES rows in one INSERT is much faster than separate INSERT statements. The database handles them as a single operation.</p>
+
+    <h3>INSERT...SELECT &mdash; Insert from a Query</h3>
+
+    <p>This is a powerful pattern Prisma can't do directly. You can insert rows based on the result of a SELECT query &mdash; no VALUES clause needed:</p>
+
+    <pre><code>-- Copy all published articles into an archive table
+INSERT INTO archived_articles (title, body, category, original_id)
+SELECT title, body, category, id
+FROM articles
+WHERE published = true
+  AND published_at &lt; '2023-01-01';
+
+-- Create a summary row from aggregated data
+INSERT INTO daily_stats (date, article_count, total_views)
+SELECT
+  CURRENT_DATE,
+  COUNT(*),
+  SUM(views)
+FROM articles
+WHERE published_at::DATE = CURRENT_DATE;</code></pre>
+
+    <div class="aha">
+      <p><strong>INSERT...SELECT is a data migration superpower.</strong> Need to copy data between tables, transform data, or populate a reporting table? This does it in one query, entirely on the database server. No need to pull data into your app and push it back.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- UPDATE                                       -->
+    <!-- ============================================ -->
+
+    <h2>UPDATE &mdash; Changing Existing Data</h2>
+
+    <h3>Basic UPDATE</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>// Update one record
+await prisma.article.update({
+  where: { id: 5 },
+  data: {
+    title: 'Updated Headline',
+    published: true,
+    views: { increment: 1 },
+  },
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>-- Update one record
+UPDATE articles
+SET
+  title = 'Updated Headline',
+  published = true,
+  views = views + 1
+WHERE id = 5;</code></pre>
+      </div>
+    </div>
+
+    <p>The pattern: <code>UPDATE table SET column = value WHERE condition</code>. You can SET multiple columns, separated by commas.</p>
+
+    <h3>Update Many Rows</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>// Update many
+await prisma.article.updateMany({
+  where: {
+    published: false,
+    created_at: { lt: cutoffDate },
+  },
+  data: {
+    status: 'archived',
+  },
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>-- Update many
+UPDATE articles
+SET status = 'archived'
+WHERE published = false
+  AND created_at &lt; '2023-06-01';
+
+-- See how many rows were affected:
+-- PostgreSQL shows "UPDATE 42" meaning
+-- 42 rows were changed</code></pre>
+      </div>
+    </div>
+
+    <pre><code>-- Preview what will be updated FIRST
+SELECT id, title, status
+FROM articles
+WHERE published = false
+  AND created_at &lt; '2023-06-01';
+-- Check the results, then run the UPDATE</code></pre>
+
+    <div class="callout">
+      <p><strong>Always preview with SELECT first.</strong> Before running an UPDATE, write a SELECT with the same WHERE clause to see which rows will be affected. This is especially important in production databases where mistakes are expensive.</p>
+    </div>
+
+    <h3>UPDATE with Expressions</h3>
+
+    <p>SET can use expressions, not just literal values:</p>
+
+    <pre><code>-- Increment views
+UPDATE articles SET views = views + 1 WHERE id = 5;
+
+-- Apply a 10% raise
+UPDATE employees SET salary = salary * 1.10 WHERE department = 'engineering';
+
+-- Set based on another column
+UPDATE articles SET slug = LOWER(REPLACE(title, ' ', '-')) WHERE slug IS NULL;
+
+-- Set using CASE
+UPDATE articles
+SET priority = CASE
+  WHEN views &gt; 10000 THEN 'high'
+  WHEN views &gt; 1000  THEN 'medium'
+  ELSE 'low'
+END;</code></pre>
+
+    <h3>UPDATE with RETURNING</h3>
+
+    <pre><code>-- Get the updated rows back
+UPDATE articles
+SET published = true,
+    published_at = NOW()
+WHERE id = 5
+RETURNING id, title, published, published_at;</code></pre>
+
+    <p>This is what Prisma's <code>.update()</code> uses to return the updated record.</p>
+
+    <h3>UPDATE with JOIN</h3>
+
+    <p>Sometimes you need to update rows based on data from another table. PostgreSQL uses a FROM clause for this:</p>
+
+    <pre><code>-- Update articles: set the beat column based on the author's beat
+UPDATE articles a
+SET beat = au.beat
+FROM authors au
+WHERE a.author_id = au.id
+  AND a.beat IS NULL;
+
+-- Give a views boost to all articles by top-performing authors
+UPDATE articles
+SET views = views + 500
+FROM (
+  SELECT author_id
+  FROM articles
+  GROUP BY author_id
+  HAVING SUM(views) &gt; 10000
+) top_authors
+WHERE articles.author_id = top_authors.author_id;</code></pre>
+
+    <div class="aha">
+      <p><strong>PostgreSQL UPDATE...FROM is non-standard.</strong> Standard SQL uses <code>UPDATE ... SET ... FROM ... WHERE ...</code> syntax, but other databases use different patterns (MySQL uses <code>UPDATE table1 JOIN table2</code>). This is one area where SQL differs across databases.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DELETE                                       -->
+    <!-- ============================================ -->
+
+    <h2>DELETE &mdash; Removing Data</h2>
+
+    <h3>Basic DELETE</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>// Delete one
+await prisma.article.delete({
+  where: { id: 5 },
+});
+
+// Delete many
+await prisma.article.deleteMany({
+  where: {
+    published: false,
+    created_at: { lt: cutoffDate },
+  },
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>-- Delete one
+DELETE FROM articles
+WHERE id = 5;
+
+-- Delete many
+DELETE FROM articles
+WHERE published = false
+  AND created_at &lt; '2023-01-01';</code></pre>
+      </div>
+    </div>
+
+    <pre><code>-- Delete with RETURNING (see what was deleted)
+DELETE FROM articles
+WHERE id = 5
+RETURNING id, title;
+
+-- Delete ALL rows (use with extreme caution)
+DELETE FROM articles;
+-- This is different from DROP TABLE:
+-- DELETE removes rows but keeps the table structure
+-- DROP TABLE removes the entire table</code></pre>
+
+    <div class="aha">
+      <p><strong>DELETE is permanent.</strong> There's no undo, no recycle bin. Once a row is deleted, it's gone (unless you have backups or are inside a transaction you can ROLLBACK). In production, prefer "soft deletes" &mdash; set a <code>deleted_at</code> timestamp instead of actually deleting the row.</p>
+    </div>
+
+    <h3>DELETE with Subqueries</h3>
+
+    <pre><code>-- Delete articles by authors who are no longer active
+DELETE FROM articles
+WHERE author_id IN (
+  SELECT id FROM authors WHERE active = false
+);
+
+-- Delete articles that have no comments
+DELETE FROM articles a
+WHERE NOT EXISTS (
+  SELECT 1 FROM comments c WHERE c.article_id = a.id
+);</code></pre>
+
+    <h3>Cascading Deletes</h3>
+
+    <p>When you delete a row that other rows reference (via foreign key), what happens to those dependent rows? This is defined when creating the table:</p>
+
+    <pre><code>-- When creating the table, define cascade behavior
+CREATE TABLE articles (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  author_id INTEGER REFERENCES authors(id) ON DELETE CASCADE
+);
+
+-- ON DELETE CASCADE: deleting an author automatically deletes their articles
+-- ON DELETE SET NULL: deleting an author sets author_id to NULL on their articles
+-- ON DELETE RESTRICT: prevents deleting an author who has articles (default)</code></pre>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma schema</h5>
+        <pre><code>model Article {
+  id       Int    @id @default(autoincrement())
+  title    String
+  author   Author @relation(fields: [authorId],
+    references: [id],
+    onDelete: Cascade)
+  authorId Int
+}</code></pre>
+      </div>
+      <div>
+        <h5>SQL equivalent</h5>
+        <pre><code>CREATE TABLE articles (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  author_id INTEGER
+    REFERENCES authors(id)
+    ON DELETE CASCADE
+);</code></pre>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>ON DELETE Action</th><th>Behavior</th><th>Prisma Equivalent</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>CASCADE</code></td><td>Delete related rows automatically</td><td><code>onDelete: Cascade</code></td></tr>
+        <tr><td><code>SET NULL</code></td><td>Set foreign key to NULL</td><td><code>onDelete: SetNull</code></td></tr>
+        <tr><td><code>RESTRICT</code></td><td>Prevent deletion if references exist</td><td><code>onDelete: Restrict</code></td></tr>
+        <tr><td><code>SET DEFAULT</code></td><td>Set foreign key to its default value</td><td><code>onDelete: SetDefault</code></td></tr>
+        <tr><td><code>NO ACTION</code></td><td>Same as RESTRICT (check deferred)</td><td>Default behavior</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- UPSERT                                       -->
+    <!-- ============================================ -->
+
+    <h2>UPSERT &mdash; INSERT or UPDATE</h2>
+
+    <p>An "upsert" inserts a row if it doesn't exist, or updates it if it does. This is common when syncing data from external sources &mdash; you don't know if the record already exists.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>await prisma.author.upsert({
+  where: { email: 'sarah@news.com' },
+  create: {
+    email: 'sarah@news.com',
+    name: 'Sarah Chen',
+    beat: 'politics',
+  },
+  update: {
+    name: 'Sarah Chen',
+    beat: 'politics',
+  },
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>INSERT INTO authors (email, name, beat)
+VALUES ('sarah@news.com', 'Sarah Chen', 'politics')
+ON CONFLICT (email)
+DO UPDATE SET
+  name = EXCLUDED.name,
+  beat = EXCLUDED.beat;</code></pre>
+      </div>
+    </div>
+
+    <p>Let's break down the SQL:</p>
+    <ul>
+      <li><code>INSERT INTO ... VALUES ...</code> &mdash; try to insert the row</li>
+      <li><code>ON CONFLICT (email)</code> &mdash; if the email already exists (conflict on the unique constraint)</li>
+      <li><code>DO UPDATE SET ...</code> &mdash; update those columns instead</li>
+      <li><code>EXCLUDED</code> &mdash; refers to the values that were about to be inserted</li>
+    </ul>
+
+    <pre><code>-- If you want to do nothing on conflict (skip the row):
+INSERT INTO authors (email, name, beat)
+VALUES ('sarah@news.com', 'Sarah Chen', 'politics')
+ON CONFLICT (email) DO NOTHING;
+
+-- Upsert with RETURNING
+INSERT INTO authors (email, name, beat)
+VALUES ('sarah@news.com', 'Sarah Chen', 'politics')
+ON CONFLICT (email)
+DO UPDATE SET
+  name = EXCLUDED.name,
+  beat = EXCLUDED.beat
+RETURNING *;</code></pre>
+
+    <div class="aha">
+      <p><strong>EXCLUDED is a special table.</strong> Inside <code>ON CONFLICT DO UPDATE</code>, <code>EXCLUDED</code> refers to the row that was attempted to be inserted. You can mix <code>EXCLUDED</code> values with existing values: <code>SET views = authors.views + EXCLUDED.views</code> to increment instead of replace.</p>
+    </div>
+
+    <h3>Bulk Upsert</h3>
+
+    <pre><code>-- Upsert multiple rows at once
+INSERT INTO daily_stats (date, category, article_count, total_views)
+VALUES
+  ('2024-03-15', 'politics', 12, 45000),
+  ('2024-03-15', 'sports', 8, 28000),
+  ('2024-03-15', 'tech', 5, 62000)
+ON CONFLICT (date, category)
+DO UPDATE SET
+  article_count = EXCLUDED.article_count,
+  total_views = EXCLUDED.total_views;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- PRISMA VS RAW SQL                            -->
+    <!-- ============================================ -->
+
+    <h2>Prisma vs Raw SQL for Data Modification</h2>
+
+    <table>
+      <thead>
+        <tr><th>Operation</th><th>Prisma</th><th>Raw SQL Advantage</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Insert one row</td><td><code>.create()</code></td><td>About the same</td></tr>
+        <tr><td>Insert many rows</td><td><code>.createMany()</code></td><td>About the same</td></tr>
+        <tr><td>Insert from query</td><td>Not supported</td><td><code>INSERT...SELECT</code></td></tr>
+        <tr><td>Update one</td><td><code>.update()</code></td><td>About the same</td></tr>
+        <tr><td>Update with JOIN</td><td>Not supported</td><td><code>UPDATE...FROM</code></td></tr>
+        <tr><td>Conditional update</td><td>Limited</td><td><code>UPDATE...SET CASE</code></td></tr>
+        <tr><td>Upsert</td><td><code>.upsert()</code></td><td><code>ON CONFLICT</code> more flexible</td></tr>
+        <tr><td>Bulk upsert</td><td>Not supported</td><td><code>INSERT...ON CONFLICT</code> with multiple VALUES</td></tr>
+        <tr><td>Delete with subquery</td><td>Limited</td><td><code>DELETE WHERE IN (SELECT...)</code></td></tr>
+        <tr><td>Cascading deletes</td><td><code>onDelete: Cascade</code></td><td><code>ON DELETE CASCADE</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>For simple CRUD, use Prisma.</strong> It's safer (prevents SQL injection), type-safe, and more maintainable. Use raw SQL when you need INSERT...SELECT, UPDATE with JOINs, bulk upserts, or other operations Prisma can't express.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TRANSACTIONS                                 -->
+    <!-- ============================================ -->
+
+    <h2>Transactions &mdash; All or Nothing</h2>
+
+    <p>When you need multiple operations to succeed or fail together, use a transaction. Classic example: transferring money between accounts &mdash; you need both the debit and credit to happen, or neither.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>await prisma.$transaction([
+  prisma.article.update({
+    where: { id: 5 },
+    data: { published: true },
+  }),
+  prisma.notification.create({
+    data: {
+      message: 'Article published!',
+      article_id: 5,
+    },
+  }),
+]);</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>BEGIN;
+
+UPDATE articles
+SET published = true
+WHERE id = 5;
+
+INSERT INTO notifications
+  (message, article_id)
+VALUES
+  ('Article published!', 5);
+
+COMMIT;
+-- If anything fails, use ROLLBACK
+-- instead of COMMIT</code></pre>
+      </div>
+    </div>
+
+    <p><code>BEGIN</code> starts the transaction. <code>COMMIT</code> saves all changes. <code>ROLLBACK</code> undoes everything since BEGIN. If the database crashes between BEGIN and COMMIT, all changes are automatically rolled back.</p>
+
+    <pre><code>-- Practical example: publishing an article
+BEGIN;
+
+-- 1. Mark article as published
+UPDATE articles
+SET published = true, published_at = NOW()
+WHERE id = 5;
+
+-- 2. Update author's article count cache
+UPDATE authors
+SET published_count = published_count + 1
+WHERE id = (SELECT author_id FROM articles WHERE id = 5);
+
+-- 3. Create audit log entry
+INSERT INTO audit_log (action, table_name, record_id, timestamp)
+VALUES ('publish', 'articles', 5, NOW());
+
+-- All good? Save everything
+COMMIT;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- PRACTICAL                                    -->
+    <!-- ============================================ -->
+
+    <h2>Practical &mdash; Managing Newsroom Data</h2>
+
+    <h3>1. Onboarding a New Author</h3>
+
+    <pre><code>-- Insert the author and get their ID back
+INSERT INTO authors (name, email, beat, hire_date)
+VALUES ('Alex Kim', 'alex@news.com', 'technology', CURRENT_DATE)
+RETURNING id;
+-- Returns: id = 5
+
+-- Assign them to their first story
+UPDATE articles
+SET author_id = 5, status = 'in_progress'
+WHERE id = 42 AND author_id IS NULL
+RETURNING title;</code></pre>
+
+    <h3>2. End-of-Day Content Report Update</h3>
+
+    <pre><code>-- Upsert daily stats for each category
+INSERT INTO daily_stats (date, category, article_count, total_views)
+SELECT
+  CURRENT_DATE,
+  category,
+  COUNT(*),
+  SUM(views)
+FROM articles
+WHERE published = true
+  AND published_at::DATE = CURRENT_DATE
+GROUP BY category
+ON CONFLICT (date, category)
+DO UPDATE SET
+  article_count = EXCLUDED.article_count,
+  total_views = EXCLUDED.total_views;</code></pre>
+
+    <h3>3. Archiving Old Drafts</h3>
+
+    <pre><code>BEGIN;
+
+-- Move old drafts to archive table
+INSERT INTO archived_articles (title, body, category, author_id, created_at)
+SELECT title, body, category, author_id, created_at
+FROM articles
+WHERE published = false
+  AND created_at &lt; CURRENT_DATE - INTERVAL '90 days';
+
+-- Delete them from the main table
+DELETE FROM articles
+WHERE published = false
+  AND created_at &lt; CURRENT_DATE - INTERVAL '90 days';
+
+COMMIT;</code></pre>
+
+    <h3>4. Reassigning an Author's Articles</h3>
+
+    <pre><code>-- When an author leaves, reassign their articles
+UPDATE articles
+SET author_id = 2  -- reassign to Sarah
+WHERE author_id = 5  -- from Alex
+  AND published = false;  -- only unpublished ones
+
+-- Soft-delete the departing author
+UPDATE authors
+SET active = false, deactivated_at = NOW()
+WHERE id = 5;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Quick Check</h4>
+
+      <div class="question">
+        <p>1. What does <code>RETURNING *</code> do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">Returns the affected rows (inserted, updated, or deleted) as a result set. PostgreSQL-specific. It's how Prisma's <code>.create()</code> and <code>.update()</code> return the full record including auto-generated fields like <code>id</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What does <code>ON CONFLICT DO NOTHING</code> do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">If the INSERT would violate a unique constraint, it silently skips the row instead of throwing an error. Useful for idempotent imports where you want to insert only new records.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What does <code>EXCLUDED</code> refer to in an ON CONFLICT clause?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>EXCLUDED</code> is a special table that refers to the row that was proposed for insertion but caused the conflict. You use it to access the new values: <code>SET name = EXCLUDED.name</code> updates the column with the value that was attempted to be inserted.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What's the difference between <code>ON DELETE CASCADE</code> and <code>ON DELETE SET NULL</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>CASCADE</code> automatically deletes the dependent rows (e.g., deleting an author deletes all their articles). <code>SET NULL</code> keeps the dependent rows but sets their foreign key to NULL (articles remain but with no author).</div>
+      </div>
+
+      <div class="question">
+        <p>5. Why should you use transactions for multi-step operations?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">Transactions guarantee atomicity: either all operations succeed or none of them do. Without a transaction, if step 2 of 3 fails, step 1 has already been committed and you're left with inconsistent data.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Practice Exercise</h4>
+      <p>Using tables: <code>articles</code> (id, title, body, author_id, category, views, published, published_at, created_at) and <code>authors</code> (id, name, email, beat, active).</p>
+
+      <div class="question" style="margin-top: 1rem;">
+        <p><strong>A:</strong> Insert a new article with title "Tech Industry Layoffs", body "Major tech companies...", category "technology", author_id 3, published true. Return the id and created_at.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>INSERT INTO articles (title, body, category, author_id, published)
+VALUES ('Tech Industry Layoffs', 'Major tech companies...', 'technology', 3, true)
+RETURNING id, created_at;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>B:</strong> Update all unpublished articles older than 30 days to have status "stale".</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>UPDATE articles
+SET status = 'stale'
+WHERE published = false
+  AND created_at &lt; CURRENT_DATE - INTERVAL '30 days';</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>C:</strong> Delete all articles that have 0 views and are older than 6 months. Preview which rows will be deleted first.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>-- Preview first
+SELECT id, title, created_at
+FROM articles
+WHERE views = 0
+  AND created_at &lt; CURRENT_DATE - INTERVAL '6 months';
+
+-- Then delete
+DELETE FROM articles
+WHERE views = 0
+  AND created_at &lt; CURRENT_DATE - INTERVAL '6 months';</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>D:</strong> Upsert an author: if email "alex@news.com" already exists, update their name and beat. Otherwise insert them as new.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>INSERT INTO authors (email, name, beat)
+VALUES ('alex@news.com', 'Alex Kim', 'technology')
+ON CONFLICT (email)
+DO UPDATE SET
+  name = EXCLUDED.name,
+  beat = EXCLUDED.beat
+RETURNING *;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>E:</strong> Write a transaction that publishes article #10: set published to true and published_at to now, then insert an audit log entry.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>BEGIN;
+
+UPDATE articles
+SET published = true, published_at = NOW()
+WHERE id = 10;
+
+INSERT INTO audit_log (action, table_name, record_id, timestamp)
+VALUES ('publish', 'articles', 10, NOW());
+
+COMMIT;</code></pre></div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHEAT SHEET                                  -->
+    <!-- ============================================ -->
+
+    <h2>Cheat Sheet</h2>
+
+    <pre><code>-- INSERT single row
+INSERT INTO table (col1, col2) VALUES ('val1', 'val2');
+INSERT INTO table (col1, col2) VALUES ('val1', 'val2') RETURNING *;
+
+-- INSERT multiple rows
+INSERT INTO table (col1, col2)
+VALUES ('a', 'b'), ('c', 'd'), ('e', 'f');
+
+-- INSERT from SELECT
+INSERT INTO target (col1, col2)
+SELECT col1, col2 FROM source WHERE condition;
+
+-- UPDATE
+UPDATE table SET col = 'value' WHERE id = 1;
+UPDATE table SET col = col + 1 WHERE condition;
+UPDATE table SET col = 'value' WHERE id = 1 RETURNING *;
+
+-- UPDATE with JOIN (PostgreSQL)
+UPDATE table1 SET col = t2.col
+FROM table2 t2 WHERE table1.id = t2.ref_id;
+
+-- DELETE
+DELETE FROM table WHERE id = 1;
+DELETE FROM table WHERE condition RETURNING *;
+
+-- UPSERT (INSERT ON CONFLICT)
+INSERT INTO table (col1, col2) VALUES ('a', 'b')
+ON CONFLICT (col1) DO UPDATE SET col2 = EXCLUDED.col2;
+-- or
+ON CONFLICT (col1) DO NOTHING;
+
+-- CASCADE options (on CREATE TABLE)
+REFERENCES other_table(id) ON DELETE CASCADE
+REFERENCES other_table(id) ON DELETE SET NULL
+REFERENCES other_table(id) ON DELETE RESTRICT
+
+-- TRANSACTIONS
+BEGIN;
+  -- multiple statements
+COMMIT;   -- save all changes
+ROLLBACK; -- undo all changes</code></pre>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/sql/lessons/05-subqueries/">&larr; Lesson 05: Subqueries &amp; CTEs</a>
+      <a href="/sql/lessons/07-data-types-constraints/">Lesson 07: Data Types &amp; Constraints &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

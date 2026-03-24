@@ -831,7 +831,7 @@ container.<span class="fn">bind</span>(tokens.db, () =&gt; <span class="kw">new<
   <span class="kw">private</span> limitVal?: <span class="type">number</span>;
 
   <span class="fn">where</span>&lt;<span class="type">K extends keyof T</span>&gt;(
-    field: <span class="type">K</span>, op: <span class="str">"=" | ">" | "<"</span>, val: <span class="type">T[K]</span>
+    field: <span class="type">K</span>, op: <span class="str">"=" | "&gt;" | "&lt;"</span>, val: <span class="type">T[K]</span>
   ): <span class="type">this</span> {
     <span class="kw">this</span>.conditions.push(<span class="str">`$</span>{String(field)} ${op} ${val}<span class="str">`</span>);
     <span class="kw">return this</span>;

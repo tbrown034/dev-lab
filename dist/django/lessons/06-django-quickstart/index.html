@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 06 - Django Quickstart</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-DiDSpPSC.svg">
+  <style>
+    :root { --track-color: #22c55e; }
+    .file-tree { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; margin: 1rem 0; font-family: var(--mono); font-size: 0.85rem; line-height: 1.8; }
+    .file-tree .folder { color: var(--info); }
+    .file-tree .file { color: var(--text-dim); }
+    .file-tree .highlight { color: var(--track-color); font-weight: 600; }
+    .file-tree .muted { color: var(--text-muted); }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>06</span> Django Quickstart &mdash; Next.js to Django</h1>
+    <a href="/django/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #22c55e;">You know Next.js. Django solves the same problems differently.</strong> This lesson maps every Django concept to something you already understand from Next.js.</p>
+
+    <!-- ============================================ -->
+    <!-- WHAT IS DJANGO                               -->
+    <!-- ============================================ -->
+
+    <h2>What is Django?</h2>
+
+    <p>Django is a <strong>"batteries included" Python web framework</strong>. It gives you routing, an ORM (database layer), templates, authentication, an admin panel, form handling, and more — all built-in.</p>
+
+    <p>If Next.js is "React + routing + API routes + SSR," Django is "Python + routing + ORM + templates + auth + admin + forms + ..." It ships with even MORE built-in features than Next.js.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js gives you</h5>
+        <ul>
+          <li>File-based routing</li>
+          <li>API routes (server functions)</li>
+          <li>SSR / SSG</li>
+          <li>Middleware</li>
+          <li>Image optimization</li>
+          <li><em>You add: Prisma, NextAuth, Zod...</em></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Django gives you</h5>
+        <ul>
+          <li>URL routing (explicit)</li>
+          <li>Views (like API routes)</li>
+          <li>Server-rendered templates</li>
+          <li>Middleware</li>
+          <li>ORM (like Prisma, built-in)</li>
+          <li>Auth, admin panel, forms, CSRF...</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> Django is like if Next.js came with Prisma, NextAuth, React Hook Form, and an auto-generated admin dashboard all baked in. The tradeoff? You get more out of the box, but you follow Django's patterns (not your own).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PROJECT VS APP                               -->
+    <!-- ============================================ -->
+
+    <h2>Project vs. App</h2>
+
+    <p>Django has a unique concept that Next.js doesn't: the <strong>project/app split</strong>. Understanding this is crucial.</p>
+
+    <ul>
+      <li><strong>Project</strong> = the entire website. Like your Next.js app. Contains settings, root URL config.</li>
+      <li><strong>App</strong> = a feature module within the project. Like a route group in Next.js (e.g., <code>(blog)/</code>, <code>(auth)/</code>, <code>(dashboard)/</code>).</li>
+    </ul>
+
+    <h3>Creating a Project</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js</h5>
+        <pre><code><span class="comment"># Create a new project</span>
+npx create-next-app@latest mysite
+
+<span class="comment"># Start dev server</span>
+cd mysite
+npm run dev</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># Create a new project</span>
+django-admin startproject mysite
+
+<span class="comment"># Start dev server</span>
+cd mysite
+python manage.py runserver</code></pre>
+      </div>
+    </div>
+
+    <h3>Creating an App (Feature Module)</h3>
+
+    <pre><code><span class="comment"># Inside your project directory</span>
+python manage.py startapp blog     <span class="comment"># Creates a "blog" feature module</span>
+python manage.py startapp accounts <span class="comment"># Creates an "accounts" feature module</span>
+python manage.py startapp api      <span class="comment"># Creates an "api" feature module</span></code></pre>
+
+    <div class="aha">
+      <p><strong>Think of it like this:</strong> Your Next.js app is the project. Each route group or feature area (blog, auth, dashboard) would be a Django "app." A single Django project usually has 3-10 apps. Each app has its own models, views, URLs, and templates — nicely isolated.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FILE STRUCTURE                               -->
+    <!-- ============================================ -->
+
+    <h2>File Structure</h2>
+
+    <p>After running <code>django-admin startproject mysite</code> and <code>python manage.py startapp blog</code>, here's what you get:</p>
+
+    <div class="file-tree">
+      <span class="folder">mysite/</span> <span class="muted">............... project root (like your Next.js root)</span><br>
+      &nbsp;&nbsp;<span class="highlight">manage.py</span> <span class="muted">............ CLI tool — like package.json scripts</span><br>
+      &nbsp;&nbsp;<span class="folder">mysite/</span> <span class="muted">.............. project config (same name, nested)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">__init__.py</span> <span class="muted">........ marks this as a Python package</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">settings.py</span> <span class="muted">........ next.config.js + .env combined</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">urls.py</span> <span class="muted">............ root router — like app/layout.tsx routing</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">wsgi.py</span> <span class="muted">............ production server entry point</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">asgi.py</span> <span class="muted">............ async server entry point</span><br>
+      &nbsp;&nbsp;<span class="folder">blog/</span> <span class="muted">................ your "blog" app</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">__init__.py</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">models.py</span> <span class="muted">.......... Prisma schema equivalent</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">views.py</span> <span class="muted">........... API routes / page handlers</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="highlight">urls.py</span> <span class="muted">............ app-level routes (you create this)</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">admin.py</span> <span class="muted">........... admin panel config</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">apps.py</span> <span class="muted">............ app metadata</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">tests.py</span> <span class="muted">........... test file</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="file">migrations/</span> <span class="muted">........ database migrations (like prisma migrate)</span>
+    </div>
+
+    <h3>File-by-File Translation</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Django File</th>
+          <th>Next.js Equivalent</th>
+          <th>What It Does</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>manage.py</code></td>
+          <td><code>package.json</code> scripts</td>
+          <td>CLI commands: runserver, migrate, createsuperuser, etc.</td>
+        </tr>
+        <tr>
+          <td><code>settings.py</code></td>
+          <td><code>next.config.js</code> + <code>.env</code></td>
+          <td>All configuration: database, installed apps, middleware, secrets</td>
+        </tr>
+        <tr>
+          <td><code>urls.py</code></td>
+          <td><code>app/</code> directory structure</td>
+          <td>URL routing — but explicit, not file-based</td>
+        </tr>
+        <tr>
+          <td><code>views.py</code></td>
+          <td><code>route.ts</code> / <code>page.tsx</code></td>
+          <td>Request handlers. Return HTML or JSON.</td>
+        </tr>
+        <tr>
+          <td><code>models.py</code></td>
+          <td><code>schema.prisma</code></td>
+          <td>Database schema as Python classes</td>
+        </tr>
+        <tr>
+          <td><code>admin.py</code></td>
+          <td><em>No equivalent!</em></td>
+          <td>Free admin dashboard — register a model, get full CRUD UI</td>
+        </tr>
+        <tr>
+          <td><code>migrations/</code></td>
+          <td><code>prisma/migrations/</code></td>
+          <td>Database migration history</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>The admin panel is Django's secret weapon.</strong> Register a model and Django auto-generates a full CRUD interface — create, read, update, delete — with search, filters, pagination. It's like getting a free Retool/Forest Admin for every model. Journalists love it for data entry.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- YOUR FIRST VIEW                              -->
+    <!-- ============================================ -->
+
+    <h2>Your First View</h2>
+
+    <p>A Django "view" is a function that takes a request and returns a response. If you've written a Next.js API route, you already understand this.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js API Route</h5>
+        <pre><code><span class="comment">// app/api/hello/route.ts</span>
+import { NextResponse } from 'next/server';
+
+export async function GET(request: Request) {
+  return NextResponse.json({
+    message: 'Hello, World!'
+  });
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django View</h5>
+        <pre><code><span class="comment"># blog/views.py</span>
+from django.http import JsonResponse
+
+def hello(request):
+    return JsonResponse({
+        'message': 'Hello, World!'
+    })</code></pre>
+      </div>
+    </div>
+
+    <p>They're structurally identical: a function that receives a request object and returns a response. The difference is how you connect them to URLs.</p>
+
+    <h3>Returning HTML Instead of JSON</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js Page Component</h5>
+        <pre><code><span class="comment">// app/page.tsx</span>
+export default function Home() {
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Welcome!&lt;/h1&gt;
+      &lt;p&gt;This is my site.&lt;/p&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django View + Template</h5>
+        <pre><code><span class="comment"># blog/views.py</span>
+from django.shortcuts import render
+
+def home(request):
+    return render(request, 'home.html', {
+        'title': 'Welcome!'
+    })</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The key insight:</strong> In Next.js, the JSX IS the template (component = template + logic). In Django, they're separated: the <strong>view</strong> handles logic and the <strong>template</strong> handles HTML. This is the classic MVC/MVT pattern — Model, View, Template.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- URL ROUTING                                  -->
+    <!-- ============================================ -->
+
+    <h2>URL Routing</h2>
+
+    <p>Next.js uses <strong>file-based routing</strong> — the file path IS the URL. Django uses <strong>explicit routing</strong> — you define URL patterns in <code>urls.py</code> files.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js (File-Based)</h5>
+        <pre><code><span class="comment">File structure = URL pattern:</span>
+
+app/page.tsx           → /
+app/about/page.tsx     → /about
+app/blog/page.tsx      → /blog
+app/blog/[slug]/page.tsx → /blog/:slug
+app/api/posts/route.ts → /api/posts</code></pre>
+      </div>
+      <div>
+        <h5>Django (Explicit)</h5>
+        <pre><code><span class="comment"># mysite/urls.py (root)</span>
+from django.urls import path, include
+
+urlpatterns = [
+    path('', views.home),           <span class="comment"># /</span>
+    path('about/', views.about),    <span class="comment"># /about/</span>
+    path('blog/', include('blog.urls')), <span class="comment"># /blog/*</span>
+]</code></pre>
+      </div>
+    </div>
+
+    <h3>Two-Level Routing</h3>
+
+    <p>Django typically uses two levels of URL configuration:</p>
+
+    <pre><code><span class="comment"># 1. Root URLs — mysite/urls.py</span>
+<span class="comment"># This is like your app/layout.tsx that includes all route groups</span>
+from django.urls import path, include
+from django.contrib import admin
+
+urlpatterns = [
+    path('admin/', admin.site.urls),         <span class="comment"># Built-in admin</span>
+    path('blog/', include('blog.urls')),     <span class="comment"># Blog app routes</span>
+    path('api/', include('api.urls')),       <span class="comment"># API app routes</span>
+]</code></pre>
+
+    <pre><code><span class="comment"># 2. App URLs — blog/urls.py (you create this file)</span>
+<span class="comment"># These are all prefixed with /blog/ from the root config</span>
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.blog_index, name='blog-index'),           <span class="comment"># /blog/</span>
+    path('&lt;slug:slug&gt;/', views.blog_detail, name='blog-detail'), <span class="comment"># /blog/my-post/</span>
+]</code></pre>
+
+    <div class="callout">
+      <p><strong>URL parameters:</strong> Next.js uses <code>[slug]</code> in file names. Django uses <code>&lt;slug:slug&gt;</code> in the URL pattern. Same concept — capturing a dynamic segment. Django also has <code>&lt;int:id&gt;</code>, <code>&lt;str:name&gt;</code>, <code>&lt;uuid:pk&gt;</code> with built-in type validation.</p>
+    </div>
+
+    <h3>Connecting Views to URLs</h3>
+
+    <p>Here's the full flow — from URL request to view function to response:</p>
+
+    <pre><code><span class="comment"># blog/views.py</span>
+from django.shortcuts import render
+from django.http import JsonResponse
+
+def blog_index(request):
+    <span class="comment"># Like: export default function BlogPage()</span>
+    posts = [
+        {"title": "First Post", "slug": "first-post"},
+        {"title": "Second Post", "slug": "second-post"},
+    ]
+    return render(request, 'blog/index.html', {'posts': posts})
+
+def blog_detail(request, slug):
+    <span class="comment"># slug comes from the URL pattern &lt;slug:slug&gt;</span>
+    <span class="comment"># Like: export default function PostPage({ params }: { params: { slug: string } })</span>
+    return render(request, 'blog/detail.html', {'slug': slug})</code></pre>
+
+    <div class="aha">
+      <p><strong>Translation:</strong> In Next.js, <code>params.slug</code> comes from the file path. In Django, <code>slug</code> is a function argument that comes from the URL pattern. Both achieve the same thing — the URL <code>/blog/my-article/</code> passes <code>"my-article"</code> to your handler.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TEMPLATES                                    -->
+    <!-- ============================================ -->
+
+    <h2>Templates</h2>
+
+    <p>Django templates are HTML files with special tags for dynamic content. Think of them as JSX but server-rendered, with different syntax for variables and logic.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>React/JSX</h5>
+        <pre><code>&lt;div&gt;
+  &lt;h1&gt;{title}&lt;/h1&gt;
+  &lt;ul&gt;
+    {posts.map(post =&gt; (
+      &lt;li key={post.id}&gt;
+        &lt;a href={`/blog/${post.slug}`}&gt;
+          {post.title}
+        &lt;/a&gt;
+      &lt;/li&gt;
+    ))}
+  &lt;/ul&gt;
+  {posts.length === 0 && (
+    &lt;p&gt;No posts yet.&lt;/p&gt;
+  )}
+&lt;/div&gt;</code></pre>
+      </div>
+      <div>
+        <h5>Django Template</h5>
+        <pre><code>&lt;div&gt;
+  &lt;h1&gt;{{ title }}&lt;/h1&gt;
+  &lt;ul&gt;
+    {% for post in posts %}
+      &lt;li&gt;
+        &lt;a href="/blog/{{ post.slug }}"&gt;
+          {{ post.title }}
+        &lt;/a&gt;
+      &lt;/li&gt;
+    {% endfor %}
+  &lt;/ul&gt;
+  {% if not posts %}
+    &lt;p&gt;No posts yet.&lt;/p&gt;
+  {% endif %}
+&lt;/div&gt;</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Syntax map:</strong> JSX <code>{variable}</code> → Django <code>{{ variable }}</code>. JSX <code>{condition && ...}</code> → Django <code>{% if condition %}...{% endif %}</code>. JSX <code>{arr.map(...)}</code> → Django <code>{% for item in arr %}...{% endfor %}</code>. Double curly braces for values, curly-percent for logic.</p>
+    </div>
+
+    <h3>Template Inheritance (Like Layouts)</h3>
+
+    <p>Next.js has <code>layout.tsx</code> files that wrap child pages. Django has <strong>template inheritance</strong> — same concept, different syntax.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Next.js Layout</h5>
+        <pre><code><span class="comment">// app/layout.tsx</span>
+export default function Layout({
+  children
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    &lt;html&gt;
+      &lt;body&gt;
+        &lt;nav&gt;My Site&lt;/nav&gt;
+        {children}
+        &lt;footer&gt;2024&lt;/footer&gt;
+      &lt;/body&gt;
+    &lt;/html&gt;
+  );
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django Base Template</h5>
+        <pre><code><span class="comment">&lt;!-- templates/base.html --&gt;</span>
+&lt;html&gt;
+  &lt;body&gt;
+    &lt;nav&gt;My Site&lt;/nav&gt;
+    {% block content %}
+    <span class="comment">&lt;!-- child content goes here --&gt;</span>
+    {% endblock %}
+    &lt;footer&gt;2024&lt;/footer&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</code></pre>
+      </div>
+    </div>
+
+    <pre><code><span class="comment">&lt;!-- templates/blog/index.html — "extends" is like being wrapped by the layout --&gt;</span>
+{% extends "base.html" %}
+
+{% block content %}
+  &lt;h1&gt;Blog&lt;/h1&gt;
+  &lt;p&gt;This replaces the {% block content %} in base.html&lt;/p&gt;
+{% endblock %}</code></pre>
+
+    <div class="aha">
+      <p><strong>Translation:</strong> Next.js <code>layout.tsx</code> with <code>{children}</code> → Django <code>base.html</code> with <code>{% block content %}{% endblock %}</code>. Child pages use <code>{% extends "base.html" %}</code> instead of being auto-wrapped. More explicit, but the same "shell + content" pattern.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SETTINGS                                     -->
+    <!-- ============================================ -->
+
+    <h2>Settings</h2>
+
+    <p><code>settings.py</code> is the nerve center of your Django project. It combines what Next.js splits between <code>next.config.js</code>, <code>.env</code>, and various config files.</p>
+
+    <pre><code><span class="comment"># mysite/settings.py — the important parts</span>
+
+<span class="comment"># Like NODE_ENV === 'development'</span>
+DEBUG = True
+
+<span class="comment"># Like NEXTAUTH_URL / allowed origins</span>
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'mysite.com']
+
+<span class="comment"># Like your package.json dependencies (but for Django apps)</span>
+INSTALLED_APPS = [
+    'django.contrib.admin',       <span class="comment"># Admin panel — free!</span>
+    'django.contrib.auth',        <span class="comment"># Authentication — free!</span>
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles', <span class="comment"># Static file serving</span>
+    'blog',                       <span class="comment"># Your apps go here</span>
+    'api',
+]
+
+<span class="comment"># Like your Prisma DATABASE_URL</span>
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',  <span class="comment"># or postgresql</span>
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+<span class="comment"># Secret key — like your .env NEXTAUTH_SECRET</span>
+SECRET_KEY = 'django-insecure-change-me-in-production'
+
+<span class="comment"># Where templates live</span>
+TEMPLATES = [
+    {
+        'DIRS': [BASE_DIR / 'templates'],
+        <span class="comment"># ...</span>
+    },
+]</code></pre>
+
+    <div class="warning">
+      <p><strong>Important:</strong> <code>INSTALLED_APPS</code> is a concept Next.js doesn't have. When you create a new app (<code>startapp blog</code>), you MUST add <code>'blog'</code> to <code>INSTALLED_APPS</code> in settings.py. Otherwise Django doesn't know it exists. This is the #1 mistake beginners make — they create an app but forget to register it.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE DEV SERVER                               -->
+    <!-- ============================================ -->
+
+    <h2>The Dev Server</h2>
+
+    <p>Django's development workflow uses <code>manage.py</code> commands, similar to npm scripts.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Action</th>
+          <th>Next.js</th>
+          <th>Django</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Start dev server</td>
+          <td><code>npm run dev</code></td>
+          <td><code>python manage.py runserver</code></td>
+        </tr>
+        <tr>
+          <td>Create migrations</td>
+          <td><code>npx prisma migrate dev</code></td>
+          <td><code>python manage.py makemigrations</code></td>
+        </tr>
+        <tr>
+          <td>Run migrations</td>
+          <td><code>npx prisma migrate deploy</code></td>
+          <td><code>python manage.py migrate</code></td>
+        </tr>
+        <tr>
+          <td>Interactive shell</td>
+          <td><code>node</code> (limited)</td>
+          <td><code>python manage.py shell</code></td>
+        </tr>
+        <tr>
+          <td>Create admin user</td>
+          <td><em>Manual</em></td>
+          <td><code>python manage.py createsuperuser</code></td>
+        </tr>
+        <tr>
+          <td>Run tests</td>
+          <td><code>npm test</code></td>
+          <td><code>python manage.py test</code></td>
+        </tr>
+        <tr>
+          <td>Collect static files</td>
+          <td><code>npm run build</code></td>
+          <td><code>python manage.py collectstatic</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="aha">
+      <p><strong>manage.py is your Swiss Army knife.</strong> It's like if <code>package.json</code> scripts, <code>npx prisma</code>, and <code>node</code> REPL were all combined into one tool. The Django shell (<code>python manage.py shell</code>) is incredibly powerful — you can import your models and run database queries interactively, like having Prisma Studio in your terminal.</p>
+    </div>
+
+    <h3>The Full Setup Flow</h3>
+
+    <pre><code><span class="comment"># 1. Create virtual environment (like npm init)</span>
+python -m venv venv
+source venv/bin/activate
+
+<span class="comment"># 2. Install Django (like npm install next)</span>
+pip install django
+
+<span class="comment"># 3. Create project (like npx create-next-app)</span>
+django-admin startproject mysite
+cd mysite
+
+<span class="comment"># 4. Create an app (like adding a route group)</span>
+python manage.py startapp blog
+
+<span class="comment"># 5. Add 'blog' to INSTALLED_APPS in settings.py</span>
+
+<span class="comment"># 6. Run migrations (sets up the database)</span>
+python manage.py migrate
+
+<span class="comment"># 7. Create an admin user</span>
+python manage.py createsuperuser
+
+<span class="comment"># 8. Start the server!</span>
+python manage.py runserver
+
+<span class="comment"># Visit http://127.0.0.1:8000/ — your site</span>
+<span class="comment"># Visit http://127.0.0.1:8000/admin/ — free admin panel!</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- THE REQUEST/RESPONSE CYCLE                   -->
+    <!-- ============================================ -->
+
+    <h2>The Request/Response Cycle</h2>
+
+    <p>When someone visits a URL on your Django site, here's what happens — and how it compares to Next.js:</p>
+
+    <ol>
+      <li><strong>Request comes in</strong> — <code>GET /blog/my-article/</code></li>
+      <li><strong>URL routing</strong> — Django checks <code>urls.py</code> patterns (Next.js checks the <code>app/</code> directory)</li>
+      <li><strong>Middleware runs</strong> — CSRF, sessions, auth (same concept in both)</li>
+      <li><strong>View executes</strong> — Your function runs, queries the database, prepares data (like a Server Component or API route)</li>
+      <li><strong>Template renders</strong> — Data gets inserted into HTML (like JSX rendering)</li>
+      <li><strong>Response returns</strong> — HTML or JSON sent back to the browser</li>
+    </ol>
+
+    <div class="callout">
+      <p><strong>The big picture:</strong> Django's flow is: URL → View → Template → Response. Next.js's flow is: URL → Route → Component → HTML. Same steps, same order, different names. Once you see this pattern, Django stops feeling foreign.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. What's the Django equivalent of <code>npx create-next-app mysite</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>django-admin startproject mysite</code> — Creates the project structure with settings.py, urls.py, and manage.py.</div>
+      </div>
+
+      <div class="question">
+        <p>2. In Next.js, routes are defined by file structure. How are routes defined in Django?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Explicitly in <code>urls.py</code> files using <code>path()</code> patterns. You map URL patterns to view functions. It's more explicit but gives you more control.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What's the Django equivalent of a Prisma schema?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>models.py</code> — You define your database tables as Python classes. Django's ORM handles migrations, queries, and relationships, just like Prisma.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What do you get for free in Django that you'd need NextAuth for in Next.js?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Authentication! <code>django.contrib.auth</code> gives you user registration, login, logout, password reset, permissions, and groups — all built-in. Plus a free admin panel via <code>django.contrib.admin</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>5. After creating a new app with <code>python manage.py startapp blog</code>, what's the crucial step most beginners forget?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Adding <code>'blog'</code> to <code>INSTALLED_APPS</code> in <code>settings.py</code>. Without this, Django doesn't know the app exists and won't find its models, templates, or migrations.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/django/lessons/05-python-data-files/">&larr; Prev: Data &amp; File Handling</a>
+      <a href="/django/lessons/07-models-orm/">Next: Models &amp; ORM &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

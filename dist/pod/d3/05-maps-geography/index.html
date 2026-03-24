@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Maps &amp; Geography — The Pod</title>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/shell-B2-DeMgN.css">
+  <link rel="stylesheet" crossorigin href="/assets/episode-FuyZZf_I.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">The Pod</a>
+      <div class="header-right">
+        <a href="/pod/" class="back-link">&larr; All Episodes</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="episode-page" data-accent="var(--accent-d3)">
+
+    <div class="episode-header">
+      <span class="episode-track-badge d3">D3.js &mdash; Episode 05</span>
+      <h1>Maps &amp; Geography</h1>
+      <p class="episode-subtitle">Projections, GeoJSON, TopoJSON, and building choropleth maps for broadcast.</p>
+      <span class="episode-duration-badge">~15 min</span>
+    </div>
+
+    <div class="player-container">
+      <audio id="episode-audio" preload="metadata">
+        <source src="/audio/d3/05-maps-geography.mp3" type="audio/mpeg">
+      </audio>
+
+      <div class="player">
+        <div class="player-controls">
+          <button class="player-btn skip-btn" id="skip-back" aria-label="Skip back 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+          <button class="player-btn play-btn" id="play-pause" aria-label="Play">
+            <svg class="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg class="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <button class="player-btn skip-btn" id="skip-forward" aria-label="Skip forward 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+        </div>
+
+        <div class="player-progress">
+          <span class="player-time" id="current-time">0:00</span>
+          <div class="progress-bar-container" id="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <input type="range" class="progress-scrubber" id="scrubber" min="0" max="1000" value="0" step="1">
+          </div>
+          <span class="player-time" id="duration">0:00</span>
+        </div>
+
+        <div class="player-extras">
+          <div class="speed-control">
+            <button class="speed-btn" id="speed-btn">1x</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="transcript-container">
+      <div class="transcript-header">
+        <h2>Transcript</h2>
+        <button class="auto-scroll-toggle active" id="auto-scroll-toggle" aria-label="Toggle auto-scroll">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          Auto-scroll
+        </button>
+      </div>
+      <div class="transcript" id="transcript"></div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>The Pod &mdash; part of <a href="/">Learn Coding</a> by Trevor Brown</p>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+
+    const TRANSCRIPT = [
+      { time: 0, text: "Welcome back to The Pod. I'm Alex. Today we're tackling maps, one of D3's most visually impressive capabilities. If you've ever seen an interactive election map or a COVID tracker, chances are D3 was behind it." },
+      { time: 16, text: "I'm Sam, and I have to say, building my first map with D3 was the moment I fell in love with the library. There's something magical about turning raw geographic data into a visual you can explore." },
+      { time: 30, text: "Let's start with the fundamental challenge: the earth is a sphere, but your screen is flat. You can't perfectly represent a 3D surface on a 2D screen. That's where projections come in." },
+      { time: 44, text: "A projection is a mathematical function that converts latitude and longitude coordinates into x and y pixel positions. Every world map you've ever seen uses a projection, and every projection distorts something. Area, shape, distance, or direction." },
+      { time: 62, text: "The most common projection you've seen is Mercator. It's what Google Maps uses. It preserves shapes well but massively distorts size. Greenland looks as big as Africa, but Africa is actually 14 times larger." },
+      { time: 80, text: "D3 has dozens of projections built in. d3.geoMercator, d3.geoAlbersUsa which is great for US maps because it repositions Alaska and Hawaii, d3.geoOrthographic which gives you a globe view, and many more." },
+      { time: 98, text: "For broadcast news graphics, which projection do you see most?" },
+      { time: 104, text: "For US maps, geoAlbersUsa is the standard. For world maps, geoNaturalEarth1 or geoEqualEarth are popular because they balance distortion well. The choice depends on what you're showing and what distortions you can tolerate." },
+      { time: 122, text: "Now, projections need geographic data to project. That data comes in two main formats: GeoJSON and TopoJSON. Let's break those down." },
+      { time: 134, text: "GeoJSON is the simpler format. It's a standard JSON structure that describes geographic features: points, lines, and polygons. Each feature has a geometry with coordinates and a properties object for metadata like names and IDs." },
+      { time: 152, text: "A GeoJSON file for US states would have 50-something features, each with a polygon or multipolygon geometry that traces the state's border, plus properties like the state name and FIPS code." },
+      { time: 168, text: "TopoJSON is GeoJSON's more efficient cousin. Created by Mike Bostock, D3's creator. Instead of storing each polygon independently, TopoJSON stores the topology: shared borders are only stored once. This typically reduces file size by 80% or more." },
+      { time: 188, text: "That's a huge deal for web performance. A GeoJSON file for world countries might be 15 megabytes. The TopoJSON equivalent could be 1 or 2 megabytes. You do need to convert it back to GeoJSON on the client though, using the topojson-client library." },
+      { time: 208, text: "Alright, let's put it together. How do you actually draw a map? The workflow is: load your geographic data, set up a projection, create a path generator, and bindthe features to path elements." },
+      { time: 224, text: "The path generator is d3.geoPath(). You configure it with your projection, and it becomes a function that takes a GeoJSON feature and returns an SVG path string. It's like d3.line but for geography." },
+      { time: 242, text: "So in code, you'd do: const path = d3.geoPath().projection(projection). Then select your SVG, bindyour GeoJSON features array to path elements, and set each path's d attribute using the path generator. That's it. You have a map." },
+      { time: 262, text: "But a plain map is just outlines. The real power comes when you add data. That's a choropleth map, where regions are colored based on a data value. Population density, election results, COVID cases, whatever." },
+      { time: 278, text: "To build a choropleth, you need to join your geographic data with your statistical data. Usually by a shared identifier like a FIPS code or country ISO code. Then you create a color scale that maps data values to colors." },
+      { time: 296, text: "Something like d3.scaleSequential(d3.interpolateBlues).domain([0, maxValue]). Then when you set each path's fill, you use the color scale: .attr('fill', d => colorScale(dataMap.get(d.id)))." },
+      { time: 314, text: "What about interactivity? Hovering over states to see tooltips, clicking to zoom in?" },
+      { time: 322, text: "D3 makes that straightforward. You add event listeners to your path elements. On mouseover, you can highlight the region, show a tooltip with the data, and on click you can zoom in using d3.zoom or by transitioning the projection." },
+      { time: 340, text: "The fitSize method is also incredibly handy. projection.fitSize([width, height], geoJSON) automatically scales and centers your projection to fit the given geographic data within your SVG dimensions. No manual tweaking needed." },
+      { time: 358, text: "Let me mention one more thing: d3.geoPath has a centroid method that gives you the center point of any feature. That's great for placing labels or symbols at the center of states or countries." },
+      { time: 374, text: "And if you want to draw point data on your map, like city locations, you can use your projection directly. projection([longitude, latitude]) returns the x, y pixel coordinates, and you just place circles there." },
+      { time: 390, text: "One gotcha: GeoJSON coordinates are [longitude, latitude], not [latitude, longitude]. Longitude is x, latitude is y. It's backwards from what most people expect, and it's caused countless bugs." },
+      { time: 406, text: "That's the voice of experience right there. To wrap up: projections convert coordinates to pixels, GeoJSON and TopoJSON provide the geographic shapes, d3.geoPath draws them as SVG paths, and choropleths add data through color scales." },
+      { time: 424, text: "Maps are where D3 really demonstrates its power as a visualization library. No other JavaScript tool gives you this level of control over geographic rendering." },
+      { time: 436, text: "Absolutely. That wraps up the D3 track for now. We've gone from SVG basics to maps. If you've followed along, you have the foundation to build any visualization you can imagine. Thanks for listening, everyone!" }
+    ];
+  </script>
+  <script src="/pod/player.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 04 - Data Binding: The ONE Concept</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #f97316; }</style>
+  <style>
+    .demo button { background: var(--track-color); color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin: 0.25rem; font-weight: 600; }
+    .demo button:hover { background: #fb923c; }
+    .demo button.secondary { background: var(--info); color: #000; }
+    .demo button.green { background: var(--success); color: #000; }
+    .demo .controls { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .step-num { display: inline-block; background: var(--track-color); color: #000; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 600; font-size: 0.85rem; margin-right: 0.5rem; }
+    #stage-info { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0.75rem; margin-top: 0.75rem; font-family: var(--mono); font-size: 0.85rem; color: var(--text-muted); }
+  </style>
+  <script type="module" crossorigin src="/assets/d3_lessons_04-shapes-bindings-B8jIMP8U.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/init-tutor-Cq4VzOVI.js">
+  <link rel="modulepreload" crossorigin href="/assets/transform-DGvXF_4U.js">
+  <link rel="modulepreload" crossorigin href="/assets/max-DBeXZoyG.js">
+  <link rel="modulepreload" crossorigin href="/assets/defaultLocale-_QQJJ3OD.js">
+  <link rel="modulepreload" crossorigin href="/assets/linear-Bvwc2yJx.js">
+  <link rel="modulepreload" crossorigin href="/assets/band-HgbXjY_x.js">
+  <link rel="modulepreload" crossorigin href="/assets/select-PKtlUnGw.js">
+  <link rel="modulepreload" crossorigin href="/assets/axis-rlX7cRMw.js">
+  <link rel="modulepreload" crossorigin href="/assets/interactive-playground-DpCW7cfN.js">
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>04</span> Data Binding &mdash; The ONE Concept</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Mental Model:</strong> Data binding is a <code>forEach</code> loop with superpowers. Think of it as attaching a sticky note (data) to each DOM element, then using that sticky note to control the element's appearance.</p>
+
+    <!-- ============================================ -->
+    <!-- THE PROBLEM                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Problem Data Binding Solves</h2>
+
+    <p>Say you have population data for 5 states and you want a bar for each. Without data binding, you would write:</p>
+
+    <pre><code>const data = [
+  { state: "CA", pop: 39538 },
+  { state: "TX", pop: 29146 },
+  { state: "FL", pop: 21538 },
+  { state: "NY", pop: 20201 },
+  { state: "PA", pop: 13002 },
+];
+
+<span class="comment">// The forEach approach (what you know)</span>
+data.forEach((d, i) =&gt; {
+  svg.append("rect")
+    .attr("x", i * 100)
+    .attr("y", 300 - d.pop / 150)
+    .attr("width", 80)
+    .attr("height", d.pop / 150)
+    .attr("fill", "#f97316");
+});</code></pre>
+
+    <p>This works, but it has a problem: <strong>there is no link between the data and the elements.</strong> If the data changes, you have to manually find, update, or remove bars. D3's data binding creates that permanent link.</p>
+
+    <!-- ============================================ -->
+    <!-- WHAT .DATA() ACTUALLY DOES                   -->
+    <!-- ============================================ -->
+
+    <h2>What .data() Actually Does</h2>
+
+    <p>When you call <code>.data(array)</code>, D3 does something invisible but powerful: it takes each item in the array and <strong>physically attaches it to a DOM element</strong> using a hidden property called <code>__data__</code>.</p>
+
+    <pre><code><span class="comment">// After data binding, each rect has a hidden property:</span>
+rect.__data__  <span class="comment">// → { state: "CA", pop: 39538 }</span>
+
+<span class="comment">// You can see it! Open DevTools, select a rect, and type:</span>
+$0.__data__    <span class="comment">// → the data object bound to that element</span></code></pre>
+
+    <div class="aha">
+      <p><strong>This is the sticky note.</strong> Each DOM element literally carries its data around. When you write <code>.attr("width", d => d.pop)</code>, that <code>d</code> parameter is the sticky note glued to that specific element. D3 just reads the <code>__data__</code> property and passes it to your function.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE PATTERN                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Pattern: selectAll &rarr; data &rarr; join</h2>
+
+    <pre><code>svg.selectAll("rect")   <span class="comment">// 1. Select all existing rects (probably 0)</span>
+  .data(data)            <span class="comment">// 2. Bind the data array</span>
+  .join("rect")          <span class="comment">// 3. Create/update/remove rects to match data</span>
+  .attr("x", (d, i) =&gt; i * 100)  <span class="comment">// 4. Use bound data to set attributes</span>
+  .attr("width", 80)
+  .attr("height", d =&gt; d.pop / 150)
+  .attr("fill", "#f97316");</code></pre>
+
+    <h3><span class="step-num">1</span> selectAll("rect") &mdash; declare intent</h3>
+    <p>This usually selects <strong>zero elements</strong> on first run. That is fine. You are telling D3: "I want rects to represent my data." It is a declaration of intent, not a selection of existing elements.</p>
+
+    <div class="callout">
+      <p><strong>Why select things that don't exist?</strong> This is the most confusing part of D3 for newcomers. Think of it like React's <code>return &lt;div&gt;{items.map(...)}&lt;/div&gt;</code>. You are declaring what the DOM <em>should</em> look like, not finding what's there now. D3 uses the empty selection as a starting point to figure out what needs to be created.</p>
+    </div>
+
+    <h3><span class="step-num">2</span> .data(data) &mdash; match data to elements</h3>
+    <p>D3 compares the data array to the existing elements by index. 5 data items, 0 rects = 5 new rects needed.</p>
+
+    <h3><span class="step-num">3</span> .join("rect") &mdash; create, update, or remove</h3>
+    <p>This is the magic. <code>.join()</code> creates missing elements, keeps existing ones, and removes extras. After <code>.join("rect")</code>, you have exactly one rect per data item, each with its <code>__data__</code> attached.</p>
+
+    <h3><span class="step-num">4</span> Accessor functions: (d, i) =&gt; ...</h3>
+    <p>Any method that takes a value can also take a function. D3 calls it once per element:</p>
+    <ul>
+      <li><code>d</code> = the data bound to this element (the sticky note)</li>
+      <li><code>i</code> = the index in the data array</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- SIDE BY SIDE                                 -->
+    <!-- ============================================ -->
+
+    <h2>Side by Side: forEach vs D3</h2>
+
+    <div class="side-by-side">
+      <div>
+        <h5>forEach (manual)</h5>
+        <pre><code>data.forEach((d, i) =&gt; {
+  svg.append("rect")
+    .attr("x", i * 100)
+    .attr("y", 300 - d.pop/150)
+    .attr("width", 80)
+    .attr("height", d.pop/150)
+    .attr("fill", "#f97316");
+});
+<span class="comment">// No data link to elements
+// Can't easily update later</span></code></pre>
+      </div>
+      <div>
+        <h5>D3 data binding</h5>
+        <pre><code>svg.selectAll("rect")
+  .data(data)
+  .join("rect")
+  .attr("x", (d,i) =&gt; i * 100)
+  .attr("y", d =&gt; 300 - d.pop/150)
+  .attr("width", 80)
+  .attr("height", d =&gt; d.pop/150)
+  .attr("fill", "#f97316");
+<span class="comment">// Data glued to elements
+// Re-run with new data = auto-update</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The superpower:</strong> If you call the D3 version again with different data, it automatically updates existing bars, creates new ones, and removes old ones. The <code>forEach</code> version would just keep appending duplicates. This is what makes D3's data binding fundamentally different.</p>
+    </div>
+
+    <div class="try-it">
+      <h4>Play with it: data array length &rarr; DOM elements</h4>
+      <p style="color: #a5b4fc; font-size: 0.85rem; margin-bottom: 0.75rem;">Change the number of data points and watch rects appear/disappear. This is .data().join() at work: one rect per data item, always in sync.</p>
+      <div id="playground-data-binding"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 1: STEP BY STEP BAR CHART               -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Build a Bar Chart Step by Step</h2>
+    <p>Click through each stage to see the data binding pattern unfold one step at a time.</p>
+
+    <div class="demo">
+      <h4>Live: Step-by-step bar chart construction</h4>
+      <div class="controls">
+        <button id="btn-stage1">1. selectAll</button>
+        <button id="btn-stage2" class="secondary">2. .data()</button>
+        <button id="btn-stage3" class="green">3. .join()</button>
+        <button id="btn-stage4">4. Set attrs</button>
+        <button id="btn-reset" style="background: #666;">Reset</button>
+      </div>
+      <svg id="step-chart" viewBox="0 0 700 250"></svg>
+      <div id="stage-info">Click "1. selectAll" to begin...</div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 2: LIVE DATA UPDATE                     -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Change Data, Watch Bars Update</h2>
+    <p>Same <code>.data().join()</code> pattern, called with different data. The bars resize automatically.</p>
+
+    <div class="demo">
+      <h4>Live: Dynamic data &rarr; bar chart</h4>
+      <div class="controls">
+        <button id="btn-data1">2020 Census</button>
+        <button id="btn-data2" class="secondary">2010 Census</button>
+        <button id="btn-data3" class="green">Random</button>
+      </div>
+      <svg id="live-chart" viewBox="0 0 700 300"></svg>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What does <code>.data()</code> actually do to a DOM element?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It attaches each item from the data array to a DOM element via a hidden <code>__data__</code> property. This creates a persistent link between the data and the element. You can verify this in DevTools: select an element and check <code>$0.__data__</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why does <code>selectAll("rect")</code> select zero elements, and why is that OK?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">On first render, there are no rects yet. The empty selection is a <strong>declaration of intent</strong>: "I want rects to represent my data." <code>.data()</code> compares 5 data items to 0 existing elements and determines 5 need to be created. <code>.join("rect")</code> then creates those 5 rects. This is the "enter" phase.</div>
+      </div>
+
+      <div class="question">
+        <p>3. In <code>.attr("width", d => d.pop / 100)</code>, where does <code>d</code> come from?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>d</code> is the data item bound to the current element. D3 reads the element's <code>__data__</code> property and passes it as the first argument to your accessor function. The second argument <code>i</code> is the index. So for the 3rd bar, <code>d</code> is <code>data[2]</code> and <code>i</code> is <code>2</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What happens if you call the data binding pattern again with different data?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>.join()</code> handles it automatically: existing elements get updated with new data (update), new elements are created if the new array is longer (enter), and extra elements are removed if the new array is shorter (exit). This is why D3's data binding is more powerful than a simple forEach loop.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What is the difference between a static value and an accessor function in <code>.attr()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A static value like <code>.attr("width", 80)</code> sets the same value for every element. An accessor function like <code>.attr("width", d => d.pop / 100)</code> is called once per element, receiving the bound data, so each element can have a different value. Use static values for shared properties (like color), functions for data-driven properties (like bar width).</div>
+      </div>
+
+      <div class="question">
+        <p>6. How would you verify that data is correctly bound to a DOM element?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Open DevTools, select the element in the Elements panel, then in the Console type <code>$0.__data__</code>. This shows the data object D3 attached. You can also use <code>d3.select(element).datum()</code> to access the bound data from code. This is an essential debugging technique.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Bar Chart from Data</h4>
+      <p>Using the data binding pattern, create a horizontal bar chart from this data:</p>
+      <pre><code>const data = [
+  { state: "California", pop: 39538, abbr: "CA" },
+  { state: "Texas", pop: 29146, abbr: "TX" },
+  { state: "Florida", pop: 21538, abbr: "FL" },
+  { state: "New York", pop: 20201, abbr: "NY" },
+  { state: "Pennsylvania", pop: 13002, abbr: "PA" },
+  { state: "Illinois", pop: 12812, abbr: "IL" },
+  { state: "Ohio", pop: 11799, abbr: "OH" },
+  { state: "Georgia", pop: 10711, abbr: "GA" },
+];</code></pre>
+      <ol>
+        <li>Use <code>selectAll("rect").data(data).join("rect")</code> to create bars</li>
+        <li>Use accessor functions to set bar height based on <code>d.pop</code></li>
+        <li>Add text labels using a second <code>selectAll("text").data(data).join("text")</code></li>
+        <li>Show the state abbreviation below each bar</li>
+        <li>Bonus: Add value labels above each bar</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">Practice in your browser console on this page, or create a new file. The key is to write the pattern from memory: <code>selectAll &rarr; data &rarr; join &rarr; attrs</code>.</p>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>.data() attaches data to DOM elements</strong> via the hidden <code>__data__</code> property</li>
+      <li><strong>selectAll &rarr; data &rarr; join</strong> is the core pattern</li>
+      <li><strong>Accessor functions</strong> <code>(d, i) =&gt; ...</code> make each element data-driven</li>
+      <li><strong>Empty selectAll is a declaration of intent</strong>, not a bug</li>
+      <li><strong>.join() handles creation and cleanup</strong> automatically</li>
+      <li><strong>Re-running with new data updates the chart</strong> &mdash; no manual DOM management</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/03-scales-axes/">&larr; Lesson 03: D3 Selections Deep Dive</a>
+      <a href="/d3/lessons/05-maps-geo/">Lesson 05: Scales - The Translator &rarr;</a>
+    </div>
+  </div>
+
+
+
+</body>
+</html>

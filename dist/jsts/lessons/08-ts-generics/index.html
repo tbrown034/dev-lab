@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 08 - TypeScript Generics</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #eab308; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>08</span> TypeScript Generics &mdash; The Story Template</h1>
+    <a href="/jsts/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Generics are TypeScript's most powerful feature.</strong> They let you write code that works with any type while preserving type safety. Every React hook, every utility type, every library you use is built on generics.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: Story Templates</h2>
+
+    <p>A news organization has story templates: "PERSON did THING at PLACE on DATE." The template is fixed, but the specifics get filled in for each story. A generic type works the same way &mdash; the structure is defined once, and the specific types get filled in at use time.</p>
+
+    <p><code>Array&lt;T&gt;</code> is a template: "a list of T." <code>Array&lt;string&gt;</code> fills in T with string. <code>Array&lt;User&gt;</code> fills in T with User. The structure (list operations: push, pop, map, filter) stays the same. Only the element type changes.</p>
+
+    <!-- ============================================ -->
+    <!-- BASIC GENERICS                               -->
+    <!-- ============================================ -->
+
+    <h2>Generic Functions</h2>
+
+    <pre><code><span class="comment">// Without generics: you lose type information</span>
+function first(arr: any[]): any {
+  return arr[0];
+}
+const x = first([1, 2, 3]);  <span class="comment">// x: any (useless!)</span>
+
+<span class="comment">// With generics: type flows through</span>
+function first&lt;T&gt;(arr: T[]): T {
+  return arr[0];
+}
+const x = first([1, 2, 3]);       <span class="comment">// x: number (inferred!)</span>
+const y = first(["a", "b"]);      <span class="comment">// y: string</span>
+const z = first&lt;boolean&gt;([true]);  <span class="comment">// z: boolean (explicit)</span>
+</code></pre>
+
+    <div class="aha">
+      <p><strong>Generics preserve the connection between input and output.</strong> Without generics, the return type is disconnected from the argument type. With generics, TypeScript tracks the type through the function. This is why <code>useState&lt;number&gt;(0)</code> gives you a <code>number</code> setter &mdash; the generic flows through.</p>
+    </div>
+
+    <h3>Multiple Type Parameters</h3>
+
+    <pre><code>function pair&lt;A, B&gt;(first: A, second: B): [A, B] {
+  return [first, second];
+}
+
+const p = pair("hello", 42);  <span class="comment">// type: [string, number]</span>
+
+<span class="comment">// Real example: Map</span>
+const map = new Map&lt;string, User&gt;();
+map.set("trevor", { name: "Trevor", age: 30 });
+map.get("trevor");  <span class="comment">// User | undefined</span>
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- CONSTRAINTS                                  -->
+    <!-- ============================================ -->
+
+    <h2>Generic Constraints</h2>
+
+    <p>Sometimes you need to restrict what types T can be:</p>
+
+    <pre><code><span class="comment">// T must have a .length property</span>
+function longest&lt;T extends { length: number }&gt;(a: T, b: T): T {
+  return a.length &gt;= b.length ? a : b;
+}
+
+longest("hello", "world");         <span class="comment">// OK: strings have .length</span>
+longest([1, 2], [1, 2, 3]);        <span class="comment">// OK: arrays have .length</span>
+longest(10, 20);                    <span class="comment">// Error: numbers don't have .length</span>
+
+<span class="comment">// T must be a key of the object</span>
+function getProperty&lt;T, K extends keyof T&gt;(obj: T, key: K): T[K] {
+  return obj[key];
+}
+
+const user = { name: "Trevor", age: 30 };
+getProperty(user, "name");   <span class="comment">// type: string</span>
+getProperty(user, "age");    <span class="comment">// type: number</span>
+getProperty(user, "email");  <span class="comment">// Error: "email" is not a key of user</span>
+</code></pre>
+
+    <div class="callout">
+      <p><strong><code>keyof</code> is your best friend.</strong> It extracts the union of all keys from a type. <code>keyof User</code> is <code>"name" | "age" | "email"</code>. Combined with <code>extends</code>, it ensures you can only access properties that actually exist. This is the foundation of type-safe property access.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CONDITIONAL TYPES                            -->
+    <!-- ============================================ -->
+
+    <h2>Conditional Types</h2>
+
+    <p>Types can have if/else logic:</p>
+
+    <pre><code><span class="comment">// Syntax: T extends U ? X : Y</span>
+type IsString&lt;T&gt; = T extends string ? "yes" : "no";
+
+type A = IsString&lt;string&gt;;    <span class="comment">// "yes"</span>
+type B = IsString&lt;number&gt;;    <span class="comment">// "no"</span>
+type C = IsString&lt;"hello"&gt;;   <span class="comment">// "yes" (literal extends string)</span>
+</code></pre>
+
+    <h3>Distributive Conditional Types</h3>
+
+    <pre><code><span class="comment">// When T is a union, conditional types distribute across the union</span>
+type ToArray&lt;T&gt; = T extends any ? T[] : never;
+
+type D = ToArray&lt;string | number&gt;;
+<span class="comment">// = (string extends any ? string[] : never) | (number extends any ? number[] : never)</span>
+<span class="comment">// = string[] | number[]</span>
+
+<span class="comment">// Compare with non-distributive (wrapped in tuple):</span>
+type ToArrayND&lt;T&gt; = [T] extends [any] ? T[] : never;
+type E = ToArrayND&lt;string | number&gt;;
+<span class="comment">// = (string | number)[]  — one mixed array, not a union of arrays</span>
+</code></pre>
+
+    <h3>Extract and Exclude (Built-in Conditional Types)</h3>
+
+    <pre><code>type Status = "draft" | "published" | "archived" | "deleted";
+
+<span class="comment">// Exclude: remove members from a union</span>
+type ActiveStatus = Exclude&lt;Status, "deleted"&gt;;
+<span class="comment">// "draft" | "published" | "archived"</span>
+
+<span class="comment">// Extract: keep only matching members</span>
+type PublicStatus = Extract&lt;Status, "published" | "archived"&gt;;
+<span class="comment">// "published" | "archived"</span>
+
+<span class="comment">// NonNullable: remove null and undefined</span>
+type MaybeString = string | null | undefined;
+type DefinitelyString = NonNullable&lt;MaybeString&gt;;
+<span class="comment">// string</span>
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- MAPPED TYPES                                 -->
+    <!-- ============================================ -->
+
+    <h2>Mapped Types</h2>
+
+    <p>Transform every property of a type according to a rule:</p>
+
+    <pre><code><span class="comment">// Make all properties optional (this is how Partial works!)</span>
+type MyPartial&lt;T&gt; = {
+  [K in keyof T]?: T[K];
+};
+
+<span class="comment">// Make all properties readonly</span>
+type MyReadonly&lt;T&gt; = {
+  readonly [K in keyof T]: T[K];
+};
+
+<span class="comment">// Make all properties nullable</span>
+type Nullable&lt;T&gt; = {
+  [K in keyof T]: T[K] | null;
+};
+
+interface User {
+  name: string;
+  age: number;
+}
+
+type NullableUser = Nullable&lt;User&gt;;
+<span class="comment">// { name: string | null; age: number | null }</span>
+</code></pre>
+
+    <h3>Key Remapping (as clause)</h3>
+
+    <pre><code><span class="comment">// Create getter methods for every property</span>
+type Getters&lt;T&gt; = {
+  [K in keyof T as `get${Capitalize&lt;string & K&gt;}`]: () =&gt; T[K];
+};
+
+type UserGetters = Getters&lt;User&gt;;
+<span class="comment">// { getName: () =&gt; string; getAge: () =&gt; number }</span>
+
+<span class="comment">// Filter properties by type</span>
+type StringKeys&lt;T&gt; = {
+  [K in keyof T as T[K] extends string ? K : never]: T[K];
+};
+
+type UserStrings = StringKeys&lt;User&gt;;
+<span class="comment">// { name: string } — age is filtered out</span>
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- INFER                                        -->
+    <!-- ============================================ -->
+
+    <h2>The <code>infer</code> Keyword</h2>
+
+    <p><code>infer</code> lets you extract types from within other types. Think of it as a capture group in regex, but for types:</p>
+
+    <pre><code><span class="comment">// Extract return type of a function</span>
+type MyReturnType&lt;T&gt; = T extends (...args: any[]) =&gt; infer R ? R : never;
+
+type A = MyReturnType&lt;() =&gt; string&gt;;    <span class="comment">// string</span>
+type B = MyReturnType&lt;(x: number) =&gt; boolean&gt;;  <span class="comment">// boolean</span>
+
+<span class="comment">// Extract element type from an array</span>
+type ElementOf&lt;T&gt; = T extends (infer E)[] ? E : never;
+
+type C = ElementOf&lt;string[]&gt;;     <span class="comment">// string</span>
+type D = ElementOf&lt;(number | boolean)[]&gt;;  <span class="comment">// number | boolean</span>
+
+<span class="comment">// Extract Promise value type</span>
+type Unwrap&lt;T&gt; = T extends Promise&lt;infer V&gt; ? V : T;
+
+type E = Unwrap&lt;Promise&lt;string&gt;&gt;;  <span class="comment">// string</span>
+type F = Unwrap&lt;number&gt;;           <span class="comment">// number (not a Promise, return as-is)</span>
+
+<span class="comment">// Deep unwrap (recursive!)</span>
+type DeepUnwrap&lt;T&gt; = T extends Promise&lt;infer V&gt; ? DeepUnwrap&lt;V&gt; : T;
+type G = DeepUnwrap&lt;Promise&lt;Promise&lt;string&gt;&gt;&gt;;  <span class="comment">// string</span>
+</code></pre>
+
+    <div class="aha">
+      <p><strong><code>infer</code> is pattern matching for types.</strong> The pattern is defined by the <code>extends</code> clause. <code>infer R</code> says "whatever matches this position, call it R." This is how TypeScript extracts the element type from arrays, the return type from functions, and the value type from Promises.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- REAL PATTERNS                                -->
+    <!-- ============================================ -->
+
+    <h2>Real-World Generic Patterns</h2>
+
+    <h3>Type-Safe Event Emitter</h3>
+
+    <pre><code>type EventMap = {
+  login: { userId: string; timestamp: number };
+  logout: { userId: string };
+  error: { message: string; code: number };
+};
+
+class TypedEmitter&lt;Events extends Record&lt;string, any&gt;&gt; {
+  private handlers = new Map&lt;string, Function[]&gt;();
+
+  on&lt;K extends keyof Events&gt;(event: K, handler: (data: Events[K]) =&gt; void) {
+    const list = this.handlers.get(event as string) || [];
+    list.push(handler);
+    this.handlers.set(event as string, list);
+  }
+
+  emit&lt;K extends keyof Events&gt;(event: K, data: Events[K]) {
+    const list = this.handlers.get(event as string) || [];
+    list.forEach(fn =&gt; fn(data));
+  }
+}
+
+const emitter = new TypedEmitter&lt;EventMap&gt;();
+emitter.on("login", (data) =&gt; {
+  <span class="comment">// data is { userId: string; timestamp: number }</span>
+  console.log(data.userId);
+});
+emitter.emit("login", { userId: "trevor", timestamp: Date.now() });
+emitter.emit("login", { userId: "trevor" });  <span class="comment">// Error: missing timestamp</span>
+</code></pre>
+
+    <h3>Type-Safe API Client</h3>
+
+    <pre><code>type Routes = {
+  "/api/users":    { GET: User[]; POST: User };
+  "/api/users/:id": { GET: User; PUT: User; DELETE: void };
+  "/api/articles": { GET: Article[]; POST: Article };
+};
+
+async function api&lt;
+  P extends keyof Routes,
+  M extends keyof Routes[P]
+&gt;(path: P, method: M): Promise&lt;Routes[P][M]&gt; {
+  const res = await fetch(path, { method: method as string });
+  return res.json();
+}
+
+const users = await api("/api/users", "GET");     <span class="comment">// User[]</span>
+const user = await api("/api/users/:id", "GET");  <span class="comment">// User</span>
+await api("/api/users", "DELETE");                 <span class="comment">// Error: DELETE not on /api/users</span>
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Knowledge Check</h4>
+
+      <div class="question">
+        <p>1. What type does this resolve to?</p>
+        <pre><code>type X = "hello" extends string ? true : false;</code></pre>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer"><strong>true</strong>. The literal type <code>"hello"</code> extends (is assignable to) <code>string</code>, so the conditional resolves to the true branch.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Explain why <code>Partial</code> is implemented as a mapped type.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer"><code>Partial&lt;T&gt;</code> is <code>{ [K in keyof T]?: T[K] }</code>. It iterates over every key K in T (via <code>keyof T</code>), keeps the same value type (<code>T[K]</code>), and adds the <code>?</code> modifier to make each property optional. It needs to be a mapped type because it transforms each property individually.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What does <code>infer</code> do in <code>T extends Promise&lt;infer U&gt; ? U : T</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer"><code>infer U</code> creates a new type variable <code>U</code> that captures whatever type is inside the <code>Promise&lt;&gt;</code>. If <code>T</code> is <code>Promise&lt;string&gt;</code>, then <code>U</code> is inferred as <code>string</code>. If <code>T</code> doesn't match the <code>Promise&lt;...&gt;</code> pattern, the false branch returns <code>T</code> unchanged.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Type-Safe Form Validator</h4>
+      <p>Create a generic validation system:</p>
+      <pre><code><span class="comment">// Define your schema type</span>
+type Schema = {
+  name: { type: "string"; required: true };
+  age: { type: "number"; required: false };
+  email: { type: "string"; required: true };
+};
+
+<span class="comment">// Build these utility types:</span>
+
+<span class="comment">// 1. SchemaToType — converts schema to the actual data type</span>
+type UserData = SchemaToType&lt;Schema&gt;;
+<span class="comment">// { name: string; age?: number; email: string }</span>
+
+<span class="comment">// 2. ValidationErrors — maps each key to string | undefined</span>
+type UserErrors = ValidationErrors&lt;Schema&gt;;
+<span class="comment">// { name?: string; age?: string; email?: string }</span>
+
+<span class="comment">// 3. RequiredKeys — extracts only the required field names</span>
+type Required = RequiredKeys&lt;Schema&gt;;
+<span class="comment">// "name" | "email"</span></code></pre>
+      <p><strong>Hints:</strong> You'll need conditional types, mapped types, and key remapping.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/jsts/lessons/07-typescript-foundations/">&larr; TypeScript Foundations</a>
+      <a href="/jsts/lessons/09-ts-advanced/">Advanced TypeScript &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

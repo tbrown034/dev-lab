@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 06 - RAG Patterns</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #f472b6; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>06</span> RAG Patterns &mdash; Grounding AI in Facts</h1>
+    <a href="/ai-llm/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">RAG is the cure for hallucination.</strong> Instead of relying on what the model memorized, you give it the actual source material. It's the difference between a closed-book and an open-book exam.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>Mental Model: The Open-Book Exam</h2>
+
+    <p>Without RAG, the model answers from memory (training data). It might be wrong, outdated, or confidently fabricated. With RAG, you <strong>retrieve relevant documents</strong> and include them in the prompt. The model answers based on the actual text you provided.</p>
+
+    <div class="aha">
+      <p><strong>RAG = Retrieval-Augmented Generation.</strong> Three steps: (1) user asks a question, (2) you retrieve relevant documents from your database, (3) you send those documents + the question to the model. The model generates an answer grounded in real sources.</p>
+    </div>
+
+    <pre><code><span class="comment">// The RAG flow:</span>
+
+User question: "What did the city council decide about the budget?"
+         ↓
+Step 1: RETRIEVE — search your article database for relevant documents
+         ↓
+Found: [article_1: "Council voted 7-2 to approve...",
+        article_2: "Budget includes $5M for..."]
+         ↓
+Step 2: AUGMENT — inject documents into the prompt
+         ↓
+Prompt: "Based on ONLY these sources, answer the question:
+         [source 1] [source 2]
+         Question: What did the city council decide?"
+         ↓
+Step 3: GENERATE — model answers using the provided sources
+         ↓
+Response: "The city council voted 7-2 to approve the budget,
+          which includes $5M for infrastructure (Source 1)."</code></pre>
+
+    <!-- ============================================ -->
+    <!-- CHUNKING                                     -->
+    <!-- ============================================ -->
+
+    <h2>Chunking: Breaking Documents into Pieces</h2>
+
+    <p>You can't embed and retrieve entire articles if they're thousands of words. You need to break them into <strong>chunks</strong> &mdash; smaller pieces that each contain a coherent unit of information.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Bad: fixed-size chunks</h5>
+        <pre><code><span class="comment">// Split every 500 characters
+// Might break mid-sentence
+// Loses context</span>
+
+"The council voted 7-2 to ap"
+"prove the budget. Mayor John"
+"son said 'This is a historic"
+
+<span class="comment">// Chunk boundary breaks
+// the key quote!</span></code></pre>
+      </div>
+      <div>
+        <h5>Good: semantic chunks</h5>
+        <pre><code><span class="comment">// Split by paragraph or section
+// Overlap for context
+// Keep metadata</span>
+
+Chunk 1: "The council voted 7-2 to
+approve the $50M budget..."
+{ source: "art-001", para: 1 }
+
+Chunk 2: "Mayor Johnson said 'This
+is a historic investment...'"
+{ source: "art-001", para: 2 }
+
+<span class="comment">// Each chunk is self-contained</span></code></pre>
+      </div>
+    </div>
+
+    <pre><code><span class="comment">// Practical chunking function</span>
+function chunkArticle(article, { chunkSize = 500, overlap = 50 } = {}) {
+  const paragraphs = article.text.split("\n\n");
+  const chunks = [];
+  let currentChunk = "";
+
+  for (const para of paragraphs) {
+    if ((currentChunk + para).length &gt; chunkSize && currentChunk) {
+      chunks.push({
+        text: currentChunk.trim(),
+        source: article.id,
+        title: article.title,
+        date: article.date
+      });
+      <span class="comment">// Keep overlap for context continuity</span>
+      const words = currentChunk.split(" ");
+      currentChunk = words.slice(-overlap / 4).join(" ") + "\n\n" + para;
+    } else {
+      currentChunk += (currentChunk ? "\n\n" : "") + para;
+    }
+  }
+
+  if (currentChunk.trim()) {
+    chunks.push({
+      text: currentChunk.trim(),
+      source: article.id,
+      title: article.title,
+      date: article.date
+    });
+  }
+
+  return chunks;
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>Chunk size tradeoffs:</strong> Smaller chunks (200&ndash;400 tokens) are more precise in retrieval but lose context. Larger chunks (500&ndash;1000 tokens) keep more context but may include irrelevant information. Start with ~400 tokens and adjust based on your retrieval quality.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE RAG PIPELINE                             -->
+    <!-- ============================================ -->
+
+    <h2>The Complete RAG Pipeline</h2>
+
+    <pre><code>import Anthropic from "@anthropic-ai/sdk";
+import { ChromaClient } from "chromadb";
+
+const claude = new Anthropic();
+const chroma = new ChromaClient();
+
+<span class="comment">// Step 0 (once): Index your documents</span>
+async function indexArticles(articles) {
+  const collection = await chroma.getOrCreateCollection({ name: "newsroom" });
+  const chunks = articles.flatMap(a =&gt; chunkArticle(a));
+
+  await collection.add({
+    ids: chunks.map((_, i) =&gt; `chunk-${i}`),
+    documents: chunks.map(c =&gt; c.text),
+    metadatas: chunks.map(c =&gt; ({
+      source: c.source,
+      title: c.title,
+      date: c.date
+    }))
+  });
+
+  return collection;
+}
+
+<span class="comment">// Step 1-3: The RAG query function</span>
+async function ragQuery(question, collection) {
+  <span class="comment">// RETRIEVE: find relevant chunks</span>
+  const results = await collection.query({
+    queryTexts: [question],
+    nResults: 5
+  });
+
+  <span class="comment">// AUGMENT: build the prompt with sources</span>
+  const sources = results.documents[0].map((doc, i) =&gt; {
+    const meta = results.metadatas[0][i];
+    return `[Source: ${meta.title}, ${meta.date}]\n${doc}`;
+  }).join("\n\n---\n\n");
+
+  <span class="comment">// GENERATE: ask Claude with the sources</span>
+  const response = await claude.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 1024,
+    system: `You are a research assistant for journalists.
+Answer questions based ONLY on the provided sources.
+Always cite which source you're drawing from.
+If the sources don't contain enough information, say so.
+Never make up facts not in the sources.`,
+    messages: [{
+      role: "user",
+      content: `Sources:\n${sources}\n\nQuestion: ${question}`
+    }]
+  });
+
+  return response.content[0].text;
+}</code></pre>
+
+    <div class="aha">
+      <p><strong>The critical instruction:</strong> "Answer based ONLY on the provided sources." This is what prevents hallucination. Without this constraint, the model will happily blend source material with its training data, which defeats the whole point.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CITATION PATTERNS                            -->
+    <!-- ============================================ -->
+
+    <h2>Citation Patterns</h2>
+
+    <p>For journalism, citations aren't optional. Here are three approaches:</p>
+
+    <pre><code><span class="comment">// Pattern 1: Inline citations (simplest)</span>
+system: `Cite sources inline like [Source: Title, Date].`
+
+<span class="comment">// Output: "The council voted 7-2 [Source: Budget Article, 2025-01-15]"</span>
+
+
+<span class="comment">// Pattern 2: Numbered footnotes (cleanest)</span>
+system: `Number each source [1], [2], etc.
+Add a "Sources" section at the end.`
+
+<span class="comment">// Output: "The council voted 7-2 [1]...
+// Sources:
+// [1] Budget Article, Jan 15, 2025
+// [2] Council Meeting Notes, Jan 14, 2025"</span>
+
+
+<span class="comment">// Pattern 3: Structured JSON (most parseable)</span>
+system: `Return JSON with claims and their source references.`
+
+<span class="comment">// Output: {
+//   "answer": "The council voted 7-2...",
+//   "citations": [
+//     { "claim": "voted 7-2", "source": "art-001", "quote": "..." }
+//   ]
+// }</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- COMMON RAG FAILURES                          -->
+    <!-- ============================================ -->
+
+    <h2>Common RAG Failures (and Fixes)</h2>
+
+    <table>
+      <tr><th>Problem</th><th>Symptom</th><th>Fix</th></tr>
+      <tr><td><strong>Bad retrieval</strong></td><td>Relevant docs not found</td><td>Improve chunking, add metadata, try hybrid search (keyword + semantic)</td></tr>
+      <tr><td><strong>Too much context</strong></td><td>Model gets confused</td><td>Reduce nResults, improve chunk relevance scoring</td></tr>
+      <tr><td><strong>Source leakage</strong></td><td>Model uses training data</td><td>Stronger "ONLY use provided sources" instruction</td></tr>
+      <tr><td><strong>No citation</strong></td><td>Can't verify claims</td><td>Require citations in system prompt, use structured output</td></tr>
+      <tr><td><strong>Stale data</strong></td><td>Outdated answers</td><td>Re-index regularly, include dates in metadata</td></tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What are the three steps of RAG?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Retrieve (find relevant documents from your database), Augment (inject those documents into the prompt), Generate (the model answers based on the provided sources).</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why do you need to chunk documents?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Long documents can't be effectively embedded as a single vector (the meaning gets diluted). Chunking creates smaller, focused pieces where each chunk has a clear topic. This makes retrieval more precise &mdash; you find the specific paragraph that answers the question, not just the right article.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What's the most important instruction for preventing hallucination in RAG?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">"Answer based ONLY on the provided sources." Without this, the model blends source material with training data. You also need "If the sources don't contain enough information, say so" to prevent the model from filling gaps with made-up content.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Why is chunk overlap useful?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Overlap ensures that information at chunk boundaries isn't lost. If a key fact spans two paragraphs, the overlap captures context from both. Without it, relevant sentences at the edges of chunks might lose their context.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Cited Q&A System</h4>
+      <ol>
+        <li>Create 5 mock articles (3&ndash;4 paragraphs each) about a fictional city's governance</li>
+        <li>Chunk the articles with metadata (title, date, paragraph number)</li>
+        <li>Index them with ChromaDB</li>
+        <li>Build a RAG query function that returns answers with numbered citations</li>
+        <li>Test with questions that require information from multiple articles</li>
+      </ol>
+      <p style="margin-top: 0.75rem;"><strong>Bonus:</strong> Add a relevance threshold &mdash; if no chunks score above 0.7, respond "I don't have enough information to answer this."</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/ai-llm/lessons/05-embeddings-search/">&larr; Embeddings &amp; Search</a>
+      <a href="/ai-llm/lessons/07-agents/">Lesson 07: Agents &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

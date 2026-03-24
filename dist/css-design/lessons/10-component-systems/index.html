@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 10 - Component CSS Systems</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #a855f7; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>10</span> Component Systems &mdash; Styling at Scale</h1>
+    <a href="/css-design/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>A component is a contract.</strong> It defines what can vary, what's fixed, and how it interacts with other components. The CSS methodology you choose determines how that contract is expressed and enforced.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: CSS as an API</h2>
+
+    <p>Think of each component's CSS as an API. It has:</p>
+
+    <ul>
+      <li><strong>Public interface</strong> &mdash; custom properties that consumers can override (<code>--btn-bg</code>, <code>--btn-padding</code>)</li>
+      <li><strong>Internal implementation</strong> &mdash; layout, positioning, structure that shouldn't be changed</li>
+      <li><strong>Variants</strong> &mdash; predefined states that modify the public interface (<code>.btn-lg</code>, <code>.btn-outline</code>)</li>
+      <li><strong>Slots</strong> &mdash; areas where consumer content goes (children, named regions)</li>
+    </ul>
+
+    <div class="aha">
+      <p><strong>Good component CSS is like good function design.</strong> Clear inputs (custom properties, variant classes). Predictable outputs (visual appearance). No side effects (doesn't leak styles to siblings or parents). Encapsulated implementation (internal selectors don't matter to consumers).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE APPROACHES                               -->
+    <!-- ============================================ -->
+
+    <h2>The Three Approaches</h2>
+
+    <h3>1. BEM (Block Element Modifier)</h3>
+
+    <pre><code><span class="comment">/* Naming convention: block__element--modifier */</span>
+.card { }
+.card__title { }
+.card__body { }
+.card__footer { }
+.card--featured { }
+.card--compact { }
+
+<span class="comment">/* Strengths:
+   - Clear naming tells you what belongs to what
+   - Flat specificity (everything is a single class)
+   - Works without build tools
+   - Self-documenting: .card__title clearly belongs to .card
+
+   Weaknesses:
+   - Verbose class names
+   - Convention-based (nothing prevents .card__title outside a .card)
+   - No actual encapsulation (styles CAN leak) */</span></code></pre>
+
+    <h3>2. Utility-First (Tailwind)</h3>
+
+    <pre><code><span class="comment">/* Component = composition of utilities */</span>
+&lt;div class="flex flex-col gap-4 p-6 bg-surface rounded-lg border border-border"&gt;
+  &lt;h3 class="text-lg font-semibold text-text"&gt;...&lt;/h3&gt;
+  &lt;p class="text-sm text-text-secondary"&gt;...&lt;/p&gt;
+&lt;/div&gt;
+
+<span class="comment">/* Strengths:
+   - No CSS file to maintain
+   - No naming decisions
+   - Co-located styles (see what it looks like in the template)
+   - No unused CSS in production
+
+   Weaknesses:
+   - Long class strings
+   - Repetition across instances (solved with components/partials)
+   - Harder to see the "design intent"
+   - Requires build tool */</span></code></pre>
+
+    <h3>3. CSS Modules / Scoped CSS</h3>
+
+    <pre><code><span class="comment">/* card.module.css */</span>
+.card { background: var(--color-surface); }
+.title { font-weight: 600; }
+.body { color: var(--color-text-secondary); }
+
+<span class="comment">/* Build tool transforms to unique class names:
+   .card_a1b2c3 { background: var(--color-surface); }
+   .title_d4e5f6 { font-weight: 600; }
+   Guaranteed no conflicts. */</span>
+
+<span class="comment">/* Strengths:
+   - True encapsulation (unique class names prevent leaking)
+   - Use any class names you want (no naming convention)
+   - TypeScript integration (import styles and get autocomplete)
+
+   Weaknesses:
+   - Requires build tool
+   - Dynamic styling requires extra work
+   - Harder to override from outside the component */</span></code></pre>
+
+    <div class="callout">
+      <p><strong>There is no "best" approach.</strong> BEM works great for simpler projects and content sites. Tailwind excels for application UIs with lots of one-off variations. CSS Modules are ideal for component libraries with strict encapsulation needs. Many production codebases use a hybrid: Tailwind for layout utilities + component classes for complex components.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODERN PATTERN: HEADLESS COMPONENTS          -->
+    <!-- ============================================ -->
+
+    <h2>The Headless Component Pattern</h2>
+
+    <p>The most influential modern pattern: separate behavior from appearance. Libraries like Radix UI and Headless UI provide accessible behavior; you provide all the styling.</p>
+
+    <pre><code><span class="comment">/* Radix UI gives you unstyled, accessible primitives */</span>
+&lt;Dialog.Root&gt;
+  &lt;Dialog.Trigger className="..."&gt;Open&lt;/Dialog.Trigger&gt;
+  &lt;Dialog.Portal&gt;
+    &lt;Dialog.Overlay className="..." /&gt;
+    &lt;Dialog.Content className="..."&gt;
+      &lt;Dialog.Title className="..."&gt;Title&lt;/Dialog.Title&gt;
+      &lt;Dialog.Description className="..."&gt;...&lt;/Dialog.Description&gt;
+    &lt;/Dialog.Content&gt;
+  &lt;/Dialog.Portal&gt;
+&lt;/Dialog.Root&gt;
+
+<span class="comment">/* You style with whatever approach you prefer:
+   - Tailwind classes directly
+   - CSS custom properties
+   - CSS Modules
+   - data-state attributes for animations */</span>
+
+<span class="comment">/* Radix uses data-state attributes for interactive states */</span>
+[data-state="open"] { animation: fade-in 200ms ease-out; }
+[data-state="closed"] { animation: fade-out 150ms ease-in; }</code></pre>
+
+    <div class="aha">
+      <p><strong>The shadcn/ui breakthrough.</strong> shadcn/ui took the headless pattern further: instead of installing a component library (dependency), you copy component files into your project (ownership). The components use Radix for behavior + Tailwind for styling + <code>class-variance-authority</code> for variants. You own the code. You can modify anything. This is the dominant pattern in the React ecosystem right now.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CLASS VARIANCE AUTHORITY                     -->
+    <!-- ============================================ -->
+
+    <h2>Class Variance Authority (CVA): Typed Variants</h2>
+
+    <pre><code><span class="comment">/* CVA creates a typed variant system for Tailwind classes */</span>
+import { cva } from "class-variance-authority";
+
+const button = cva(
+  <span class="comment">/* Base styles (always applied) */</span>
+  "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-white hover:bg-primary/90",
+        outline: "border border-input bg-transparent hover:bg-accent",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        destructive: "bg-destructive text-white hover:bg-destructive/90",
+      },
+      size: {
+        sm: "h-8 px-3 text-xs",
+        md: "h-10 px-4 text-sm",
+        lg: "h-12 px-6 text-base",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "md",
+    },
+  }
+);
+
+<span class="comment">/* Usage in a React component: */</span>
+&lt;button className={button({ variant: "outline", size: "lg" })}&gt;
+  Click me
+&lt;/button&gt;
+
+<span class="comment">/* CVA gives you:
+   - TypeScript autocomplete for variants
+   - Compound variants (variant + size combinations)
+   - Default variants
+   - The Tailwind approach but with structure */</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- PURE CSS COMPONENT PATTERN                   -->
+    <!-- ============================================ -->
+
+    <h2>Pure CSS Component Pattern (No JS Framework)</h2>
+
+    <p>For design systems that need to work everywhere (not just React), here's the pure CSS approach using modern features:</p>
+
+    <pre><code><span class="comment">/* button.css — framework-agnostic component */</span>
+@layer components {
+  .btn {
+    <span class="comment">/* Component token API (public) */</span>
+    --btn-bg: var(--color-action);
+    --btn-text: var(--color-action-text);
+    --btn-padding-x: var(--spacing-element);
+    --btn-padding-y: var(--spacing-tight);
+    --btn-radius: var(--radius-md);
+    --btn-font-size: var(--text-sm);
+
+    <span class="comment">/* Implementation (internal) */</span>
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-tight);
+    padding: var(--btn-padding-y) var(--btn-padding-x);
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    border: 1px solid transparent;
+    border-radius: var(--btn-radius);
+    font-size: var(--btn-font-size);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 200ms ease-out, border-color 200ms ease-out;
+
+    &:hover {
+      filter: brightness(1.1);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-action);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  <span class="comment">/* Variants override token API */</span>
+  .btn-outline {
+    --btn-bg: transparent;
+    --btn-text: var(--color-action);
+    border-color: var(--color-action);
+  }
+
+  .btn-ghost {
+    --btn-bg: transparent;
+    --btn-text: var(--color-text);
+  }
+
+  .btn-lg {
+    --btn-padding-x: var(--spacing-section);
+    --btn-padding-y: var(--spacing-element);
+    --btn-font-size: var(--text-base);
+  }
+
+  .btn-sm {
+    --btn-padding-x: var(--spacing-tight);
+    --btn-padding-y: var(--space-1);
+    --btn-font-size: var(--text-xs);
+  }
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>This pattern works in React, Vue, Svelte, plain HTML, or web components.</strong> Because it's just CSS classes, any framework can use it. The component token API (<code>--btn-bg</code>, etc.) lets consumers customize without modifying the source CSS. This is the approach used by many enterprise design systems (IBM Carbon, Salesforce Lightning).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- COMPOSITION PATTERNS                         -->
+    <!-- ============================================ -->
+
+    <h2>Composition Patterns</h2>
+
+    <h3>The compound component pattern</h3>
+
+    <pre><code><span class="comment">/* A card with structured slots */</span>
+.card { }
+.card-header { }
+.card-body { }
+.card-footer { }
+
+<span class="comment">/* Usage: */</span>
+&lt;div class="card"&gt;
+  &lt;div class="card-header"&gt;...&lt;/div&gt;
+  &lt;div class="card-body"&gt;...&lt;/div&gt;
+  &lt;div class="card-footer"&gt;...&lt;/div&gt;
+&lt;/div&gt;
+
+<span class="comment">/* Style relationships between parts using :has() */</span>
+.card:has(.card-footer) .card-body {
+  padding-bottom: 0;  <span class="comment">/* remove bottom padding when footer exists */</span>
+}
+.card:has(img:first-child) {
+  padding-top: 0;     <span class="comment">/* remove top padding when image is first */</span>
+}</code></pre>
+
+    <h3>The data-attribute variant pattern</h3>
+
+    <pre><code><span class="comment">/* Variants via data attributes instead of classes */</span>
+.btn[data-variant="outline"] { --btn-bg: transparent; }
+.btn[data-variant="ghost"] { --btn-bg: transparent; --btn-text: var(--color-text); }
+.btn[data-size="sm"] { --btn-padding: 0.25rem 0.5rem; }
+.btn[data-size="lg"] { --btn-padding: 0.75rem 1.5rem; }
+
+<span class="comment">/* Usage: */</span>
+&lt;button class="btn" data-variant="outline" data-size="lg"&gt;
+  Click me
+&lt;/button&gt;
+
+<span class="comment">/* Benefits:
+   - Class list stays clean (just .btn)
+   - Variants are explicit attributes
+   - Works great with Radix/headless component data-state */</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What does "headless component" mean?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A headless component provides behavior and accessibility (keyboard handling, ARIA attributes, focus management) without any visual styling. The consumer provides all CSS. Libraries like Radix UI and Headless UI are headless &mdash; they handle the hard parts (accessibility, state) and let you style however you want.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What problem does BEM solve, and what's its main weakness?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">BEM solves naming collisions and makes component ownership clear through naming conventions (<code>.block__element--modifier</code>). Its main weakness: it's convention-based, not enforced. Nothing prevents someone from using <code>.card__title</code> outside a <code>.card</code>, and styles can still leak.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What's the difference between installing a component library and the shadcn/ui approach?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Traditional libraries (Material UI, Chakra) are npm dependencies &mdash; you import and use them, but they own the code. shadcn/ui copies component files into YOUR project &mdash; you own the code and can modify anything. It's the difference between renting (dependency) and owning (source code).</div>
+      </div>
+
+      <div class="question">
+        <p>4. Why are component tokens (like <code>--btn-bg</code>) useful?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Component tokens create an explicit API. They tell consumers "you can customize these properties" without exposing the internal CSS implementation. Variants override tokens, not CSS rules directly. This makes components predictable and safe to customize.</div>
+      </div>
+
+      <div class="question">
+        <p>5. When would you use data attributes instead of classes for component variants?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Data attributes keep the class list clean (just <code>.btn</code>) and make variants explicit. They're especially useful with headless component libraries that already use <code>data-state</code> attributes. They also work well with JavaScript frameworks that bind dynamic attributes.</div>
+      </div>
+    </div>
+
+    <div class="exercise">
+      <h4>Exercise: Build a Component System</h4>
+      <ol>
+        <li>Build a button component with the pure CSS pattern: base styles, component tokens, 3 variants (default, outline, ghost), 3 sizes (sm, md, lg)</li>
+        <li>Build a card component with compound parts (header, body, footer) and <code>:has()</code> for conditional styling</li>
+        <li>Build an input component with focus states, error states, and disabled states</li>
+        <li>Wire all three components to your semantic tokens from Lesson 09</li>
+        <li>Verify they update when you switch themes</li>
+        <li>Bonus: Build the button in both the pure CSS approach and the CVA/Tailwind approach. Compare.</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Components are contracts</strong> &mdash; public API (tokens), internal implementation, variants, slots</li>
+      <li><strong>BEM = naming convention</strong>, Tailwind = utility composition, CSS Modules = build-time encapsulation</li>
+      <li><strong>Headless components</strong> separate behavior from styling &mdash; the dominant modern pattern</li>
+      <li><strong>shadcn/ui = ownership over dependency</strong> &mdash; copy code, don't install packages</li>
+      <li><strong>CVA provides typed variants</strong> for Tailwind-based component systems</li>
+      <li><strong>Pure CSS components with @layer</strong> work in any framework</li>
+      <li><strong>Component tokens define the customization API</strong></li>
+      <li><strong>Data attributes</strong> are a clean alternative to modifier classes</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/css-design/lessons/09-design-tokens/">&larr; Lesson 09: Design Tokens</a>
+      <a href="/css-design/lessons/11-broadcast-graphics/">Lesson 11: Broadcast Graphics &rarr;</a>
+    </div>
+  </div>
+</body>
+</html>

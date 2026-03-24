@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Django — What It Is and How to Talk About It</title>
+  <style>
+    :root { --track-color: #22c55e; }
+    .crash-tag {
+      display: inline-block; font-family: var(--mono); font-size: 0.6rem;
+      letter-spacing: 0.08em; text-transform: uppercase; padding: 0.2rem 0.55rem;
+      border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #ef4444;
+      margin-bottom: 0.5rem;
+    }
+    .say-this {
+      background: rgba(74, 222, 128, 0.06);
+      border-left: 3px solid #4ade80;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .say-this p { color: #86efac; }
+    .say-this strong { color: #4ade80; }
+    [data-theme="light"] .say-this p { color: #166534; }
+    [data-theme="light"] .say-this strong { color: #15803d; }
+
+    .dont-say {
+      background: rgba(239, 68, 68, 0.06);
+      border-left: 3px solid #ef4444;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .dont-say p { color: #fca5a5; }
+    .dont-say strong { color: #ef4444; }
+    [data-theme="light"] .dont-say p { color: #991b1b; }
+
+    .vocab {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .vocab h4 {
+      color: var(--track-color);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+    .vocab dt {
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-top: 0.75rem;
+    }
+    .vocab dt:first-of-type { margin-top: 0; }
+    .vocab dd {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      margin-left: 0;
+      margin-bottom: 0.25rem;
+    }
+
+    .flow-diagram {
+      background: #141414;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .flow-diagram .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .flow-diagram .flow-step {
+      display: inline-block;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.85rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+    .flow-diagram .flow-step.active {
+      border-color: var(--track-color);
+      color: var(--track-color);
+    }
+    .flow-diagram .flow-arrow {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+    [data-theme="light"] .flow-diagram { background: #f0eeeb; }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>Django</span> What It Is &amp; How to Talk About It</h1>
+    <a href="/courses/crash-course/">&larr; Back to crash course</a>
+  </div>
+
+  <div class="content">
+
+    <div class="crash-tag">Texas Tribune Interview Prep</div>
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Django is a Python web framework.</strong> That's the whole sentence. It takes a URL someone visits, runs some Python, and sends back a web page or JSON data. The Tribune uses it to run their CMS, their data apps, and the backend that feeds their D3 graphics. Here's what you need to know to talk about it.</p>
+
+    <!-- ============================================ -->
+    <!-- WHAT IS DJANGO                               -->
+    <!-- ============================================ -->
+
+    <h2>What is Django?</h2>
+
+    <p>Django is a <strong>web framework written in Python</strong>. When someone visits a website powered by Django, here's what happens:</p>
+
+    <div class="flow-diagram">
+      <div class="flow-row">
+        <span class="flow-step">Someone visits a URL</span>
+        <span class="flow-arrow">&rarr;</span>
+        <span class="flow-step active">Django matches it to a function</span>
+        <span class="flow-arrow">&rarr;</span>
+        <span class="flow-step active">That function pulls data from the database</span>
+        <span class="flow-arrow">&rarr;</span>
+        <span class="flow-step active">Fills in an HTML template</span>
+        <span class="flow-arrow">&rarr;</span>
+        <span class="flow-step">Sends the page back</span>
+      </div>
+    </div>
+
+    <p>That's the whole framework. Everything else &mdash; models, views, templates, the admin panel &mdash; is just Django's name for each step in that flow.</p>
+
+    <div class="aha">
+      <p><strong>The analogy:</strong> Think of Django like a newsroom's assignment desk. A request comes in (the URL). The assignment desk routes it to the right reporter (the <strong>view</strong>). The reporter pulls records from the filing cabinet (the <strong>database/models</strong>). Then writes the story using a standard layout (the <strong>template</strong>). The finished page goes out to the reader.</p>
+    </div>
+
+    <div class="say-this">
+      <p><strong>How to say it:</strong> "Django handles the backend &mdash; the database, the URL routing, the API endpoints, the admin interface. It's a Python framework that's been around since 2005, so it's very mature and battle-tested. It's especially popular in newsrooms because of how fast you can build content management tools with it."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHY NEWSROOMS LOVE IT                        -->
+    <!-- ============================================ -->
+
+    <h2>Why Newsrooms Love Django</h2>
+
+    <p>Django has been the default backend for news organizations for years. The Washington Post, The New York Times, the Tribune &mdash; tons of newsrooms use it. Here's why:</p>
+
+    <ul>
+      <li><strong>The admin panel is free.</strong> You define your data (stories, election results, county data) and Django auto-generates a full editing interface. Reporters and editors can create, edit, search, and filter content without a developer building anything. This is Django's killer feature for newsrooms.</li>
+      <li><strong>It's fast to build with.</strong> Django comes with authentication, database management, URL routing, form handling, and security all built in. You're not assembling 15 npm packages &mdash; it's all there.</li>
+      <li><strong>Python is the newsroom language.</strong> Data journalists already use Python for analysis (pandas, Jupyter notebooks). Django lets them use the same language for the web app.</li>
+      <li><strong>It handles data well.</strong> Django's ORM (object-relational mapper) lets you query databases in Python instead of raw SQL. That makes data pipelines &mdash; like importing election results from the AP &mdash; straightforward.</li>
+      <li><strong>"Batteries included" philosophy.</strong> Django's motto. Unlike more minimal frameworks, Django ships with everything you need out of the box.</li>
+    </ul>
+
+    <div class="say-this">
+      <p><strong>How to say it:</strong> "What makes Django a natural fit for newsrooms is the admin panel. You define your data models, and Django gives you a full content management interface for free. Editors can publish stories, update election results, manage event listings &mdash; all without engineering support. On the developer side, the ORM makes it straightforward to build data pipelines for things like ingesting AP election results."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE FOUR PIECES                              -->
+    <!-- ============================================ -->
+
+    <h2>Django's Four Pieces</h2>
+
+    <p>Django organizes code into four main parts. If someone mentions any of these, you'll know what they're talking about:</p>
+
+    <div class="vocab">
+      <h4>The Core Pieces</h4>
+      <dl>
+        <dt>Models</dt>
+        <dd>Your database tables, defined as Python classes. A <code>Story</code> model has fields like <code>headline</code>, <code>body</code>, <code>pub_date</code>, <code>published</code>. Each field becomes a column in the database. You never write SQL to create tables &mdash; Django generates it from your Python code.</dd>
+
+        <dt>Views</dt>
+        <dd>The Python functions that handle requests. A view receives a URL request, does something (usually queries the database), and returns a response (usually an HTML page or JSON data). In other frameworks, these are called "controllers" or "route handlers."</dd>
+
+        <dt>Templates</dt>
+        <dd>HTML files with placeholders that Django fills in with data. Think of them like mail merge: you write the layout once with blank spots, and Django fills in the specific story headline, date, author, etc. for each page.</dd>
+
+        <dt>URLs (URL conf)</dt>
+        <dd>A list that maps URL patterns to view functions. "When someone visits <code>/stories/</code>, run the <code>story_list</code> view. When they visit <code>/stories/texas-budget/</code>, run the <code>story_detail</code> view." This is explicit &mdash; you write it out, nothing is magic.</dd>
+      </dl>
+    </div>
+
+    <p>That pattern has a name: <strong>MTV</strong> (Model-Template-View). It's Django's version of the more common MVC (Model-View-Controller) pattern. The naming is slightly different, but the concept is identical: separate your data, your logic, and your presentation.</p>
+
+    <div class="dont-say">
+      <p><strong>Don't mix up:</strong> Django "views" are not like React views/components. A Django view is a <em>backend function</em> that handles a request &mdash; more like an API route handler. The "template" is the part that's closer to what React developers think of as a "view."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MORE VOCABULARY                              -->
+    <!-- ============================================ -->
+
+    <h2>More Vocabulary You Should Know</h2>
+
+    <div class="vocab">
+      <h4>Terms That Might Come Up</h4>
+      <dl>
+        <dt>ORM (Object-Relational Mapper)</dt>
+        <dd>Django's way of talking to the database in Python instead of SQL. Instead of writing <code>SELECT * FROM stories WHERE published = true</code>, you write <code>Story.objects.filter(published=True)</code>. Same result, but in Python. It works with PostgreSQL, MySQL, SQLite &mdash; you can switch databases without changing your code.</dd>
+
+        <dt>Migrations</dt>
+        <dd>When you change a model (add a field, rename something), Django generates a "migration" &mdash; a script that updates the database to match. The whole team commits migrations to git, so everyone's database stays in sync. You run <code>makemigrations</code> to generate them and <code>migrate</code> to apply them.</dd>
+
+        <dt>Django Admin</dt>
+        <dd>The auto-generated editing interface. You register a model and instantly get a web-based CRUD (create, read, update, delete) panel. Editors use it to manage content. You can customize it with search, filters, custom actions, and inline editing. This is Django's biggest selling point for newsrooms.</dd>
+
+        <dt>Django REST Framework (DRF)</dt>
+        <dd>An add-on library for building JSON APIs. If your D3 chart needs data from the backend, DRF is how you serve it. It handles serialization (converting database objects to JSON), pagination, filtering, and authentication. Most Django shops use it.</dd>
+
+        <dt>Management Commands</dt>
+        <dd>Custom terminal commands you write in Django. In a newsroom, these are your data pipelines: "import election results from this CSV," "pull the latest AP data," "scrape the state legislature website." They're scheduled with cron jobs or run manually. Think of them as scripts that have full access to your database.</dd>
+
+        <dt>Middleware</dt>
+        <dd>Code that runs on every request before it reaches your view, and on every response before it leaves. Authentication checks, security headers, logging. You don't usually write middleware yourself, but you should know it exists as a layer.</dd>
+
+        <dt>WSGI / ASGI</dt>
+        <dd>How Django talks to the web server in production. WSGI is the traditional (synchronous) standard. ASGI is the newer async version. You don't need to know the details &mdash; just know that in production, Django runs behind something like Gunicorn (a WSGI server) or Uvicorn (ASGI), not the built-in <code>runserver</code>.</dd>
+
+        <dt>Apps</dt>
+        <dd>Django projects are made of "apps" &mdash; self-contained modules. A Tribune project might have a <code>stories</code> app, an <code>elections</code> app, and a <code>data_visuals</code> app. Each has its own models, views, and URLs. They're meant to be reusable and independent.</dd>
+      </dl>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DJANGO vs OTHER FRAMEWORKS                   -->
+    <!-- ============================================ -->
+
+    <h2>Django vs. Other Frameworks</h2>
+
+    <p>If they compare it to something you know, here's how to orient:</p>
+
+    <table>
+      <tr>
+        <th>Framework</th>
+        <th>How It Compares</th>
+      </tr>
+      <tr>
+        <td><strong>Express.js</strong></td>
+        <td>Minimal &mdash; you assemble everything yourself. Django is "batteries included" (auth, ORM, admin all built in).</td>
+      </tr>
+      <tr>
+        <td><strong>Next.js</strong></td>
+        <td>Full-stack JavaScript/React. Django is Python-only backend. They can work together: Django serves APIs, Next.js renders the frontend.</td>
+      </tr>
+      <tr>
+        <td><strong>Flask</strong></td>
+        <td>Python, but minimal like Express. Flask gives you routing and that's about it. Django gives you the whole kitchen. Flask is better for tiny projects; Django is better for big ones like a CMS.</td>
+      </tr>
+      <tr>
+        <td><strong>Ruby on Rails</strong></td>
+        <td>The closest equivalent. Both are "batteries included," opinionated, have ORMs, auto-generated admin tools, and follow similar patterns. Django is to Python what Rails is to Ruby.</td>
+      </tr>
+      <tr>
+        <td><strong>WordPress</strong></td>
+        <td>Different level entirely. WordPress is a ready-made CMS. Django is a framework you build a CMS <em>with</em>. Much more flexible, but more engineering required.</td>
+      </tr>
+    </table>
+
+    <div class="say-this">
+      <p><strong>How to say it:</strong> "Django's sweet spot is when you need a structured backend with good data management. Compared to something like Flask, it's more opinionated but gives you a lot for free &mdash; especially the admin panel and the ORM. For a newsroom that manages a lot of structured content, that tradeoff makes sense."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HOW D3 AND DJANGO WORK TOGETHER              -->
+    <!-- ============================================ -->
+
+    <h2>How D3 and Django Work Together</h2>
+
+    <p>This is probably the most useful thing you can talk about in the interview &mdash; because it shows you understand the full stack:</p>
+
+    <div class="flow-diagram">
+      <div class="flow-row">
+        <span class="flow-step active" style="border-color: #22c55e; color: #22c55e;">Django serves JSON data via API</span>
+        <span class="flow-arrow">&rarr;</span>
+        <span class="flow-step active" style="border-color: #f97316; color: #f97316;">D3 fetches that JSON in the browser</span>
+        <span class="flow-arrow">&rarr;</span>
+        <span class="flow-step active" style="border-color: #f97316; color: #f97316;">D3 draws the visualization</span>
+      </div>
+    </div>
+
+    <p>They're <strong>two completely separate layers</strong> that talk through HTTP. The Django backend doesn't know or care that D3 is drawing a chart &mdash; it just serves data. The D3 frontend doesn't know or care that Django is talking to a PostgreSQL database &mdash; it just fetches JSON.</p>
+
+    <p>This separation is powerful:</p>
+    <ul>
+      <li>A backend developer can change the database structure without touching the chart code</li>
+      <li>A graphics developer can redesign the visualization without touching the API</li>
+      <li>The same API can feed a D3 chart, a mobile app, and an internal tool</li>
+      <li>On election night, Django ingests new results from the AP. The D3 chart polls the API and updates automatically. Two independent systems, working together.</li>
+    </ul>
+
+    <div class="say-this">
+      <p><strong>How to say it:</strong> "What I find interesting about the D3-Django stack is how clean the separation is. Django owns the data layer &mdash; models, migrations, data ingestion. D3 owns the presentation layer &mdash; the visual encoding, the interactivity, the responsiveness. They meet at the API. That means on election night, the data pipeline team can focus on getting results into Django, and the graphics team can focus on the D3 chart rendering correctly. Neither team is blocked by the other."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE ADMIN PANEL                              -->
+    <!-- ============================================ -->
+
+    <h2>The Admin Panel &mdash; Talk About This</h2>
+
+    <p>If there's one Django feature to talk about with enthusiasm, it's the admin.</p>
+
+    <p>Here's the concept: you define a database table in Python (a "model"). You add one line of code to register it with the admin. Django then auto-generates a full web interface where non-technical users can:</p>
+
+    <ul>
+      <li>Create, edit, and delete records</li>
+      <li>Search and filter by any field</li>
+      <li>Sort by date, author, status</li>
+      <li>Bulk-select and perform actions ("publish selected stories")</li>
+    </ul>
+
+    <p>No frontend code. No React. No forms. Just register the model and it works.</p>
+
+    <p>For a newsroom, this means:</p>
+    <ul>
+      <li>Reporters can publish stories without bugging a developer</li>
+      <li>Editors can update election results by hand if the automated pipeline breaks</li>
+      <li>Data journalists can manage datasets through a web UI instead of raw SQL</li>
+      <li>Developers spend their time on features, not building CRUD interfaces</li>
+    </ul>
+
+    <div class="say-this">
+      <p><strong>How to say it:</strong> "The admin is one of the reasons I'm drawn to Django for newsroom work. In a fast-moving environment, you don't always have time to build custom interfaces. The admin gives editors and reporters a way to manage content immediately, and developers can customize it over time &mdash; add search, filters, custom actions, whatever the team needs."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DATA PIPELINES                               -->
+    <!-- ============================================ -->
+
+    <h2>Data Pipelines in Django</h2>
+
+    <p>Newsrooms ingest a lot of external data &mdash; election results from the AP, census data, school ratings, campaign finance records. Django handles this with <strong>management commands</strong>: custom scripts that can read files, call APIs, and save data to the database.</p>
+
+    <p>The concept:</p>
+    <ol>
+      <li>Write a Python script that reads a CSV or calls an API</li>
+      <li>Use Django's ORM to save each row to the database</li>
+      <li>Run it from the terminal: <code>python manage.py import_election_results</code></li>
+      <li>Schedule it with a cron job to run automatically (e.g., every 5 minutes on election night)</li>
+    </ol>
+
+    <p>The D3 frontend then reads from that same database via the API. Data flows in from the AP, Django stores it, D3 displays it. A complete pipeline.</p>
+
+    <div class="say-this">
+      <p><strong>How to say it:</strong> "I've been learning about Django's management commands as a way to handle data ingestion &mdash; pulling in external data sources and loading them into the database. I can see how that'd be critical on election night: you'd have a command polling the AP results feed, saving to the database, and the D3 graphics reading from the API in near-real time."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SMART QUESTIONS                              -->
+    <!-- ============================================ -->
+
+    <h2>Smart Questions You Could Ask Them</h2>
+
+    <ul>
+      <li>"What does your Django stack look like? Is it primarily serving templates or mostly acting as an API backend for JavaScript frontends?"</li>
+      <li>"How do you handle data ingestion for election results &mdash; is that a Django management command pipeline, or something separate?"</li>
+      <li>"How much do reporters and editors interact with the Django admin directly?"</li>
+      <li>"Are you using Django REST Framework for your APIs, or something else?"</li>
+      <li>"What's the deployment setup &mdash; are you on Heroku, AWS, or something custom?"</li>
+      <li>"How do you handle the relationship between your CMS content and the interactive graphics?"</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- YOUR ADVANTAGE                               -->
+    <!-- ============================================ -->
+
+    <h2>Your Advantage &mdash; Don't Forget This</h2>
+
+    <p>You're a journalist who codes. Not a developer who reads the news. That distinction matters.</p>
+
+    <p>Most developers the Tribune interviews can write Python and build APIs. They can't do what you can do:</p>
+
+    <ul>
+      <li><strong>You know what makes a good story.</strong> You know which data point is the lead, what context readers need, and what questions they'll ask.</li>
+      <li><strong>You understand the editorial process.</strong> Deadline pressure, fact-checking, source verification, editorial judgment about what to publish.</li>
+      <li><strong>You can talk to reporters.</strong> You speak their language. You know what "the nut graf" is. You know why a graphic needs a clear takeaway, not just cool interactivity.</li>
+      <li><strong>You're learning the technical side.</strong> That trajectory &mdash; journalist &rarr; developer &mdash; is exactly what organizations like the Tribune value, because it's rare.</li>
+    </ul>
+
+    <div class="say-this">
+      <p><strong>If you say one thing in this interview, say this:</strong> "I bring editorial judgment to the development process. I've been in newsrooms. I know what makes a graphic useful to readers, not just technically impressive. The code skills I'm building are how I deliver on that editorial instinct at scale."</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/courses/crash-course/d3/">&larr; D3</a>
+      <a href="/courses/crash-course/">Crash course home &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

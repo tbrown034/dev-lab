@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Use Cases for Journalism - Learn AI</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #f472b6; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover, .nav a.active {
+      background: #f472b6;
+      color: #000;
+      border-color: #f472b6;
+    }
+
+    .page-title {
+      padding: 2rem 3rem 0.5rem;
+    }
+    .page-title h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+    .page-title h2 span { color: #f472b6; }
+    .page-title p {
+      color: #888;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+      max-width: 700px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.25rem;
+      padding: 1.5rem 3rem 3rem;
+      max-width: 1600px;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      border-color: #444;
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      padding: 1.25rem 1.25rem 0.75rem;
+    }
+    .card-header .card-num {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.35rem;
+    }
+    .card-header h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .card-header .who {
+      font-size: 0.78rem;
+      color: #888;
+      font-style: italic;
+    }
+
+    .card-demo {
+      margin: 0.5rem 1.25rem;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      overflow: hidden;
+      min-height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 12px;
+    }
+
+    .card-body {
+      padding: 0.75rem 1.25rem 1rem;
+    }
+    .card-body ul {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 0.75rem;
+    }
+    .card-body ul li {
+      font-size: 0.78rem;
+      color: #999;
+      line-height: 1.6;
+      padding-left: 0.85rem;
+      position: relative;
+    }
+    .card-body ul li::before {
+      content: "\2022";
+      position: absolute;
+      left: 0;
+      color: #555;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .tag {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .tag-pink   { background: #f472b622; color: #f472b6; }
+    .tag-purple { background: #818cf822; color: #818cf8; }
+    .tag-green  { background: #4ade8022; color: #4ade80; }
+    .tag-orange { background: #f9731622; color: #f97316; }
+
+    .accent-pink   { color: #f472b6; }
+    .accent-purple { color: #818cf8; }
+    .accent-green  { color: #4ade80; }
+    .accent-orange { color: #f97316; }
+
+    /* ── Demo Specific Styles ── */
+    .demo-flow {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .demo-flow-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 6px;
+      font-size: 0.7rem;
+    }
+    .demo-flow-step .step-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .demo-flow-step .step-text { color: #aaa; flex: 1; }
+    .demo-flow-arrow {
+      text-align: center;
+      color: #333;
+      font-size: 0.7rem;
+    }
+
+    .demo-chat {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .demo-msg {
+      max-width: 85%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.72rem;
+      line-height: 1.5;
+    }
+    .demo-msg.user {
+      align-self: flex-end;
+      background: #f472b630;
+      border: 1px solid #f472b650;
+      color: #f472b6;
+    }
+    .demo-msg.assistant {
+      align-self: flex-start;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      color: #ccc;
+    }
+    .demo-msg .role {
+      font-size: 0.55rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 3px;
+      color: #888;
+    }
+
+    .demo-meter {
+      width: 100%;
+    }
+    .demo-meter-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .demo-meter-label {
+      font-size: 0.68rem;
+      color: #aaa;
+      width: 70px;
+      flex-shrink: 0;
+    }
+    .demo-meter-bar {
+      flex: 1;
+      height: 14px;
+      background: #111;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .demo-meter-fill {
+      height: 100%;
+      border-radius: 4px;
+    }
+    .demo-meter-val {
+      font-size: 0.65rem;
+      font-weight: 600;
+      width: 35px;
+      text-align: right;
+    }
+
+    .demo-grid-items {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      width: 100%;
+    }
+    .demo-grid-item {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 6px;
+      padding: 8px;
+    }
+    .demo-grid-item .item-label {
+      font-size: 0.55rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+    .demo-grid-item .item-value {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .demo-grid-item .item-sub {
+      font-size: 0.6rem;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 768px) {
+      .header, .nav, .page-title, .grid { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Learn <span>AI</span> + LLMs</h1>
+    <div class="meta">Real-World Use Cases</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/ai-llm/">Home</a>
+    <a href="/ai-llm/lessons/01-how-llms-work/">01 LLMs</a>
+    <a href="/ai-llm/lessons/02-prompt-engineering/">02 Prompts</a>
+    <a href="/ai-llm/lessons/03-claude-api/">03 API</a>
+    <a href="/ai-llm/lessons/04-tool-use/">04 Tools</a>
+    <a href="/ai-llm/lessons/05-embeddings-search/">05 Embeddings</a>
+    <a href="/ai-llm/lessons/06-rag-patterns/">06 RAG</a>
+    <a href="/ai-llm/lessons/07-agents/">07 Agents</a>
+    <a href="/ai-llm/lessons/08-structured-output/">08 Structured</a>
+    <a href="/ai-llm/lessons/09-streaming-ux/">09 Streaming</a>
+    <a href="/ai-llm/lessons/10-eval-testing/">10 Evals</a>
+    <a href="/ai-llm/lessons/11-ethics-journalism/">11 Ethics</a>
+    <a href="/ai-llm/lessons/12-capstone/">12 Capstone</a>
+    <a href="/ai-llm/references/use-cases/" class="active">Use Cases</a>
+  </nav>
+
+  <div class="page-title">
+    <h2>15 AI <span>Use Cases</span> for Journalism</h2>
+    <p>Practical AI applications for newsrooms, investigations, and content workflows. Each card shows a real implementation pattern with architecture and tooling.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- Card 1: Document Summarizer -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">01 / NLP</div>
+        <h3>Document Summarizer</h3>
+        <div class="who">AP, Reuters, Bloomberg</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-flow">
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#f472b630;color:#f472b6;">1</div>
+            <div class="step-text">Input: 50-page PDF report</div>
+          </div>
+          <div class="demo-flow-arrow">&#8595;</div>
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#818cf830;color:#818cf8;">2</div>
+            <div class="step-text">Chunk &rarr; Summarize each section</div>
+          </div>
+          <div class="demo-flow-arrow">&#8595;</div>
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#4ade8030;color:#4ade80;">3</div>
+            <div class="step-text">Output: 3-paragraph executive summary</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Map-reduce pattern: split long docs, summarize chunks, merge</li>
+          <li>Chain-of-density prompting for progressively refined summaries</li>
+          <li>Preserves key quotes, dates, and figures from source material</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-pink">map-reduce</span>
+          <span class="tag tag-purple">prompt engineering</span>
+          <span class="tag tag-green">PDF parsing</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Source Verification Tool -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">02 / VERIFICATION</div>
+        <h3>Source Verification Tool</h3>
+        <div class="who">Bellingcat, NYT Visual Investigations</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-chat">
+          <div class="demo-msg user"><div class="role">Reporter</div>Verify: "City budget increased 40% in 2024"</div>
+          <div class="demo-msg assistant"><div class="role">AI Verifier</div>Searching city budget records... Found FY2024 report: budget was $4.2B (FY2023: $3.1B). Actual increase: <strong style="color:#4ade80;">35.5%</strong>. Claim is approximately correct but overstates by ~4.5 points.</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>RAG pipeline with government document database</li>
+          <li>Cross-references claims against primary sources</li>
+          <li>Returns confidence score and source citations</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-pink">RAG</span>
+          <span class="tag tag-purple">tool use</span>
+          <span class="tag tag-green">fact-checking</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: FOIA Request Generator -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">03 / LEGAL</div>
+        <h3>FOIA Request Generator</h3>
+        <div class="who">MuckRock, IRE, ProPublica</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-flow">
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#4ade8030;color:#4ade80;">1</div>
+            <div class="step-text">Reporter describes what records they need</div>
+          </div>
+          <div class="demo-flow-arrow">&#8595;</div>
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#f472b630;color:#f472b6;">2</div>
+            <div class="step-text">AI generates legally compliant FOIA letter</div>
+          </div>
+          <div class="demo-flow-arrow">&#8595;</div>
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#818cf830;color:#818cf8;">3</div>
+            <div class="step-text">Includes correct agency, statutes, fee waiver</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Templates for federal, state, and local FOIA requests</li>
+          <li>Auto-identifies correct agency and applicable statutes</li>
+          <li>Generates fee waiver justification for journalists</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-green">structured output</span>
+          <span class="tag tag-purple">legal templates</span>
+          <span class="tag tag-pink">prompt chaining</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Interview Transcript Analyzer -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">04 / NLP</div>
+        <h3>Interview Transcript Analyzer</h3>
+        <div class="who">The Intercept, NPR</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-grid-items">
+          <div class="demo-grid-item">
+            <div class="item-label" style="color: #f472b6;">Key Claims</div>
+            <div class="item-value" style="color: #f472b6;">12</div>
+            <div class="item-sub">Verifiable statements extracted</div>
+          </div>
+          <div class="demo-grid-item">
+            <div class="item-label" style="color: #818cf8;">Topics</div>
+            <div class="item-value" style="color: #818cf8;">5</div>
+            <div class="item-sub">Budget, housing, transit, ...</div>
+          </div>
+          <div class="demo-grid-item">
+            <div class="item-label" style="color: #4ade80;">Quotes</div>
+            <div class="item-value" style="color: #4ade80;">8</div>
+            <div class="item-sub">Publication-ready quotes</div>
+          </div>
+          <div class="demo-grid-item">
+            <div class="item-label" style="color: #f97316;">Follow-ups</div>
+            <div class="item-value" style="color: #f97316;">3</div>
+            <div class="item-sub">Suggested follow-up questions</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Extracts claims, quotes, topics, and suggested follow-ups</li>
+          <li>Speaker diarization to attribute quotes correctly</li>
+          <li>Highlights contradictions with previous statements</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">extraction</span>
+          <span class="tag tag-pink">structured output</span>
+          <span class="tag tag-purple">NLP</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: Fact-check Pipeline -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">05 / VERIFICATION</div>
+        <h3>Fact-check Pipeline</h3>
+        <div class="who">PolitiFact, Snopes, FullFact</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-flow">
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#f472b630;color:#f472b6;">1</div>
+            <div class="step-text">Extract verifiable claims from text</div>
+          </div>
+          <div class="demo-flow-arrow">&#8595;</div>
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#818cf830;color:#818cf8;">2</div>
+            <div class="step-text">Search knowledge base + web for evidence</div>
+          </div>
+          <div class="demo-flow-arrow">&#8595;</div>
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#4ade8030;color:#4ade80;">3</div>
+            <div class="step-text">Rate: True / Mostly True / False + evidence</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Three-step: claim extraction &rarr; evidence retrieval &rarr; verdict</li>
+          <li>Agent loop with web search and document retrieval tools</li>
+          <li>Human-in-the-loop for final publication decision</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-pink">agents</span>
+          <span class="tag tag-purple">tool use</span>
+          <span class="tag tag-green">RAG</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 6: Sentiment Analysis Dashboard -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">06 / ANALYTICS</div>
+        <h3>Sentiment Analysis Dashboard</h3>
+        <div class="who">Social media monitors, newsrooms</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-meter">
+          <div class="demo-meter-row">
+            <div class="demo-meter-label">Positive</div>
+            <div class="demo-meter-bar"><div class="demo-meter-fill" style="width:42%;background:#4ade80;"></div></div>
+            <div class="demo-meter-val" style="color:#4ade80;">42%</div>
+          </div>
+          <div class="demo-meter-row">
+            <div class="demo-meter-label">Neutral</div>
+            <div class="demo-meter-bar"><div class="demo-meter-fill" style="width:31%;background:#818cf8;"></div></div>
+            <div class="demo-meter-val" style="color:#818cf8;">31%</div>
+          </div>
+          <div class="demo-meter-row">
+            <div class="demo-meter-label">Negative</div>
+            <div class="demo-meter-bar"><div class="demo-meter-fill" style="width:27%;background:#ef4444;"></div></div>
+            <div class="demo-meter-val" style="color:#ef4444;">27%</div>
+          </div>
+          <div style="font-size:0.6rem;color:#666;margin-top:6px;text-align:center;">1,247 posts analyzed &middot; Last 24 hours</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Batch classification of social media posts and comments</li>
+          <li>Tracks sentiment trends over time for breaking stories</li>
+          <li>Detects sarcasm and nuanced language using few-shot prompts</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">classification</span>
+          <span class="tag tag-pink">batch processing</span>
+          <span class="tag tag-green">few-shot</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 7: Content Classifier -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">07 / ORGANIZATION</div>
+        <h3>Content Classifier</h3>
+        <div class="who">CMS teams, archive managers</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-grid-items">
+          <div class="demo-grid-item">
+            <div class="item-label" style="color: #f472b6;">Category</div>
+            <div class="item-value" style="color: #f472b6;font-size:0.8rem;">Politics</div>
+          </div>
+          <div class="demo-grid-item">
+            <div class="item-label" style="color: #818cf8;">Urgency</div>
+            <div class="item-value" style="color: #f97316;font-size:0.8rem;">Breaking</div>
+          </div>
+          <div class="demo-grid-item">
+            <div class="item-label" style="color: #4ade80;">Tone</div>
+            <div class="item-value" style="color: #4ade80;font-size:0.8rem;">Investigative</div>
+          </div>
+          <div class="demo-grid-item">
+            <div class="item-label" style="color: #f97316;">Region</div>
+            <div class="item-value" style="color: #818cf8;font-size:0.8rem;">National</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Multi-label classification with confidence scores</li>
+          <li>Custom taxonomy matching newsroom categories</li>
+          <li>Auto-tags content for CMS and recommendation engines</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-green">classification</span>
+          <span class="tag tag-purple">structured output</span>
+          <span class="tag tag-pink">few-shot</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 8: Translation Pipeline -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">08 / LOCALIZATION</div>
+        <h3>Translation Pipeline</h3>
+        <div class="who">BBC, Al Jazeera, DW News</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-chat">
+          <div class="demo-msg user"><div class="role">Source (ES)</div>"El presidente anuncio nuevas medidas economicas que afectaran a millones de familias."</div>
+          <div class="demo-msg assistant"><div class="role">Translation (EN)</div>"The president announced new economic measures that will affect millions of families."<br><span style="font-size:0.6rem;color:#888;">Confidence: 98% | Tone: Neutral | Register: Formal</span></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Preserves journalistic tone and register across languages</li>
+          <li>Flags culturally specific terms for editor review</li>
+          <li>Confidence scoring with uncertain segments highlighted</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">translation</span>
+          <span class="tag tag-pink">prompt engineering</span>
+          <span class="tag tag-purple">quality metrics</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 9: Data Extraction from PDFs -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">09 / EXTRACTION</div>
+        <h3>Data Extraction from PDFs</h3>
+        <div class="who">IRE, data journalism teams</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-flow">
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#f472b630;color:#f472b6;">PDF</div>
+            <div class="step-text">Scanned budget document (image PDF)</div>
+          </div>
+          <div class="demo-flow-arrow">&#8595;</div>
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#818cf830;color:#818cf8;">OCR</div>
+            <div class="step-text">Vision model extracts tables and text</div>
+          </div>
+          <div class="demo-flow-arrow">&#8595;</div>
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#4ade8030;color:#4ade80;">CSV</div>
+            <div class="step-text">Structured data output (JSON/CSV)</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Multimodal models handle scanned/image PDFs</li>
+          <li>Table extraction with row/column alignment</li>
+          <li>Outputs structured JSON or CSV for data analysis</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-pink">vision</span>
+          <span class="tag tag-purple">extraction</span>
+          <span class="tag tag-green">structured output</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 10: Automated Beat Reporter -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">10 / AUTOMATION</div>
+        <h3>Automated Beat Reporter</h3>
+        <div class="who">AP Automation, LAT</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-flow">
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#818cf830;color:#818cf8;">1</div>
+            <div class="step-text">Monitor: police logs, court filings, agendas</div>
+          </div>
+          <div class="demo-flow-arrow">&#8595;</div>
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#f472b630;color:#f472b6;">2</div>
+            <div class="step-text">Detect: newsworthy events above threshold</div>
+          </div>
+          <div class="demo-flow-arrow">&#8595;</div>
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#4ade8030;color:#4ade80;">3</div>
+            <div class="step-text">Draft: structured brief for editor review</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Monitors public data feeds for newsworthy events</li>
+          <li>Generates structured story briefs, not finished articles</li>
+          <li>Human editor reviews and decides on coverage</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">agents</span>
+          <span class="tag tag-pink">monitoring</span>
+          <span class="tag tag-green">structured output</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 11: Research Assistant -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">11 / RESEARCH</div>
+        <h3>Research Assistant</h3>
+        <div class="who">Investigative teams, researchers</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-chat">
+          <div class="demo-msg user"><div class="role">Reporter</div>What are the campaign finance records for candidates in District 5?</div>
+          <div class="demo-msg assistant"><div class="role">AI Assistant</div>Searching FEC records and state filing database...<br><br>Found 3 candidates with filings. Top donor: PAC XYZ ($125K). <span style="color:#f472b6;">Notable: One candidate has no itemized individual donations.</span></div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Connects to public databases via tool use</li>
+          <li>Surfaces patterns and anomalies in the data</li>
+          <li>Maintains conversation history for iterative research</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-green">tool use</span>
+          <span class="tag tag-pink">RAG</span>
+          <span class="tag tag-purple">agents</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 12: Story Lead Generator -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">12 / CREATIVE</div>
+        <h3>Story Lead Generator</h3>
+        <div class="who">Local newsrooms, tip lines</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-grid-items">
+          <div class="demo-grid-item" style="grid-column:1/-1;">
+            <div class="item-label" style="color: #f97316;">Lead Score: High</div>
+            <div style="font-size:0.72rem;color:#ccc;margin-top:4px;">City council quietly approved a $2M contract with a company owned by a council member's spouse. Found in meeting minutes from March 4.</div>
+            <div style="font-size:0.6rem;color:#666;margin-top:6px;">Sources: City meeting minutes, state business registry, campaign finance records</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Cross-references public records for potential stories</li>
+          <li>Detects conflicts of interest, unusual patterns</li>
+          <li>Ranks leads by newsworthiness and public impact</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">agents</span>
+          <span class="tag tag-pink">data mining</span>
+          <span class="tag tag-green">tool use</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 13: Public Records Search -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">13 / SEARCH</div>
+        <h3>Public Records Search</h3>
+        <div class="who">Court reporters, data teams</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-flow">
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#f472b630;color:#f472b6;">Q</div>
+            <div class="step-text">"Show me all property transfers over $1M in 2024"</div>
+          </div>
+          <div class="demo-flow-arrow">&#8595;</div>
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#818cf830;color:#818cf8;">AI</div>
+            <div class="step-text">Converts to SQL, queries county recorder database</div>
+          </div>
+          <div class="demo-flow-arrow">&#8595;</div>
+          <div class="demo-flow-step">
+            <div class="step-icon" style="background:#4ade8030;color:#4ade80;">R</div>
+            <div class="step-text">Returns 47 results with linked deed documents</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Natural language to SQL/API query translation</li>
+          <li>Searches across property, court, business, and campaign databases</li>
+          <li>Returns results with links to original documents</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-pink">text-to-SQL</span>
+          <span class="tag tag-purple">tool use</span>
+          <span class="tag tag-green">database access</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 14: Image Description for Accessibility -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">14 / ACCESSIBILITY</div>
+        <h3>Image Description for Accessibility</h3>
+        <div class="who">All newsrooms (ADA compliance)</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-chat">
+          <div class="demo-msg user" style="background:#818cf830;border-color:#818cf850;color:#818cf8;"><div class="role">Image Input</div>[Photo of a crowd gathered at a city hall building]</div>
+          <div class="demo-msg assistant"><div class="role">Alt Text</div>"Approximately 200 people gather on the steps of Springfield City Hall during a rally for affordable housing reform on Tuesday, March 12, 2024. Several attendees hold signs reading 'Housing is a Right.'"</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Vision model generates journalistic alt text descriptions</li>
+          <li>Follows AP style for image captions and descriptions</li>
+          <li>Includes relevant context: who, what, where, when</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-purple">vision</span>
+          <span class="tag tag-pink">accessibility</span>
+          <span class="tag tag-green">prompt engineering</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 15: Audience Analytics -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">15 / ANALYTICS</div>
+        <h3>Audience Analytics</h3>
+        <div class="who">Digital editors, engagement teams</div>
+      </div>
+      <div class="card-demo">
+        <div class="demo-meter">
+          <div class="demo-meter-row">
+            <div class="demo-meter-label">Readability</div>
+            <div class="demo-meter-bar"><div class="demo-meter-fill" style="width:85%;background:#4ade80;"></div></div>
+            <div class="demo-meter-val" style="color:#4ade80;">8.2</div>
+          </div>
+          <div class="demo-meter-row">
+            <div class="demo-meter-label">Engagement</div>
+            <div class="demo-meter-bar"><div class="demo-meter-fill" style="width:72%;background:#f472b6;"></div></div>
+            <div class="demo-meter-val" style="color:#f472b6;">7.2</div>
+          </div>
+          <div class="demo-meter-row">
+            <div class="demo-meter-label">SEO Score</div>
+            <div class="demo-meter-bar"><div class="demo-meter-fill" style="width:64%;background:#818cf8;"></div></div>
+            <div class="demo-meter-val" style="color:#818cf8;">6.4</div>
+          </div>
+          <div class="demo-meter-row">
+            <div class="demo-meter-label">Shareability</div>
+            <div class="demo-meter-bar"><div class="demo-meter-fill" style="width:78%;background:#f97316;"></div></div>
+            <div class="demo-meter-val" style="color:#f97316;">7.8</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Predicts article performance using content analysis</li>
+          <li>Suggests headline variants optimized for engagement</li>
+          <li>Analyzes readability level for target audience</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-green">analytics</span>
+          <span class="tag tag-pink">prediction</span>
+          <span class="tag tag-orange">optimization</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

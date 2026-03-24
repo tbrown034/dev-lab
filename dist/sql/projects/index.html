@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Projects - Learn SQL</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    body {
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #3b82f6; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+    .header .meta a { color: #3b82f6; text-decoration: none; }
+
+    /* ── Nav ── */
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover {
+      background: #3b82f6;
+      color: #fff;
+      border-color: #3b82f6;
+    }
+    .nav a.active {
+      background: #f472b6;
+      color: #000;
+      border-color: #f472b6;
+    }
+
+    /* ── Page Hero ── */
+    .page-hero {
+      padding: 3rem 3rem 1rem;
+      max-width: 1200px;
+    }
+    .page-hero h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-hero h2 .accent { color: #3b82f6; }
+    .page-hero .subtitle {
+      color: #888;
+      font-size: 1.05rem;
+      max-width: 720px;
+      line-height: 1.7;
+    }
+    .page-hero .subtitle strong { color: #ccc; font-weight: 600; }
+    .page-hero .badge-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      color: #aaa;
+    }
+    .badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* ── Project Cards ── */
+    .projects {
+      padding: 1rem 3rem 4rem;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    .project-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .project-card:hover { border-color: #444; }
+
+    .project-header {
+      padding: 2rem 2rem 1rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .project-num {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .project-header h3 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .project-header p {
+      color: #999;
+      font-size: 0.9rem;
+      max-width: 650px;
+    }
+    .project-tags {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .project-tags span {
+      padding: 0.2rem 0.6rem;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: #888;
+    }
+
+    /* ── Schema Diagram ── */
+    .schema-container {
+      padding: 1.5rem 2rem;
+    }
+    .schema-diagram {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 8px;
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+    .schema-tables {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .schema-table {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 6px;
+      min-width: 160px;
+      overflow: hidden;
+    }
+    .schema-table-name {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-bottom: 1px solid #222;
+    }
+    .schema-table-name.blue { color: #3b82f6; background: #3b82f608; }
+    .schema-table-name.green { color: #22c55e; background: #22c55e08; }
+    .schema-table-name.purple { color: #818cf8; background: #818cf808; }
+    .schema-table-name.pink { color: #f472b6; background: #f472b608; }
+    .schema-table-name.orange { color: #f97316; background: #f9731608; }
+    .schema-fields {
+      padding: 0.5rem 0.75rem;
+    }
+    .schema-field {
+      font-size: 0.7rem;
+      color: #888;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1.8;
+    }
+    .schema-field .pk { color: #3b82f6; }
+    .schema-field .fk { color: #f97316; }
+    .schema-field .type { color: #555; }
+
+    /* ── Features Grid ── */
+    .features-grid {
+      padding: 1.5rem 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    .feature-card {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+    .feature-card h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #3b82f6;
+    }
+    .feature-card p {
+      font-size: 0.8rem;
+      color: #888;
+      line-height: 1.5;
+    }
+    .feature-card code {
+      background: #1a1a1a;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      color: #3b82f6;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── Sample Queries ── */
+    .sample-queries {
+      padding: 1rem 2rem 1.5rem;
+    }
+    .sample-queries h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #3b82f6;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.75rem;
+    }
+    .query-block {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .query-block .query-label {
+      font-size: 0.72rem;
+      color: #888;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .query-block pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      color: #ccc;
+      overflow-x: auto;
+    }
+
+    /* ── How Built ── */
+    .how-built {
+      padding: 1.5rem 2rem 2rem;
+      border-top: 1px solid #1e1e1e;
+      background: #111;
+    }
+    .how-built h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #3b82f6;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.75rem;
+    }
+    .how-built ul {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0.5rem;
+    }
+    .how-built li {
+      color: #888;
+      font-size: 0.82rem;
+      padding-left: 1.2rem;
+      position: relative;
+      line-height: 1.5;
+    }
+    .how-built li::before {
+      content: '>';
+      position: absolute;
+      left: 0;
+      color: #3b82f6;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .how-built code {
+      background: #1a1a1a;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.78rem;
+      color: #3b82f6;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header, .nav, .page-hero, .projects { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .page-hero h2 { font-size: 1.6rem; }
+      .project-header, .schema-container, .features-grid, .sample-queries, .how-built { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .schema-tables { flex-direction: column; }
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+</head>
+<body>
+
+  <div class="header">
+    <h1>Learn <span>SQL</span></h1>
+    <div class="meta"><a href="/sql/">Home</a> &middot; Portfolio Projects</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/sql/">Home</a>
+    <a href="/sql/references/use-cases/" style="color: #818cf8;">Use Cases</a>
+    <a href="/sql/games/" style="color: #60a5fa;">Games</a>
+    <a href="/sql/projects/" class="active" style="color: #000;">Projects</a>
+  </nav>
+
+  <div class="page-hero">
+    <h2>Portfolio <span class="accent">Projects</span></h2>
+    <p class="subtitle">
+      Four data journalism projects built with <strong>real public datasets</strong>.
+      Each demonstrates advanced SQL techniques applied to civic data analysis,
+      investigative reporting, and public accountability.
+    </p>
+    <div class="badge-row">
+      <span class="badge"><span class="dot" style="background: #3b82f6;"></span>PostgreSQL 16</span>
+      <span class="badge"><span class="dot" style="background: #22c55e;"></span>Real Data</span>
+      <span class="badge"><span class="dot" style="background: #818cf8;"></span>Window Functions</span>
+      <span class="badge"><span class="dot" style="background: #f472b6;"></span>Data Journalism</span>
+    </div>
+  </div>
+
+  <div class="projects">
+
+    <!-- ══════════════════════════════════════
+         PROJECT 1: Census Data Explorer
+         ══════════════════════════════════════ -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #3b82f6;">Project 01</div>
+        <h3>Census Data Explorer</h3>
+        <p>A normalized database of U.S. Census Bureau data (American Community Survey 5-year estimates) enabling demographic analysis across geographies. Explore population, income, education, housing, and racial composition for every county and state.</p>
+        <div class="project-tags">
+          <span>Window Functions</span>
+          <span>CTEs</span>
+          <span>Aggregation</span>
+          <span>Percentile Ranks</span>
+          <span>Geographic Hierarchies</span>
+          <span>D3.js choropleth</span>
+        </div>
+      </div>
+
+      <div class="schema-container">
+        <div class="schema-diagram">
+          <div class="schema-tables">
+            <div class="schema-table">
+              <div class="schema-table-name blue">geographies</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field">fips_code <span class="type">VARCHAR(5)</span></div>
+                <div class="schema-field">name <span class="type">TEXT</span></div>
+                <div class="schema-field">state_fips <span class="type">VARCHAR(2)</span></div>
+                <div class="schema-field">geo_level <span class="type">ENUM</span></div>
+                <div class="schema-field">area_sqmi <span class="type">NUMERIC</span></div>
+              </div>
+            </div>
+            <div class="schema-table">
+              <div class="schema-table-name green">demographics</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field"><span class="fk">geo_id</span> <span class="type">FK</span></div>
+                <div class="schema-field">year <span class="type">INT</span></div>
+                <div class="schema-field">population <span class="type">INT</span></div>
+                <div class="schema-field">median_income <span class="type">NUMERIC</span></div>
+                <div class="schema-field">median_age <span class="type">NUMERIC</span></div>
+              </div>
+            </div>
+            <div class="schema-table">
+              <div class="schema-table-name purple">education</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field"><span class="fk">geo_id</span> <span class="type">FK</span></div>
+                <div class="schema-field">year <span class="type">INT</span></div>
+                <div class="schema-field">hs_diploma_pct <span class="type">NUMERIC</span></div>
+                <div class="schema-field">bachelors_pct <span class="type">NUMERIC</span></div>
+                <div class="schema-field">graduate_pct <span class="type">NUMERIC</span></div>
+              </div>
+            </div>
+            <div class="schema-table">
+              <div class="schema-table-name pink">housing</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field"><span class="fk">geo_id</span> <span class="type">FK</span></div>
+                <div class="schema-field">year <span class="type">INT</span></div>
+                <div class="schema-field">median_home_value <span class="type">NUMERIC</span></div>
+                <div class="schema-field">homeownership_rate <span class="type">NUMERIC</span></div>
+                <div class="schema-field">vacancy_rate <span class="type">NUMERIC</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <h4>Percentile Rankings</h4>
+          <p>Uses <code>PERCENT_RANK()</code> and <code>NTILE()</code> to rank counties by income, education, and population density within their states.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Year-Over-Year Change</h4>
+          <p><code>LAG()</code> window function calculates population growth rates and income changes across ACS survey years.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Geographic Aggregation</h4>
+          <p>Rolls up county-level data to state, region, and national totals using <code>GROUPING SETS</code> in a single query.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Correlation Analysis</h4>
+          <p>Self-joins across tables to examine correlations between education levels, income, housing costs, and population density.</p>
+        </div>
+      </div>
+
+      <div class="sample-queries">
+        <h4>Key Queries</h4>
+        <div class="query-block">
+          <div class="query-label">Counties with fastest population growth (2018-2023)</div>
+          <pre>WITH growth AS (
+  SELECT
+    g.name, g.state_fips,
+    d.population,
+    LAG(d.population) OVER (PARTITION BY d.geo_id ORDER BY d.year) AS prev_pop,
+    d.year
+  FROM demographics d
+  JOIN geographies g ON d.geo_id = g.id
+  WHERE g.geo_level = 'county'
+)
+SELECT name, state_fips,
+  ROUND((population - prev_pop) * 100.0 / prev_pop, 2) AS growth_pct
+FROM growth
+WHERE year = 2023 AND prev_pop IS NOT NULL
+ORDER BY growth_pct DESC
+LIMIT 25;</pre>
+        </div>
+      </div>
+
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Imported ACS 5-year CSV files using <code>COPY</code> with custom staging tables for data cleaning</li>
+          <li>Normalized raw Census tables into geography, demographics, education, and housing dimensions</li>
+          <li>Window functions (<code>PERCENT_RANK</code>, <code>LAG</code>, <code>NTILE</code>) for rankings and trend analysis</li>
+          <li>Materialized views for pre-computed state-level summaries, refreshed on data import</li>
+          <li>GeoJSON served via JSON API endpoints for D3 choropleth map rendering</li>
+          <li>Full-text search on geography names with <code>tsvector</code> and <code>GIN</code> index</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         PROJECT 2: Campaign Finance Tracker
+         ══════════════════════════════════════ -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #22c55e;">Project 02</div>
+        <h3>Campaign Finance Tracker</h3>
+        <p>A searchable database of Federal Election Commission (FEC) campaign contributions, tracking money flow from individual donors and PACs to candidates and committees. Real data from the 2024 election cycle.</p>
+        <div class="project-tags">
+          <span>Full-Text Search</span>
+          <span>JSONB Metadata</span>
+          <span>Recursive CTEs</span>
+          <span>Partitioning</span>
+          <span>Audit Logging</span>
+          <span>Row-Level Security</span>
+        </div>
+      </div>
+
+      <div class="schema-container">
+        <div class="schema-diagram">
+          <div class="schema-tables">
+            <div class="schema-table">
+              <div class="schema-table-name green">candidates</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field">fec_id <span class="type">VARCHAR(9)</span></div>
+                <div class="schema-field">name <span class="type">TEXT</span></div>
+                <div class="schema-field">party <span class="type">VARCHAR(3)</span></div>
+                <div class="schema-field">office <span class="type">ENUM</span></div>
+                <div class="schema-field">state <span class="type">VARCHAR(2)</span></div>
+                <div class="schema-field">district <span class="type">INT</span></div>
+              </div>
+            </div>
+            <div class="schema-table">
+              <div class="schema-table-name blue">committees</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field">fec_id <span class="type">VARCHAR(9)</span></div>
+                <div class="schema-field">name <span class="type">TEXT</span></div>
+                <div class="schema-field">type <span class="type">ENUM</span></div>
+                <div class="schema-field"><span class="fk">candidate_id</span> <span class="type">FK</span></div>
+              </div>
+            </div>
+            <div class="schema-table">
+              <div class="schema-table-name orange">contributions</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">BIGSERIAL PK</span></div>
+                <div class="schema-field"><span class="fk">committee_id</span> <span class="type">FK</span></div>
+                <div class="schema-field">donor_name <span class="type">TEXT</span></div>
+                <div class="schema-field">amount <span class="type">NUMERIC</span></div>
+                <div class="schema-field">date <span class="type">DATE</span></div>
+                <div class="schema-field">employer <span class="type">TEXT</span></div>
+                <div class="schema-field">zip_code <span class="type">VARCHAR(5)</span></div>
+              </div>
+            </div>
+            <div class="schema-table">
+              <div class="schema-table-name purple">expenditures</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">BIGSERIAL PK</span></div>
+                <div class="schema-field"><span class="fk">committee_id</span> <span class="type">FK</span></div>
+                <div class="schema-field">payee <span class="type">TEXT</span></div>
+                <div class="schema-field">amount <span class="type">NUMERIC</span></div>
+                <div class="schema-field">purpose <span class="type">TEXT</span></div>
+                <div class="schema-field">date <span class="type">DATE</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <h4>Donor Network Analysis</h4>
+          <p>Self-joins and recursive CTEs to trace money flow from individual donors through PACs to candidates. Identifies bundlers and dark money patterns.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Full-Text Donor Search</h4>
+          <p>Weighted <code>tsvector</code> search across donor names, employers, and cities. Trigram similarity for fuzzy matching on misspelled names.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Time Series Fundraising</h4>
+          <p><code>generate_series</code> with <code>LEFT JOIN</code> for gap-free daily/weekly fundraising totals. Rolling averages track momentum.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Geographic Heat Maps</h4>
+          <p>ZIP code aggregation with geographic lookups for contribution heat maps by congressional district.</p>
+        </div>
+      </div>
+
+      <div class="sample-queries">
+        <h4>Key Queries</h4>
+        <div class="query-block">
+          <div class="query-label">Top employers by total contributions to each party</div>
+          <pre>SELECT
+  c.employer,
+  SUM(c.amount) FILTER (WHERE ca.party = 'DEM') AS dem_total,
+  SUM(c.amount) FILTER (WHERE ca.party = 'REP') AS rep_total,
+  SUM(c.amount) AS grand_total,
+  RANK() OVER (ORDER BY SUM(c.amount) DESC) AS rank
+FROM contributions c
+JOIN committees cm ON c.committee_id = cm.id
+JOIN candidates ca ON cm.candidate_id = ca.id
+WHERE c.employer IS NOT NULL
+  AND c.employer NOT IN ('RETIRED', 'SELF-EMPLOYED', 'NOT EMPLOYED')
+GROUP BY c.employer
+ORDER BY grand_total DESC
+LIMIT 30;</pre>
+        </div>
+      </div>
+
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Bulk imported 20M+ FEC contribution records using <code>COPY</code> with custom delimiter handling</li>
+          <li>Table partitioning by election cycle year for query performance on historical data</li>
+          <li>GIN indexes on <code>tsvector</code> columns and <code>pg_trgm</code> extension for fuzzy name matching</li>
+          <li>Recursive CTE traces money flow: donor to PAC to candidate across committee-to-committee transfers</li>
+          <li>Materialized views pre-compute top donors, employer rankings, and ZIP code aggregates</li>
+          <li>BRIN index on contribution date for efficient time-range queries on the append-only data</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         PROJECT 3: Public School Analytics
+         ══════════════════════════════════════ -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #818cf8;">Project 03</div>
+        <h3>Public School Analytics</h3>
+        <p>A comprehensive analysis of National Center for Education Statistics (NCES) data covering enrollment, demographics, funding, and test scores for 100,000+ public schools. Identifies achievement gaps, funding inequities, and demographic trends.</p>
+        <div class="project-tags">
+          <span>GROUPING SETS</span>
+          <span>PERCENTILE_CONT</span>
+          <span>FILTER Clause</span>
+          <span>Correlation Analysis</span>
+          <span>Materialized Views</span>
+          <span>Data Import Pipeline</span>
+        </div>
+      </div>
+
+      <div class="schema-container">
+        <div class="schema-diagram">
+          <div class="schema-tables">
+            <div class="schema-table">
+              <div class="schema-table-name purple">schools</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field">nces_id <span class="type">VARCHAR(12)</span></div>
+                <div class="schema-field">name <span class="type">TEXT</span></div>
+                <div class="schema-field"><span class="fk">district_id</span> <span class="type">FK</span></div>
+                <div class="schema-field">level <span class="type">ENUM</span></div>
+                <div class="schema-field">latitude <span class="type">NUMERIC</span></div>
+                <div class="schema-field">longitude <span class="type">NUMERIC</span></div>
+              </div>
+            </div>
+            <div class="schema-table">
+              <div class="schema-table-name blue">districts</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field">name <span class="type">TEXT</span></div>
+                <div class="schema-field">state <span class="type">VARCHAR(2)</span></div>
+                <div class="schema-field">locale_type <span class="type">ENUM</span></div>
+                <div class="schema-field">total_revenue <span class="type">NUMERIC</span></div>
+              </div>
+            </div>
+            <div class="schema-table">
+              <div class="schema-table-name green">enrollment</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field"><span class="fk">school_id</span> <span class="type">FK</span></div>
+                <div class="schema-field">year <span class="type">INT</span></div>
+                <div class="schema-field">total <span class="type">INT</span></div>
+                <div class="schema-field">free_lunch_pct <span class="type">NUMERIC</span></div>
+                <div class="schema-field">title_i <span class="type">BOOLEAN</span></div>
+              </div>
+            </div>
+            <div class="schema-table">
+              <div class="schema-table-name orange">test_scores</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field"><span class="fk">school_id</span> <span class="type">FK</span></div>
+                <div class="schema-field">year <span class="type">INT</span></div>
+                <div class="schema-field">subject <span class="type">ENUM</span></div>
+                <div class="schema-field">proficient_pct <span class="type">NUMERIC</span></div>
+                <div class="schema-field">tested_count <span class="type">INT</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <h4>Achievement Gap Analysis</h4>
+          <p>Correlates free lunch percentage (poverty proxy) with test scores using <code>CORR()</code> aggregate. Quantifies the funding-achievement relationship.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Funding Equity Score</h4>
+          <p>Compares per-pupil spending across districts using <code>PERCENTILE_CONT(0.5)</code> and <code>STDDEV</code>. Identifies outliers with z-score analysis.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Multi-Level Rollups</h4>
+          <p><code>GROUPING SETS</code> compute school, district, state, and national aggregates in a single query pass.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Trend Detection</h4>
+          <p>Window functions track enrollment growth, score improvements, and demographic shifts across 10 years of data.</p>
+        </div>
+      </div>
+
+      <div class="sample-queries">
+        <h4>Key Queries</h4>
+        <div class="query-block">
+          <div class="query-label">Funding equity analysis: per-pupil spending variation by state</div>
+          <pre>SELECT
+  d.state,
+  COUNT(DISTINCT d.id) AS districts,
+  ROUND(AVG(d.total_revenue / NULLIF(e.total, 0)), 0) AS avg_per_pupil,
+  ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP
+    (ORDER BY d.total_revenue / NULLIF(e.total, 0)), 0) AS median_per_pupil,
+  ROUND(STDDEV(d.total_revenue / NULLIF(e.total, 0)), 0) AS stddev_per_pupil,
+  ROUND(MAX(d.total_revenue / NULLIF(e.total, 0)) /
+    NULLIF(MIN(d.total_revenue / NULLIF(e.total, 0)), 0), 1) AS max_min_ratio
+FROM districts d
+JOIN enrollment e ON e.school_id IN (
+  SELECT id FROM schools WHERE district_id = d.id
+)
+WHERE e.year = 2023
+GROUP BY d.state
+ORDER BY max_min_ratio DESC;</pre>
+        </div>
+      </div>
+
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Imported NCES Common Core of Data (CCD) files spanning 2013-2023 using <code>COPY</code> with staging tables</li>
+          <li>Data cleaning pipeline in SQL: standardized school names, filled missing FIPS codes, deduplicated records</li>
+          <li><code>GROUPING SETS (school_id, district_id, state, ())</code> for multi-level aggregation in a single pass</li>
+          <li><code>CORR(test_scores.proficient_pct, enrollment.free_lunch_pct)</code> for poverty-achievement correlation</li>
+          <li>Materialized views for state-level dashboards, refreshed nightly via <code>pg_cron</code></li>
+          <li>GiST index on school coordinates for geographic proximity queries (nearest school search)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         PROJECT 4: Crime Statistics Dashboard
+         ══════════════════════════════════════ -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #f472b6;">Project 04</div>
+        <h3>Crime Statistics Dashboard</h3>
+        <p>An analysis platform for FBI Uniform Crime Reporting (UCR) data covering crime rates, clearance rates, and trends across 18,000+ law enforcement agencies. Built for investigative reporters covering public safety and policing.</p>
+        <div class="project-tags">
+          <span>Time Series</span>
+          <span>Statistical Functions</span>
+          <span>LATERAL JOIN</span>
+          <span>Table Partitioning</span>
+          <span>Geospatial Queries</span>
+          <span>Automated Reports</span>
+        </div>
+      </div>
+
+      <div class="schema-container">
+        <div class="schema-diagram">
+          <div class="schema-tables">
+            <div class="schema-table">
+              <div class="schema-table-name pink">agencies</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field">ori_code <span class="type">VARCHAR(9)</span></div>
+                <div class="schema-field">name <span class="type">TEXT</span></div>
+                <div class="schema-field">state <span class="type">VARCHAR(2)</span></div>
+                <div class="schema-field">population <span class="type">INT</span></div>
+                <div class="schema-field">agency_type <span class="type">ENUM</span></div>
+              </div>
+            </div>
+            <div class="schema-table">
+              <div class="schema-table-name blue">crime_reports</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">BIGSERIAL PK</span></div>
+                <div class="schema-field"><span class="fk">agency_id</span> <span class="type">FK</span></div>
+                <div class="schema-field">year <span class="type">INT</span></div>
+                <div class="schema-field">month <span class="type">INT</span></div>
+                <div class="schema-field">offense_type <span class="type">ENUM</span></div>
+                <div class="schema-field">reported <span class="type">INT</span></div>
+                <div class="schema-field">cleared <span class="type">INT</span></div>
+              </div>
+            </div>
+            <div class="schema-table">
+              <div class="schema-table-name green">populations</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field"><span class="fk">agency_id</span> <span class="type">FK</span></div>
+                <div class="schema-field">year <span class="type">INT</span></div>
+                <div class="schema-field">population <span class="type">INT</span></div>
+              </div>
+            </div>
+            <div class="schema-table">
+              <div class="schema-table-name orange">officer_counts</div>
+              <div class="schema-fields">
+                <div class="schema-field"><span class="pk">id</span> <span class="type">SERIAL PK</span></div>
+                <div class="schema-field"><span class="fk">agency_id</span> <span class="type">FK</span></div>
+                <div class="schema-field">year <span class="type">INT</span></div>
+                <div class="schema-field">sworn_officers <span class="type">INT</span></div>
+                <div class="schema-field">civilian_staff <span class="type">INT</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <h4>Crime Rate Calculations</h4>
+          <p>Joins crime reports with population data to calculate per-capita crime rates. Uses <code>LATERAL JOIN</code> for "top 3 crimes per agency" queries.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Clearance Rate Analysis</h4>
+          <p>Tracks the ratio of cleared-to-reported crimes. Identifies agencies with declining clearance rates using <code>LAG()</code> and trend lines.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Seasonal Patterns</h4>
+          <p>Aggregates monthly data to detect seasonal crime patterns. Uses <code>AVG() OVER (PARTITION BY month)</code> for multi-year seasonal baselines.</p>
+        </div>
+        <div class="feature-card">
+          <h4>Peer Comparison</h4>
+          <p>Groups agencies by population size and compares crime rates within peer groups using <code>NTILE</code> and <code>PERCENT_RANK</code>.</p>
+        </div>
+      </div>
+
+      <div class="sample-queries">
+        <h4>Key Queries</h4>
+        <div class="query-block">
+          <div class="query-label">Agencies with largest homicide clearance rate decline (2019-2023)</div>
+          <pre>WITH clearance_rates AS (
+  SELECT
+    a.name AS agency,
+    a.state,
+    cr.year,
+    SUM(cr.cleared) * 100.0 / NULLIF(SUM(cr.reported), 0) AS clearance_pct
+  FROM crime_reports cr
+  JOIN agencies a ON cr.agency_id = a.id
+  WHERE cr.offense_type = 'homicide'
+    AND cr.year IN (2019, 2023)
+    AND a.population > 100000
+  GROUP BY a.name, a.state, cr.year
+),
+pivoted AS (
+  SELECT agency, state,
+    MAX(clearance_pct) FILTER (WHERE year = 2019) AS rate_2019,
+    MAX(clearance_pct) FILTER (WHERE year = 2023) AS rate_2023
+  FROM clearance_rates
+  GROUP BY agency, state
+)
+SELECT agency, state,
+  ROUND(rate_2019, 1) AS rate_2019,
+  ROUND(rate_2023, 1) AS rate_2023,
+  ROUND(rate_2023 - rate_2019, 1) AS change
+FROM pivoted
+WHERE rate_2019 IS NOT NULL AND rate_2023 IS NOT NULL
+ORDER BY change ASC
+LIMIT 20;</pre>
+        </div>
+      </div>
+
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Imported FBI UCR data (10+ years, 18K agencies) with <code>COPY</code> and custom ETL scripts for format variations</li>
+          <li>Table partitioning by year on crime_reports for fast time-range queries on 50M+ rows</li>
+          <li><code>LATERAL JOIN</code> for "top N crimes per agency" without correlated subqueries</li>
+          <li>Statistical functions: <code>REGR_SLOPE</code> for trend lines, <code>CORR</code> for officer-count vs crime-rate analysis</li>
+          <li>Automated monthly report generation using <code>pg_cron</code> and <code>COPY TO</code> for CSV export</li>
+          <li>Materialized views for state-level summaries with <code>CONCURRENTLY</code> refresh during off-peak hours</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

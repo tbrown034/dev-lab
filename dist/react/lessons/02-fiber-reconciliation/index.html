@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 02 - Fiber &amp; Reconciliation</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #06b6d4; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>02</span> Fiber &amp; Reconciliation &mdash; What Happens Between setState and Pixels</h1>
+    <a href="/react/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Forget "virtual DOM."</strong> That's a marketing simplification. What React actually maintains is a fiber tree &mdash; a linked data structure that represents your component hierarchy and enables interruptible rendering. This lesson shows you the real architecture.</p>
+
+    <!-- ============================================ -->
+    <!-- THE VIRTUAL DOM MYTH                         -->
+    <!-- ============================================ -->
+
+    <h2>The "Virtual DOM" Myth</h2>
+
+    <p>If someone asks you "how does React work?" and you answer "it uses a virtual DOM to diff changes," you're giving the 2015 answer. The reality in modern React is more nuanced and more interesting.</p>
+
+    <p>The term "virtual DOM" describes a concept: keep a JavaScript representation of the DOM, diff it against the previous version, and apply only the changes. This is true at a high level. But the implementation &mdash; React Fiber &mdash; is far more sophisticated than "a copy of the DOM in memory."</p>
+
+    <div class="callout">
+      <p><strong>Dan Abramov has said</strong> the "virtual DOM" framing is misleading. React doesn't create a lightweight copy of the DOM. It creates a fiber tree &mdash; a linked list of fiber nodes that represent components, not DOM elements. The DOM diffing is a consequence, not the core idea. The core idea is <em>scheduling work</em>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHAT IS A FIBER?                             -->
+    <!-- ============================================ -->
+
+    <h2>What Is a Fiber?</h2>
+
+    <p>A fiber is a JavaScript object that represents a unit of work. There's one fiber for every component instance and every DOM element in your tree. Think of it like a node in a bureaucratic filing system &mdash; it tracks everything React needs to know about that piece of your UI.</p>
+
+    <pre><code><span class="comment">// Simplified fiber node structure</span>
+{
+  tag: FunctionComponent,    <span class="comment">// What type of thing is this?</span>
+  type: ArticleCard,         <span class="comment">// The component function itself</span>
+  key: 'article-42',         <span class="comment">// For reconciliation identity</span>
+
+  stateNode: null,           <span class="comment">// For class components: the instance</span>
+                             <span class="comment">// For host elements: the DOM node</span>
+
+  memoizedProps: { ... },    <span class="comment">// Props from the last render</span>
+  memoizedState: { ... },    <span class="comment">// State from the last render (hooks)</span>
+  pendingProps: { ... },     <span class="comment">// Props for the current render</span>
+
+  <span class="comment">// Tree structure (not parent/children like DOM)</span>
+  return: parentFiber,       <span class="comment">// Points to parent</span>
+  child: firstChildFiber,    <span class="comment">// Points to first child</span>
+  sibling: nextSiblingFiber, <span class="comment">// Points to next sibling</span>
+
+  <span class="comment">// For hooks</span>
+  hooks: linkedListOfHooks,  <span class="comment">// useState, useEffect, etc.</span>
+
+  <span class="comment">// Effect tracking</span>
+  flags: Update | Placement, <span class="comment">// What needs to happen to this node</span>
+  alternate: previousFiber,  <span class="comment">// The "other" tree (double-buffering)</span>
+}</code></pre>
+
+    <div class="aha">
+      <p><strong>The key insight:</strong> Fibers use a <em>linked list</em> structure (return/child/sibling pointers) instead of a nested tree (parent/children arrays). Why? Because a linked list can be traversed incrementally. React can process one fiber, then pause and yield to the browser for paint or input handling, then pick up exactly where it left off. A recursive tree traversal can't be paused mid-way &mdash; a linked list can.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DOUBLE BUFFERING                             -->
+    <!-- ============================================ -->
+
+    <h2>Double Buffering: Current and Work-in-Progress</h2>
+
+    <p>React maintains <em>two</em> fiber trees at all times:</p>
+
+    <ul>
+      <li><strong>Current tree:</strong> Represents what's currently on screen. The "source of truth" for the rendered UI.</li>
+      <li><strong>Work-in-progress (WIP) tree:</strong> Being built during the current render. Contains the new state, new props, new children.</li>
+    </ul>
+
+    <p>When a render completes, React swaps them. The WIP tree becomes the current tree. The old current tree becomes available for reuse in the next render (React recycles fiber nodes to reduce garbage collection pressure).</p>
+
+    <div class="callout">
+      <p><strong>This is exactly like double-buffering in video games.</strong> You render the next frame to a back buffer while displaying the front buffer. When the frame is complete, you swap the pointers. The user never sees a half-rendered frame. React uses the same technique so you never see a half-committed DOM update.</p>
+    </div>
+
+    <pre><code><span class="comment">// Conceptually, the swap looks like this:</span>
+
+<span class="comment">// During render:</span>
+currentTree   -&gt; [what's on screen]
+wipTree       -&gt; [being built with new state]
+
+<span class="comment">// After commit:</span>
+currentTree   -&gt; [the new tree, now on screen]
+wipTree       -&gt; [the old tree, recycled for next render]
+
+<span class="comment">// Each fiber's .alternate points to its counterpart</span>
+currentFiber.alternate === wipFiber
+wipFiber.alternate === currentFiber</code></pre>
+
+    <!-- ============================================ -->
+    <!-- THE RECONCILIATION ALGORITHM                 -->
+    <!-- ============================================ -->
+
+    <h2>The Reconciliation Algorithm</h2>
+
+    <p>Reconciliation is the process of determining what changed between the current tree and the new element tree (from your component functions' return values). Here's how it works:</p>
+
+    <h3>Rule 1: Different types = destroy and rebuild</h3>
+
+    <p>If a fiber's type changes (say from <code>&lt;div&gt;</code> to <code>&lt;span&gt;</code>, or from <code>&lt;ArticleCard&gt;</code> to <code>&lt;VideoCard&gt;</code>), React tears down the entire subtree and rebuilds from scratch. All state in that subtree is lost.</p>
+
+    <pre><code><span class="comment">// Changing the root element type destroys state:</span>
+
+<span class="comment">// Before:</span>
+&lt;div&gt;
+  &lt;Counter /&gt;   <span class="comment">// Has state: count = 5</span>
+&lt;/div&gt;
+
+<span class="comment">// After:</span>
+&lt;section&gt;
+  &lt;Counter /&gt;   <span class="comment">// State RESET to 0 — new instance</span>
+&lt;/section&gt;</code></pre>
+
+    <h3>Rule 2: Same type = update in place</h3>
+
+    <p>If the type is the same, React keeps the existing DOM node/component instance and updates only the changed attributes or props.</p>
+
+    <pre><code><span class="comment">// Same type, different props — updates in place:</span>
+
+<span class="comment">// Before:</span>
+&lt;button className="primary" disabled={false}&gt;Submit&lt;/button&gt;
+
+<span class="comment">// After:</span>
+&lt;button className="primary" disabled={true}&gt;Submit&lt;/button&gt;
+
+<span class="comment">// React only calls: button.disabled = true</span>
+<span class="comment">// The DOM node itself is preserved</span></code></pre>
+
+    <h3>Rule 3: Keys identify children in lists</h3>
+
+    <p>This is where keys earn their salary. Without keys, React matches children by index. With keys, React matches children by identity.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Without keys (index matching)</h5>
+        <pre><code><span class="comment">// Before:</span>
+&lt;ul&gt;
+  &lt;li&gt;Apple&lt;/li&gt;    <span class="comment">// index 0</span>
+  &lt;li&gt;Banana&lt;/li&gt;   <span class="comment">// index 1</span>
+&lt;/ul&gt;
+
+<span class="comment">// After (prepend Cherry):</span>
+&lt;ul&gt;
+  &lt;li&gt;Cherry&lt;/li&gt;   <span class="comment">// index 0 → mutate "Apple" to "Cherry"</span>
+  &lt;li&gt;Apple&lt;/li&gt;    <span class="comment">// index 1 → mutate "Banana" to "Apple"</span>
+  &lt;li&gt;Banana&lt;/li&gt;   <span class="comment">// index 2 → create new</span>
+&lt;/ul&gt;
+<span class="comment">// 3 mutations!</span></code></pre>
+      </div>
+      <div>
+        <h5>With keys (identity matching)</h5>
+        <pre><code><span class="comment">// Before:</span>
+&lt;ul&gt;
+  &lt;li key="a"&gt;Apple&lt;/li&gt;
+  &lt;li key="b"&gt;Banana&lt;/li&gt;
+&lt;/ul&gt;
+
+<span class="comment">// After (prepend Cherry):</span>
+&lt;ul&gt;
+  &lt;li key="c"&gt;Cherry&lt;/li&gt;  <span class="comment">// new key → insert</span>
+  &lt;li key="a"&gt;Apple&lt;/li&gt;   <span class="comment">// same key → keep</span>
+  &lt;li key="b"&gt;Banana&lt;/li&gt;  <span class="comment">// same key → keep</span>
+&lt;/ul&gt;
+<span class="comment">// 1 insertion!</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Keys aren't just about performance.</strong> They're about correctness. If a list item has local state (like an input field), index-based matching will put the wrong state on the wrong item when the list order changes. Using the array index as key is only safe when the list never reorders, never has items inserted/removed from the middle, and items have no local state.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong>Never use <code>key={Math.random()}</code>.</strong> This gives every element a new key every render, which means React destroys and recreates every component in the list on every render. It defeats the entire purpose of reconciliation.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CONCURRENT RENDERING                         -->
+    <!-- ============================================ -->
+
+    <h2>Concurrent Rendering: The Fiber Payoff</h2>
+
+    <p>The entire Fiber rewrite (React 16+) was done for one reason: to make rendering interruptible. The old "stack reconciler" (pre-Fiber) processed the component tree recursively in one synchronous pass. If your tree was large, the browser's main thread was blocked for the entire duration &mdash; no animations, no input handling, nothing.</p>
+
+    <p>Fiber's linked list structure allows React to:</p>
+
+    <ol>
+      <li><strong>Break work into chunks:</strong> Process one fiber, then check if there's higher-priority work (like user input)</li>
+      <li><strong>Pause and resume:</strong> Stop mid-tree and continue later, because each fiber node has pointers to its next piece of work</li>
+      <li><strong>Abort and restart:</strong> If new state arrives while rendering, discard the WIP tree and start fresh with newer data</li>
+      <li><strong>Assign priorities:</strong> User interactions get high priority, data fetches get lower priority</li>
+    </ol>
+
+    <pre><code><span class="comment">// Simplified work loop (what React does internally)</span>
+function workLoop(deadline) {
+  while (nextUnitOfWork &amp;&amp; deadline.timeRemaining() &gt; 1) {
+    nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
+  }
+
+  if (!nextUnitOfWork &amp;&amp; wipRoot) {
+    commitRoot(); <span class="comment">// All work done — commit to DOM</span>
+  }
+
+  requestIdleCallback(workLoop); <span class="comment">// Schedule next chunk</span>
+}
+
+function performUnitOfWork(fiber) {
+  <span class="comment">// 1. Call the component function, get children</span>
+  <span class="comment">// 2. Create fibers for children (reconcile)</span>
+  <span class="comment">// 3. Return the next fiber to work on</span>
+  if (fiber.child) return fiber.child;
+  let nextFiber = fiber;
+  while (nextFiber) {
+    if (nextFiber.sibling) return nextFiber.sibling;
+    nextFiber = nextFiber.return; <span class="comment">// Walk up to parent</span>
+  }
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>The traversal order matters.</strong> React walks the fiber tree depth-first: process a node, go to its first child, go to its sibling, walk back up to the parent. This means the return/child/sibling pointers encode the entire traversal &mdash; no call stack needed. That's why it's interruptible: the "where am I?" state is in the data structure, not on the JavaScript call stack.</p>
+    </div>
+
+    <h3>Concurrent features you use today</h3>
+
+    <p>Fiber enables several features you're already using:</p>
+
+    <ul>
+      <li><strong><code>useTransition</code>:</strong> Mark a state update as non-urgent. React renders it in the background without blocking user input.</li>
+      <li><strong><code>useDeferredValue</code>:</strong> Show stale data while the new data is being rendered. Like a debounce, but React-aware.</li>
+      <li><strong>Suspense:</strong> Pause rendering at a boundary while waiting for async data, show a fallback, then seamlessly swap in the content.</li>
+      <li><strong>Streaming SSR:</strong> Send HTML in chunks as each Suspense boundary resolves, instead of waiting for the entire page.</li>
+    </ul>
+
+    <pre><code><span class="comment">// useTransition in practice: search with a non-blocking filter</span>
+function ArticleSearch({ articles }: Props) {
+  const [query, setQuery] = useState('');
+  const [isPending, startTransition] = useTransition();
+
+  function handleChange(e: ChangeEvent&lt;HTMLInputElement&gt;) {
+    <span class="comment">// The input update is urgent (show what user typed immediately)</span>
+    setQuery(e.target.value);
+
+    <span class="comment">// The filter is non-urgent (can render in background)</span>
+    startTransition(() =&gt; {
+      setFilteredArticles(
+        articles.filter(a =&gt; a.title.includes(e.target.value))
+      );
+    });
+  }
+
+  return (
+    &lt;div&gt;
+      &lt;input value={query} onChange={handleChange} /&gt;
+      {isPending &amp;&amp; &lt;Spinner /&gt;}
+      &lt;ArticleList articles={filteredArticles} /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- THE COMMIT PHASE                             -->
+    <!-- ============================================ -->
+
+    <h2>The Commit Phase: When the DOM Actually Changes</h2>
+
+    <p>After reconciliation completes, React has a list of "effects" &mdash; DOM mutations that need to happen. The commit phase applies these synchronously (it cannot be interrupted &mdash; you don't want a half-updated DOM).</p>
+
+    <p>The commit phase has three sub-phases:</p>
+
+    <ol>
+      <li><strong>Before mutation:</strong> Read from the DOM (like <code>getSnapshotBeforeUpdate</code> in class components)</li>
+      <li><strong>Mutation:</strong> Apply all DOM insertions, updates, and deletions</li>
+      <li><strong>Layout:</strong> Run <code>useLayoutEffect</code> callbacks (sync, before paint). Run <code>useEffect</code> callbacks (async, after paint).</li>
+    </ol>
+
+    <div class="aha">
+      <p><strong>The commit phase is always synchronous.</strong> No matter how fancy the concurrent render phase is, the commit phase runs in one uninterrupted pass. This guarantees the user never sees an inconsistent DOM. The render phase is where React does the smart scheduling; the commit phase is the reliable, boring part that just applies changes.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What is a fiber, in concrete terms?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A fiber is a JavaScript object (a plain POJO) that represents one unit of work in the React tree. It has pointers to its parent (return), first child (child), and next sibling (sibling), plus it stores the component's type, props, state, hooks, and effect flags.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why does React use a linked list structure instead of a recursive tree?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because a linked list can be traversed incrementally. React can process one node, check if the browser needs to handle user input, and resume later. A recursive traversal stores its progress on the call stack, which can't be paused.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What happens when you change a component's root element type (e.g., div to section)?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">React tears down the entire subtree (unmounts all components, destroys all DOM nodes, loses all state) and rebuilds from scratch. Different type = new identity = full reset.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Explain why <code>key={index}</code> is dangerous for lists that can reorder.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">React uses keys to match old and new children. If you use indices and insert an item at position 0, every item's index shifts. React thinks item at index 0 changed, index 1 changed, etc., and updates every DOM node. Worse: if items have local state (inputs, focus), the state stays at the old index position, getting attached to the wrong item.</div>
+      </div>
+
+      <div class="question">
+        <p>5. Can the commit phase be interrupted?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">No. The commit phase is always synchronous. It applies all DOM mutations in one pass to prevent the user from seeing an inconsistent UI. Only the render (reconciliation) phase can be interrupted by concurrent features.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Break Reconciliation on Purpose</h4>
+      <ol>
+        <li>Create a list of items with input fields. Use <code>key={index}</code>. Add items to the beginning of the list. Watch the inputs get scrambled. Then fix it with proper keys.</li>
+        <li>Wrap a component in a div, then change it to a span. Observe that all child state resets. Use React DevTools to verify the component unmounts and remounts.</li>
+        <li>Use React DevTools Profiler: trigger a re-render and look at the flame chart. Identify which components re-rendered and how long each took.</li>
+      </ol>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/react/lessons/01-react-mental-model/">&larr; Lesson 01: Mental Model</a>
+      <a href="/react/lessons/03-hooks-deep-dive/">Lesson 03: Hooks Deep Dive &rarr;</a>
+    </div>
+  </div>
+</body>
+</html>

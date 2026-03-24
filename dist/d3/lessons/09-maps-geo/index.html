@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 09 - Arcs, Pies & Radial Charts</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #f97316; }</style>
+  <style>
+    .legend-item { display: inline-flex; align-items: center; gap: 0.4rem; margin-right: 1rem; font-size: 0.8rem; color: var(--text-muted); }
+    .legend-item span.swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; }
+  </style>
+  <script type="module" crossorigin src="/assets/d3_lessons_09-maps-geo-DKr1RrHR.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/init-tutor-Cq4VzOVI.js">
+  <link rel="modulepreload" crossorigin href="/assets/transform-DGvXF_4U.js">
+  <link rel="modulepreload" crossorigin href="/assets/sum-CB6J5KXz.js">
+  <link rel="modulepreload" crossorigin href="/assets/select-PKtlUnGw.js">
+  <link rel="modulepreload" crossorigin href="/assets/array-C1TrskLm.js">
+  <link rel="modulepreload" crossorigin href="/assets/pie-CGED7U8v.js">
+  <link rel="modulepreload" crossorigin href="/assets/defaultLocale-_QQJJ3OD.js">
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>09</span> Arcs, Pies &amp; Radial Charts</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Mental Model:</strong> Two tools, two jobs. <code>d3.pie()</code> computes the angles (divides the circle). <code>d3.arc()</code> draws the slices (generates path strings from angles). They always work together.</p>
+
+    <h2>The Two-Step Process</h2>
+
+    <pre><code><span class="comment">// Step 1: pie() transforms data into angles</span>
+const pie = d3.pie()
+  .value(d =&gt; d.amount)    <span class="comment">// which field to use for proportions</span>
+  .sort(null);             <span class="comment">// keep original order (don't re-sort)</span>
+
+const arcsData = pie(data);
+<span class="comment">// Each item now has: { startAngle, endAngle, data, value }</span>
+
+<span class="comment">// Step 2: arc() generates SVG path strings from angles</span>
+const arc = d3.arc()
+  .innerRadius(0)          <span class="comment">// 0 = pie, &gt; 0 = donut</span>
+  .outerRadius(150);
+
+<span class="comment">// Step 3: Combine them</span>
+svg.selectAll("path")
+  .data(arcsData)          <span class="comment">// data is the pie-computed angles</span>
+  .join("path")
+  .attr("d", arc)          <span class="comment">// arc() reads startAngle/endAngle</span>
+  .attr("fill", (d, i) =&gt; colors[i]);</code></pre>
+
+    <div class="aha">
+      <p><strong>pie() does NOT draw anything.</strong> It only computes angles. arc() does NOT know about your data. It only reads angles. Separating computation from drawing is a D3 design principle &mdash; it gives you full control over layout and appearance independently.</p>
+    </div>
+
+    <h3>Donut vs Pie</h3>
+    <pre><code><span class="comment">// Pie chart: innerRadius = 0</span>
+d3.arc().innerRadius(0).outerRadius(150)
+
+<span class="comment">// Donut chart: innerRadius &gt; 0</span>
+d3.arc().innerRadius(70).outerRadius(150)
+
+<span class="comment">// The center space is great for summary text</span></code></pre>
+
+    <h3>Centroid for Labels</h3>
+    <pre><code><span class="comment">// arc.centroid() returns [x, y] of the midpoint of the arc</span>
+<span class="comment">// Perfect for positioning labels</span>
+const labelArc = d3.arc()
+  .innerRadius(outerRadius * 0.7)
+  .outerRadius(outerRadius * 0.7);
+
+svg.selectAll("text")
+  .data(arcsData)
+  .join("text")
+  .attr("transform", d =&gt; `translate(${labelArc.centroid(d)})`)
+  .text(d =&gt; d.data.label);</code></pre>
+
+    <!-- ============================================ -->
+    <!-- DEMO 1: CAMPAIGN FINANCE DONUT               -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Campaign Finance Donut Chart</h2>
+
+    <div class="demo">
+      <h4>Live: Congressional campaign funding sources</h4>
+      <div id="donut-chart" style="text-align: center;"></div>
+      <div id="donut-legend" style="margin-top: 1rem; text-align: center;"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEMO 2: ANIMATED ARC ENTRANCE                -->
+    <!-- ============================================ -->
+
+    <h2>Demo: Animated Arc Entrance</h2>
+    <p>Arcs tween from 0 to their final angle using D3's <code>attrTween</code>.</p>
+
+    <div class="demo">
+      <h4>Live: Budget breakdown with animated entrance</h4>
+      <div id="animated-donut" style="text-align: center;"></div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What does <code>d3.pie()</code> return when you call it with data?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">An array of objects, each with <code>startAngle</code>, <code>endAngle</code>, <code>data</code> (original datum), <code>value</code>, <code>index</code>, and <code>padAngle</code>. The angles are in radians and sum to 2*pi. These angle objects are what <code>d3.arc()</code> reads to draw slices.</div>
+      </div>
+
+      <div class="question">
+        <p>2. How do you make a donut chart instead of a pie chart?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Set <code>innerRadius</code> to a value greater than 0 in the arc generator: <code>d3.arc().innerRadius(70).outerRadius(150)</code>. When innerRadius = 0, you get a full pie. When it is > 0, you get a donut with a hole in the center.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why pass <code>.sort(null)</code> to <code>d3.pie()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">By default, <code>d3.pie()</code> sorts slices by descending value. <code>.sort(null)</code> tells it to keep the original data order. This is important when the data has a meaningful order (e.g., chronological, or matching a legend) or when you want consistent positioning across updates.</div>
+      </div>
+
+      <div class="question">
+        <p>4. How do you position labels at the center of each arc slice?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use <code>arc.centroid(d)</code> which returns an [x, y] array for the midpoint of the arc. Create a label-specific arc generator with radius set to where you want labels (e.g., 70% of outer radius), then use <code>translate(${labelArc.centroid(d)})</code> to position text elements.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What does <code>.padAngle(0.02)</code> do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It adds a small gap (in radians) between adjacent slices, making them visually distinct. Combined with <code>.cornerRadius(4)</code>, it gives the donut chart a polished, modern look. The padding is subtracted from each slice proportionally.</div>
+      </div>
+
+      <div class="question">
+        <p>6. How do you animate arcs growing from 0 to their final angle?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use <code>attrTween("d", ...)</code> with a custom interpolator. Start each arc's <code>endAngle</code> at its <code>startAngle</code> (0 size), then interpolate to the final <code>endAngle</code>. The arc generator is called at each frame of the transition to produce the intermediate path string.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Donut Chart from Donation Data</h4>
+      <p>Create a donut chart showing campaign donation sources:</p>
+      <pre><code>const donations = [
+  { source: "Individual &lt;$200", amount: 1_250_000 },
+  { source: "Individual $200-$2900", amount: 2_800_000 },
+  { source: "PAC", amount: 950_000 },
+  { source: "Party Committee", amount: 400_000 },
+  { source: "Self-Funded", amount: 500_000 },
+];</code></pre>
+      <ol>
+        <li>Use <code>d3.pie().value(d => d.amount)</code> to compute angles</li>
+        <li>Use <code>d3.arc()</code> with innerRadius > 0 for donut style</li>
+        <li>Add percentage labels using arc centroid positioning</li>
+        <li>Put the total raised amount in the center</li>
+        <li>Add a legend below the chart</li>
+        <li>Animate the arcs appearing one by one with delay</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>d3.pie()</strong> computes angles from data values</li>
+      <li><strong>d3.arc()</strong> draws SVG paths from angles</li>
+      <li><strong>innerRadius = 0</strong> is pie, <strong>&gt; 0</strong> is donut</li>
+      <li><strong>arc.centroid()</strong> gives the midpoint for label positioning</li>
+      <li><strong>.padAngle()</strong> and <strong>.cornerRadius()</strong> for polish</li>
+      <li><strong>attrTween</strong> enables smooth arc animations</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/d3/lessons/08-arcs-pies/">&larr; Lesson 08: Lines &amp; Areas</a>
+      <a href="/d3/lessons/10-interactivity/">Lesson 10: Maps &amp; Geography &rarr;</a>
+    </div>
+  </div>
+
+
+</body>
+</html>

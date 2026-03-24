@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mail Voting in America — Data Workstation — Learn D3</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    body {
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #f97316; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+
+    /* ── Nav ── */
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover {
+      background: #f97316;
+      color: #000;
+      border-color: #f97316;
+    }
+    .nav a.active {
+      background: #f472b6;
+      color: #000;
+      border-color: #f472b6;
+    }
+
+    /* ── Hero ── */
+    .page-hero {
+      padding: 3rem 3rem 1.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .page-hero .kicker {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #f472b6;
+      margin-bottom: 0.75rem;
+    }
+    .page-hero h2 {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+      line-height: 1.15;
+    }
+    .page-hero .subtitle {
+      color: #999;
+      font-size: 1.05rem;
+      max-width: 720px;
+      line-height: 1.7;
+    }
+    .page-hero .byline {
+      margin-top: 1rem;
+      color: #666;
+      font-size: 0.85rem;
+    }
+    .page-hero .byline strong { color: #aaa; font-weight: 600; }
+
+    /* ── Content Container ── */
+    .content {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 3rem 6rem;
+    }
+
+    /* ── Section Divider ── */
+    .section-divider {
+      border: none;
+      height: 1px;
+      background: linear-gradient(to right, transparent, #333, transparent);
+      margin: 4rem 0;
+    }
+
+    /* ── Viz Section ── */
+    .viz-section {
+      margin-bottom: 1rem;
+    }
+    .viz-section .section-num {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #f97316;
+      margin-bottom: 0.5rem;
+    }
+    .viz-section h3 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+    .viz-section .viz-subtitle {
+      color: #888;
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+      max-width: 680px;
+    }
+
+    /* ── Chart Container ── */
+    .chart-container {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .chart-container svg {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* ── Controls ── */
+    .controls-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .controls-row label {
+      font-size: 0.8rem;
+      color: #888;
+      margin-right: 0.25rem;
+    }
+    .controls-row select {
+      padding: 0.4rem 0.75rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #e5e5e5;
+      font-size: 0.85rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .controls-row select:focus { outline: none; border-color: #f97316; }
+    .filter-btn {
+      padding: 0.4rem 0.85rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .filter-btn:hover { border-color: #555; color: #fff; }
+    .filter-btn.active { border-color: #f97316; color: #f97316; background: #f9731615; }
+
+    /* ── Toggle Buttons ── */
+    .toggle-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .toggle-btn {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .toggle-btn:hover { border-color: #555; color: #fff; }
+    .toggle-btn.active { border-color: #f97316; color: #f97316; }
+    .toggle-btn.code-btn.active { border-color: #818cf8; color: #818cf8; }
+    .toggle-btn.learning-btn.active { border-color: #f97316; color: #f97316; }
+    .toggle-btn.brief-btn.active { border-color: #4ade80; color: #4ade80; }
+
+    /* ── Code Block ── */
+    .code-panel {
+      display: none;
+      background: #0d1117;
+      border: 1px solid #222;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .code-panel.open { display: block; }
+    .code-panel .code-header {
+      padding: 0.6rem 1rem;
+      background: #161b22;
+      border-bottom: 1px solid #222;
+      font-size: 0.75rem;
+      color: #8b949e;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .code-panel pre {
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: #e6edf3;
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      tab-size: 2;
+    }
+
+    /* ── Explanation Panels ── */
+    .explanation-panel {
+      display: none;
+      border: 1px solid #222;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .explanation-panel.open { display: block; }
+    .explanation-panel.learning {
+      border-color: #f9731633;
+    }
+    .explanation-panel.brief {
+      border-color: #4ade8033;
+    }
+    .explanation-panel .panel-header {
+      padding: 0.75rem 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-bottom: 1px solid #222;
+    }
+    .explanation-panel.learning .panel-header {
+      background: #f9731610;
+      color: #f97316;
+    }
+    .explanation-panel.brief .panel-header {
+      background: #4ade8010;
+      color: #4ade80;
+    }
+    .explanation-panel .panel-body {
+      padding: 1rem 1.25rem;
+      color: #bbb;
+      font-size: 0.88rem;
+      line-height: 1.7;
+    }
+    .explanation-panel .panel-body strong { color: #e5e5e5; }
+    .explanation-panel .panel-body code {
+      background: #1a1a1a;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.82rem;
+      color: #f97316;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+    .explanation-panel .panel-body ul {
+      margin: 0.5rem 0;
+      padding-left: 1.25rem;
+    }
+    .explanation-panel .panel-body li {
+      margin-bottom: 0.4rem;
+    }
+    .explanation-panel .panel-body p {
+      margin-bottom: 0.6rem;
+    }
+
+    /* ── Key Stat Cards ── */
+    .key-stat {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+    }
+    .key-stat .stat {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      min-width: 140px;
+      flex: 1;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .key-stat .stat.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .key-stat .stat .number {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .key-stat .stat .label {
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 0.25rem;
+    }
+
+    /* ── Tooltip ── */
+    .tooltip {
+      position: fixed;
+      pointer-events: none;
+      background: #1a1a1a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      color: #e5e5e5;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 1000;
+      max-width: 300px;
+      line-height: 1.4;
+      border: 1px solid #333;
+    }
+    .tooltip.visible { opacity: 1; }
+    .tooltip .tip-label { font-weight: 600; margin-bottom: 0.15rem; }
+    .tooltip .tip-value { color: #aaa; }
+    .tooltip .tip-rule { font-size: 0.72rem; margin-top: 0.2rem; }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+      padding: 0.75rem 0;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      color: #aaa;
+    }
+    .legend-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    /* ── Data Sources & Journalist Notes ── */
+    .sources-section, .notes-section {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+    .sources-section h3, .notes-section h3 {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      color: #ccc;
+    }
+    .sources-section ul, .notes-section ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sources-section li, .notes-section li {
+      padding: 0.4rem 0;
+      color: #888;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .sources-section li:last-child, .notes-section li:last-child { border-bottom: none; }
+    .sources-section li strong, .notes-section li strong { color: #bbb; font-weight: 600; }
+    .notes-section .note-group { margin-bottom: 1.5rem; }
+    .notes-section .note-group h4 {
+      font-size: 0.85rem;
+      color: #aaa;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .notes-section .note-group ul { list-style: disc; padding-left: 1.25rem; }
+    .notes-section .note-group li { border-bottom: none; padding: 0.2rem 0; }
+
+    /* ── State highlight ── */
+    .state-path { cursor: pointer; transition: opacity 0.15s; }
+    .state-path.dimmed { opacity: 0.25; }
+    .bar-group { cursor: pointer; }
+    .bar-group.dimmed rect { opacity: 0.25; }
+    .bar-group.dimmed text { opacity: 0.35; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header, .nav, .page-hero, .content { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .page-hero h2 { font-size: 1.6rem; }
+      .chart-container { padding: 1rem; }
+      .key-stat { flex-direction: column; }
+    }
+
+    /* ── Syntax highlight colors ── */
+    .code-panel .kw { color: #ff7b72; }
+    .code-panel .fn { color: #d2a8ff; }
+    .code-panel .str { color: #a5d6ff; }
+    .code-panel .num { color: #79c0ff; }
+    .code-panel .cm { color: #8b949e; }
+    .code-panel .op { color: #c9d1d9; }
+  </style>
+  <script type="module" crossorigin src="/assets/d3_workstation_absentee-voting-D5_7Ddez.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/transform-DGvXF_4U.js">
+  <link rel="modulepreload" crossorigin href="/assets/feature-DXDMwmIR.js">
+  <link rel="modulepreload" crossorigin href="/assets/mesh-CkkaPKVR.js">
+  <link rel="modulepreload" crossorigin href="/assets/defaultLocale-_QQJJ3OD.js">
+  <link rel="modulepreload" crossorigin href="/assets/linear-Bvwc2yJx.js">
+  <link rel="modulepreload" crossorigin href="/assets/nice-CjghwxBw.js">
+  <link rel="modulepreload" crossorigin href="/assets/sequential-Bke8uvtG.js">
+  <link rel="modulepreload" crossorigin href="/assets/band-HgbXjY_x.js">
+  <link rel="modulepreload" crossorigin href="/assets/ramp-CK088EDZ.js">
+  <link rel="modulepreload" crossorigin href="/assets/YlOrRd-6YagA92R.js">
+  <link rel="modulepreload" crossorigin href="/assets/select-PKtlUnGw.js">
+  <link rel="modulepreload" crossorigin href="/assets/albersUsa-fMGaySAz.js">
+  <link rel="modulepreload" crossorigin href="/assets/array-C1TrskLm.js">
+  <link rel="modulepreload" crossorigin href="/assets/line-Ds-cSQ6A.js">
+  <link rel="modulepreload" crossorigin href="/assets/axis-rlX7cRMw.js">
+  <link rel="modulepreload" crossorigin href="/assets/stack-CyL8Kq-q.js">
+  <link rel="modulepreload" crossorigin href="/assets/selectAll-DmLYiGMk.js">
+  <link rel="modulepreload" crossorigin href="/assets/init-tutor-Cq4VzOVI.js">
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+</head>
+<body>
+
+  <!-- Shared tooltip -->
+  <div class="tooltip" id="tooltip"></div>
+
+  <!-- ── Header ── -->
+  <div class="header">
+    <h1>Learn <span>D3</span>.js</h1>
+    <div class="meta">Data Journalism Workstation</div>
+  </div>
+
+  <!-- ── Nav ── -->
+  <nav class="nav">
+    <a href="/d3/">Home</a>
+    <a href="/d3/projects/">Portfolio</a>
+    <a href="/d3/workstation/save-act/">SAVE Act</a>
+    <a href="/d3/workstation/absentee-voting/" class="active" style="color: #f472b6;">Mail Voting</a>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <div class="page-hero">
+    <div class="kicker">Data Investigation</div>
+    <h2>Mail Voting in America: Who Relies on It and What's at Stake</h2>
+    <p class="subtitle">
+      A data-driven investigation into absentee and mail-in voting across all 50 states.
+      Five visualizations built with D3.js, exploring how Americans vote by mail, how COVID-19
+      reshaped voting habits, and which populations depend most on this method.
+    </p>
+    <p class="byline">By <strong>Trevor Brown</strong> &middot; Data Visualization Workstation &middot; 2026</p>
+  </div>
+
+  <!-- ── Main Content ── -->
+  <div class="content">
+
+    <!-- ================================================================ -->
+    <!-- SECTION 1: Hero Map -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz1-section">
+      <div class="section-num">Section 01</div>
+      <h3>How America Votes by Mail</h3>
+      <p class="viz-subtitle">A state-by-state look at mail voting's share of total ballots. Oregon and Washington vote almost entirely by mail, while most excuse-required states remain below 10%.</p>
+
+      <div class="controls-row">
+        <label for="year-select-map">Election Year:</label>
+        <select id="year-select-map">
+          <option value="y2024" selected>2024</option>
+          <option value="y2020">2020</option>
+          <option value="y2016">2016</option>
+        </select>
+      </div>
+
+      <div class="chart-container" id="viz1-map"></div>
+
+      <div class="legend" id="viz1-legend"></div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code1">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn1">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief1">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code1">
+        <div class="code-header"><span>viz1-choropleth-map.js</span><span>D3.js v7 + TopoJSON</span></div>
+        <pre id="code1-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn1">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><code>d3.geoAlbersUsa()</code> &mdash; the built-in projection for US maps. It repositions Alaska and Hawaii as insets. No need to set center or rotate.</li>
+            <li><code>d3.geoPath(projection)</code> &mdash; the path generator. Takes a GeoJSON feature and returns an SVG path <code>d</code> attribute string. Think of it as a "translator" from lat/lng to SVG coordinates.</li>
+            <li><strong>TopoJSON &rarr; GeoJSON:</strong> <code>topojson.feature(us, us.objects.states)</code> converts the compressed TopoJSON back to GeoJSON features that D3 can render.</li>
+            <li><code>d3.scaleSequential(d3.interpolateYlOrRd)</code> &mdash; maps a continuous domain [0, 100] to a color ramp. Sequential scales are perfect for "low to high" data like percentages.</li>
+            <li><strong>Data lookup pattern:</strong> Create a <code>Map</code> keyed by FIPS code, then use it in <code>.attr("fill", d => colorScale(lookup.get(d.id)))</code>. This is the standard choropleth pattern.</li>
+            <li><strong>Linked highlighting:</strong> A shared <code>highlightState(abbr)</code> function that both the map and bar chart call. This is how newsroom graphics sync multiple views.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A D3 map is just SVG <code>&lt;path&gt;</code> elements that happen to look like geography. Each state is one path. The projection is the "lens" that converts 3D coordinates to 2D screen positions. <code>geoPath</code> turns those positions into SVG path commands (<code>M</code>, <code>L</code>, <code>C</code>, etc.).</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief1">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers &amp; Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> U.S. Election Assistance Commission (EAVS) reports for 2016, 2020, and 2024. State law classifications from the National Conference of State Legislatures (NCSL), 2025 update.</p>
+          <p><strong>Methodology:</strong> Mail vote share = (mail/absentee ballots cast) / (total ballots cast) x 100. State boundaries from US Atlas TopoJSON (10m resolution). Albers USA projection for standard journalistic layout with Alaska/Hawaii insets.</p>
+          <p><strong>Color scale choice:</strong> Sequential yellow-orange-red ramp chosen for intuitive "cool to hot" reading. States with no data in our subset render as the baseline color.</p>
+          <p><strong>Limitations:</strong> Not all 50 states are represented in our curated dataset. EAVS data completeness varies by state. Some 2024 figures are estimated from early reports and news coverage.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 2: Ranked Bar Chart -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz2-section">
+      <div class="section-num">Section 02</div>
+      <h3>State by State</h3>
+      <p class="viz-subtitle">Every state ranked by its share of mail-in votes. Filter by voting rule type to see how policy shapes behavior.</p>
+
+      <div class="controls-row">
+        <label for="year-select-bar">Year:</label>
+        <select id="year-select-bar">
+          <option value="y2024" selected>2024</option>
+          <option value="y2020">2020</option>
+          <option value="y2016">2016</option>
+        </select>
+        <span style="margin-left:1rem;"></span>
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="all-mail">All-Mail</button>
+        <button class="filter-btn" data-filter="no-excuse">No-Excuse</button>
+        <button class="filter-btn" data-filter="excuse-required">Excuse-Required</button>
+      </div>
+
+      <div class="chart-container" id="viz2-bars"></div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#f472b6;"></div> All-Mail State</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#818cf8;"></div> No-Excuse Absentee</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#f97316;"></div> Excuse Required</div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code2">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn2">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief2">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code2">
+        <div class="code-header"><span>viz2-ranked-bars.js</span><span>D3.js v7</span></div>
+        <pre id="code2-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn2">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><code>d3.scaleBand()</code> for the y-axis &mdash; each state gets an equal vertical slice. <code>.padding(0.25)</code> adds gaps between bars.</li>
+            <li><code>d3.scaleLinear()</code> for the x-axis &mdash; domain [0, 100] maps to [0, chartWidth] since we're showing percentages.</li>
+            <li><strong>Sort + rebind:</strong> When the year changes, re-sort the data, update the <code>scaleBand</code> domain, then transition bars to new positions. This is the <code>.data().join()</code> update pattern in action.</li>
+            <li><strong>Filter pattern:</strong> Don't remove bars on filter &mdash; instead, set <code>opacity</code> or <code>display</code>. This preserves the DOM elements for smooth transitions when toggling filters off.</li>
+            <li><code>.transition().duration(600)</code> on both <code>width</code> and <code>y</code> makes bars smoothly re-sort and resize when the year or filter changes.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A horizontal bar chart is a <code>scaleBand</code> (categories on y) crossed with a <code>scaleLinear</code> (values on x). When data changes, you update both scales' domains and transition the bars. The "linked highlighting" is just a shared function that adds/removes a CSS class on both the map paths and bar groups.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief2">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers &amp; Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> Same EAVS data as Section 01. State rule classifications from NCSL.</p>
+          <p><strong>Why horizontal bars:</strong> With 36+ states, horizontal bars are more readable than vertical. State names serve as natural labels. Sorting by value makes comparison instant.</p>
+          <p><strong>Color encoding:</strong> Rule type is encoded as bar color (pink = all-mail, purple = no-excuse, orange = excuse-required). This dual encoding (position + color) helps readers see clustering of policy types at different mail vote levels.</p>
+          <p><strong>Linked highlighting:</strong> Hovering a state on the map highlights the corresponding bar, and vice versa. This "brushing and linking" technique is standard in data journalism dashboards.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 3: Slope Chart -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz3-section">
+      <div class="section-num">Section 03</div>
+      <h3>The COVID Spike and Rebound</h3>
+      <p class="viz-subtitle">Mail voting surged in 2020 as the pandemic pushed states to expand access. By 2024, many states snapped back &mdash; but not all. The lines tell the story.</p>
+
+      <div class="chart-container" id="viz3-slope"></div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#f472b6;"></div> All-Mail States</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#818cf8;"></div> No-Excuse Absentee</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#f97316;"></div> Excuse Required</div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code3">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn3">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief3">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code3">
+        <div class="code-header"><span>viz3-slope-chart.js</span><span>D3.js v7</span></div>
+        <pre id="code3-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn3">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><strong>Slope chart = simplified line chart</strong> with only 3 x-positions (2016, 2020, 2024). Each state gets a polyline connecting its three data points.</li>
+            <li><code>d3.scalePoint()</code> for the x-axis &mdash; like <code>scaleBand</code> but for points. Perfect when you have discrete categories (years) that need even spacing.</li>
+            <li><code>d3.line()</code> path generator &mdash; takes an array of [x, y] pairs and returns an SVG path string. The same generator used for time series, just with fewer data points.</li>
+            <li><strong>Annotation pattern:</strong> Hand-placed text labels using <code>.append("text")</code> with specific coordinates. In newsrooms, annotations are often the most time-consuming part.</li>
+            <li><strong>Hover interaction on overlapping lines:</strong> Use <code>stroke-width</code> expansion on hover, plus bring the hovered line to front with <code>this.parentNode.appendChild(this)</code>.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A slope chart is just a line chart with the "time" axis compressed to a few columns. The slope (angle) of each line segment shows direction and magnitude of change. Steep up = big increase. The visual pattern of lines crossing each other tells the ranking story.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief3">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers &amp; Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> EAVS 2016, 2020, 2024 reports. State totals cross-referenced with news coverage for 2024 estimates.</p>
+          <p><strong>Why a slope chart:</strong> Slope charts are ideal for showing change across a small number of time periods. They reveal three patterns simultaneously: (1) starting level, (2) magnitude of change, (3) direction of change. The COVID spike in 2020 and partial rebound in 2024 are immediately visible.</p>
+          <p><strong>Key findings:</strong> All-mail states (OR, WA, CO) show flat lines near the top &mdash; mail voting was already universal. Swing states like PA, MI, and WI show dramatic spikes in 2020 followed by significant drops in 2024, suggesting the pandemic expansion was temporary. Excuse-required states barely moved.</p>
+          <p><strong>Limitations:</strong> Three data points can't capture the full trend. State-level aggregation masks county-level variation.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 4: Scatterplot -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz4-section">
+      <div class="section-num">Section 04</div>
+      <h3>Who Has the Most to Lose?</h3>
+      <p class="viz-subtitle">States in the upper-right rely on mail voting both by share and raw volume. Any federal restriction on mail voting would hit these states hardest.</p>
+
+      <div class="chart-container" id="viz4-scatter"></div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-swatch" style="background:#f472b6;"></div> All-Mail</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#818cf8;"></div> No-Excuse</div>
+        <div class="legend-item"><div class="legend-swatch" style="background:#f97316;"></div> Excuse Required</div>
+        <div class="legend-item" style="margin-left:1rem; color:#666;">Dot size = total votes cast</div>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code4">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn4">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief4">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code4">
+        <div class="code-header"><span>viz4-scatterplot.js</span><span>D3.js v7</span></div>
+        <pre id="code4-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn4">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><strong>Three visual encodings:</strong> x-position (mail share %), y-position (mail volume), size (total votes), color (rule type). Scatterplots can encode 4+ dimensions.</li>
+            <li><code>d3.scaleSqrt()</code> for dot radius &mdash; use sqrt scale, not linear, for area-based encoding. A state with 4x the votes should have a dot with 4x the area, not 4x the radius (which would be 16x the area).</li>
+            <li><strong>Crosshair tooltip:</strong> Draw dashed lines from the hovered dot to both axes. Use <code>line</code> elements that update position on <code>mousemove</code>.</li>
+            <li><code>d3.format(",")</code> and <code>d3.format(".1f")</code> &mdash; D3's number formatting. Commas for thousands separators, <code>.1f</code> for one decimal place.</li>
+            <li><strong>Quadrant annotation:</strong> A dashed rectangle or shaded region highlighting the "high share + high volume" quadrant adds editorial meaning to the scatterplot.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A scatterplot reveals relationships between two variables. Each dot is a state plotted at (x, y). If dots cluster along a diagonal, the variables are correlated. Size adds a third dimension. Color adds a fourth. The "danger zone" quadrant is a journalistic annotation that tells the reader what pattern to look for.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief4">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers &amp; Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> EAVS 2024 data. Mail ballot volume and total turnout by state.</p>
+          <p><strong>Why a scatterplot:</strong> This chart answers a specific editorial question: "If mail voting were restricted, which states would be most affected?" States in the top-right quadrant have both high reliance (share) and high volume, meaning millions of voters use this method. California alone accounted for ~14.4M mail ballots in 2024.</p>
+          <p><strong>Bubble size:</strong> Encoded using <code>scaleSqrt</code> to ensure perceptually accurate area comparison. Domain based on total votes cast (smallest to largest state).</p>
+          <p><strong>Editorial note:</strong> This visualization intentionally frames mail voting access as a potential policy vulnerability. It does not take a position on whether restrictions are warranted.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- SECTION 5: National Summary -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="viz-section" id="viz5-section">
+      <div class="section-num">Section 05</div>
+      <h3>By the Numbers</h3>
+      <p class="viz-subtitle">The national view: how America's voting methods have shifted over three elections, and key stats that frame the mail voting debate.</p>
+
+      <div class="key-stat" id="summary-stats">
+        <div class="stat" style="transition-delay: 0s;">
+          <div class="number" style="color: #f97316;">~48M</div>
+          <div class="label">Mail ballots cast in 2024</div>
+        </div>
+        <div class="stat" style="transition-delay: 0.1s;">
+          <div class="number" style="color: #818cf8;">31%</div>
+          <div class="label">Average state mail vote share</div>
+        </div>
+        <div class="stat" style="transition-delay: 0.2s;">
+          <div class="number" style="color: #f472b6;">8+DC</div>
+          <div class="label">All-mail election states</div>
+        </div>
+        <div class="stat" style="transition-delay: 0.3s;">
+          <div class="number" style="color: #4ade80;">14</div>
+          <div class="label">Excuse-required states</div>
+        </div>
+      </div>
+
+      <div class="key-stat" id="summary-stats-2" style="margin-top:0;">
+        <div class="stat" style="transition-delay: 0.4s;">
+          <div class="number" style="color: #f97316; font-size:1.2rem;">OR, WA, CO, UT, HI</div>
+          <div class="label">Top 5 by mail vote share</div>
+        </div>
+        <div class="stat" style="transition-delay: 0.5s;">
+          <div class="number" style="color: #818cf8; font-size:1.2rem;">CA, WA, CO, AZ, FL</div>
+          <div class="label">Top 5 by mail ballot volume</div>
+        </div>
+      </div>
+
+      <div class="chart-container" id="viz5-stacked" style="margin-top:1.5rem;"></div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <button class="toggle-btn code-btn" data-target="code5">View Code</button>
+        <button class="toggle-btn learning-btn" data-target="learn5">For Me (D3 Learning)</button>
+        <button class="toggle-btn brief-btn" data-target="brief5">Technical Brief</button>
+      </div>
+
+      <div class="code-panel" id="code5">
+        <div class="code-header"><span>viz5-national-summary.js</span><span>D3.js v7</span></div>
+        <pre id="code5-content"></pre>
+      </div>
+
+      <div class="explanation-panel learning" id="learn5">
+        <div class="panel-header">For Me &mdash; D3 Learning Notes</div>
+        <div class="panel-body">
+          <p><strong>Key D3 concepts used:</strong></p>
+          <ul>
+            <li><code>d3.stack()</code> &mdash; takes tabular data and computes baseline and topline values for each category. Returns arrays of [y0, y1] pairs that you feed to <code>d3.area()</code> or use for stacked bars.</li>
+            <li><strong>Stacked bar pattern:</strong> Each "layer" is a group of rectangles. The y-position of each rect is <code>d[0]</code> (baseline) and the height is <code>d[1] - d[0]</code> (the segment).</li>
+            <li><code>d3.scaleBand()</code> for the year axis (3 bars: 2016, 2020, 2024). <code>d3.scaleLinear()</code> for the percentage axis [0, 100].</li>
+            <li><strong>IntersectionObserver</strong> to trigger the stat card animations when they scroll into view. Each card has a <code>transition-delay</code> for staggered entrance.</li>
+          </ul>
+          <p><strong>Mental model:</strong> A stacked bar chart shows part-to-whole relationships across categories. Each bar sums to 100%. The <code>d3.stack()</code> generator does the math of calculating where each segment starts and ends. Think of it as "stacking blocks" &mdash; D3 calculates the shelf height for each block.</p>
+        </div>
+      </div>
+
+      <div class="explanation-panel brief" id="brief5">
+        <div class="panel-header">Technical Brief &mdash; For Interviewers &amp; Editors</div>
+        <div class="panel-body">
+          <p><strong>Data Source:</strong> National totals compiled from EAVS reports, EAC summaries, and MIT Election Lab. Voting method breakdown (mail, early in-person, Election Day) from EAVS surveys and CRS reports.</p>
+          <p><strong>Methodology:</strong> National breakdown percentages: 2016 (21% mail, 19% early, 60% Election Day), 2020 (42% mail, 26% early, 32% Election Day), 2024 (31% mail, 35% early, 34% Election Day). Early in-person and Election Day splits for 2024 are estimated from preliminary state reports.</p>
+          <p><strong>Key insight:</strong> The 2020 election saw mail voting double from 21% to 42%. By 2024, it partially reverted to 31%, but early in-person voting grew to 35%, suggesting voters who adopted non-Election Day voting in 2020 shifted methods rather than returning to traditional Election Day voting.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- DATA SOURCES -->
+    <!-- ================================================================ -->
+    <hr class="section-divider">
+
+    <div class="sources-section">
+      <h3>Data Sources</h3>
+      <ul>
+        <li><strong>U.S. Election Assistance Commission (EAVS)</strong> &mdash; Election Administration and Voting Survey, 2016, 2020, and 2024 reports</li>
+        <li><strong>National Conference of State Legislatures (NCSL)</strong> &mdash; Absentee and Mail Voting Policies by State, 2025 update</li>
+        <li><strong>States United Democracy Center</strong> &mdash; State voting law tracker</li>
+        <li><strong>MIT Election Data + Science Lab</strong> &mdash; Election performance data</li>
+        <li><strong>FiveThirtyEight</strong> &mdash; Historical election data and analysis</li>
+        <li><strong>Note:</strong> Some state data estimated from EAVS reports and news coverage. See methodology notes for each visualization.</li>
+      </ul>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- JOURNALIST NOTES -->
+    <!-- ================================================================ -->
+    <div class="notes-section" style="margin-top:2rem;">
+      <h3>What This Can and Cannot Tell You</h3>
+
+      <div class="note-group">
+        <h4 style="color:#4ade80;">What this data CAN show</h4>
+        <ul>
+          <li>How reliant each state is on mail/absentee voting as a share of total votes</li>
+          <li>How mail voting usage changed across the 2016, 2020, and 2024 elections</li>
+          <li>Which states have policies that encourage or restrict mail voting</li>
+          <li>The raw volume of voters who depend on this voting method</li>
+          <li>How the COVID-19 pandemic temporarily reshaped voting behavior</li>
+        </ul>
+      </div>
+
+      <div class="note-group">
+        <h4 style="color:#f97316;">What this data CANNOT show</h4>
+        <ul>
+          <li>Whether mail voting restrictions will pass in any given state legislature</li>
+          <li>Whether mail voting increases or decreases fraud (this data is about volume, not security)</li>
+          <li>How future turnout would change if mail voting were restricted</li>
+          <li>Partisan breakdown of mail voters (this data is method-only, not party affiliation)</li>
+          <li>Individual voter preferences or motivations for choosing mail over in-person</li>
+        </ul>
+      </div>
+
+      <div class="note-group">
+        <h4 style="color:#888;">Data limitations</h4>
+        <ul>
+          <li>EAVS data varies in completeness; not all states report all fields consistently</li>
+          <li>2024 data includes estimates where final certified results were not yet available</li>
+          <li>State law classifications can change between elections; NCSL categories shown are as of 2025</li>
+          <li>This dataset covers 36 states that represent the range of mail voting policies and volumes, not all 50+DC</li>
+        </ul>
+      </div>
+    </div>
+
+  </div><!-- end .content -->
+
+  <!-- ── D3 Script ── -->
+</body>
+</html>

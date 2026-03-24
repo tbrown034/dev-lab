@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Projects - Learn D3</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    body {
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #f97316; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+
+    /* ── Nav ── */
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover {
+      background: #f97316;
+      color: #000;
+      border-color: #f97316;
+    }
+    .nav a.active {
+      background: #f472b6;
+      color: #000;
+      border-color: #f472b6;
+    }
+
+    /* ── Page Title ── */
+    .page-hero {
+      padding: 3rem 3rem 1rem;
+      max-width: 1200px;
+    }
+    .page-hero h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-hero h2 .accent { color: #f472b6; }
+    .page-hero .subtitle {
+      color: #888;
+      font-size: 1.05rem;
+      max-width: 720px;
+      line-height: 1.7;
+    }
+    .page-hero .subtitle strong { color: #ccc; font-weight: 600; }
+    .page-hero .badge-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      color: #aaa;
+    }
+    .badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* ── Project Cards ── */
+    .projects {
+      padding: 1rem 3rem 4rem;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    .project-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .project-card:hover { border-color: #444; }
+
+    .project-header {
+      padding: 2rem 2rem 1rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .project-num {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .project-header h3 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .project-header p {
+      color: #999;
+      font-size: 0.9rem;
+      max-width: 650px;
+    }
+    .project-tags {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .project-tags span {
+      padding: 0.2rem 0.6rem;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: #888;
+    }
+
+    .viz-container {
+      padding: 1.5rem 2rem;
+      min-height: 200px;
+      position: relative;
+    }
+    .viz-container svg {
+      width: 100%;
+      display: block;
+    }
+
+    .how-built {
+      padding: 1.5rem 2rem 2rem;
+      border-top: 1px solid #1e1e1e;
+      background: #111;
+    }
+    .how-built h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #f97316;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.75rem;
+    }
+    .how-built ul {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0.5rem;
+    }
+    .how-built li {
+      color: #888;
+      font-size: 0.82rem;
+      padding-left: 1.2rem;
+      position: relative;
+      line-height: 1.5;
+    }
+    .how-built li::before {
+      content: '>';
+      position: absolute;
+      left: 0;
+      color: #f97316;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .how-built code {
+      background: #1a1a1a;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.78rem;
+      color: #f97316;
+    }
+
+    /* ── Tooltip ── */
+    .d3-tooltip {
+      position: fixed;
+      padding: 0.6rem 0.9rem;
+      background: rgba(0,0,0,0.92);
+      border: 1px solid #444;
+      border-radius: 6px;
+      color: #eee;
+      font-size: 0.78rem;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.15s;
+      backdrop-filter: blur(8px);
+      line-height: 1.4;
+    }
+    .d3-tooltip.visible { opacity: 1; }
+
+    /* ── Treemap ── */
+    .treemap-breadcrumb {
+      padding: 0.5rem 0;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .treemap-breadcrumb span {
+      cursor: pointer;
+      color: #f97316;
+    }
+    .treemap-breadcrumb span:hover { text-decoration: underline; }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header, .nav, .page-hero, .projects { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .page-hero h2 { font-size: 1.6rem; }
+      .project-header, .viz-container, .how-built { padding-left: 1.25rem; padding-right: 1.25rem; }
+    }
+  </style>
+  <script type="module" crossorigin src="/assets/d3_projects-CXJ-PQv4.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/init-tutor-Cq4VzOVI.js">
+  <link rel="modulepreload" crossorigin href="/assets/transform-DGvXF_4U.js">
+  <link rel="modulepreload" crossorigin href="/assets/defaultLocale-_QQJJ3OD.js">
+  <link rel="modulepreload" crossorigin href="/assets/linear-Bvwc2yJx.js">
+  <link rel="modulepreload" crossorigin href="/assets/extent-Ccx1MofX.js">
+  <link rel="modulepreload" crossorigin href="/assets/min-D1slsF82.js">
+  <link rel="modulepreload" crossorigin href="/assets/max-DBeXZoyG.js">
+  <link rel="modulepreload" crossorigin href="/assets/band-HgbXjY_x.js">
+  <link rel="modulepreload" crossorigin href="/assets/index-pyzYwo2_.js">
+  <link rel="modulepreload" crossorigin href="/assets/nice-CjghwxBw.js">
+  <link rel="modulepreload" crossorigin href="/assets/sequential-Bke8uvtG.js">
+  <link rel="modulepreload" crossorigin href="/assets/select-PKtlUnGw.js">
+  <link rel="modulepreload" crossorigin href="/assets/array-C1TrskLm.js">
+  <link rel="modulepreload" crossorigin href="/assets/line-Ds-cSQ6A.js">
+  <link rel="modulepreload" crossorigin href="/assets/monotone-CrhWzKu2.js">
+  <link rel="modulepreload" crossorigin href="/assets/axis-rlX7cRMw.js">
+  <link rel="modulepreload" crossorigin href="/assets/exp-CWrupD81.js">
+  <link rel="modulepreload" crossorigin href="/assets/pie-CGED7U8v.js">
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+</head>
+<body>
+
+  <!-- Tooltip shared by all visualizations -->
+  <div class="d3-tooltip" id="tooltip"></div>
+
+  <div class="header">
+    <h1>Learn <span>D3</span>.js</h1>
+    <div class="meta">Trevor Brown &middot; Portfolio Projects</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/d3/">Home</a>
+    <a href="/d3/lessons/01-fundamentals/">01 SVG</a>
+    <a href="/d3/lessons/02-selections-data/">02 Scales</a>
+    <a href="/d3/lessons/03-scales-axes/">03 Selections</a>
+    <a href="/d3/lessons/04-shapes-bindings/">04 Data</a>
+    <a href="/d3/lessons/05-maps-geo/">05 Scales</a>
+    <a href="/d3/lessons/06-transitions-interactivity/">06 Axes</a>
+    <a href="/d3/lessons/07-lines-areas/">07 Updates</a>
+    <a href="/d3/lessons/08-arcs-pies/">08 Lines</a>
+    <a href="/d3/lessons/09-maps-geo/">09 Arcs</a>
+    <a href="/d3/lessons/10-interactivity/">10 Maps</a>
+    <a href="/d3/lessons/11-d3-react/">11 Interactive</a>
+    <a href="/d3/lessons/12-capstone/">12 Capstone</a>
+    <a href="/d3/references/use-cases/" style="color: #818cf8;">Use Cases</a>
+    <a href="/d3/games/" style="color: #4ade80;">Games</a>
+    <a href="/d3/projects/" class="active" style="color: #000;">Projects</a>
+  </nav>
+
+  <div class="page-hero">
+    <h2>Portfolio <span class="accent">Projects</span></h2>
+    <p class="subtitle">
+      Four production-quality D3 visualizations built with <strong>real data</strong>.
+      Each demonstrates different D3 techniques relevant to broadcast journalism,
+      media analytics, and data-driven storytelling.
+    </p>
+    <div class="badge-row">
+      <span class="badge"><span class="dot" style="background: #f97316;"></span>D3.js v7</span>
+      <span class="badge"><span class="dot" style="background: #818cf8;"></span>Responsive SVG</span>
+      <span class="badge"><span class="dot" style="background: #4ade80;"></span>Real Data</span>
+      <span class="badge"><span class="dot" style="background: #f472b6;"></span>Interactive</span>
+    </div>
+  </div>
+
+  <div class="projects">
+
+    <!-- ======================================================
+         PROJECT 1: Global Temperature Anomalies
+         ====================================================== -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #f97316;">Project 01</div>
+        <h3>Global Temperature Anomalies (1880 &ndash; 2024)</h3>
+        <p>NASA GISS surface temperature anomaly data visualized as a gradient area chart, showing the unmistakable warming trend with blue-to-red color encoding.</p>
+        <div class="project-tags">
+          <span>d3.area()</span>
+          <span>d3.scaleSequential()</span>
+          <span>linearGradient</span>
+          <span>bisector</span>
+          <span>tooltip</span>
+        </div>
+      </div>
+      <div class="viz-container" id="viz-temperature"></div>
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Used <code>d3.area()</code> with <code>curveMonotoneX</code> for smooth, natural-looking curves that don't overshoot the data</li>
+          <li>Applied an SVG <code>&lt;linearGradient&gt;</code> mapped to the x-axis, transitioning from blue (#3b82f6) to red (#ef4444) to encode the warming trend visually</li>
+          <li>Implemented hover tracking with <code>d3.bisector()</code> to find the nearest data point and display a tooltip with year and anomaly value</li>
+          <li>Added a zero-line reference and decade labels using <code>d3.axisBottom</code> with <code>.tickValues()</code> for clean, editorial-style labeling</li>
+          <li>The chart uses <code>viewBox</code> for full responsiveness, scaling from mobile to desktop without any JavaScript resize handlers</li>
+          <li>Entrance animation uses <code>d3.transition()</code> with a clip-path reveal, drawing the chart left-to-right like a broadcast wipe</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         PROJECT 2: Federal Budget Treemap
+         ====================================================== -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #818cf8;">Project 02</div>
+        <h3>Federal Budget Breakdown (FY 2024)</h3>
+        <p>Interactive treemap of U.S. federal spending. Click any category to zoom in and explore subcategories. Real data from the Congressional Budget Office.</p>
+        <div class="project-tags">
+          <span>d3.treemap()</span>
+          <span>d3.hierarchy()</span>
+          <span>zoom transitions</span>
+          <span>nested data</span>
+          <span>d3.format()</span>
+        </div>
+      </div>
+      <div class="viz-container" id="viz-budget"></div>
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Structured budget data as a nested hierarchy and used <code>d3.hierarchy()</code> with <code>.sum()</code> and <code>.sort()</code> to compute the layout</li>
+          <li>Applied <code>d3.treemap().tile(d3.treemapSquarify)</code> for the squarified layout that maximizes readability of labels</li>
+          <li>Click-to-zoom uses <code>d3.transition()</code> to smoothly interpolate positions and sizes, re-running the treemap layout on the clicked node's children</li>
+          <li>Color scheme uses <code>d3.scaleOrdinal()</code> mapped to top-level department categories, with opacity variation for subcategories</li>
+          <li>Dollar formatting via <code>d3.format("$.2s")</code> converts raw billions to human-readable labels like "$1.2T" and "$340B"</li>
+          <li>Breadcrumb navigation lets users click back to the root view, a UX pattern borrowed from file explorers</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         PROJECT 3: Media Market Viewership
+         ====================================================== -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #4ade80;">Project 03</div>
+        <h3>Media Market Viewership Dashboard</h3>
+        <p>Top 20 DMA markets by TV households with a companion daypart viewership donut chart. Built to showcase broadcast industry data literacy.</p>
+        <div class="project-tags">
+          <span>d3.scaleBand()</span>
+          <span>d3.arc()</span>
+          <span>d3.pie()</span>
+          <span>multi-chart layout</span>
+          <span>staggered animations</span>
+        </div>
+      </div>
+      <div class="viz-container" id="viz-media"></div>
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Horizontal bar chart uses <code>d3.scaleBand()</code> for DMA market names and <code>d3.scaleLinear()</code> for household counts, with staggered <code>.delay((d, i) =&gt; i * 40)</code> entrance</li>
+          <li>Donut chart built with <code>d3.pie()</code> and <code>d3.arc()</code>, using <code>innerRadius</code> at 60% of <code>outerRadius</code> for the classic broadcast donut style</li>
+          <li>Both charts share a coordinated color palette and are laid out side-by-side using SVG <code>transform</code> groups</li>
+          <li>Nielsen DMA data is hardcoded from publicly available market rankings, representing real TV household penetration numbers</li>
+          <li>Polyline labels on the donut chart use <code>d3.arc().centroid()</code> for anchor points, preventing text overlap on small slices</li>
+          <li>Hover interactions highlight the corresponding bar or arc with opacity transitions, providing visual feedback</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         PROJECT 4: Election Night Tracker
+         ====================================================== -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #f472b6;">Project 04</div>
+        <h3>Election Night Results Tracker</h3>
+        <p>Styled after a broadcast TV election night graphic. Animated vote count bars with "Projected Winner" callouts when a candidate crosses the threshold. Uses real 2024 presidential election data for 10 swing states.</p>
+        <div class="project-tags">
+          <span>animated transitions</span>
+          <span>conditional styling</span>
+          <span>broadcast graphics</span>
+          <span>d3.format()</span>
+          <span>threshold logic</span>
+        </div>
+      </div>
+      <div class="viz-container" id="viz-election"></div>
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Each state is a paired bar group showing both candidates, using <code>d3.scaleBand()</code> with inner padding for the election-night look</li>
+          <li>Vote bars animate from zero using <code>d3.transition().duration(1500)</code> with <code>d3.easeExpOut</code>, simulating the vote-counting feel of live broadcasts</li>
+          <li>Staggered state-by-state reveals use <code>.delay((d, i) =&gt; i * 200)</code>, creating a dramatic cascade like actual election night coverage</li>
+          <li>"Projected Winner" banners appear via opacity transition when a candidate's bar crosses 50%, checking margins for competitive vs. blowout states</li>
+          <li>Color scheme uses broadcast-standard red (#dc2626) and blue (#2563eb) with luminance-adjusted text for readability</li>
+          <li>Vote counts formatted with <code>d3.format(",")</code> for comma-separated thousands, matching network chyron style</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+
+</body>
+</html>

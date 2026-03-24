@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-World D3 Use Cases - Learn D3</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #f97316; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover, .nav a.active {
+      background: #818cf8;
+      color: #000;
+      border-color: #818cf8;
+    }
+
+    .page-title {
+      padding: 2rem 3rem 0.5rem;
+    }
+    .page-title h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+    .page-title h2 span { color: #818cf8; }
+    .page-title p {
+      color: #888;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+      max-width: 700px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.25rem;
+      padding: 1.5rem 3rem 3rem;
+      max-width: 1600px;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      border-color: #444;
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      padding: 1.25rem 1.25rem 0.75rem;
+    }
+    .card-header .card-num {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.35rem;
+    }
+    .card-header h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .card-header .who {
+      font-size: 0.78rem;
+      color: #888;
+      font-style: italic;
+    }
+
+    .card-demo {
+      margin: 0.5rem 1.25rem;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      overflow: hidden;
+      min-height: 170px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-demo svg {
+      display: block;
+    }
+
+    .card-body {
+      padding: 0.75rem 1.25rem 1rem;
+    }
+    .card-body ul {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 0.75rem;
+    }
+    .card-body ul li {
+      font-size: 0.78rem;
+      color: #999;
+      line-height: 1.6;
+      padding-left: 0.85rem;
+      position: relative;
+    }
+    .card-body ul li::before {
+      content: "\2022";
+      position: absolute;
+      left: 0;
+      color: #555;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .tag {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .tag-orange { background: #f9731622; color: #f97316; }
+    .tag-purple { background: #818cf822; color: #818cf8; }
+    .tag-green  { background: #4ade8022; color: #4ade80; }
+    .tag-pink   { background: #f472b622; color: #f472b6; }
+
+    /* color classes for card numbers */
+    .accent-orange { color: #f97316; }
+    .accent-purple { color: #818cf8; }
+    .accent-green  { color: #4ade80; }
+    .accent-pink   { color: #f472b6; }
+  </style>
+  <script type="module" crossorigin src="/assets/d3_references_use-cases-DpYyHJQm.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/init-tutor-Cq4VzOVI.js">
+  <link rel="modulepreload" crossorigin href="/assets/transform-DGvXF_4U.js">
+  <link rel="modulepreload" crossorigin href="/assets/feature-DXDMwmIR.js">
+  <link rel="modulepreload" crossorigin href="/assets/defaultLocale-_QQJJ3OD.js">
+  <link rel="modulepreload" crossorigin href="/assets/linear-Bvwc2yJx.js">
+  <link rel="modulepreload" crossorigin href="/assets/band-HgbXjY_x.js">
+  <link rel="modulepreload" crossorigin href="/assets/nice-CjghwxBw.js">
+  <link rel="modulepreload" crossorigin href="/assets/defaultLocale-B7YgYLP2.js">
+  <link rel="modulepreload" crossorigin href="/assets/time-CvmHSMq6.js">
+  <link rel="modulepreload" crossorigin href="/assets/extent-Ccx1MofX.js">
+  <link rel="modulepreload" crossorigin href="/assets/index-pyzYwo2_.js">
+  <link rel="modulepreload" crossorigin href="/assets/max-DBeXZoyG.js">
+  <link rel="modulepreload" crossorigin href="/assets/quantize-Rbblvf1C.js">
+  <link rel="modulepreload" crossorigin href="/assets/sequential-Bke8uvtG.js">
+  <link rel="modulepreload" crossorigin href="/assets/select-PKtlUnGw.js">
+  <link rel="modulepreload" crossorigin href="/assets/axis-rlX7cRMw.js">
+  <link rel="modulepreload" crossorigin href="/assets/array-C1TrskLm.js">
+  <link rel="modulepreload" crossorigin href="/assets/line-Ds-cSQ6A.js">
+  <link rel="modulepreload" crossorigin href="/assets/monotone-CrhWzKu2.js">
+  <link rel="modulepreload" crossorigin href="/assets/basis-UEinyaHF.js">
+  <link rel="modulepreload" crossorigin href="/assets/pie-CGED7U8v.js">
+  <link rel="modulepreload" crossorigin href="/assets/stack-CyL8Kq-q.js">
+  <link rel="modulepreload" crossorigin href="/assets/albersUsa-fMGaySAz.js">
+  <link rel="modulepreload" crossorigin href="/assets/ramp-CK088EDZ.js">
+  <link rel="modulepreload" crossorigin href="/assets/YlOrRd-6YagA92R.js">
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Learn <span>D3</span>.js</h1>
+    <div class="meta">Real-World Use Cases</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/d3/">Home</a>
+    <a href="/d3/lessons/01-fundamentals/">01 Fundamentals</a>
+    <a href="/d3/lessons/02-selections-data/">02 Scales & Axes</a>
+    <a href="/d3/lessons/03-scales-axes/">03 Data Updates</a>
+    <a href="/d3/lessons/04-shapes-bindings/">04 Shapes</a>
+    <a href="/d3/lessons/05-maps-geo/">05 Maps</a>
+    <a href="/d3/lessons/06-transitions-interactivity/">06 Interactivity</a>
+    <a href="/d3/references/use-cases/" class="active">Use Cases</a>
+  </nav>
+
+  <div class="page-title">
+    <h2>15 Production <span>Use Cases</span></h2>
+    <p>Every card below contains a live, working D3 mini-visualization. These are the same techniques used by the New York Times, FiveThirtyEight, Bloomberg, and other newsrooms.</p>
+  </div>
+
+  <div class="grid">
+    <!-- Card 1: Election Results Map -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">01 / GEO</div>
+        <h3>Election Results Map</h3>
+        <div class="who">NYT, AP, CNN</div>
+      </div>
+      <div class="card-demo" id="demo-choropleth-election"></div>
+      <div class="card-body">
+        <ul>
+          <li>TopoJSON parsed into GeoJSON feature collection</li>
+          <li>d3.geoAlbersUsa projection for US state outlines</li>
+          <li>Categorical color scale: red/blue by party</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.geoPath</span>
+          <span class="tag tag-purple">topojson</span>
+          <span class="tag tag-green">d3.geoAlbersUsa</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Live Results Bar Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">02 / BAR</div>
+        <h3>Live Results Bar Chart</h3>
+        <div class="who">Broadcast TV, AP, Decision Desk</div>
+      </div>
+      <div class="card-demo" id="demo-live-bars"></div>
+      <div class="card-body">
+        <ul>
+          <li>Horizontal bars with animated width transitions</li>
+          <li>Vote counts update on a timer to simulate live data</li>
+          <li>d3.transition for smooth value interpolation</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.scaleBand</span>
+          <span class="tag tag-purple">d3.transition</span>
+          <span class="tag tag-green">enter/update</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Polling Average Line Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">03 / LINE</div>
+        <h3>Polling Average Line Chart</h3>
+        <div class="who">FiveThirtyEight, RCP, The Economist</div>
+      </div>
+      <div class="card-demo" id="demo-polling-line"></div>
+      <div class="card-body">
+        <ul>
+          <li>d3.line generator with d3.curveBasis smoothing</li>
+          <li>Confidence band via d3.area with upper/lower bounds</li>
+          <li>Time scale on x-axis for date-based data</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.line</span>
+          <span class="tag tag-purple">d3.area</span>
+          <span class="tag tag-pink">d3.curveBasis</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Election Needle/Gauge -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">04 / ARC</div>
+        <h3>Election Needle / Gauge</h3>
+        <div class="who">New York Times</div>
+      </div>
+      <div class="card-demo" id="demo-gauge"></div>
+      <div class="card-body">
+        <ul>
+          <li>d3.arc generator for the gauge background track</li>
+          <li>Animated needle rotation via d3.interpolate on angle</li>
+          <li>Probability text updates in sync with needle position</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.arc</span>
+          <span class="tag tag-purple">d3.interpolate</span>
+          <span class="tag tag-green">transitions</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: Choropleth Heatmap -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">05 / GEO</div>
+        <h3>Choropleth Heatmap</h3>
+        <div class="who">WaPo COVID Tracker, CDC, Johns Hopkins</div>
+      </div>
+      <div class="card-demo" id="demo-choropleth-heat"></div>
+      <div class="card-body">
+        <ul>
+          <li>Sequential color scale (d3.interpolateYlOrRd) for intensity</li>
+          <li>Same geo pipeline as election map, different encoding</li>
+          <li>Quantize scale bins continuous data into discrete colors</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.scaleSequential</span>
+          <span class="tag tag-purple">d3.geoPath</span>
+          <span class="tag tag-green">topojson</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 6: Treemap -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">06 / LAYOUT</div>
+        <h3>Treemap</h3>
+        <div class="who">ProPublica, Bloomberg, Observable</div>
+      </div>
+      <div class="card-demo" id="demo-treemap"></div>
+      <div class="card-body">
+        <ul>
+          <li>d3.treemap computes nested rectangles from hierarchy</li>
+          <li>d3.hierarchy + sum() to roll up values</li>
+          <li>Color encodes category, size encodes dollar amount</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.treemap</span>
+          <span class="tag tag-purple">d3.hierarchy</span>
+          <span class="tag tag-pink">d3.treemapSquarify</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 7: Bar Chart Race -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">07 / ANIMATION</div>
+        <h3>Animated Bar Chart Race</h3>
+        <div class="who">Bloomberg, Financial Times, Flourish</div>
+      </div>
+      <div class="card-demo" id="demo-bar-race"></div>
+      <div class="card-body">
+        <ul>
+          <li>Bars re-sort and re-position with keyed data joins</li>
+          <li>d3.transition for smooth rank reordering</li>
+          <li>Timer-driven frames to animate over time</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.transition</span>
+          <span class="tag tag-purple">data join (key)</span>
+          <span class="tag tag-green">d3.interval</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 8: Donut Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">08 / ARC</div>
+        <h3>Donut / Pie Chart</h3>
+        <div class="who">Campaign Finance, OpenSecrets, FEC</div>
+      </div>
+      <div class="card-demo" id="demo-donut"></div>
+      <div class="card-body">
+        <ul>
+          <li>d3.pie computes start/end angles from data</li>
+          <li>d3.arc renders each slice as an SVG path</li>
+          <li>Animated entrance with attrTween on arc angles</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.pie</span>
+          <span class="tag tag-purple">d3.arc</span>
+          <span class="tag tag-pink">attrTween</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 9: Force-Directed Graph -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">09 / SIMULATION</div>
+        <h3>Force-Directed Graph</h3>
+        <div class="who">Network Analysis, Social Graphs, Knowledge Maps</div>
+      </div>
+      <div class="card-demo" id="demo-force"></div>
+      <div class="card-body">
+        <ul>
+          <li>d3.forceSimulation with charge, center, and link forces</li>
+          <li>Nodes repel each other, links pull connected pairs</li>
+          <li>Tick function updates positions every animation frame</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.forceSimulation</span>
+          <span class="tag tag-purple">d3.forceLink</span>
+          <span class="tag tag-green">d3.forceManyBody</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 10: Stacked Area Chart -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">10 / AREA</div>
+        <h3>Stacked Area Chart</h3>
+        <div class="who">Budget Trackers, CBO, USASPENDING</div>
+      </div>
+      <div class="card-demo" id="demo-stacked-area"></div>
+      <div class="card-body">
+        <ul>
+          <li>d3.stack transforms tabular data into layered series</li>
+          <li>d3.area generator draws each layer as a filled shape</li>
+          <li>Color scale differentiates budget categories</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.stack</span>
+          <span class="tag tag-purple">d3.area</span>
+          <span class="tag tag-green">d3.scaleOrdinal</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 11: Scatter Plot -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">11 / SCATTER</div>
+        <h3>Scatter Plot</h3>
+        <div class="who">Census Bureau, Pew Research, Gapminder</div>
+      </div>
+      <div class="card-demo" id="demo-scatter"></div>
+      <div class="card-body">
+        <ul>
+          <li>Two linear scales map x/y data to pixel coordinates</li>
+          <li>Circle radius encodes a third variable (population)</li>
+          <li>Color encodes category (region) via ordinal scale</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.scaleLinear</span>
+          <span class="tag tag-purple">d3.scaleSqrt</span>
+          <span class="tag tag-pink">circle elements</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 12: GitHub-style Heatmap -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">12 / GRID</div>
+        <h3>GitHub-style Heatmap</h3>
+        <div class="who">GitHub, GitLab, Contribution Calendars</div>
+      </div>
+      <div class="card-demo" id="demo-heatmap-grid"></div>
+      <div class="card-body">
+        <ul>
+          <li>Grid of small rects, one per day, colored by value</li>
+          <li>d3.scaleQuantize maps continuous values to color steps</li>
+          <li>d3.timeWeek and d3.timeDay compute grid positions</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.scaleQuantize</span>
+          <span class="tag tag-purple">d3.timeWeek</span>
+          <span class="tag tag-green">rect grid</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 13: Small Multiples -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">13 / PATTERN</div>
+        <h3>Small Multiples</h3>
+        <div class="who">NYT, FiveThirtyEight, The Economist</div>
+      </div>
+      <div class="card-demo" id="demo-small-multiples"></div>
+      <div class="card-body">
+        <ul>
+          <li>Same chart template repeated for each data subset</li>
+          <li>Shared scales ensure comparability across panels</li>
+          <li>SVG groups positioned in a grid layout</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.line</span>
+          <span class="tag tag-purple">nested data</span>
+          <span class="tag tag-green">shared scales</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 14: Bubble Map -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">14 / GEO</div>
+        <h3>Bubble Map</h3>
+        <div class="who">NYT, Reuters, CDC City-Level Data</div>
+      </div>
+      <div class="card-demo" id="demo-bubble-map"></div>
+      <div class="card-body">
+        <ul>
+          <li>Circles placed at projected [lon, lat] coordinates</li>
+          <li>d3.scaleSqrt sizes bubbles proportional to population</li>
+          <li>Layered on top of a base geographic path layer</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.geoAlbersUsa</span>
+          <span class="tag tag-purple">d3.scaleSqrt</span>
+          <span class="tag tag-pink">projection</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 15: Sparklines -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">15 / INLINE</div>
+        <h3>Sparklines</h3>
+        <div class="who">Dashboards, Stock Tickers, KPI Panels</div>
+      </div>
+      <div class="card-demo" id="demo-sparklines"></div>
+      <div class="card-body">
+        <ul>
+          <li>Tiny line charts without axes, just the trend shape</li>
+          <li>d3.line with scaleLinear fit to a small viewport</li>
+          <li>Endpoint dot highlights the current/latest value</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-orange">d3.line</span>
+          <span class="tag tag-purple">d3.scaleLinear</span>
+          <span class="tag tag-green">minimal chrome</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</body>
+</html>

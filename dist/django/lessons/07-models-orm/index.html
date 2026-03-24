@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 07 - Models &amp; ORM</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-DiDSpPSC.svg">
+  <style>:root { --track-color: #22c55e; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>07</span> Models &amp; ORM &mdash; Prisma to Django ORM</h1>
+    <a href="/django/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #22c55e;">You already know Prisma schemas and database queries.</strong> This lesson maps every Prisma concept to its Django equivalent &mdash; models are your schema, the ORM is your query client, and migrations work almost identically. You'll feel right at home.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model &mdash; What Are Models?</h2>
+
+    <p>In Prisma, you define your database schema in a <code>.prisma</code> file, then Prisma generates a client you use to query. Django flips the order: you define your schema as <strong>Python classes</strong> (called models), and Django generates both the database tables <em>and</em> the query API from those classes.</p>
+
+    <p>Models are the <strong>M</strong> in Django's MTV (Model-Template-View) pattern. Think of it this way:</p>
+
+    <table>
+      <tr><th>Concept</th><th>Prisma / Next.js</th><th>Django</th></tr>
+      <tr><td>Schema definition</td><td><code>schema.prisma</code> file</td><td>Python classes in <code>models.py</code></td></tr>
+      <tr><td>Query client</td><td><code>prisma.user.findMany()</code></td><td><code>User.objects.all()</code></td></tr>
+      <tr><td>Migrations</td><td><code>npx prisma migrate dev</code></td><td><code>python manage.py makemigrations</code> + <code>migrate</code></td></tr>
+      <tr><td>Database viewer</td><td>Prisma Studio</td><td>Django Admin (built-in, way more powerful)</td></tr>
+    </table>
+
+    <div class="aha">
+      <p><strong>The key insight:</strong> A Django model is a single Python class that is simultaneously your schema definition, your TypeScript type, AND your query builder. One class does the job of three separate things in the Prisma/Next.js world. Every model class maps to one database table. Every attribute maps to one column.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DEFINING MODELS                              -->
+    <!-- ============================================ -->
+
+    <h2>Defining Models &mdash; Your Schema in Python</h2>
+
+    <p>Let's build a newsroom database. We'll start with an <code>Article</code> model and compare it directly to what you'd write in Prisma.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>model Article {
+  id        Int      @id @default(autoincrement())
+  title     String
+  slug      String   @unique
+  body      String
+  status    String   @default("draft")
+  wordCount Int?
+  publishedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django (models.py)</h5>
+        <pre><code><span class="comment"># newsroom/models.py</span>
+from django.db import models
+
+class Article(models.Model):
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
+    body = models.TextField()
+    status = models.CharField(
+        max_length=20, default="draft"
+    )
+    word_count = models.IntegerField(
+        null=True, blank=True
+    )
+    published_at = models.DateTimeField(
+        null=True, blank=True
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Where's the id?</strong> Django automatically adds an <code>id</code> field (auto-incrementing integer primary key) to every model. You never need to define it yourself unless you want a custom primary key. Same concept as Prisma's <code>@id @default(autoincrement())</code>, just invisible.</p>
+    </div>
+
+    <h3>Field Type Cheat Sheet</h3>
+
+    <p>Every Prisma type has a Django equivalent. Here are the most common ones:</p>
+
+    <table>
+      <tr><th>Prisma Type</th><th>Django Field</th><th>Notes</th></tr>
+      <tr><td><code>String</code></td><td><code>CharField(max_length=N)</code></td><td>Must specify max_length</td></tr>
+      <tr><td><code>String</code> (long text)</td><td><code>TextField()</code></td><td>No length limit, maps to TEXT</td></tr>
+      <tr><td><code>Int</code></td><td><code>IntegerField()</code></td><td>Also: <code>BigIntegerField</code>, <code>SmallIntegerField</code></td></tr>
+      <tr><td><code>Float</code></td><td><code>FloatField()</code></td><td>For precise money: <code>DecimalField</code></td></tr>
+      <tr><td><code>Boolean</code></td><td><code>BooleanField()</code></td><td>Defaults to <code>False</code> if no default set</td></tr>
+      <tr><td><code>DateTime</code></td><td><code>DateTimeField()</code></td><td>Also: <code>DateField</code>, <code>TimeField</code></td></tr>
+      <tr><td><code>Json</code></td><td><code>JSONField()</code></td><td>Stores native JSON (Postgres, SQLite 3.9+)</td></tr>
+      <tr><td><code>String @unique</code></td><td><code>CharField(unique=True)</code></td><td>Uniqueness is a field option, not a decorator</td></tr>
+      <tr><td><code>String?</code> (nullable)</td><td><code>CharField(null=True, blank=True)</code></td><td>Need both <code>null</code> and <code>blank</code> for forms</td></tr>
+      <tr><td><code>@default(value)</code></td><td><code>default=value</code></td><td>Can be a value or a callable</td></tr>
+      <tr><td>N/A</td><td><code>SlugField()</code></td><td>URL-friendly strings (like "my-article-title")</td></tr>
+      <tr><td>N/A</td><td><code>EmailField()</code></td><td>CharField with email validation built in</td></tr>
+      <tr><td>N/A</td><td><code>URLField()</code></td><td>CharField with URL validation built in</td></tr>
+    </table>
+
+    <div class="warning">
+      <p><strong>null vs blank &mdash; a Django gotcha.</strong> <code>null=True</code> means the database column allows NULL. <code>blank=True</code> means Django forms will accept an empty value. For optional text fields, you typically want both. For optional numbers and dates, you only need <code>null=True</code>. This two-flag system trips up everyone at first.</p>
+    </div>
+
+    <h3>Common Field Options</h3>
+
+    <pre><code><span class="comment"># Options you'll use constantly</span>
+title = models.CharField(
+    max_length=200,         <span class="comment"># required for CharField</span>
+    unique=True,            <span class="comment"># Prisma's @unique</span>
+    db_index=True,          <span class="comment"># Prisma's @@index</span>
+    default="Untitled",     <span class="comment"># Prisma's @default</span>
+    null=True,              <span class="comment"># Prisma's ? (nullable)</span>
+    blank=True,             <span class="comment"># allow empty in forms</span>
+    help_text="The headline",  <span class="comment"># shows in admin UI</span>
+    verbose_name="Headline",   <span class="comment"># human-readable label</span>
+    choices=[               <span class="comment"># dropdown in admin</span>
+        ("draft", "Draft"),
+        ("published", "Published"),
+        ("archived", "Archived"),
+    ],
+)</code></pre>
+
+    <div class="aha">
+      <p><strong>The choices pattern:</strong> Instead of a separate enum, Django uses a list of <code>(db_value, display_label)</code> tuples directly on the field. The first value goes in the database, the second shows up in forms and the admin panel. It's inline and simple &mdash; no extra file or import needed.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- META CLASS                                   -->
+    <!-- ============================================ -->
+
+    <h3>The Meta Class &mdash; Table-Level Options</h3>
+
+    <p>Prisma uses <code>@@</code> decorators for table-level settings (indexes, unique constraints, table name). Django uses an inner <code>Meta</code> class.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>model Article {
+  <span class="comment">// ... fields ...</span>
+
+  @@map("articles")
+  @@unique([slug, status])
+  @@index([published_at])
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code>class Article(models.Model):
+    <span class="comment"># ... fields ...</span>
+
+    class Meta:
+        db_table = "articles"
+        unique_together = [
+            ["slug", "status"]
+        ]
+        indexes = [
+            models.Index(
+                fields=["published_at"]
+            ),
+        ]
+        ordering = ["-created_at"]
+        verbose_name_plural = "Articles"</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong><code>ordering</code> is a lifesaver.</strong> Set it once in <code>Meta</code>, and every query returns results in that order by default. The <code>-</code> prefix means descending. No more adding <code>.order_by()</code> to every single query. Prisma has no equivalent &mdash; you must pass <code>orderBy</code> every time.</p>
+    </div>
+
+    <h3>The __str__ Method &mdash; Your Model's Display Name</h3>
+
+    <p>Always define <code>__str__</code> on your models. It controls how objects appear in the admin panel, the shell, and debug output. Without it, you'll see <code>Article object (1)</code> everywhere.</p>
+
+    <pre><code>class Article(models.Model):
+    title = models.CharField(max_length=200)
+    <span class="comment"># ... other fields ...</span>
+
+    def __str__(self):
+        return self.title
+
+    <span class="comment"># Now the admin shows "Breaking News: City Budget Approved"</span>
+    <span class="comment"># instead of "Article object (3)"</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- MIGRATIONS                                   -->
+    <!-- ============================================ -->
+
+    <h2>Migrations &mdash; Schema Changes Without Tears</h2>
+
+    <p>Migrations are how Django syncs your Python model classes with the actual database schema. If you've used Prisma migrations, the concept is identical: detect changes, generate a migration file, apply it.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code><span class="comment"># 1. Edit schema.prisma</span>
+<span class="comment"># 2. Generate + apply migration</span>
+npx prisma migrate dev \
+  --name add_articles
+
+<span class="comment"># That single command does both</span>
+<span class="comment"># steps. Prisma figures it out.</span></code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># 1. Edit models.py</span>
+<span class="comment"># 2. Generate migration file</span>
+python manage.py makemigrations
+
+<span class="comment"># 3. Apply migration to database</span>
+python manage.py migrate
+
+<span class="comment"># Two steps: generate, then apply.</span>
+<span class="comment"># You can review the migration</span>
+<span class="comment"># file before applying it.</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Why two steps?</strong> Django separates "detect changes" (<code>makemigrations</code>) from "apply changes" (<code>migrate</code>) so you can inspect the generated migration file before touching the database. In production, you commit migration files to git and run <code>migrate</code> on deploy. This is exactly like Prisma's migration files, but you get to review them first.</p>
+    </div>
+
+    <p>The typical workflow:</p>
+
+    <pre><code><span class="comment"># You changed a model (added a field, renamed something, etc.)</span>
+
+$ python manage.py makemigrations
+<span class="comment"># Migrations for 'newsroom':</span>
+<span class="comment">#   newsroom/migrations/0002_article_word_count.py</span>
+<span class="comment">#     - Add field word_count to article</span>
+
+$ python manage.py migrate
+<span class="comment"># Operations to perform:</span>
+<span class="comment">#   Apply all migrations: newsroom</span>
+<span class="comment"># Running migrations:</span>
+<span class="comment">#   Applying newsroom.0002_article_word_count... OK</span></code></pre>
+
+    <div class="warning">
+      <p><strong>Common mistake:</strong> Forgetting to run <code>makemigrations</code> before <code>migrate</code>. If you change a model and only run <code>migrate</code>, nothing happens because Django doesn't know about your changes yet. Always: edit model, <code>makemigrations</code>, <code>migrate</code>. In that order.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE ORM: CREATING OBJECTS                    -->
+    <!-- ============================================ -->
+
+    <h2>The ORM &mdash; CRUD Operations</h2>
+
+    <p>Django's ORM is the query builder that comes free with every model. Prisma gives you <code>prisma.article.create()</code>. Django gives you <code>Article.objects.create()</code>. The <code>.objects</code> manager is your entry point for all queries &mdash; think of it as the equivalent of <code>prisma.article</code>.</p>
+
+    <h3>Creating Objects</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code><span class="comment">// Create one record</span>
+const article = await prisma.article.create({
+  data: {
+    title: "City Budget Approved",
+    slug: "city-budget-approved",
+    body: "The city council...",
+    status: "published",
+  },
+});
+
+<span class="comment">// Create and return the object</span>
+console.log(article.id); <span class="comment">// auto-set</span>
+console.log(article.createdAt);</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># Method 1: .create() — one line</span>
+article = Article.objects.create(
+    title="City Budget Approved",
+    slug="city-budget-approved",
+    body="The city council...",
+    status="published",
+)
+
+<span class="comment"># Already saved to the database</span>
+print(article.id)         <span class="comment"># auto-set</span>
+print(article.created_at)</code></pre>
+      </div>
+    </div>
+
+    <pre><code><span class="comment"># Method 2: build, then save (like Prisma's build pattern)</span>
+article = Article(
+    title="New Park Opens Downtown",
+    slug="new-park-opens",
+    body="A ribbon-cutting ceremony...",
+)
+<span class="comment"># Object exists in memory but NOT in the database yet</span>
+article.status = "draft"   <span class="comment"># can modify before saving</span>
+article.save()             <span class="comment"># NOW it hits the database</span></code></pre>
+
+    <div class="callout">
+      <p><strong><code>.create()</code> vs <code>.save()</code>:</strong> Use <code>.create()</code> when you have all the data upfront &mdash; it's one step. Use the constructor + <code>.save()</code> when you need to build the object incrementally or run logic before saving. Both achieve the same result: a new row in the database.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUERYING: READ                               -->
+    <!-- ============================================ -->
+
+    <h3>Querying &mdash; Reading Data</h3>
+
+    <p>This is where Django's ORM really shines. Every query returns a <strong>QuerySet</strong> &mdash; a lazy, chainable, database query that doesn't execute until you actually need the data. Think of it like a Promise that represents a SQL query.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code><span class="comment">// Get all records</span>
+const articles = await prisma.article
+  .findMany();
+
+<span class="comment">// Get one by unique field</span>
+const article = await prisma.article
+  .findUnique({
+    where: { slug: "city-budget" },
+  });
+
+<span class="comment">// Filter records</span>
+const published = await prisma.article
+  .findMany({
+    where: { status: "published" },
+  });
+
+<span class="comment">// Exclude records</span>
+const notDrafts = await prisma.article
+  .findMany({
+    where: {
+      NOT: { status: "draft" },
+    },
+  });</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># Get all records</span>
+articles = Article.objects.all()
+
+
+<span class="comment"># Get one by unique field</span>
+article = Article.objects.get(
+    slug="city-budget"
+)
+
+
+<span class="comment"># Filter records</span>
+published = Article.objects.filter(
+    status="published"
+)
+
+
+<span class="comment"># Exclude records</span>
+not_drafts = Article.objects.exclude(
+    status="draft"
+)
+</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>QuerySets are lazy.</strong> <code>Article.objects.filter(status="published")</code> does NOT hit the database. It builds a query. The SQL only runs when you iterate, slice, call <code>list()</code>, or access results. This means you can chain multiple filters without triggering multiple database queries. It's like building up a Prisma query object before awaiting it.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong><code>.get()</code> vs <code>.filter()</code>:</strong> <code>.get()</code> returns a single object and raises <code>DoesNotExist</code> if nothing matches (or <code>MultipleObjectsReturned</code> if more than one matches). <code>.filter()</code> returns a QuerySet (possibly empty). Use <code>.get()</code> when you expect exactly one result. Use <code>.filter()</code> when you expect zero or more.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LOOKUPS                                      -->
+    <!-- ============================================ -->
+
+    <h3>Field Lookups &mdash; The Double-Underscore Magic</h3>
+
+    <p>In Prisma, you nest filter conditions inside objects: <code>{ contains: "budget" }</code>. In Django, you use <strong>double-underscore suffixes</strong> on field names. This is one of Django's most distinctive patterns.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code><span class="comment">// Contains</span>
+where: { title: { contains: "budget" } }
+
+<span class="comment">// Greater than</span>
+where: { word_count: { gt: 1000 } }
+
+<span class="comment">// Less than or equal</span>
+where: { word_count: { lte: 500 } }
+
+<span class="comment">// In list</span>
+where: { status: { in: ["draft", "review"] } }
+
+<span class="comment">// Is null</span>
+where: { published_at: null }
+
+<span class="comment">// Starts with</span>
+where: { title: { startsWith: "Breaking" } }
+
+<span class="comment">// Date range</span>
+where: {
+  created_at: {
+    gte: new Date("2025-01-01"),
+    lt: new Date("2026-01-01"),
+  }
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># Contains</span>
+.filter(title__contains="budget")
+
+<span class="comment"># Greater than</span>
+.filter(word_count__gt=1000)
+
+<span class="comment"># Less than or equal</span>
+.filter(word_count__lte=500)
+
+<span class="comment"># In list</span>
+.filter(status__in=["draft", "review"])
+
+<span class="comment"># Is null</span>
+.filter(published_at__isnull=True)
+
+<span class="comment"># Starts with</span>
+.filter(title__startswith="Breaking")
+
+<span class="comment"># Date range</span>
+.filter(
+    created_at__gte="2025-01-01",
+    created_at__lt="2026-01-01",
+)
+</code></pre>
+      </div>
+    </div>
+
+    <p>Full lookup reference:</p>
+
+    <table>
+      <tr><th>Lookup</th><th>Django Syntax</th><th>SQL Equivalent</th></tr>
+      <tr><td>Exact match</td><td><code>field__exact=val</code> (or just <code>field=val</code>)</td><td><code>WHERE field = val</code></td></tr>
+      <tr><td>Case-insensitive</td><td><code>field__iexact=val</code></td><td><code>WHERE LOWER(field) = LOWER(val)</code></td></tr>
+      <tr><td>Contains</td><td><code>field__contains=val</code></td><td><code>WHERE field LIKE '%val%'</code></td></tr>
+      <tr><td>Case-insensitive contains</td><td><code>field__icontains=val</code></td><td><code>WHERE field ILIKE '%val%'</code></td></tr>
+      <tr><td>Starts with</td><td><code>field__startswith=val</code></td><td><code>WHERE field LIKE 'val%'</code></td></tr>
+      <tr><td>Ends with</td><td><code>field__endswith=val</code></td><td><code>WHERE field LIKE '%val'</code></td></tr>
+      <tr><td>Greater than</td><td><code>field__gt=val</code></td><td><code>WHERE field > val</code></td></tr>
+      <tr><td>Greater/equal</td><td><code>field__gte=val</code></td><td><code>WHERE field >= val</code></td></tr>
+      <tr><td>Less than</td><td><code>field__lt=val</code></td><td><code>WHERE field &lt; val</code></td></tr>
+      <tr><td>Less/equal</td><td><code>field__lte=val</code></td><td><code>WHERE field &lt;= val</code></td></tr>
+      <tr><td>In list</td><td><code>field__in=[a, b, c]</code></td><td><code>WHERE field IN (a, b, c)</code></td></tr>
+      <tr><td>Is null</td><td><code>field__isnull=True</code></td><td><code>WHERE field IS NULL</code></td></tr>
+      <tr><td>Date range</td><td><code>field__range=(start, end)</code></td><td><code>WHERE field BETWEEN start AND end</code></td></tr>
+      <tr><td>Year</td><td><code>field__year=2025</code></td><td><code>WHERE YEAR(field) = 2025</code></td></tr>
+    </table>
+
+    <div class="aha">
+      <p><strong>The double-underscore pattern:</strong> <code>field__lookup=value</code>. The field name, two underscores, then the lookup type. It reads like English: <code>title__contains="budget"</code> means "title contains budget." Once this clicks, you'll never want to go back to nested filter objects. The <code>i</code> prefix (like <code>icontains</code>, <code>iexact</code>) means case-insensitive &mdash; incredibly useful for search.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHAINING QUERYSETS                            -->
+    <!-- ============================================ -->
+
+    <h3>Chaining QuerySets</h3>
+
+    <p>Because QuerySets are lazy, you can chain filters together. Each chain narrows the results further. The database query only runs once, at the end.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code><span class="comment">// Build up complex filters</span>
+const results = await prisma.article
+  .findMany({
+    where: {
+      AND: [
+        { status: "published" },
+        { word_count: { gt: 500 } },
+        { title: {
+            contains: "city"
+          }
+        },
+      ],
+    },
+    orderBy: { published_at: "desc" },
+    take: 10,
+  });</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># Chain filters — AND by default</span>
+results = (
+    Article.objects
+    .filter(status="published")
+    .filter(word_count__gt=500)
+    .filter(title__icontains="city")
+    .order_by("-published_at")
+    [:10]
+)
+
+<span class="comment"># Or combine in one .filter() call:</span>
+results = Article.objects.filter(
+    status="published",
+    word_count__gt=500,
+    title__icontains="city",
+).order_by("-published_at")[:10]</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Multiple <code>.filter()</code> calls are AND.</strong> <code>.filter(a=1).filter(b=2)</code> is <code>WHERE a=1 AND b=2</code>. You can also pass multiple keyword arguments to a single <code>.filter()</code> for the same effect. For OR queries, use Django's <code>Q</code> objects (covered below).</p>
+    </div>
+
+    <h3>OR Queries with Q Objects</h3>
+
+    <p>Prisma uses <code>OR: [...]</code> inside <code>where</code>. Django uses <code>Q</code> objects combined with the <code>|</code> (pipe) operator.</p>
+
+    <pre><code>from django.db.models import Q
+
+<span class="comment"># Articles that are published OR have more than 1000 words</span>
+Article.objects.filter(
+    Q(status="published") | Q(word_count__gt=1000)
+)
+
+<span class="comment"># Complex: (published AND recent) OR (draft AND by me)</span>
+Article.objects.filter(
+    (Q(status="published") &amp; Q(created_at__year=2025)) |
+    (Q(status="draft") &amp; Q(author__name="Trevor"))
+)
+
+<span class="comment"># NOT: exclude published articles</span>
+Article.objects.filter(~Q(status="published"))</code></pre>
+
+    <div class="aha">
+      <p><strong>Q objects are Django's boolean algebra for queries.</strong> <code>|</code> for OR, <code>&amp;</code> for AND, <code>~</code> for NOT. They let you build any SQL WHERE clause, no matter how complex. You only need Q objects for OR &mdash; simple AND filters don't need them.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- UPDATING AND DELETING                        -->
+    <!-- ============================================ -->
+
+    <h3>Updating Objects</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code><span class="comment">// Update one record</span>
+await prisma.article.update({
+  where: { id: 1 },
+  data: { status: "published" },
+});
+
+<span class="comment">// Update many records</span>
+await prisma.article.updateMany({
+  where: { status: "draft" },
+  data: { status: "archived" },
+});</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># Update one: fetch, modify, save</span>
+article = Article.objects.get(id=1)
+article.status = "published"
+article.save()
+
+<span class="comment"># Bulk update (no fetch needed!)</span>
+Article.objects.filter(
+    status="draft"
+).update(status="archived")
+</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Bulk <code>.update()</code> is fast.</strong> It runs a single SQL <code>UPDATE</code> statement. It does NOT load objects into Python, does NOT call <code>.save()</code>, and does NOT trigger signals. Use it for mass updates. Use the fetch-modify-save pattern when you need model logic (custom save methods, signals) to run.</p>
+    </div>
+
+    <h3>Deleting Objects</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code><span class="comment">// Delete one</span>
+await prisma.article.delete({
+  where: { id: 1 },
+});
+
+<span class="comment">// Delete many</span>
+await prisma.article.deleteMany({
+  where: { status: "archived" },
+});</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># Delete one</span>
+article = Article.objects.get(id=1)
+article.delete()
+
+<span class="comment"># Delete many (bulk)</span>
+Article.objects.filter(
+    status="archived"
+).delete()
+</code></pre>
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong>Django cascades by default.</strong> If you delete an Author who has articles, Django will delete all their articles too (like Prisma's <code>onDelete: Cascade</code>). You can change this behavior on the ForeignKey field with the <code>on_delete</code> parameter. Always set <code>on_delete</code> intentionally.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- RELATIONSHIPS                                -->
+    <!-- ============================================ -->
+
+    <h2>Relationships &mdash; Connecting Models</h2>
+
+    <p>This is where things get interesting. Prisma models relationships with <code>@relation</code> decorators. Django models them with dedicated field types. The concepts are identical; the syntax is different.</p>
+
+    <h3>ForeignKey &mdash; One-to-Many (like Prisma's @relation)</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>model Author {
+  id       Int       @id @default(autoincrement())
+  name     String
+  articles Article[]
+}
+
+model Article {
+  id       Int    @id @default(autoincrement())
+  title    String
+  author   Author @relation(fields: [authorId],
+                   references: [id])
+  authorId Int
+}</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code>class Author(models.Model):
+    name = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
+
+class Article(models.Model):
+    title = models.CharField(max_length=200)
+    author = models.ForeignKey(
+        Author,
+        on_delete=models.CASCADE,
+        related_name="articles",
+    )
+</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Django is way less boilerplate here.</strong> In Prisma, you define both sides of the relationship (the <code>Article[]</code> on Author AND the <code>@relation</code> on Article) plus the foreign key column. In Django, you define the ForeignKey on one side and Django figures out the rest. The <code>related_name="articles"</code> gives you the reverse lookup: <code>author.articles.all()</code>.</p>
+    </div>
+
+    <pre><code><span class="comment"># Using ForeignKey relationships</span>
+
+<span class="comment"># Forward: get the author of an article</span>
+article = Article.objects.get(id=1)
+article.author          <span class="comment"># Author object</span>
+article.author.name     <span class="comment"># "Jane Smith"</span>
+
+<span class="comment"># Reverse: get all articles by an author</span>
+author = Author.objects.get(name="Jane Smith")
+author.articles.all()   <span class="comment"># QuerySet of all Jane's articles</span>
+
+<span class="comment"># Create with relationship</span>
+Article.objects.create(
+    title="New Story",
+    author=author,        <span class="comment"># pass the Author object</span>
+)
+
+<span class="comment"># Or use the ID directly</span>
+Article.objects.create(
+    title="New Story",
+    author_id=author.id,  <span class="comment"># Django auto-creates _id field</span>
+)
+
+<span class="comment"># Filter across relationships (double-underscore!)</span>
+Article.objects.filter(author__name="Jane Smith")
+Article.objects.filter(author__name__icontains="jane")</code></pre>
+
+    <div class="aha">
+      <p><strong>The double-underscore crosses relationships.</strong> <code>author__name</code> means "follow the author FK, then look at the name field." You can chain across multiple relationships: <code>article__author__email__contains="@nyt"</code>. This is one of Django ORM's most powerful features &mdash; Prisma needs nested <code>where</code> objects for the same thing.</p>
+    </div>
+
+    <h3>on_delete Options</h3>
+
+    <table>
+      <tr><th>Django</th><th>Prisma Equivalent</th><th>What It Does</th></tr>
+      <tr><td><code>models.CASCADE</code></td><td><code>onDelete: Cascade</code></td><td>Delete article when author is deleted</td></tr>
+      <tr><td><code>models.PROTECT</code></td><td><code>onDelete: Restrict</code></td><td>Prevent deleting author who has articles</td></tr>
+      <tr><td><code>models.SET_NULL</code></td><td><code>onDelete: SetNull</code></td><td>Set author to NULL (field must be nullable)</td></tr>
+      <tr><td><code>models.SET_DEFAULT</code></td><td><code>onDelete: SetDefault</code></td><td>Set author to default value</td></tr>
+      <tr><td><code>models.DO_NOTHING</code></td><td>N/A</td><td>Do nothing (can break referential integrity)</td></tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- MANY TO MANY                                 -->
+    <!-- ============================================ -->
+
+    <h3>ManyToManyField &mdash; Many-to-Many</h3>
+
+    <p>Articles can have multiple categories, and categories can contain multiple articles. In Prisma, you'd model this with an implicit many-to-many relation. Django handles it the same way.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>model Article {
+  id         Int        @id @default(autoincrement())
+  title      String
+  categories Category[]
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  articles Article[]
+}
+
+<span class="comment">// Prisma auto-creates a join table</span></code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code>class Category(models.Model):
+    name = models.CharField(
+        max_length=50, unique=True
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class Article(models.Model):
+    title = models.CharField(max_length=200)
+    categories = models.ManyToManyField(
+        Category,
+        related_name="articles",
+        blank=True,
+    )
+<span class="comment"># Django auto-creates a join table too</span></code></pre>
+      </div>
+    </div>
+
+    <pre><code><span class="comment"># Working with many-to-many relationships</span>
+
+article = Article.objects.get(id=1)
+politics = Category.objects.get(name="Politics")
+local = Category.objects.get(name="Local News")
+
+<span class="comment"># Add categories to an article</span>
+article.categories.add(politics, local)
+
+<span class="comment"># Remove a category</span>
+article.categories.remove(politics)
+
+<span class="comment"># Set exact categories (replaces all existing)</span>
+article.categories.set([politics, local])
+
+<span class="comment"># Clear all categories</span>
+article.categories.clear()
+
+<span class="comment"># Query: all categories for an article</span>
+article.categories.all()
+
+<span class="comment"># Reverse: all articles in a category</span>
+politics.articles.all()
+
+<span class="comment"># Filter across M2M: articles in the "Politics" category</span>
+Article.objects.filter(categories__name="Politics")</code></pre>
+
+    <div class="callout">
+      <p><strong>M2M methods: <code>.add()</code>, <code>.remove()</code>, <code>.set()</code>, <code>.clear()</code>.</strong> These four methods manage the join table for you. In Prisma, you'd use <code>connect</code>, <code>disconnect</code>, and <code>set</code> inside an update call. Django's approach is more direct &mdash; you call methods on the relationship itself.</p>
+    </div>
+
+    <h3>OneToOneField &mdash; One-to-One</h3>
+
+    <p>Use <code>OneToOneField</code> when each record in one table maps to exactly one record in another. Common for profile/settings extensions.</p>
+
+    <pre><code>from django.contrib.auth.models import User
+
+class AuthorProfile(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
+    bio = models.TextField(blank=True)
+    twitter_handle = models.CharField(
+        max_length=50, blank=True
+    )
+
+<span class="comment"># Usage: like ForeignKey but returns object, not QuerySet</span>
+user = User.objects.get(username="trevor")
+user.profile             <span class="comment"># AuthorProfile object (not a QuerySet)</span>
+user.profile.bio         <span class="comment"># "Journalist turned developer"</span>
+
+profile = AuthorProfile.objects.get(id=1)
+profile.user             <span class="comment"># User object</span>
+profile.user.email       <span class="comment"># "trevor@example.com"</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- THE FULL NEWSROOM EXAMPLE                    -->
+    <!-- ============================================ -->
+
+    <h2>Putting It Together &mdash; The Newsroom Database</h2>
+
+    <p>Here's the complete model set for a newsroom app. This is what a real Django <code>models.py</code> looks like.</p>
+
+    <pre><code><span class="comment"># newsroom/models.py</span>
+from django.db import models
+from django.contrib.auth.models import User
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    slug = models.SlugField(unique=True)
+    description = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name_plural = "Categories"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class Author(models.Model):
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="author_profile"
+    )
+    bio = models.TextField(blank=True)
+    headshot = models.URLField(blank=True)
+
+    def __str__(self):
+        return self.user.get_full_name() or self.user.username
+
+
+class Article(models.Model):
+
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("review", "In Review"),
+        ("published", "Published"),
+        ("archived", "Archived"),
+    ]
+
+    title = models.CharField(max_length=200)
+    slug = models.SlugField(unique=True)
+    body = models.TextField()
+    summary = models.TextField(max_length=500, blank=True)
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="draft"
+    )
+    word_count = models.IntegerField(default=0)
+    author = models.ForeignKey(
+        Author, on_delete=models.CASCADE, related_name="articles"
+    )
+    categories = models.ManyToManyField(
+        Category, related_name="articles", blank=True
+    )
+    published_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-published_at", "-created_at"]
+        indexes = [
+            models.Index(fields=["status", "published_at"]),
+            models.Index(fields=["slug"]),
+        ]
+
+    def __str__(self):
+        return self.title</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUERYSET METHODS                             -->
+    <!-- ============================================ -->
+
+    <h2>QuerySet Power Tools</h2>
+
+    <p>Beyond basic CRUD, Django's QuerySets have methods that handle sorting, aggregation, and data shaping &mdash; things that would require raw SQL or extra libraries in many other frameworks.</p>
+
+    <h3>Ordering</h3>
+
+    <pre><code><span class="comment"># Order by field (ascending)</span>
+Article.objects.order_by("title")
+
+<span class="comment"># Descending: prefix with -</span>
+Article.objects.order_by("-published_at")
+
+<span class="comment"># Multiple fields: first by status, then by date</span>
+Article.objects.order_by("status", "-published_at")
+
+<span class="comment"># Random order (useful for "featured" picks)</span>
+Article.objects.order_by("?")</code></pre>
+
+    <h3>Limiting &amp; Slicing</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code><span class="comment">// First 10</span>
+prisma.article.findMany({ take: 10 })
+
+<span class="comment">// Skip 10, take 10 (pagination)</span>
+prisma.article.findMany({
+  skip: 10,
+  take: 10,
+})
+
+<span class="comment">// First matching record</span>
+prisma.article.findFirst({
+  where: { status: "published" },
+})</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># First 10 (Python slice syntax!)</span>
+Article.objects.all()[:10]
+
+<span class="comment"># Skip 10, take 10 (pagination)</span>
+Article.objects.all()[10:20]
+
+
+<span class="comment"># First matching record</span>
+Article.objects.filter(
+    status="published"
+).first()
+</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>QuerySets use Python slice syntax for LIMIT/OFFSET.</strong> <code>[:10]</code> is <code>LIMIT 10</code>. <code>[10:20]</code> is <code>OFFSET 10 LIMIT 10</code>. You already know this syntax from Python lists. Django translates it to efficient SQL behind the scenes.</p>
+    </div>
+
+    <h3>.values() and .values_list() &mdash; Selecting Specific Columns</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code><span class="comment">// Select specific fields</span>
+await prisma.article.findMany({
+  select: {
+    title: true,
+    status: true,
+  },
+});
+<span class="comment">// [{title: "...", status: "..."}]</span>
+
+<span class="comment">// Get just one field as array</span>
+const titles = articles
+  .map(a =&gt; a.title);</code></pre>
+      </div>
+      <div>
+        <h5>Django</h5>
+        <pre><code><span class="comment"># Returns list of dicts</span>
+Article.objects.values(
+    "title", "status"
+)
+
+<span class="comment"># [{"title": "...", "status": "..."}]</span>
+
+<span class="comment"># Returns list of tuples</span>
+Article.objects.values_list("title")
+<span class="comment"># [("Title 1",), ("Title 2",)]</span>
+
+<span class="comment"># Flat list of single field</span>
+Article.objects.values_list(
+    "title", flat=True
+)
+<span class="comment"># ["Title 1", "Title 2", "Title 3"]</span></code></pre>
+      </div>
+    </div>
+
+    <h3>Aggregation &mdash; Database-Level Math</h3>
+
+    <pre><code>from django.db.models import Count, Avg, Sum, Max, Min
+
+<span class="comment"># Aggregate: returns a single dict of computed values</span>
+Article.objects.aggregate(
+    total=Count("id"),
+    avg_words=Avg("word_count"),
+    max_words=Max("word_count"),
+    total_words=Sum("word_count"),
+)
+<span class="comment"># {"total": 150, "avg_words": 820.5, "max_words": 3200, "total_words": 123075}</span>
+
+<span class="comment"># Annotate: adds a computed column to each row</span>
+authors = Author.objects.annotate(
+    article_count=Count("articles")
+)
+for author in authors:
+    print(f"{author} has written {author.article_count} articles")
+
+<span class="comment"># Group by: annotate + values = SQL GROUP BY</span>
+Article.objects.values("status").annotate(
+    count=Count("id"),
+    avg_length=Avg("word_count"),
+).order_by("status")
+<span class="comment"># [{"status": "draft", "count": 23, "avg_length": 450.2},</span>
+<span class="comment">#  {"status": "published", "count": 98, "avg_length": 1120.8}]</span></code></pre>
+
+    <div class="aha">
+      <p><strong><code>.aggregate()</code> vs <code>.annotate()</code>:</strong> Think of <code>aggregate</code> as a "summary" &mdash; it collapses the entire QuerySet into a single dictionary. Think of <code>annotate</code> as "add a column" &mdash; it attaches a computed value to each object in the QuerySet. When you combine <code>.values()</code> with <code>.annotate()</code>, you get SQL <code>GROUP BY</code>. This is where Django's ORM can replace most raw SQL you'd ever write.</p>
+    </div>
+
+    <h3>Other Useful QuerySet Methods</h3>
+
+    <pre><code><span class="comment"># Count without loading objects</span>
+Article.objects.filter(status="published").count()  <span class="comment"># 98</span>
+
+<span class="comment"># Check if any records exist</span>
+Article.objects.filter(status="published").exists()  <span class="comment"># True</span>
+
+<span class="comment"># Distinct values (SQL DISTINCT)</span>
+Article.objects.values_list("author__name", flat=True).distinct()
+
+<span class="comment"># Get or create (avoids duplicate checks)</span>
+category, created = Category.objects.get_or_create(
+    name="Breaking News",
+    defaults={"slug": "breaking-news"},
+)
+<span class="comment"># created is True if it was just made, False if it already existed</span>
+
+<span class="comment"># Update or create (upsert)</span>
+article, created = Article.objects.update_or_create(
+    slug="city-budget-approved",
+    defaults={
+        "title": "City Budget Approved (Updated)",
+        "status": "published",
+    },
+)
+
+<span class="comment"># Bulk create (insert many rows efficiently)</span>
+Article.objects.bulk_create([
+    Article(title="Story 1", slug="story-1", body="...", author=author),
+    Article(title="Story 2", slug="story-2", body="...", author=author),
+    Article(title="Story 3", slug="story-3", body="...", author=author),
+])</code></pre>
+
+    <div class="callout">
+      <p><strong><code>get_or_create</code> and <code>update_or_create</code></strong> are Django's version of Prisma's <code>upsert</code>. They're incredibly useful for import scripts, API endpoints, and seeding data. The <code>defaults</code> dict contains fields that get set on creation (or on update for <code>update_or_create</code>), while the other kwargs are used for the lookup.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRACTICAL QUERIES                            -->
+    <!-- ============================================ -->
+
+    <h2>Real-World Query Examples</h2>
+
+    <p>Here are queries you'd actually write in a newsroom app, showing how naturally the ORM handles journalism-domain problems:</p>
+
+    <pre><code><span class="comment"># Homepage: latest 10 published articles with their authors</span>
+Article.objects.filter(
+    status="published"
+).select_related("author").order_by("-published_at")[:10]
+
+<span class="comment"># Author page: all articles by a specific author</span>
+author = Author.objects.get(user__username="trevor")
+author.articles.filter(status="published").order_by("-published_at")
+
+<span class="comment"># Category page: articles in "Politics" category</span>
+Article.objects.filter(
+    categories__name="Politics",
+    status="published",
+).distinct()
+
+<span class="comment"># Search: articles matching a keyword</span>
+Article.objects.filter(
+    Q(title__icontains=query) | Q(body__icontains=query),
+    status="published",
+)
+
+<span class="comment"># Dashboard: article counts by status</span>
+Article.objects.values("status").annotate(
+    count=Count("id")
+).order_by("status")
+
+<span class="comment"># Most prolific authors (top 5 by article count)</span>
+Author.objects.annotate(
+    num_articles=Count("articles")
+).order_by("-num_articles")[:5]
+
+<span class="comment"># Articles published this month</span>
+from django.utils import timezone
+this_month = timezone.now().replace(day=1)
+Article.objects.filter(
+    published_at__gte=this_month,
+    status="published",
+)</code></pre>
+
+    <div class="warning">
+      <p><strong><code>select_related</code> prevents N+1 queries.</strong> Without it, accessing <code>article.author</code> in a loop fires a separate SQL query for each article. <code>select_related("author")</code> does a SQL JOIN so all the data comes in one query. Use <code>select_related</code> for ForeignKey/OneToOne and <code>prefetch_related</code> for ManyToMany. This is like Prisma's <code>include</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DJANGO SHELL                                 -->
+    <!-- ============================================ -->
+
+    <h2>The Django Shell &mdash; Your ORM Playground</h2>
+
+    <p>The Django shell is where you test queries interactively. It's like Prisma Studio but as a Python REPL with full ORM access.</p>
+
+    <pre><code><span class="comment"># Start the shell</span>
+$ python manage.py shell
+
+<span class="comment"># Import your models</span>
+&gt;&gt;&gt; from newsroom.models import Article, Author, Category
+
+<span class="comment"># Now you can query interactively</span>
+&gt;&gt;&gt; Article.objects.count()
+150
+
+&gt;&gt;&gt; Article.objects.filter(status="published").count()
+98
+
+&gt;&gt;&gt; a = Article.objects.first()
+&gt;&gt;&gt; a.title
+'City Budget Approved After Lengthy Debate'
+
+&gt;&gt;&gt; a.author.name
+'Jane Smith'
+
+&gt;&gt;&gt; a.categories.all()
+&lt;QuerySet [&lt;Category: Politics&gt;, &lt;Category: Local News&gt;]&gt;</code></pre>
+
+    <div class="aha">
+      <p><strong>Use the shell constantly.</strong> When you're building a new feature, open a shell and experiment with queries before writing view code. It's the fastest way to learn the ORM and debug data issues. Pro tip: <code>python manage.py shell_plus</code> (from django-extensions) auto-imports all your models.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. In Prisma you write <code>prisma.article.findMany({ where: { status: "published" } })</code>. What's the Django equivalent?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>Article.objects.filter(status="published")</code> &mdash; The <code>.objects</code> manager is your query entry point (like <code>prisma.article</code>), and <code>.filter()</code> is <code>findMany</code> with a <code>where</code> clause.</div>
+      </div>
+
+      <div class="question">
+        <p>2. How do you query articles whose author's name contains "Jane" (filtering across a relationship)?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>Article.objects.filter(author__name__icontains="jane")</code> &mdash; The double-underscore crosses the ForeignKey relationship (<code>author__name</code>) and then applies the lookup (<code>__icontains</code>).</div>
+      </div>
+
+      <div class="question">
+        <p>3. What's the difference between <code>.aggregate()</code> and <code>.annotate()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>.aggregate()</code> collapses the entire QuerySet into a single summary dict (e.g., total count, average). <code>.annotate()</code> adds a computed value to each object in the QuerySet (e.g., adding an <code>article_count</code> to each Author).</div>
+      </div>
+
+      <div class="question">
+        <p>4. What two commands do you run after changing a model in Django?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>python manage.py makemigrations</code> (detect changes and create migration file) then <code>python manage.py migrate</code> (apply migration to database). Always in that order. <code>makemigrations</code> is like <code>prisma migrate dev --create-only</code>, and <code>migrate</code> is like <code>prisma migrate deploy</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>5. You have a ForeignKey from Article to Author. How do you get all articles by a specific author using the <em>reverse</em> relationship?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>author.articles.all()</code> &mdash; The <code>related_name="articles"</code> on the ForeignKey creates the reverse accessor. Without <code>related_name</code>, you'd use <code>author.article_set.all()</code> (Django's default naming convention).</div>
+      </div>
+
+      <div class="question">
+        <p>6. What does <code>select_related("author")</code> do, and why is it important?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It performs a SQL JOIN to fetch the related Author data in the same query. Without it, accessing <code>article.author</code> in a loop fires a separate database query per article (the N+1 problem). It's Django's version of Prisma's <code>include: { author: true }</code>.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/django/lessons/06-django-quickstart/">&larr; Previous: Django Quickstart</a>
+      <a href="/django/lessons/08-views-urls/">Next: Views &amp; URLs &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

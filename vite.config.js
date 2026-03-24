@@ -5,9 +5,9 @@ import { createApiProxy } from './server/api-proxy.js';
 
 // Directories to skip when searching for HTML entry points
 const SKIP_DIRS = new Set([
-  'node_modules', 'dist', '.git',
+  'node_modules', 'dist', '.git', '.vercel', 'public',
   'learn-d3', 'learn-django', 'learn-sql',  // old standalone dirs
-  'audio', 'devlogs', 'tools', 'server',    // non-HTML asset/config dirs
+  'audio', 'devlogs', 'tools', 'server', 'test-results',  // non-HTML asset/config dirs
 ]);
 
 /**
@@ -48,7 +48,7 @@ function findHtmlFiles(dir, base = '') {
 
       // Top-level index.html gets the key "main"
       const key = entryName === '' ? 'main' : entryName;
-      entries[key] = resolve(dir, rel.split('/').join('/'));
+      entries[key] = resolve(rel);
     }
   }
 

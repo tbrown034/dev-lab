@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 02 - Layout Mental Models</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-dKoJCkGQ.svg">
+  <style>:root { --track-color: #a855f7; }</style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>02</span> Layout Mental Models &mdash; Four Universes</h1>
+    <a href="/css-design/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>CSS has four layout universes.</strong> Block, inline, flex, and grid each follow different physics. Properties that work in one universe may do nothing in another. The #1 layout mistake is treating them as one system.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: Universes with Different Physics</h2>
+
+    <p>When you set <code>display: flex</code> on an element, you're not just "turning on flexbox." You're changing which universe its children live in. And each universe has fundamentally different rules:</p>
+
+    <table>
+      <tr><th>Universe</th><th>Dimension</th><th>Core Idea</th><th>Tailwind</th></tr>
+      <tr><td><strong>Block</strong></td><td>Vertical</td><td>Elements stack top-to-bottom. Each takes full width.</td><td><code>block</code></td></tr>
+      <tr><td><strong>Inline</strong></td><td>Horizontal</td><td>Elements flow left-to-right like text. Width/height ignored.</td><td><code>inline</code></td></tr>
+      <tr><td><strong>Flex</strong></td><td>One axis</td><td>Children align along a main axis. Space distribution.</td><td><code>flex</code></td></tr>
+      <tr><td><strong>Grid</strong></td><td>Two axes</td><td>Children placed in rows AND columns simultaneously.</td><td><code>grid</code></td></tr>
+    </table>
+
+    <div class="aha">
+      <p><strong>The key insight:</strong> <code>display</code> doesn't style the element itself &mdash; it changes the layout rules for that element's children. When you write <code>display: flex</code>, you're saying "my children now live in the flex universe." The element itself still participates in whatever its parent's layout mode is.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE BOX MODEL                                -->
+    <!-- ============================================ -->
+
+    <h2>The Box Model: Every Element Is a Box</h2>
+
+    <p>Before layout modes, you need the box model. Every element is a nested set of rectangles:</p>
+
+    <pre><code>┌──────────────────────── margin ────────────────────────┐
+│  ┌──────────────────── border ───────────────────────┐  │
+│  │  ┌──────────────── padding ─────────────────────┐  │  │
+│  │  │                                               │  │  │
+│  │  │              content area                     │  │  │
+│  │  │         (your text, images, etc.)             │  │  │
+│  │  │                                               │  │  │
+│  │  └───────────────────────────────────────────────┘  │  │
+│  └─────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────┘</code></pre>
+
+    <h3>The box-sizing gotcha</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>content-box (default, confusing)</h5>
+        <pre><code>.box {
+  width: 300px;
+  padding: 20px;
+  border: 2px solid;
+}
+<span class="comment">/* Actual width on screen:
+   300 + 20*2 + 2*2 = 344px
+   The 300px only sizes the CONTENT.
+   Padding and border add on top. */</span></code></pre>
+      </div>
+      <div>
+        <h5>border-box (what you actually want)</h5>
+        <pre><code>.box {
+  box-sizing: border-box;
+  width: 300px;
+  padding: 20px;
+  border: 2px solid;
+}
+<span class="comment">/* Actual width on screen:
+   300px total.
+   Content shrinks to fit.
+   This is why every reset includes
+   *, *::before, *::after {
+     box-sizing: border-box;
+   } */</span></code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Tailwind connection.</strong> Tailwind's preflight (reset) sets <code>box-sizing: border-box</code> on everything. That's why <code>w-[300px] p-5 border-2</code> gives you exactly 300px wide. Without <code>border-box</code>, it'd be 344px and nothing would line up.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- BLOCK FLOW                                   -->
+    <!-- ============================================ -->
+
+    <h2>Block Flow: The Default Universe</h2>
+
+    <p>Block-level elements (<code>div</code>, <code>p</code>, <code>h1</code>-<code>h6</code>, <code>section</code>) follow these rules:</p>
+
+    <ul>
+      <li>Each element takes the <strong>full available width</strong> of its parent</li>
+      <li>Elements stack <strong>vertically</strong>, one below the other</li>
+      <li><code>width</code> and <code>height</code> work as expected</li>
+      <li>Vertical margins <strong>collapse</strong> (the tricky part)</li>
+    </ul>
+
+    <h3>Margin collapsing &mdash; the hidden gotcha</h3>
+
+    <pre><code><span class="comment">/* These two paragraphs have 20px between them, NOT 40px */</span>
+p { margin-bottom: 20px; }
+p { margin-top: 20px; }
+<span class="comment">/* Adjacent vertical margins collapse to the larger value.
+   This only happens in block flow. Flex and grid don't collapse. */</span></code></pre>
+
+    <div class="aha">
+      <p><strong>Why Tailwind uses padding for spacing.</strong> Margin collapsing is unpredictable. That's one reason Tailwind's <code>space-y-4</code> utility uses margin-top on all but the first child &mdash; and why many design systems prefer <code>gap</code> in flex/grid (where margins don't collapse) over margin-based spacing.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- INLINE FLOW                                  -->
+    <!-- ============================================ -->
+
+    <h2>Inline Flow: The Text Universe</h2>
+
+    <p>Inline elements (<code>span</code>, <code>a</code>, <code>strong</code>, <code>em</code>) follow text rules:</p>
+
+    <ul>
+      <li>They flow <strong>left-to-right</strong>, wrapping like words in a paragraph</li>
+      <li><code>width</code> and <code>height</code> are <strong>ignored</strong></li>
+      <li>Vertical <code>padding</code> and <code>margin</code> don't push other elements away</li>
+      <li>They sit on the text <strong>baseline</strong></li>
+    </ul>
+
+    <div class="warning">
+      <p><strong>The inline trap.</strong> New developers constantly try to set <code>width</code> or <code>height</code> on <code>&lt;span&gt;</code> or <code>&lt;a&gt;</code> elements and wonder why nothing happens. These are inline elements &mdash; they don't respond to box dimensions. You need <code>display: inline-block</code> or <code>display: block</code> first.</p>
+    </div>
+
+    <h3>inline-block: the hybrid</h3>
+
+    <pre><code><span class="comment">/* inline-block = inline flow + block box model */</span>
+.tag {
+  display: inline-block;   <span class="comment">/* flows like text, but... */</span>
+  width: 80px;             <span class="comment">/* this works now! */</span>
+  height: 32px;            <span class="comment">/* this too! */</span>
+  padding: 4px 12px;       <span class="comment">/* vertical padding pushes things */</span>
+}
+<span class="comment">/* Tailwind: inline-block */</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- FORMATTING CONTEXTS                          -->
+    <!-- ============================================ -->
+
+    <h2>Formatting Contexts: The Invisible Boundaries</h2>
+
+    <p>A <strong>Block Formatting Context</strong> (BFC) is an invisible boundary that contains floats, prevents margin collapse with the outside, and creates a self-contained layout region.</p>
+
+    <p>Things that create a new BFC:</p>
+
+    <ul>
+      <li><code>display: flow-root</code> &mdash; the explicit way (best)</li>
+      <li><code>overflow: hidden</code> &mdash; the old hack (has side effects)</li>
+      <li><code>display: flex</code> or <code>display: grid</code> &mdash; automatically creates one</li>
+      <li>Absolutely or fixed positioned elements</li>
+      <li><code>display: inline-block</code></li>
+    </ul>
+
+    <pre><code><span class="comment">/* Old way to "clear" floats and contain margins */</span>
+.container { overflow: hidden; }  <span class="comment">/* creates BFC but clips content */</span>
+
+<span class="comment">/* Modern way */</span>
+.container { display: flow-root; }  <span class="comment">/* creates BFC, no side effects */</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Why this matters for design systems.</strong> When building reusable components, each component should create its own formatting context. This prevents margin collapse from leaking styles between components. Use <code>display: flow-root</code>, or just use flex/grid (which create BFCs automatically).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STACKING CONTEXT                             -->
+    <!-- ============================================ -->
+
+    <h2>Stacking Contexts: The Z-Axis</h2>
+
+    <p>Stacking contexts control which elements appear in front of others. Think of them as layers in Photoshop &mdash; each context is its own layer group.</p>
+
+    <p>A new stacking context is created by:</p>
+
+    <ul>
+      <li><code>position: relative/absolute/fixed</code> with a <code>z-index</code> value</li>
+      <li><code>opacity</code> less than 1</li>
+      <li><code>transform</code>, <code>filter</code>, <code>backdrop-filter</code></li>
+      <li><code>isolation: isolate</code> &mdash; the clean way to create one</li>
+    </ul>
+
+    <pre><code><span class="comment">/* The z-index mystery: why z-index: 9999 doesn't work */</span>
+.modal-overlay {
+  position: fixed;
+  z-index: 9999;  <span class="comment">/* Useless if the parent creates a stacking context */</span>
+}
+
+<span class="comment">/* If a parent has transform: translateX(0) or opacity: 0.99,
+   it creates a new stacking context. Your z-index: 9999 only
+   competes WITHIN that context, not with elements outside it. */</span>
+
+<span class="comment">/* The fix: use isolation: isolate on intentional containers */</span>
+.app-layout { isolation: isolate; }
+<span class="comment">/* Tailwind: isolate */</span></code></pre>
+
+    <div class="aha">
+      <p><strong>z-index only works within the same stacking context.</strong> If your modal is inside a <code>transform</code>-ed container, its z-index fights with siblings in that container, not the rest of the page. This is the #1 source of "why is my modal behind the overlay" bugs.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHOOSING A LAYOUT MODE                       -->
+    <!-- ============================================ -->
+
+    <h2>The Decision Tree: Which Layout Mode?</h2>
+
+    <pre><code>Is the layout one-dimensional (row OR column)?
+├── YES → Use Flexbox
+│   └── Is it a simple row of items? → flex
+│   └── Is it a nav bar? → flex
+│   └── Is it centering something? → flex + align/justify
+│
+└── NO → Is it two-dimensional (rows AND columns)?
+    ├── YES → Use Grid
+    │   └── Is it a page layout with sidebar? → grid
+    │   └── Is it a card grid? → grid
+    │   └── Do you need items to span rows AND columns? → grid
+    │
+    └── Is it just normal document flow?
+        └── YES → Use Block (the default)
+            └── Paragraphs, headings, stacked sections → block</code></pre>
+
+    <div class="callout">
+      <p><strong>The real answer:</strong> Use flex for distributing items along one axis. Use grid for placing items in two dimensions. Use both in the same project. They're not competing &mdash; they're complementary. A grid layout's cells can contain flex containers, and vice versa.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. You set <code>width: 200px</code> on a <code>&lt;span&gt;</code> and nothing happens. Why?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>&lt;span&gt;</code> is an inline element. Inline elements ignore <code>width</code> and <code>height</code>. Change it to <code>display: inline-block</code> or <code>display: block</code> first.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Two adjacent <code>&lt;div&gt;</code>s each have <code>margin: 20px 0</code>. How much space is between them?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">20px, not 40px. Vertical margins in block flow collapse to the larger value. If one had 30px and the other 20px, the gap would be 30px.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Does margin collapsing happen inside a flex container?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">No. Margin collapsing only happens in block formatting context. Flex and grid containers create new formatting contexts where margins don't collapse.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What does <code>display: flex</code> change about the element's CHILDREN?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It puts the children into the flex layout universe. They now respond to flex properties (justify-content, align-items, flex-grow, etc.) and no longer follow block flow rules.</div>
+      </div>
+
+      <div class="question">
+        <p>5. Your modal has <code>z-index: 9999</code> but appears behind a dropdown. What's likely happening?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The modal is inside a parent element that creates a stacking context (via transform, opacity, filter, etc.). The z-index only competes within that context, not with elements outside it. The fix: move the modal out of the stacking context, or use <code>isolation: isolate</code> strategically.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Identify the Layout Universe</h4>
+      <p>Open the DevTools on this platform's homepage and identify:</p>
+      <ol>
+        <li>Find 3 elements using <strong>block flow</strong> (normal document stacking)</li>
+        <li>Find 2 elements using <strong>flexbox</strong> (check for <code>display: flex</code>)</li>
+        <li>Find 1 element using <strong>grid</strong> (check for <code>display: grid</code>)</li>
+        <li>For each, explain WHY that layout mode was chosen for that context</li>
+        <li>Bonus: Find an element that creates a new stacking context</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Four layout universes</strong> &mdash; block, inline, flex, grid &mdash; each with different physics</li>
+      <li><strong><code>display</code> changes children's universe</strong>, not the element itself</li>
+      <li><strong>box-sizing: border-box</strong> makes width mean "total width including padding and border"</li>
+      <li><strong>Margins collapse in block flow</strong> only &mdash; not in flex or grid</li>
+      <li><strong>Inline elements ignore width/height</strong> &mdash; use inline-block or block</li>
+      <li><strong>Formatting contexts</strong> contain floats and prevent margin collapse leaking</li>
+      <li><strong>Stacking contexts</strong> scope z-index &mdash; the #1 source of layering bugs</li>
+      <li><strong>Flex = one axis, Grid = two axes</strong> &mdash; they complement, not compete</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/css-design/lessons/01-cascade-specificity/">&larr; Lesson 01: Cascade</a>
+      <a href="/css-design/lessons/03-flexbox-mastery/">Lesson 03: Flexbox &rarr;</a>
+    </div>
+  </div>
+</body>
+</html>

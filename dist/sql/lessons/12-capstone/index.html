@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 12 - Real-World Patterns</title>
+  <style>:root { --track-color: #3b82f6; }</style>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-Ch5wxeC6.svg">
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>12</span> Real-World Patterns</h1>
+    <a href="/sql/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>This is where all 11 lessons come together.</strong> You know the syntax. Now let's look at the patterns that production databases actually use &mdash; pagination, search, JSON columns, soft deletes, audit trails, and migrations. These are the things you'll build in your Next.js apps.</p>
+
+    <!-- ============================================ -->
+    <!-- PAGINATION                                  -->
+    <!-- ============================================ -->
+
+    <h2>Pagination &mdash; OFFSET/LIMIT vs Cursor-Based</h2>
+
+    <p>You already know <code>LIMIT</code> and <code>OFFSET</code> from Lesson 01. But there's a catch: <strong>OFFSET gets slower as the page number grows</strong>. Page 1000 means the database has to scan and skip 10,000 rows before giving you 10. Let's look at both approaches.</p>
+
+    <h3>OFFSET/LIMIT (Simple but Slow)</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma</h5>
+        <pre><code>// Page 1
+const page1 = await prisma.article
+  .findMany({
+    take: 10,
+    skip: 0,
+    orderBy: { createdAt: 'desc' },
+  });
+
+// Page 50
+const page50 = await prisma.article
+  .findMany({
+    take: 10,
+    skip: 490, // Skips 490 rows!
+    orderBy: { createdAt: 'desc' },
+  });</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>-- Page 1
+SELECT * FROM articles
+ORDER BY created_at DESC
+LIMIT 10 OFFSET 0;
+
+-- Page 50
+SELECT * FROM articles
+ORDER BY created_at DESC
+LIMIT 10 OFFSET 490;
+-- Database scans 500 rows,
+-- throws away 490, returns 10.
+-- Imagine OFFSET 10000...</code></pre>
+      </div>
+    </div>
+
+    <p>OFFSET pagination works fine when:</p>
+    <ul>
+      <li>The table is small (under ~100K rows)</li>
+      <li>Users rarely go past page 10</li>
+      <li>You need "jump to page 47" functionality</li>
+    </ul>
+
+    <h3>Cursor-Based Pagination (Fast at Any Depth)</h3>
+
+    <p>Instead of saying "skip N rows," cursor pagination says "give me rows after this specific row." It uses an indexed column (usually <code>id</code> or <code>created_at</code>) as a bookmark.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma cursor</h5>
+        <pre><code>// First page
+const page1 = await prisma.article
+  .findMany({
+    take: 10,
+    orderBy: { id: 'desc' },
+  });
+
+// Next page: start after last item
+const page2 = await prisma.article
+  .findMany({
+    take: 10,
+    cursor: { id: lastId },
+    skip: 1, // skip the cursor itself
+    orderBy: { id: 'desc' },
+  });</code></pre>
+      </div>
+      <div>
+        <h5>SQL cursor</h5>
+        <pre><code>-- First page
+SELECT * FROM articles
+ORDER BY id DESC
+LIMIT 10;
+
+-- Next page (last item had id = 95)
+SELECT * FROM articles
+WHERE id &lt; 95
+ORDER BY id DESC
+LIMIT 10;
+-- Uses the index! Instant, no matter
+-- how deep you paginate.</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Cursor pagination is what Twitter, Instagram, and infinite scroll use.</strong> The API returns a "next cursor" token with each response. Your frontend sends it back to get the next batch. It's always fast because <code>WHERE id &lt; 95</code> uses the primary key index directly &mdash; no scanning required.</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Feature</th><th>OFFSET/LIMIT</th><th>Cursor-Based</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Speed at page 1</td><td>Fast</td><td>Fast</td></tr>
+        <tr><td>Speed at page 1000</td><td>Slow</td><td>Still fast</td></tr>
+        <tr><td>"Jump to page N"</td><td>Yes</td><td>No</td></tr>
+        <tr><td>Handles new rows mid-pagination</td><td>Can skip/duplicate</td><td>Stable</td></tr>
+        <tr><td>Implementation</td><td>Simple</td><td>Moderate</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- FULL-TEXT SEARCH                             -->
+    <!-- ============================================ -->
+
+    <h2>Full-Text Search with tsvector &amp; tsquery</h2>
+
+    <p>You know <code>LIKE '%word%'</code> and <code>ILIKE</code>. But for real search &mdash; the kind where users type "election results 2024" and get relevant articles ranked by relevance &mdash; you need PostgreSQL's full-text search.</p>
+
+    <p>The mental model: PostgreSQL breaks text into <strong>tokens</strong> (words), stems them (so "running" matches "run"), removes stop words ("the", "a"), and stores them in a special data type called <code>tsvector</code>. You search with <code>tsquery</code>.</p>
+
+    <h3>Basic Full-Text Search</h3>
+
+    <pre><code>-- Convert text to tsvector (tokenized, stemmed)
+SELECT to_tsvector('english', 'The election results are in for 2024');
+-- Result: '2024':7 'elect':2 'result':3
+
+-- Create a search query
+SELECT to_tsquery('english', 'election &amp; results');
+-- Result: 'elect' &amp; 'result'
+
+-- Search!
+SELECT title, body
+FROM articles
+WHERE to_tsvector('english', title || ' ' || body)
+      @@ to_tsquery('english', 'election &amp; results');</code></pre>
+
+    <p>The <code>@@</code> operator means "matches." It checks if the <code>tsvector</code> (document) matches the <code>tsquery</code> (search terms).</p>
+
+    <h3>Adding a Search Column (Performance)</h3>
+
+    <p>Calling <code>to_tsvector()</code> on every query is slow. Instead, store the vector in a dedicated column and index it:</p>
+
+    <pre><code>-- Add a search column
+ALTER TABLE articles
+ADD COLUMN search_vector tsvector;
+
+-- Populate it
+UPDATE articles
+SET search_vector = to_tsvector('english',
+  COALESCE(title, '') || ' ' || COALESCE(body, '')
+);
+
+-- Create a GIN index for fast search
+CREATE INDEX articles_search_idx
+ON articles USING GIN(search_vector);
+
+-- Keep it updated with a trigger
+CREATE FUNCTION update_search_vector()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.search_vector := to_tsvector('english',
+    COALESCE(NEW.title, '') || ' ' || COALESCE(NEW.body, '')
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER articles_search_update
+BEFORE INSERT OR UPDATE ON articles
+FOR EACH ROW
+EXECUTE FUNCTION update_search_vector();</code></pre>
+
+    <h3>Ranked Search Results</h3>
+
+    <pre><code>-- Search with relevance ranking
+SELECT
+  title,
+  ts_rank(search_vector,
+    to_tsquery('english', 'election &amp; results')) AS relevance
+FROM articles
+WHERE search_vector @@ to_tsquery('english', 'election &amp; results')
+ORDER BY relevance DESC
+LIMIT 20;</code></pre>
+
+    <h3>Search Query Syntax</h3>
+
+    <table>
+      <thead>
+        <tr><th>Operator</th><th>Meaning</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>&amp;</code></td><td>AND (both words)</td><td><code>'election &amp; fraud'</code></td></tr>
+        <tr><td><code>|</code></td><td>OR (either word)</td><td><code>'election | primary'</code></td></tr>
+        <tr><td><code>!</code></td><td>NOT (exclude word)</td><td><code>'election &amp; !primary'</code></td></tr>
+        <tr><td><code>&lt;-&gt;</code></td><td>Followed by (phrase)</td><td><code>'election &lt;-&gt; results'</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma (limited)</h5>
+        <pre><code>// Prisma has no built-in full-text search
+// Use raw SQL:
+const results = await prisma.$queryRaw`
+  SELECT id, title,
+    ts_rank(search_vector,
+      to_tsquery('english', ${query})
+    ) AS relevance
+  FROM articles
+  WHERE search_vector @@
+    to_tsquery('english', ${query})
+  ORDER BY relevance DESC
+  LIMIT 20
+`;</code></pre>
+      </div>
+      <div>
+        <h5>SQL (full power)</h5>
+        <pre><code>-- Fuzzy user input with websearch_to_tsquery
+-- (handles plain language input)
+SELECT title, ts_rank(search_vector, q) AS rank
+FROM articles,
+  websearch_to_tsquery('english',
+    'election fraud 2024') AS q
+WHERE search_vector @@ q
+ORDER BY rank DESC
+LIMIT 20;
+
+-- websearch_to_tsquery handles:
+-- "election fraud" -&gt; phrase search
+-- election OR primary -&gt; OR logic
+-- -spam -&gt; exclude word</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>PostgreSQL full-text search is surprisingly good.</strong> For most apps, you don't need Elasticsearch or Algolia. PostgreSQL handles stemming, ranking, phrase matching, and fuzzy search right in your database. Only reach for a dedicated search engine if you need typo tolerance or need to search millions of documents with sub-100ms response times.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- JSONB COLUMNS                               -->
+    <!-- ============================================ -->
+
+    <h2>JSONB Columns &mdash; Structured Flexibility</h2>
+
+    <p>Sometimes you need to store data that doesn't fit neatly into columns. Metadata, settings, API responses, tags. PostgreSQL's <code>JSONB</code> type lets you store JSON documents inside a column and <em>query into them</em> with SQL.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma Json type</h5>
+        <pre><code>model Article {
+  id       Int  @id
+  title    String
+  metadata Json  // stores any JSON
+}
+
+// Write
+await prisma.article.create({
+  data: {
+    title: 'Story',
+    metadata: {
+      source: 'AP',
+      tags: ['politics', 'breaking'],
+      wordCount: 850,
+    },
+  },
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL JSONB</h5>
+        <pre><code>CREATE TABLE articles (
+  id       SERIAL PRIMARY KEY,
+  title    TEXT NOT NULL,
+  metadata JSONB DEFAULT '{}'
+);
+
+-- Write
+INSERT INTO articles (title, metadata)
+VALUES ('Story', '{
+  "source": "AP",
+  "tags": ["politics", "breaking"],
+  "wordCount": 850
+}');</code></pre>
+      </div>
+    </div>
+
+    <h3>Querying JSONB</h3>
+
+    <pre><code>-- Extract a value (returns JSON)
+SELECT metadata-&gt;'source' FROM articles;
+-- Result: "AP" (with quotes, it's JSON)
+
+-- Extract as text (returns text)
+SELECT metadata-&gt;&gt;'source' FROM articles;
+-- Result: AP (no quotes, plain text)
+
+-- Nested access
+SELECT metadata-&gt;'stats'-&gt;&gt;'readTime' FROM articles;
+
+-- Filter by JSONB value
+SELECT * FROM articles
+WHERE metadata-&gt;&gt;'source' = 'AP';
+
+-- Check if JSONB contains a key-value pair
+SELECT * FROM articles
+WHERE metadata @&gt; '{"source": "AP"}';
+
+-- Check if a key exists
+SELECT * FROM articles
+WHERE metadata ? 'source';
+
+-- Query into arrays
+SELECT * FROM articles
+WHERE metadata-&gt;'tags' ? 'politics';
+-- Finds articles where tags array contains 'politics'</code></pre>
+
+    <h3>JSONB Operators Quick Reference</h3>
+
+    <table>
+      <thead>
+        <tr><th>Operator</th><th>Returns</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>-></code></td><td>JSON element</td><td><code>metadata->'source'</code> returns <code>"AP"</code></td></tr>
+        <tr><td><code>->></code></td><td>Text value</td><td><code>metadata->>'source'</code> returns <code>AP</code></td></tr>
+        <tr><td><code>@></code></td><td>Contains</td><td><code>metadata @> '{"source":"AP"}'</code></td></tr>
+        <tr><td><code>?</code></td><td>Key exists</td><td><code>metadata ? 'source'</code></td></tr>
+        <tr><td><code>?|</code></td><td>Any key exists</td><td><code>metadata ?| array['a','b']</code></td></tr>
+        <tr><td><code>?&amp;</code></td><td>All keys exist</td><td><code>metadata ?&amp; array['a','b']</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Indexing JSONB</h3>
+
+    <pre><code>-- GIN index for @&gt;, ?, ?|, ?& operators
+CREATE INDEX articles_metadata_idx
+ON articles USING GIN(metadata);
+
+-- B-tree index on a specific key (for = and range queries)
+CREATE INDEX articles_source_idx
+ON articles ((metadata-&gt;&gt;'source'));</code></pre>
+
+    <div class="callout">
+      <p><strong>When to use JSONB vs columns:</strong> Use columns for data you filter, sort, or join on frequently (author_id, published, created_at). Use JSONB for variable/optional metadata that differs between rows (SEO settings, API response data, user preferences). If you're querying a JSONB field in every request, it should probably be a column instead.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SOFT DELETES                                -->
+    <!-- ============================================ -->
+
+    <h2>Soft Deletes</h2>
+
+    <p>In production, you almost never want <code>DELETE FROM</code> to actually remove data. What if an editor accidentally deletes an article? What if you need to comply with data retention laws? The solution is <strong>soft deletes</strong>: mark rows as deleted without removing them.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Hard delete (permanent)</h5>
+        <pre><code>-- Data is GONE
+DELETE FROM articles WHERE id = 42;
+
+-- Prisma
+await prisma.article.delete({
+  where: { id: 42 },
+});</code></pre>
+      </div>
+      <div>
+        <h5>Soft delete (recoverable)</h5>
+        <pre><code>-- Data stays, marked as deleted
+UPDATE articles
+SET deleted_at = NOW()
+WHERE id = 42;
+
+-- Prisma
+await prisma.article.update({
+  where: { id: 42 },
+  data: { deletedAt: new Date() },
+});</code></pre>
+      </div>
+    </div>
+
+    <h3>Setting Up Soft Deletes</h3>
+
+    <pre><code>-- Add the column
+ALTER TABLE articles
+ADD COLUMN deleted_at TIMESTAMP DEFAULT NULL;
+
+-- A row is "deleted" when deleted_at is NOT NULL
+-- A row is "active" when deleted_at IS NULL</code></pre>
+
+    <h3>The Key: Filter Everywhere</h3>
+
+    <p>The catch is you need to remember to filter out deleted rows in every query. This is where views help:</p>
+
+    <pre><code>-- Create a view that hides deleted rows
+CREATE VIEW active_articles AS
+SELECT * FROM articles
+WHERE deleted_at IS NULL;
+
+-- Now use the view instead of the table
+SELECT * FROM active_articles;
+-- Only shows non-deleted articles
+
+-- When you need to see deleted items (admin panel, recovery)
+SELECT * FROM articles
+WHERE deleted_at IS NOT NULL
+ORDER BY deleted_at DESC;
+
+-- Restore a soft-deleted article
+UPDATE articles
+SET deleted_at = NULL
+WHERE id = 42;</code></pre>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma middleware approach</h5>
+        <pre><code>// Prisma middleware to auto-filter
+prisma.$use(async (params, next) =&gt; {
+  if (params.model === 'Article') {
+    if (params.action === 'findMany') {
+      params.args.where = {
+        ...params.args.where,
+        deletedAt: null,
+      };
+    }
+    if (params.action === 'delete') {
+      params.action = 'update';
+      params.args.data = {
+        deletedAt: new Date()
+      };
+    }
+  }
+  return next(params);
+});</code></pre>
+      </div>
+      <div>
+        <h5>SQL view approach</h5>
+        <pre><code>-- View handles the filtering
+CREATE VIEW active_articles AS
+SELECT * FROM articles
+WHERE deleted_at IS NULL;
+
+-- All queries automatically exclude
+-- deleted rows
+SELECT * FROM active_articles
+WHERE beat = 'politics';
+
+-- Delete = update
+UPDATE articles
+SET deleted_at = NOW()
+WHERE id = 42;
+
+-- Permanent purge (after 90 days)
+DELETE FROM articles
+WHERE deleted_at &lt; NOW() - INTERVAL '90 days';</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Soft deletes add complexity but save careers.</strong> Every newsroom has a story about an editor who deleted the wrong article 5 minutes before deadline. With soft deletes, recovery is one UPDATE away. Without them, you're restoring from backups and hoping they're recent.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- AUDIT TRAILS                                -->
+    <!-- ============================================ -->
+
+    <h2>Audit Trails with Triggers</h2>
+
+    <p>An audit trail records <em>who changed what and when</em>. It's essential for newsrooms (editorial accountability), healthcare (HIPAA), finance (SOX compliance), and any app where you need to answer "who edited this article at 3am?"</p>
+
+    <pre><code>-- Audit log table: stores who changed what and when
+CREATE TABLE audit_log (
+  id          SERIAL PRIMARY KEY,
+  table_name  TEXT NOT NULL,
+  row_id      INTEGER NOT NULL,
+  action      TEXT NOT NULL,  -- 'INSERT', 'UPDATE', 'DELETE'
+  old_data    JSONB,          -- row before change
+  new_data    JSONB,          -- row after change
+  changed_by  TEXT,
+  changed_at  TIMESTAMP DEFAULT NOW()
+);
+
+-- Generic trigger function (works for any table)
+CREATE FUNCTION audit_trigger_fn()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    INSERT INTO audit_log (table_name, row_id, action, new_data, changed_by)
+    VALUES (TG_TABLE_NAME, NEW.id, 'INSERT', to_jsonb(NEW),
+      current_setting('app.current_user', true));
+    RETURN NEW;
+  ELSIF TG_OP = 'UPDATE' THEN
+    INSERT INTO audit_log (table_name, row_id, action, old_data, new_data, changed_by)
+    VALUES (TG_TABLE_NAME, NEW.id, 'UPDATE', to_jsonb(OLD), to_jsonb(NEW),
+      current_setting('app.current_user', true));
+    RETURN NEW;
+  ELSIF TG_OP = 'DELETE' THEN
+    INSERT INTO audit_log (table_name, row_id, action, old_data, changed_by)
+    VALUES (TG_TABLE_NAME, OLD.id, 'DELETE', to_jsonb(OLD),
+      current_setting('app.current_user', true));
+    RETURN OLD;
+  END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Attach to any table
+CREATE TRIGGER articles_audit
+AFTER INSERT OR UPDATE OR DELETE ON articles
+FOR EACH ROW EXECUTE FUNCTION audit_trigger_fn();</code></pre>
+
+    <h3>Querying the Audit Trail</h3>
+
+    <pre><code>-- Set user in your API route (lasts one transaction)
+-- await prisma.$executeRaw`SET LOCAL app.current_user = ${userId}`;
+
+-- Who edited article #42?
+SELECT action, changed_by, changed_at,
+  old_data-&gt;&gt;'title' AS old_title,
+  new_data-&gt;&gt;'title' AS new_title
+FROM audit_log
+WHERE table_name = 'articles' AND row_id = 42
+ORDER BY changed_at DESC;
+
+-- What did user 'trevor' change today?
+SELECT table_name, row_id, action, changed_at
+FROM audit_log
+WHERE changed_by = 'trevor' AND changed_at::DATE = CURRENT_DATE;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- DATABASE MIGRATIONS                         -->
+    <!-- ============================================ -->
+
+    <h2>Database Migrations Strategy</h2>
+
+    <p>You already know migrations from Prisma: <code>npx prisma migrate dev</code>. But what's actually happening? A <strong>migration</strong> is a versioned SQL file that changes your database schema. Each migration builds on the previous one, like Git commits for your database structure.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Prisma migrations</h5>
+        <pre><code>// 1. Change schema.prisma
+model Article {
+  id    Int    @id
+  title String
+  slug  String @unique // NEW!
+}
+
+// 2. npx prisma migrate dev --name add-slug
+// Creates a SQL migration file</code></pre>
+      </div>
+      <div>
+        <h5>Generated SQL</h5>
+        <pre><code>-- The actual migration file
+ALTER TABLE articles ADD COLUMN slug TEXT;
+
+CREATE UNIQUE INDEX articles_slug_key
+ON articles (slug);
+
+-- Prisma tracks applied migrations
+-- in a _prisma_migrations table</code></pre>
+      </div>
+    </div>
+
+    <h3>Safe Migration Practices</h3>
+
+    <ul>
+      <li><strong>Never modify an applied migration.</strong> Create a new one instead. Migrations are immutable once pushed, like Git commits.</li>
+      <li><strong>Add columns as nullable first.</strong> Backfill existing rows, then add the NOT NULL constraint in a second migration.</li>
+      <li><strong>Don't drop columns immediately.</strong> Stop reading the column in your app first, deploy, then drop it in a later migration.</li>
+    </ul>
+
+    <pre><code>-- Safe way to add a required column (two-step)
+-- Migration 1: Add nullable column
+ALTER TABLE articles ADD COLUMN slug TEXT;
+
+-- Migration 2 (after backfilling):
+UPDATE articles SET slug = lower(replace(title, ' ', '-')) WHERE slug IS NULL;
+ALTER TABLE articles ALTER COLUMN slug SET NOT NULL;
+CREATE UNIQUE INDEX articles_slug_unique ON articles (slug);</code></pre>
+
+    <div class="callout">
+      <p><strong>Custom SQL in Prisma migrations:</strong> After generating a migration, edit the <code>migration.sql</code> file to add views, functions, triggers, and indexes that Prisma can't generate. Then run <code>npx prisma migrate dev</code> to apply.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRISMA VS RAW SQL PATTERNS                  -->
+    <!-- ============================================ -->
+
+    <h2>Prisma Patterns vs Raw SQL Patterns</h2>
+
+    <p>Here's a practical guide to when each approach wins:</p>
+
+    <table>
+      <thead>
+        <tr><th>Pattern</th><th>Prisma</th><th>Raw SQL</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Simple CRUD</td><td>Prisma wins (type-safe, fast to write)</td><td>Overkill</td></tr>
+        <tr><td>Relations/includes</td><td>Prisma wins (<code>include</code> is great)</td><td>Manual JOINs</td></tr>
+        <tr><td>Full-text search</td><td>Not supported</td><td>Raw SQL required</td></tr>
+        <tr><td>JSONB queries</td><td>Limited</td><td>Raw SQL is better</td></tr>
+        <tr><td>Complex aggregation</td><td>Limited</td><td>Raw SQL is better</td></tr>
+        <tr><td>Window functions</td><td>Not supported</td><td>Raw SQL required</td></tr>
+        <tr><td>Bulk operations</td><td><code>createMany</code> works</td><td>Raw SQL for complex bulk</td></tr>
+        <tr><td>Views / Functions</td><td>Can read views</td><td>Must create with raw SQL</td></tr>
+        <tr><td>Audit trails</td><td>Middleware (app-level)</td><td>Triggers (database-level)</td></tr>
+      </tbody>
+    </table>
+
+    <pre><code>// The hybrid approach: Prisma for CRUD, raw SQL for complex queries
+
+const article = await prisma.article.create({       // Prisma: simple
+  data: { title, body, authorId },
+  include: { author: true },
+});
+
+const results = await prisma.$queryRaw`              // Raw SQL: complex
+  SELECT a.title, u.name AS author,
+    ts_rank(a.search_vector,
+      websearch_to_tsquery('english', ${query})) AS relevance
+  FROM articles a JOIN users u ON a.author_id = u.id
+  WHERE a.search_vector @@ websearch_to_tsquery('english', ${query})
+    AND a.deleted_at IS NULL
+  ORDER BY relevance DESC LIMIT 20
+`;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- PRACTICAL: PRODUCTION NEWSROOM DB            -->
+    <!-- ============================================ -->
+
+    <h2>Practical &mdash; Production Newsroom Database</h2>
+
+    <p>Let's put everything together. Here's a production-ready schema for a newsroom CMS that uses every pattern from this lesson:</p>
+
+    <pre><code>-- Core tables with soft deletes and search
+CREATE TABLE articles (
+  id            SERIAL PRIMARY KEY,
+  title         TEXT NOT NULL,
+  slug          TEXT UNIQUE,
+  body          TEXT NOT NULL,
+  beat          TEXT,
+  published     BOOLEAN DEFAULT false,
+  published_at  TIMESTAMP,
+  views         INTEGER DEFAULT 0,
+  metadata      JSONB DEFAULT '{}',
+  author_id     INTEGER REFERENCES users(id),
+  search_vector tsvector,
+  deleted_at    TIMESTAMP,
+  created_at    TIMESTAMP DEFAULT NOW(),
+  updated_at    TIMESTAMP DEFAULT NOW()
+);
+
+-- Indexes: search, metadata, filtered for active rows
+CREATE INDEX articles_search_idx ON articles USING GIN(search_vector);
+CREATE INDEX articles_metadata_idx ON articles USING GIN(metadata);
+CREATE INDEX articles_published_idx ON articles (published, published_at DESC)
+  WHERE deleted_at IS NULL;
+
+-- Auto-update search vector on insert/update
+CREATE TRIGGER article_search_trigger
+BEFORE INSERT OR UPDATE ON articles
+FOR EACH ROW EXECUTE FUNCTION update_article_search();
+
+-- Audit trigger (uses generic audit function from earlier)
+CREATE TRIGGER articles_audit
+AFTER INSERT OR UPDATE OR DELETE ON articles
+FOR EACH ROW EXECUTE FUNCTION audit_trigger_fn();
+
+-- Soft-delete views
+CREATE VIEW active_articles AS
+SELECT * FROM articles WHERE deleted_at IS NULL;
+
+-- Dashboard materialized view
+CREATE MATERIALIZED VIEW newsroom_dashboard AS
+SELECT
+  u.name AS author, u.beat,
+  COUNT(*) FILTER (WHERE a.published) AS published,
+  COUNT(*) FILTER (WHERE NOT a.published) AS drafts,
+  SUM(a.views) AS total_views,
+  MAX(a.published_at) AS latest_publish
+FROM users u
+LEFT JOIN active_articles a ON u.id = a.author_id
+WHERE u.role = 'journalist'
+GROUP BY u.id, u.name, u.beat;
+CREATE UNIQUE INDEX ON newsroom_dashboard (author);</code></pre>
+
+    <pre><code>-- Sample queries against this production schema
+
+-- 1. Full-text search with ranking
+SELECT title, ts_rank(search_vector,
+    websearch_to_tsquery('english', 'city budget cuts')) AS relevance
+FROM active_articles
+WHERE search_vector @@ websearch_to_tsquery('english', 'city budget cuts')
+ORDER BY relevance DESC LIMIT 10;
+
+-- 2. Cursor-based pagination
+SELECT id, title, published_at, views FROM active_articles
+WHERE published = true AND id &lt; 500
+ORDER BY id DESC LIMIT 20;
+
+-- 3. JSONB metadata query
+SELECT title, metadata-&gt;&gt;'source' AS source FROM active_articles
+WHERE metadata @&gt; '{"tags": ["breaking"]}' AND published = true;
+
+-- 4. Soft-delete (audit trail captured by trigger)
+UPDATE articles SET deleted_at = NOW() WHERE id = 42;
+
+-- 5. Refresh dashboard on a schedule
+REFRESH MATERIALIZED VIEW CONCURRENTLY newsroom_dashboard;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                        -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Quick Check</h4>
+
+      <div class="question">
+        <p>1. Why is cursor-based pagination faster than OFFSET/LIMIT for deep pages?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">OFFSET forces the database to scan and discard N rows before returning results. Cursor pagination uses a WHERE clause on an indexed column (e.g., <code>WHERE id &lt; 95</code>), which jumps directly to the right position using the index. No scanning or discarding needed.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What's the difference between <code>-></code> and <code>->></code> for JSONB?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>-></code> returns the JSON element (with quotes for strings, preserving JSON type). <code>->></code> returns the value as plain text. Use <code>->></code> when you want to compare with text values: <code>WHERE metadata->>'source' = 'AP'</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What's the advantage of database-level audit trails (triggers) over application-level ones (Prisma middleware)?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">Database triggers capture ALL changes to the table, no matter where they come from (app, admin tool, migration script, another service). Application-level audit only captures changes made through that specific app. If an admin runs a raw SQL update, only triggers will catch it.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Why should you add new required columns in two migrations instead of one?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">If you add a NOT NULL column to a table with existing rows, the migration fails (existing rows have no value for the new column). The safe approach: (1) add the column as nullable, (2) backfill existing rows with a default value, (3) add the NOT NULL constraint.</div>
+      </div>
+
+      <div class="question">
+        <p>5. When would you use <code>websearch_to_tsquery</code> instead of <code>to_tsquery</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>websearch_to_tsquery</code> accepts plain language input (like what a user types into a search box). It handles quoted phrases, OR keywords, and - for exclusion automatically. <code>to_tsquery</code> requires explicit operators (<code>&amp;</code>, <code>|</code>, <code>!</code>) and will error on plain text input.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                    -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Practice Exercise</h4>
+      <p>Using the production newsroom schema above, write SQL for each:</p>
+
+      <div class="question" style="margin-top: 1rem;">
+        <p><strong>A:</strong> Add a <code>metadata</code> field to an article that stores <code>{"source": "Reuters", "wordCount": 1200, "tags": ["finance", "markets"]}</code>.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>UPDATE articles
+SET metadata = '{"source": "Reuters", "wordCount": 1200,
+  "tags": ["finance", "markets"]}'
+WHERE id = 1;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>B:</strong> Find all articles tagged with "breaking" in their metadata, showing title and source.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT title, metadata-&gt;&gt;'source' AS source
+FROM active_articles
+WHERE metadata-&gt;'tags' ? 'breaking';</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>C:</strong> Write a cursor-based pagination query for published articles, getting the next 10 articles after id = 250.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT id, title, published_at, views
+FROM active_articles
+WHERE published = true AND id &lt; 250
+ORDER BY id DESC
+LIMIT 10;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>D:</strong> Soft-delete all unpublished articles older than 6 months.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>UPDATE articles
+SET deleted_at = NOW()
+WHERE published = false
+  AND deleted_at IS NULL
+  AND created_at &lt; NOW() - INTERVAL '6 months';</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>E:</strong> Search for articles about "budget deficit" and return the top 5 results ranked by relevance.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT title,
+  ts_rank(search_vector,
+    websearch_to_tsquery('english', 'budget deficit')
+  ) AS relevance
+FROM active_articles
+WHERE search_vector @@
+  websearch_to_tsquery('english', 'budget deficit')
+ORDER BY relevance DESC
+LIMIT 5;</code></pre></div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHEAT SHEET                                  -->
+    <!-- ============================================ -->
+
+    <h2>Cheat Sheet</h2>
+
+    <pre><code>-- PAGINATION
+-- Offset (simple, slow for deep pages)
+SELECT * FROM table ORDER BY id LIMIT 10 OFFSET 90;
+-- Cursor (fast at any depth)
+SELECT * FROM table WHERE id &lt; :last_id ORDER BY id DESC LIMIT 10;
+
+-- FULL-TEXT SEARCH
+-- Add search column + index
+ALTER TABLE t ADD COLUMN search_vector tsvector;
+CREATE INDEX ON t USING GIN(search_vector);
+-- Search with ranking
+SELECT *, ts_rank(search_vector, q) AS rank
+FROM t, websearch_to_tsquery('english', 'search terms') AS q
+WHERE search_vector @@ q ORDER BY rank DESC;
+
+-- JSONB
+col-&gt;'key'          -- get JSON element
+col-&gt;&gt;'key'         -- get as text
+col @&gt; '{"k":"v"}'  -- contains
+col ? 'key'         -- key exists
+CREATE INDEX ON t USING GIN(col);
+
+-- SOFT DELETES
+ALTER TABLE t ADD COLUMN deleted_at TIMESTAMP;
+-- "Delete": UPDATE t SET deleted_at = NOW() WHERE id = 1;
+-- "Active": WHERE deleted_at IS NULL
+-- View:     CREATE VIEW active_t AS SELECT * FROM t WHERE deleted_at IS NULL;
+
+-- AUDIT TRAIL
+-- Trigger + audit_log table with old_data/new_data JSONB
+-- TG_OP = 'INSERT' | 'UPDATE' | 'DELETE'
+-- to_jsonb(NEW), to_jsonb(OLD)
+
+-- MIGRATIONS (safe patterns)
+-- 1. Add nullable column
+-- 2. Backfill data
+-- 3. Add NOT NULL constraint
+-- Never modify applied migrations</code></pre>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/sql/lessons/11-advanced-queries/">&larr; Lesson 11: Transactions &amp; Concurrency</a>
+      <a href="/sql/">Home &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

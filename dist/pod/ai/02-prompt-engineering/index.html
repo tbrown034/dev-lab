@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Engineering — The Pod</title>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/shell-B2-DeMgN.css">
+  <link rel="stylesheet" crossorigin href="/assets/episode-FuyZZf_I.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">The Pod</a>
+      <div class="header-right">
+        <a href="/pod/" class="back-link">&larr; All Episodes</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="episode-page" data-accent="var(--accent-ai)">
+
+    <div class="episode-header">
+      <span class="episode-track-badge ai">AI &mdash; Episode 02</span>
+      <h1>Prompt Engineering</h1>
+      <p class="episode-subtitle">System prompts, few-shot examples, and chain-of-thought reasoning.</p>
+      <span class="episode-duration-badge">~11 min</span>
+    </div>
+
+    <div class="player-container">
+      <audio id="episode-audio" preload="metadata">
+        <source src="/audio/ai/02-prompt-engineering.mp3" type="audio/mpeg">
+      </audio>
+
+      <div class="player">
+        <div class="player-controls">
+          <button class="player-btn skip-btn" id="skip-back" aria-label="Skip back 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+          <button class="player-btn play-btn" id="play-pause" aria-label="Play">
+            <svg class="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg class="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <button class="player-btn skip-btn" id="skip-forward" aria-label="Skip forward 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+        </div>
+
+        <div class="player-progress">
+          <span class="player-time" id="current-time">0:00</span>
+          <div class="progress-bar-container" id="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <input type="range" class="progress-scrubber" id="scrubber" min="0" max="1000" value="0" step="1">
+          </div>
+          <span class="player-time" id="duration">0:00</span>
+        </div>
+
+        <div class="player-extras">
+          <div class="speed-control">
+            <button class="speed-btn" id="speed-btn">1x</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="transcript-container">
+      <div class="transcript-header">
+        <h2>Transcript</h2>
+        <button class="auto-scroll-toggle active" id="auto-scroll-toggle" aria-label="Toggle auto-scroll">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          Auto-scroll
+        </button>
+      </div>
+      <div class="transcript" id="transcript"></div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>The Pod &mdash; part of <a href="/">Learn Coding</a> by Trevor Brown</p>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+
+    const TRANSCRIPT = [
+      { time: 0, text: "Welcome back to The Pod. I'm Alex, and today we're getting practical with prompt engineering. Last episode we covered how LLMs work under the hood. Now let's talk about how to actually talk to them effectively." },
+      { time: 16, text: "I'm Sam, and I think this might be the most immediately useful episode we'll do. Prompt engineering is a skill that pays off every single day if you're working with AI tools." },
+      { time: 28, text: "Let's start with the basics. A prompt is the text you send to an LLM. But not all prompts are created equal. The difference between a vague prompt and a well-structured one can be the difference between useless output and exactly what you need." },
+      { time: 44, text: "There's a concept I love called 'garbage in, garbage out.' If you ask a vague question, you get a vague answer. If you ask a specific, well-structured question with context, you get a specific, well-structured answer." },
+      { time: 58, text: "The first technique to know is the system prompt. When you're using an API like OpenAI or Anthropic, you can set a system message that establishes the AI's role and behavior. It's like giving the AI a job description before it starts working." },
+      { time: 76, text: "A system prompt might say 'You are a senior Python developer. Respond with clean, well-commented code. Always explain your reasoning.' That sets the tone and expertise level for the entire conversation." },
+      { time: 92, text: "Do system prompts actually make a difference compared to just putting that instruction in the user message?" },
+      { time: 100, text: "They do, especially for longer conversations. The system prompt gets special treatment in the model's attention mechanism. It's persistent context that influences every response. Putting instructions in the user message works too, but they can get lost as the conversation grows." },
+      { time: 118, text: "Next technique: few-shot prompting. Instead of just describing what you want, you show the model examples. You provide two or three input-output pairs, and the model learns the pattern and applies it to new inputs." },
+      { time: 134, text: "Like if you want the model to extract structured data from messy text, you'd show it: 'Input: John Smith, 35, from Denver. Output: {name: John Smith, age: 35, city: Denver}.' Give it two or three examples like that, then give it your actual input." },
+      { time: 154, text: "The model is incredibly good at pattern matching from examples. Sometimes showing is better than telling. You could write a paragraph explaining the format you want, or you could just show two examples. The examples usually work better." },
+      { time: 170, text: "Zero-shot means no examples, just instructions. One-shot is one example. Few-shot is two to five examples. More examples generally improve consistency, but they cost tokens and there's a point of diminishing returns." },
+      { time: 188, text: "Now let's talk about chain-of-thought reasoning. This is a huge one. When you ask a model to solve a problem, asking it to 'think step by step' or 'show your reasoning' dramatically improves accuracy, especially for math and logic problems." },
+      { time: 206, text: "Why does that work? The model isn't actually thinking. Why does asking it to show steps help?" },
+      { time: 214, text: "Great question. Remember, LLMs generate text token by token. Each token is influenced by the previous tokens. When the model writes out intermediate reasoning steps, those tokens become context that guides the next tokens. It's like showing your work on a math test helps you catch errors." },
+      { time: 234, text: "The generated reasoning tokens literally help the model 'see' the problem more clearly as it generates. Without chain-of-thought, the model has to jump straight from question to answer in one shot. With it, it can build up to the answer incrementally." },
+      { time: 254, text: "Let's talk about structured output. If you want JSON, XML, or any specific format, be explicit about it. Say 'Respond with valid JSON in this exact format' and show the schema. Models are very good at following format instructions." },
+      { time: 272, text: "You can also use delimiters to separate sections of your prompt. Triple backticks, XML tags, or even just clear headers. This helps the model understand which part is instructions, which is context, and which is the input to process." },
+      { time: 290, text: "That's a really practical tip. Using XML-style tags like 'context' and 'instructions' makes your prompts much clearer, both for the model and for anyone reading the prompt later." },
+      { time: 304, text: "Another powerful technique: role assignment. Instead of just asking a question, frame it as 'You are an expert in X reviewing Y.' Giving the model a specific persona can significantly improve the quality and relevance of responses." },
+      { time: 322, text: "There's also the technique of asking the model to consider multiple perspectives or to argue against its own initial response. This reduces bias and catches cases where the model's first answer might be oversimplified." },
+      { time: 338, text: "Temperature and other parameters matter too. Temperature controls randomness. Low temperature, like 0.1, gives more deterministic, focused responses. High temperature, like 0.9, gives more creative, varied responses. Match it to your use case." },
+      { time: 358, text: "For code generation, low temperature. For creative writing, higher temperature. For factual questions, low. For brainstorming, higher. The parameter should match the task." },
+      { time: 372, text: "One last thing: iterative refinement. Don't expect perfection on the first prompt. Start with something, see what the model gives you, then refine your prompt based on what was missing or wrong. Prompt engineering is an iterative process." },
+      { time: 390, text: "That's great advice. To summarize: use system prompts for persistent context, few-shot examples for pattern learning, chain-of-thought for reasoning tasks, structured formatting with delimiters, role assignment for expertise, and iterate on your prompts." },
+      { time: 410, text: "Next episode, we're going deep on RAG and embeddings. That's where you teach an AI about your own data. It's the technique behind every 'chat with your documents' product. See you there!" }
+    ];
+  </script>
+  <script src="/pod/player.js"></script>
+
+</body>
+</html>

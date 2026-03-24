@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 02 - SELECT & Filtering Deep Dive</title>
+  <style>:root { --track-color: #3b82f6; }</style>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-Ch5wxeC6.svg">
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <script type="module" crossorigin src="/assets/init-tutor-Cq4VzOVI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/base-77M9ailx.css">
+  <link rel="stylesheet" crossorigin href="/assets/lesson-CuehfTm3.css">
+</head>
+<body>
+  <div class="header">
+    <h1><span>02</span> SELECT &amp; Filtering &mdash; Deep Dive</h1>
+    <a href="/sql/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>Lesson 01 gave you the vocabulary.</strong> Now we're going to get fluent. SELECT is the query you'll write 100 times a day. Let's master every option it gives you.</p>
+
+    <!-- ============================================ -->
+    <!-- SELECT EXPRESSIONS & ALIASES                 -->
+    <!-- ============================================ -->
+
+    <h2>SELECT Expressions &amp; Aliases</h2>
+
+    <p>SELECT doesn't just pick columns &mdash; it can <em>compute</em> things. Think of it like <code>.map(item =&gt; ({ ...item, fullName: item.first + ' ' + item.last }))</code>. You're transforming data on the way out.</p>
+
+    <h3>Aliases with AS</h3>
+
+    <p><code>AS</code> renames a column in the output. The data doesn't change &mdash; just the label.</p>
+
+    <pre><code>-- Rename columns in the result
+SELECT
+  first_name AS first,
+  last_name AS last,
+  salary / 12 AS monthly_salary
+FROM employees;</code></pre>
+
+    <p>Without <code>AS</code>, that calculated column would show up as <code>?column?</code> in the results. Aliases give computed columns a proper name.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript equivalent</h5>
+        <pre><code>employees.map(emp =&gt; ({
+  first: emp.first_name,
+  last: emp.last_name,
+  monthly_salary: emp.salary / 12,
+}));</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT
+  first_name AS first,
+  last_name AS last,
+  salary / 12 AS monthly_salary
+FROM employees;</code></pre>
+      </div>
+    </div>
+
+    <h3>String Concatenation</h3>
+
+    <p>In PostgreSQL, use <code>||</code> to concatenate strings (like <code>+</code> in JavaScript):</p>
+
+    <pre><code>-- Combine first and last name
+SELECT first_name || ' ' || last_name AS full_name
+FROM employees;
+
+-- Output: "Sarah Chen", "Marcus Rivera", etc.</code></pre>
+
+    <div class="callout">
+      <p><strong>PostgreSQL-specific:</strong> The <code>||</code> operator is the standard SQL concatenation operator. MySQL uses <code>CONCAT()</code> instead. PostgreSQL supports both, but <code>||</code> is more idiomatic.</p>
+    </div>
+
+    <h3>Useful String Functions</h3>
+
+    <table>
+      <thead>
+        <tr><th>SQL Function</th><th>JavaScript Equivalent</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>UPPER(str)</code></td><td><code>str.toUpperCase()</code></td><td><code>UPPER('hello')</code> &rarr; <code>'HELLO'</code></td></tr>
+        <tr><td><code>LOWER(str)</code></td><td><code>str.toLowerCase()</code></td><td><code>LOWER('HELLO')</code> &rarr; <code>'hello'</code></td></tr>
+        <tr><td><code>LENGTH(str)</code></td><td><code>str.length</code></td><td><code>LENGTH('hello')</code> &rarr; <code>5</code></td></tr>
+        <tr><td><code>TRIM(str)</code></td><td><code>str.trim()</code></td><td><code>TRIM('  hi  ')</code> &rarr; <code>'hi'</code></td></tr>
+        <tr><td><code>SUBSTRING(str, start, len)</code></td><td><code>str.substring(start, end)</code></td><td><code>SUBSTRING('hello', 1, 3)</code> &rarr; <code>'hel'</code></td></tr>
+        <tr><td><code>REPLACE(str, from, to)</code></td><td><code>str.replace(from, to)</code></td><td><code>REPLACE('hello', 'l', 'r')</code> &rarr; <code>'herro'</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="aha">
+      <p><strong>SQL string positions start at 1, not 0.</strong> <code>SUBSTRING('hello', 1, 3)</code> gives <code>'hel'</code>. This is different from JavaScript where indexes start at 0.</p>
+    </div>
+
+    <h3>Math in SELECT</h3>
+
+    <pre><code>SELECT
+  name,
+  salary,
+  salary * 0.30 AS tax,
+  salary * 0.70 AS take_home,
+  ROUND(salary / 2080.0, 2) AS hourly_rate
+FROM employees;</code></pre>
+
+    <p>Standard math operators work: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%</code> (modulo). <code>ROUND(value, decimals)</code> rounds to the specified decimal places.</p>
+
+    <!-- ============================================ -->
+    <!-- COMPARISON OPERATORS                         -->
+    <!-- ============================================ -->
+
+    <h2>Comparison Operators</h2>
+
+    <p>You learned the basics in Lesson 01. Let's go deeper with the operators you'll use every day.</p>
+
+    <h3>BETWEEN</h3>
+
+    <p><code>BETWEEN</code> is inclusive on both ends. It's cleaner than writing <code>&gt;= AND &lt;=</code>:</p>
+
+    <pre><code>-- These are identical:
+WHERE salary BETWEEN 50000 AND 100000
+WHERE salary &gt;= 50000 AND salary &lt;= 100000
+
+-- Works with dates too
+WHERE hire_date BETWEEN '2023-01-01' AND '2023-12-31'</code></pre>
+
+    <h3>IN</h3>
+
+    <p><code>IN</code> checks if a value matches any item in a list. Like <code>.includes()</code> in JavaScript:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code>['NY', 'CA', 'TX'].includes(emp.state)</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>WHERE state IN ('NY', 'CA', 'TX')</code></pre>
+      </div>
+    </div>
+
+    <pre><code>-- NOT IN = exclude specific values
+WHERE department NOT IN ('HR', 'Legal')
+
+-- IN with numbers
+WHERE id IN (1, 5, 12, 27)</code></pre>
+
+    <!-- ============================================ -->
+    <!-- PATTERN MATCHING                             -->
+    <!-- ============================================ -->
+
+    <h2>Pattern Matching &mdash; LIKE, ILIKE, and Regex</h2>
+
+    <p>Pattern matching is essential for investigative work. Searching names, addresses, document text &mdash; you need to match partial strings.</p>
+
+    <h3>LIKE and Wildcards</h3>
+
+    <p><code>LIKE</code> uses two wildcards:</p>
+    <ul>
+      <li><code>%</code> = any number of characters (like <code>.*</code> in regex)</li>
+      <li><code>_</code> = exactly one character (like <code>.</code> in regex)</li>
+    </ul>
+
+    <pre><code>-- Starts with 'John'
+WHERE name LIKE 'John%'
+-- Matches: 'John', 'Johnny', 'John Smith'
+
+-- Ends with 'son'
+WHERE name LIKE '%son'
+-- Matches: 'Johnson', 'Ericson', 'son'
+
+-- Contains 'smith'
+WHERE name LIKE '%smith%'
+-- Matches: 'Smith', 'Blacksmith', 'Smithson'
+-- But NOT 'SMITH' (LIKE is case-sensitive!)
+
+-- Exactly 5 characters
+WHERE code LIKE '_____'
+
+-- Starts with 'A', any char, then 'C'
+WHERE code LIKE 'A_C%'
+-- Matches: 'ABC', 'AXC123', 'A1C'</code></pre>
+
+    <h3>ILIKE (PostgreSQL-Specific)</h3>
+
+    <p><code>ILIKE</code> is the case-insensitive version of <code>LIKE</code>. This is a PostgreSQL extension &mdash; standard SQL doesn't have it.</p>
+
+    <pre><code>-- Case-sensitive (misses 'SMITH', 'Smith')
+WHERE name LIKE '%smith%'
+
+-- Case-insensitive (catches all variations)
+WHERE name ILIKE '%smith%'
+-- Matches: 'smith', 'Smith', 'SMITH', 'Blacksmith'</code></pre>
+
+    <div class="aha">
+      <p><strong>For journalism: always use ILIKE.</strong> Public records have inconsistent capitalization. <code>ILIKE</code> saves you from missing records because someone typed "JOHNSON" instead of "Johnson".</p>
+    </div>
+
+    <h3>PostgreSQL Regex Matching</h3>
+
+    <p>For more complex patterns, PostgreSQL supports regex with <code>~</code> and <code>~*</code>:</p>
+
+    <pre><code>-- ~ = regex match (case-sensitive)
+WHERE name ~ '^John(son|ston)$'
+
+-- ~* = regex match (case-insensitive)
+WHERE email ~* '^[a-z]+@gmail\.com$'
+
+-- !~ = does NOT match regex
+WHERE phone !~ '^\d{3}-\d{3}-\d{4}$'</code></pre>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript regex</h5>
+        <pre><code>// Case-insensitive match
+if (/^john/i.test(name))
+
+// Test email format
+if (/^[a-z]+@gmail\.com$/i.test(email))</code></pre>
+      </div>
+      <div>
+        <h5>PostgreSQL regex</h5>
+        <pre><code>-- Case-insensitive match
+WHERE name ~* '^john'
+
+-- Test email format
+WHERE email ~* '^[a-z]+@gmail\.com$'</code></pre>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Operator</th><th>Meaning</th><th>Case</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>~</code></td><td>Matches regex</td><td>Sensitive</td></tr>
+        <tr><td><code>~*</code></td><td>Matches regex</td><td>Insensitive</td></tr>
+        <tr><td><code>!~</code></td><td>Does NOT match regex</td><td>Sensitive</td></tr>
+        <tr><td><code>!~*</code></td><td>Does NOT match regex</td><td>Insensitive</td></tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- NULL HANDLING                                -->
+    <!-- ============================================ -->
+
+    <h2>NULL Handling</h2>
+
+    <p>This is the concept that trips up every developer. <code>NULL</code> in SQL is not <code>null</code> in JavaScript. It means <strong>"unknown" or "not applicable"</strong> &mdash; not "empty" or "zero".</p>
+
+    <div class="aha">
+      <p><strong>The critical rule:</strong> NULL is not equal to anything &mdash; not even itself. <code>NULL = NULL</code> is NOT true. It evaluates to NULL (unknown). You MUST use <code>IS NULL</code> or <code>IS NOT NULL</code> instead of <code>=</code>.</p>
+    </div>
+
+    <pre><code>-- WRONG: this finds nothing (even if phone is null)
+SELECT * FROM contacts WHERE phone = NULL;
+
+-- CORRECT: use IS NULL
+SELECT * FROM contacts WHERE phone IS NULL;
+
+-- Find contacts that DO have a phone
+SELECT * FROM contacts WHERE phone IS NOT NULL;</code></pre>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript null checks</h5>
+        <pre><code>// Nullish coalescing
+const display = name ?? 'Anonymous';
+
+// Ternary with null check
+const label = name !== null
+  ? name
+  : 'Unknown';</code></pre>
+      </div>
+      <div>
+        <h5>SQL null checks</h5>
+        <pre><code>-- COALESCE (like ?? in JS)
+SELECT COALESCE(name, 'Anonymous') AS display;
+
+-- COALESCE with multiple fallbacks
+SELECT COALESCE(nickname, first_name, 'Unknown')
+AS display_name;</code></pre>
+      </div>
+    </div>
+
+    <h3>COALESCE &mdash; SQL's Nullish Coalescing</h3>
+
+    <p><code>COALESCE</code> returns the first non-NULL value from a list. It's exactly like <code>??</code> in JavaScript.</p>
+
+    <pre><code>-- If phone is NULL, show 'No phone on file'
+SELECT
+  name,
+  COALESCE(phone, 'No phone on file') AS phone_display
+FROM contacts;
+
+-- Chain multiple fallbacks (like a ?? b ?? c)
+SELECT
+  COALESCE(mobile_phone, work_phone, home_phone, 'No phone') AS best_phone
+FROM contacts;</code></pre>
+
+    <h3>NULLIF</h3>
+
+    <p><code>NULLIF(a, b)</code> returns NULL if <code>a = b</code>, otherwise returns <code>a</code>. Useful for preventing division by zero:</p>
+
+    <pre><code>-- Without NULLIF: crashes if total_votes = 0
+SELECT votes_for / total_votes AS percentage FROM results;
+
+-- With NULLIF: returns NULL instead of crashing
+SELECT votes_for / NULLIF(total_votes, 0) AS percentage FROM results;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- BOOLEAN LOGIC                                -->
+    <!-- ============================================ -->
+
+    <h2>Boolean Logic &mdash; AND, OR, NOT</h2>
+
+    <p>Same as JavaScript's <code>&amp;&amp;</code>, <code>||</code>, <code>!</code>, but with one important addition: <strong>operator precedence matters more in SQL</strong> because you can't rely on short-circuit evaluation the same way.</p>
+
+    <h3>Precedence</h3>
+
+    <p><code>AND</code> binds tighter than <code>OR</code> (just like <code>&amp;&amp;</code> binds tighter than <code>||</code> in JS). Use parentheses to be explicit:</p>
+
+    <pre><code>-- DANGEROUS: AND binds first, so this means:
+-- "politics AND trust_level &gt; 7" OR "beat = 'crime'"
+-- (Returns ALL crime beat sources regardless of trust!)
+WHERE beat = 'politics' AND trust_level &gt; 7 OR beat = 'crime'
+
+-- SAFE: use parentheses to be explicit
+WHERE (beat = 'politics' OR beat = 'crime') AND trust_level &gt; 7</code></pre>
+
+    <div class="aha">
+      <p><strong>Rule of thumb:</strong> If you have both AND and OR in a WHERE clause, always use parentheses. Don't rely on precedence rules. Make your intent crystal clear.</p>
+    </div>
+
+    <h3>NOT</h3>
+
+    <pre><code>-- NOT reverses a condition
+WHERE NOT published
+WHERE NOT (status = 'draft' OR status = 'archived')
+WHERE name NOT LIKE '%test%'
+WHERE department NOT IN ('HR', 'Legal')
+WHERE phone IS NOT NULL</code></pre>
+
+    <!-- ============================================ -->
+    <!-- DISTINCT                                     -->
+    <!-- ============================================ -->
+
+    <h2>DISTINCT &mdash; Unique Values</h2>
+
+    <p><code>DISTINCT</code> removes duplicate rows. It's like <code>[...new Set(array)]</code> in JavaScript.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code>// Unique departments
+const departments = [
+  ...new Set(
+    employees.map(e =&gt; e.department)
+  )
+];</code></pre>
+      </div>
+      <div>
+        <h5>SQL</h5>
+        <pre><code>-- Unique departments
+SELECT DISTINCT department
+FROM employees;</code></pre>
+      </div>
+    </div>
+
+    <pre><code>-- Count unique values
+SELECT COUNT(DISTINCT department) AS dept_count
+FROM employees;
+
+-- Distinct combinations
+SELECT DISTINCT department, title
+FROM employees;
+-- Returns unique (department, title) pairs</code></pre>
+
+    <div class="callout">
+      <p><strong>DISTINCT applies to the entire row.</strong> <code>SELECT DISTINCT department, title</code> gives unique combinations of department + title, not unique departments and unique titles separately.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CASE EXPRESSIONS                             -->
+    <!-- ============================================ -->
+
+    <h2>CASE Expressions &mdash; SQL's Ternary / Switch</h2>
+
+    <p><code>CASE</code> is SQL's version of <code>if/else</code> or <code>switch</code>. You use it to create computed columns with conditional logic.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript ternary / switch</h5>
+        <pre><code>// Ternary
+const label = salary &gt; 100000
+  ? 'Senior' : 'Standard';
+
+// Switch-like
+const tier = salary &gt; 150000
+  ? 'Executive'
+  : salary &gt; 100000
+    ? 'Senior'
+    : salary &gt; 60000
+      ? 'Mid'
+      : 'Entry';</code></pre>
+      </div>
+      <div>
+        <h5>SQL CASE</h5>
+        <pre><code>-- Simple CASE (like ternary)
+SELECT name,
+  CASE WHEN salary &gt; 100000
+    THEN 'Senior' ELSE 'Standard'
+  END AS label;
+
+-- Multi-condition CASE (like switch)
+SELECT name,
+  CASE
+    WHEN salary &gt; 150000 THEN 'Executive'
+    WHEN salary &gt; 100000 THEN 'Senior'
+    WHEN salary &gt; 60000  THEN 'Mid'
+    ELSE 'Entry'
+  END AS tier
+FROM employees;</code></pre>
+      </div>
+    </div>
+
+    <p>The <code>CASE</code> structure is: <code>CASE WHEN condition THEN result ... ELSE default END</code>. The <code>END</code> keyword closes the expression. Conditions are evaluated top to bottom &mdash; first match wins.</p>
+
+    <h3>CASE in WHERE</h3>
+
+    <p>You can use CASE anywhere an expression is valid &mdash; SELECT, WHERE, ORDER BY, even inside functions:</p>
+
+    <pre><code>-- Sort by custom priority
+SELECT * FROM tickets
+ORDER BY
+  CASE priority
+    WHEN 'critical' THEN 1
+    WHEN 'high'     THEN 2
+    WHEN 'medium'   THEN 3
+    WHEN 'low'      THEN 4
+    ELSE 5
+  END;</code></pre>
+
+    <h3>CASE for Conditional Counting</h3>
+
+    <p>This is a power pattern for data analysis &mdash; count rows that match different conditions:</p>
+
+    <pre><code>SELECT
+  COUNT(*) AS total_articles,
+  COUNT(CASE WHEN published = true THEN 1 END) AS published_count,
+  COUNT(CASE WHEN published = false THEN 1 END) AS draft_count,
+  COUNT(CASE WHEN views &gt; 1000 THEN 1 END) AS viral_count
+FROM articles;</code></pre>
+
+    <div class="aha">
+      <p><strong>This pattern is incredibly useful for journalism.</strong> You can count subgroups in a single query: how many complaints per category, how many donors per bracket, how many violations per district. We'll build on this in Lesson 04 with GROUP BY.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CASTING & TYPE CONVERSION                    -->
+    <!-- ============================================ -->
+
+    <h2>Casting &amp; Type Conversion</h2>
+
+    <p>Sometimes you need to convert between types. PostgreSQL has two syntaxes for this:</p>
+
+    <h3>CAST() &mdash; Standard SQL</h3>
+
+    <pre><code>-- Convert string to integer
+SELECT CAST('42' AS INTEGER);
+
+-- Convert integer to text
+SELECT CAST(salary AS TEXT);
+
+-- Convert to date
+SELECT CAST('2024-01-15' AS DATE);</code></pre>
+
+    <h3>:: Operator &mdash; PostgreSQL Shorthand</h3>
+
+    <p>PostgreSQL has a shortcut <code>::type</code> that does the same thing as CAST. It's more concise:</p>
+
+    <pre><code>-- Same conversions, shorter syntax
+SELECT '42'::INTEGER;
+SELECT salary::TEXT;
+SELECT '2024-01-15'::DATE;
+
+-- Practical use: round a calculation
+SELECT ROUND(salary / 2080.0, 2)::NUMERIC(10,2) AS hourly_rate
+FROM employees;</code></pre>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript type conversion</h5>
+        <pre><code>Number('42')        // 42
+String(42)          // '42'
+parseInt('3.14')    // 3
+parseFloat('3.14')  // 3.14</code></pre>
+      </div>
+      <div>
+        <h5>PostgreSQL type casting</h5>
+        <pre><code>'42'::INTEGER       -- 42
+42::TEXT             -- '42'
+'3.14'::INTEGER     -- 3
+'3.14'::NUMERIC     -- 3.14</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>When do you need casting?</strong> Most often when: (1) comparing columns of different types, (2) formatting output, (3) doing math with mixed types (integer division gives integers &mdash; use <code>::NUMERIC</code> to get decimals).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PUTTING IT ALL TOGETHER                      -->
+    <!-- ============================================ -->
+
+    <h2>Putting It All Together</h2>
+
+    <p>Here's a realistic query that combines everything from this lesson. Imagine you're investigating campaign donations:</p>
+
+    <pre><code>SELECT
+  donor_name,
+  UPPER(donor_state) AS state,
+  amount,
+  CASE
+    WHEN amount &gt;= 10000 THEN 'Major Donor'
+    WHEN amount &gt;= 1000  THEN 'Mid-Level'
+    ELSE 'Small Donor'
+  END AS donor_tier,
+  COALESCE(employer, 'Not disclosed') AS employer_display,
+  donation_date::TEXT AS date_string
+FROM donations
+WHERE donor_state IN ('NY', 'CA', 'TX', 'FL')
+  AND amount &gt; 500
+  AND donor_name ILIKE '%smith%'
+  AND donation_date BETWEEN '2024-01-01' AND '2024-06-30'
+ORDER BY amount DESC
+LIMIT 50;</code></pre>
+
+    <p>Read it out loud: "Select the donor name, state (uppercased), amount, a tier label based on the amount, the employer (or 'Not disclosed' if null), and the date as text &mdash; from donations &mdash; where the state is one of four states, amount is over 500, the name contains 'smith' (case-insensitive), and the date is in the first half of 2024 &mdash; sorted by amount descending, top 50."</p>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Quick Check</h4>
+
+      <div class="question">
+        <p>1. What's the difference between <code>LIKE</code> and <code>ILIKE</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>LIKE</code> is case-sensitive. <code>ILIKE</code> is case-insensitive. <code>ILIKE</code> is a PostgreSQL extension. Always prefer <code>ILIKE</code> when searching user-entered data.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why does <code>WHERE phone = NULL</code> not work?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">NULL is "unknown" in SQL. You can't compare something to unknown with <code>=</code>. The result is always NULL (not true or false). Use <code>WHERE phone IS NULL</code> instead.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What does <code>COALESCE(a, b, c)</code> return?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">The first non-NULL value among a, b, c. Like <code>a ?? b ?? c</code> in JavaScript. If all are NULL, returns NULL.</div>
+      </div>
+
+      <div class="question">
+        <p>4. <code>SELECT DISTINCT department, title FROM employees</code> &mdash; what does DISTINCT apply to?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer">DISTINCT applies to the combination of all selected columns. It returns unique (department, title) pairs, not unique departments and unique titles separately.</div>
+      </div>
+
+      <div class="question">
+        <p>5. In <code>WHERE a OR b AND c</code>, which binds first?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><code>AND</code> binds first (higher precedence). So it's evaluated as <code>a OR (b AND c)</code>. Always use parentheses to be explicit: <code>(a OR b) AND c</code>.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Practice Exercise</h4>
+      <p>You have a table <code>campaign_donations</code> with columns: <code>id</code>, <code>donor_name</code>, <code>amount</code>, <code>candidate</code>, <code>party</code>, <code>state</code>, <code>employer</code> (nullable), <code>donation_date</code>.</p>
+
+      <div class="question" style="margin-top: 1rem;">
+        <p><strong>A:</strong> Get all donations over $5,000, showing donor name, amount, and candidate. Sort by amount descending.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT donor_name, amount, candidate
+FROM campaign_donations
+WHERE amount &gt; 5000
+ORDER BY amount DESC;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>B:</strong> Find all donors whose name contains "johnson" (case-insensitive) from Texas or Florida.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT *
+FROM campaign_donations
+WHERE donor_name ILIKE '%johnson%'
+  AND state IN ('TX', 'FL');</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>C:</strong> Show each donation with the employer (or "Self-funded" if employer is NULL) and a label: "Large" if over $10,000, "Medium" if over $1,000, else "Small".</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT
+  donor_name,
+  amount,
+  COALESCE(employer, 'Self-funded') AS employer_display,
+  CASE
+    WHEN amount &gt; 10000 THEN 'Large'
+    WHEN amount &gt; 1000  THEN 'Medium'
+    ELSE 'Small'
+  END AS size_label
+FROM campaign_donations;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>D:</strong> Count how many unique states appear in the donations table.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT COUNT(DISTINCT state) AS state_count
+FROM campaign_donations;</code></pre></div>
+      </div>
+
+      <div class="question">
+        <p><strong>E:</strong> Get all donors where the employer field is missing (NULL) and the amount is between $1,000 and $50,000.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
+        <div class="answer"><pre><code>SELECT *
+FROM campaign_donations
+WHERE employer IS NULL
+  AND amount BETWEEN 1000 AND 50000;</code></pre></div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CHEAT SHEET                                  -->
+    <!-- ============================================ -->
+
+    <h2>Cheat Sheet</h2>
+
+    <pre><code>-- Aliases
+SELECT column AS alias_name FROM table;
+
+-- String functions
+SELECT UPPER(name), LOWER(name), LENGTH(name), TRIM(name);
+SELECT first || ' ' || last AS full_name;
+
+-- Pattern matching
+WHERE name LIKE '%pattern%'       -- case-sensitive
+WHERE name ILIKE '%pattern%'      -- case-insensitive (PostgreSQL)
+WHERE name ~ 'regex'              -- regex match
+WHERE name ~* 'regex'             -- regex, case-insensitive
+
+-- NULL handling
+WHERE column IS NULL
+WHERE column IS NOT NULL
+SELECT COALESCE(column, 'default')  -- first non-NULL value
+SELECT NULLIF(a, b)                 -- NULL if a = b
+
+-- Boolean logic (use parentheses!)
+WHERE (a OR b) AND c
+WHERE NOT condition
+
+-- DISTINCT
+SELECT DISTINCT column FROM table;
+SELECT COUNT(DISTINCT column) FROM table;
+
+-- CASE
+CASE
+  WHEN condition1 THEN result1
+  WHEN condition2 THEN result2
+  ELSE default_result
+END AS alias
+
+-- Casting
+CAST(value AS TYPE)     -- standard SQL
+value::TYPE             -- PostgreSQL shorthand</code></pre>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/sql/lessons/01-sql-fundamentals/">&larr; Lesson 01: SQL Fundamentals</a>
+      <a href="/sql/lessons/03-joins/">Lesson 03: JOINs &rarr;</a>
+    </div>
+
+  </div>
+
+</body>
+</html>
