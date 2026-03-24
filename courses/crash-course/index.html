@@ -922,9 +922,9 @@
     </div>
 
     <div class="ai-example">
-      <div class="ai-example-title">Conversational Data Explorer</div>
-      <p>A chatbot interface on top of Tribune data: "How did my county vote in the last three elections?" "Compare school ratings in Austin vs. Dallas." Readers ask questions in natural language, the system queries the API and returns visualizations. Like a personalized data journalist for every reader.</p>
-      <div class="ai-pitch">Your pitch: "I built an AI news aggregator and an AI model comparison tool. Building a reader-facing conversational data explorer for Tribune data is exactly the kind of project I'm excited about."</div>
+      <div class="ai-example-title">Conversational Data Explorer &mdash; They're Already Doing This</div>
+      <p>The Tribune built an <strong>AI chatbot on their 2025 water crisis coverage</strong> that answers reader questions based on Tribune reporting. This is not hypothetical &mdash; they're already experimenting. Imagine extending this to election data, school ratings, or campaign finance: "How did my county vote?" "Compare school ratings in Austin vs. Dallas." Readers ask questions in natural language, the system queries the API and returns insights.</p>
+      <div class="ai-pitch">Your pitch: "I saw the AI chatbot on the water crisis coverage &mdash; that's exactly the kind of experiment I'm excited about. I built an AI news aggregator and a model comparison tool. Extending conversational AI across Tribune datasets is a natural next step."</div>
     </div>
 
     <div class="say-this" style="margin-top: 1rem;">
@@ -1028,10 +1028,37 @@
         <span class="project-tag tag-data">Data</span>
       </div>
 
+      <a href="https://salaries.texastribune.org/" target="_blank" rel="noopener" class="project-row">
+        <div>
+          <div class="project-name">Government Salaries Explorer</div>
+          <div class="project-meta">Searchable database of 155,132 state employees across 116 Texas agencies. Downloadable CSV exports. A public transparency tool readers use year-round.</div>
+          <div class="project-builder">Django backend (tx_salaries) &mdash; open source on GitHub</div>
+        </div>
+        <span class="project-tag tag-django">Django</span>
+      </a>
+
+      <a href="https://apps.texastribune.org/death-row/" target="_blank" rel="noopener" class="project-row">
+        <div>
+          <div class="project-name">Faces of Death Row</div>
+          <div class="project-meta">Interactive database of Texas death row inmates. Filterable by years on death row, race, age, crime county. Photos, crime summaries, execution dates.</div>
+          <div class="project-builder">Node.js + Google Sheets backend, jQuery frontend &mdash; open source</div>
+        </div>
+        <span class="project-tag tag-data">Data</span>
+      </a>
+
       <div class="project-row">
         <div>
-          <div class="project-name">Campaign Finance App</div>
-          <div class="project-meta">Django app tracking campaign contributions. Mentioned specifically in the job listing &mdash; you'd likely work on this.</div>
+          <div class="project-name">ICE Enforcement Data Analysis (2025)</div>
+          <div class="project-meta">Analyzed federal ICE arrest data (Sept 2023&ndash;July 2025). Found ICE arrests in Texas doubled, 24% of national arrests. 59% had no criminal conviction.</div>
+          <div class="project-builder">Built by Carla Astudillo &mdash; data acquisition + analysis</div>
+        </div>
+        <span class="project-tag tag-data">Data</span>
+      </div>
+
+      <div class="project-row">
+        <div>
+          <div class="project-name">Campaign Finance App &amp; Lobbying Data</div>
+          <div class="project-meta">Django apps tracking campaign contributions and Texas Ethics Commission lobbying data. Mentioned specifically in the job listing &mdash; you'd likely work on this. Open-source repos: tx_lobbying, tx_salaries.</div>
         </div>
         <span class="project-tag tag-django">Django</span>
       </div>
@@ -1086,11 +1113,82 @@
         <div class="repo-desc">Older boilerplate for embeddable graphics. Gulp, BrowserSync, Nunjucks, NPR's pym.js for responsive iframes. Predecessor to data-visuals-create.</div>
         <div class="repo-why">Understanding the evolution from this to data-visuals-create shows you grasp how newsroom tooling evolves.</div>
       </a>
+
+      <a href="https://github.com/texastribune/tacobots" target="_blank" rel="noopener" class="repo-row">
+        <div class="repo-name">tacobots</div>
+        <div class="repo-desc">Slack bots for newsroom workflow: StyleBot (style guide enforcement), Hoedown Helper (formatting errors), Source Reminder (demographic sourcing prompts). Python + AWS Lambda.</div>
+        <div class="repo-why">Shows the team automates editorial workflow, not just graphics. A great example of developer-journalist thinking.</div>
+      </a>
+
+      <a href="https://github.com/texastribune/tx_salaries" target="_blank" rel="noopener" class="repo-row">
+        <div class="repo-name">tx_salaries</div>
+        <div class="repo-desc">Django app for Texas government employee salary data. Transformers convert spreadsheet data to standardized format. Powers salaries.texastribune.org.</div>
+        <div class="repo-why">A real Django data pipeline you could study &mdash; import, transform, serve. Similar to what you'd do with campaign finance data.</div>
+      </a>
+
+      <a href="https://github.com/texastribune/info-navigator" target="_blank" rel="noopener" class="repo-row">
+        <div class="repo-name">info-navigator</div>
+        <div class="repo-desc">Django app that transforms model relationships into data exploration tables for non-technical users (reporters). Democratizes database access.</div>
+        <div class="repo-why">Perfect example of building tools that serve journalism. Reporters explore data without writing SQL.</div>
+      </a>
     </div>
 
     <div class="say-this" style="margin-top: 1rem;">
       <div class="label">Say this</div>
       <p>"I noticed you have data-visuals-create for scaffolding projects and queso-ui for shared styles. That kind of tooling investment shows a mature engineering culture. I'm curious how the team decides when to invest in internal tools vs. shipping features."</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  KEY PEOPLE                             -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <h2>Know the Team</h2>
+    <p class="section-intro">Names and roles you should know going in. Don't name-drop awkwardly, but if they come up, you want to recognize them.</p>
+
+    <div class="stack-grid">
+      <div class="stack-item">
+        <div class="stack-icon" style="background: var(--crash);">CE</div>
+        <div>
+          <div class="stack-name">Chris Essig</div>
+          <div class="stack-use"><strong>Data Visuals Editor</strong> &mdash; leads the team. 10+ years as a newsroom developer. Journalism degree from Eastern Illinois. Previously in Iowa at The Gazette.</div>
+        </div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-icon" style="background: var(--crash);">DC</div>
+        <div>
+          <div class="stack-name">Darla Cameron</div>
+          <div class="stack-use"><strong>Chief Product Officer</strong> &mdash; oversees photo, multimedia, and data visuals. Previously data visuals editor at Washington Post and Tampa Bay Times.</div>
+        </div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-icon" style="background: #6b7280;">CA</div>
+        <div>
+          <div class="stack-name">Carla Astudillo</div>
+          <div class="stack-use"><strong>Your predecessor</strong> &mdash; left for ProPublica Feb 2026. Built election results pages, redistricting tools, ICE data analysis. Journalist &rarr; developer trajectory (like you).</div>
+        </div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-icon" style="background: #6b7280;">YS</div>
+        <div>
+          <div class="stack-name">Yuriko Schumacher</div>
+          <div class="stack-use">Designer/developer. Built the voter fish-in-a-pond visualization and border wall tracker. Master's from Northeastern. Previously Wall Street Journal.</div>
+        </div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-icon" style="background: #6b7280;">DK</div>
+        <div>
+          <div class="stack-name">Dan Keemahill</div>
+          <div class="stack-use">Data reporter. Measles outbreak tracker, border county voting shifts. Does the data analysis that feeds visualizations.</div>
+        </div>
+      </div>
+      <div class="stack-item">
+        <div class="stack-icon" style="background: #6b7280;">EW</div>
+        <div>
+          <div class="stack-name">Edison Wu</div>
+          <div class="stack-use">Developer. Built the July 4 floods coverage. Breaking news visualization under pressure.</div>
+        </div>
+      </div>
     </div>
   </div>
 
