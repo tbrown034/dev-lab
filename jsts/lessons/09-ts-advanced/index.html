@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 09 - Advanced TypeScript</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #eab308; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>09</span> Advanced TypeScript &mdash; The Master Class</h1>
+    <a href="/jsts/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">This is where TypeScript becomes a language unto itself.</strong> Template literal types, branded types, discriminated unions at scale, and module augmentation. These patterns separate library authors from library consumers.</p>
+
+    <!-- ============================================ -->
+    <!-- TEMPLATE LITERAL TYPES                       -->
+    <!-- ============================================ -->
+
+    <h2>Template Literal Types</h2>
+
+    <p>TypeScript can manipulate string types at the type level, just like template literals manipulate strings at runtime:</p>
+
+    <pre><code><span class="comment">// Basic template literal type</span>
+type Greeting = `Hello, ${string}`;
+const a: Greeting = "Hello, Trevor";   <span class="comment">// OK</span>
+const b: Greeting = "Goodbye, Trevor"; <span class="comment">// Error!</span>
+
+<span class="comment">// Union distribution in template literals</span>
+type Color = "red" | "blue";
+type Size = "sm" | "lg";
+type ClassName = `${Color}-${Size}`;
+<span class="comment">// "red-sm" | "red-lg" | "blue-sm" | "blue-lg"</span>
+
+<span class="comment">// CSS-like utility</span>
+type CSSProperty = "margin" | "padding";
+type Direction = "top" | "right" | "bottom" | "left";
+type CSSKey = `${CSSProperty}-${Direction}`;
+<span class="comment">// "margin-top" | "margin-right" | ... | "padding-left"</span>
+<span class="comment">// All 8 combinations, automatically</span>
+</code></pre>
+
+    <h3>String Manipulation Types</h3>
+
+    <pre><code><span class="comment">// Built-in string manipulation utility types</span>
+type A = Uppercase&lt;"hello"&gt;;      <span class="comment">// "HELLO"</span>
+type B = Lowercase&lt;"HELLO"&gt;;      <span class="comment">// "hello"</span>
+type C = Capitalize&lt;"hello"&gt;;     <span class="comment">// "Hello"</span>
+type D = Uncapitalize&lt;"Hello"&gt;;   <span class="comment">// "hello"</span>
+
+<span class="comment">// Combine with template literals for powerful patterns</span>
+type EventName&lt;T extends string&gt; = `on${Capitalize&lt;T&gt;}`;
+type E = EventName&lt;"click"&gt;;      <span class="comment">// "onClick"</span>
+type F = EventName&lt;"change"&gt;;     <span class="comment">// "onChange"</span>
+
+<span class="comment">// Generate event handler types from a props interface</span>
+type PropEvents&lt;T&gt; = {
+  [K in keyof T as K extends string ? EventName&lt;K&gt; : never]:
+    (value: T[K]) =&gt; void;
+};
+
+interface FormFields {
+  name: string;
+  age: number;
+}
+
+type FormEvents = PropEvents&lt;FormFields&gt;;
+<span class="comment">// { onName: (value: string) =&gt; void; onAge: (value: number) =&gt; void }</span>
+</code></pre>
+
+    <div class="aha">
+      <p><strong>This is how libraries like Prisma work.</strong> Prisma reads your database schema and generates types like <code>findUnique</code>, <code>findMany</code>, <code>create</code>, <code>update</code> for each model. Template literal types + mapped types + conditional types = fully type-safe database queries generated from a schema.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DISCRIMINATED UNIONS AT SCALE                -->
+    <!-- ============================================ -->
+
+    <h2>Discriminated Unions at Scale</h2>
+
+    <p>Lesson 07 introduced the basic pattern. Here's how to use it for complex state machines:</p>
+
+    <pre><code><span class="comment">// A state machine for an article workflow</span>
+type ArticleState =
+  | { status: "draft"; content: string; author: string }
+  | { status: "review"; content: string; author: string; reviewer: string }
+  | { status: "published"; content: string; author: string; publishedAt: Date; url: string }
+  | { status: "archived"; content: string; author: string; archivedAt: Date };
+
+<span class="comment">// Type-safe transitions</span>
+function submitForReview(article: Extract&lt;ArticleState, { status: "draft" }&gt;, reviewer: string):
+  Extract&lt;ArticleState, { status: "review" }&gt; {
+  return { ...article, status: "review", reviewer };
+}
+
+function publish(article: Extract&lt;ArticleState, { status: "review" }&gt;):
+  Extract&lt;ArticleState, { status: "published" }&gt; {
+  return {
+    ...article,
+    status: "published",
+    publishedAt: new Date(),
+    url: `/articles/${encodeURIComponent(article.content.slice(0, 50))}`,
+  };
+}
+
+<span class="comment">// Exhaustive switch with never check</span>
+function getStatusMessage(article: ArticleState): string {
+  switch (article.status) {
+    case "draft":     return `Draft by ${article.author}`;
+    case "review":    return `Under review by ${article.reviewer}`;
+    case "published": return `Live at ${article.url}`;
+    case "archived":  return `Archived on ${article.archivedAt.toISOString()}`;
+    default:
+      const _exhaustive: never = article;
+      return _exhaustive;
+  }
+}
+</code></pre>
+
+    <div class="callout">
+      <p><strong>The <code>never</code> trick:</strong> If you add a new status to <code>ArticleState</code> but forget to handle it in the switch, TypeScript will error at the <code>never</code> assignment. This guarantees exhaustive handling at compile time. It's a simple pattern with enormous safety benefits.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- BRANDED TYPES                                -->
+    <!-- ============================================ -->
+
+    <h2>Branded Types</h2>
+
+    <p>Sometimes two values have the same runtime type (both <code>string</code>) but represent different things. Branded types add compile-time distinction:</p>
+
+    <pre><code><span class="comment">// The problem: all IDs are strings, easy to mix up</span>
+function getUser(userId: string) { ... }
+function getArticle(articleId: string) { ... }
+
+const id = "abc-123";
+getUser(id);      <span class="comment">// OK</span>
+getArticle(id);   <span class="comment">// Also OK — but this is a USER id, not an article id!</span>
+</code></pre>
+
+    <pre><code><span class="comment">// The solution: branded types</span>
+type UserId = string & { readonly __brand: "UserId" };
+type ArticleId = string & { readonly __brand: "ArticleId" };
+
+<span class="comment">// Smart constructors</span>
+function UserId(id: string): UserId {
+  return id as UserId;
+}
+
+function ArticleId(id: string): ArticleId {
+  return id as ArticleId;
+}
+
+function getUser(userId: UserId) { ... }
+function getArticle(articleId: ArticleId) { ... }
+
+const userId = UserId("user-123");
+const articleId = ArticleId("article-456");
+
+getUser(userId);       <span class="comment">// OK</span>
+getUser(articleId);     <span class="comment">// Error! ArticleId is not assignable to UserId</span>
+getUser("raw-string"); <span class="comment">// Error! string is not assignable to UserId</span>
+</code></pre>
+
+    <div class="aha">
+      <p><strong>Branded types are compile-time fiction.</strong> At runtime, <code>UserId</code> is just a string. The <code>__brand</code> property doesn't exist in memory. It's a phantom type that TypeScript uses to prevent mixing up values that look the same at runtime but mean different things. It's like putting color-coded labels on identical-looking file folders.</p>
+    </div>
+
+    <h3>Validated Branded Types</h3>
+
+    <pre><code>type Email = string & { readonly __brand: "Email" };
+type NonEmptyString = string & { readonly __brand: "NonEmptyString" };
+
+function Email(input: string): Email {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input)) {
+    throw new Error(`Invalid email: ${input}`);
+  }
+  return input as Email;
+}
+
+function NonEmptyString(input: string): NonEmptyString {
+  if (input.trim().length === 0) {
+    throw new Error("String must not be empty");
+  }
+  return input as NonEmptyString;
+}
+
+<span class="comment">// Now your functions can REQUIRE validated input</span>
+function sendEmail(to: Email, subject: NonEmptyString) { ... }
+
+<span class="comment">// Callers must validate first — the brand is proof of validation</span>
+sendEmail(Email("trevor@example.com"), NonEmptyString("Hello"));
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- MODULE AUGMENTATION                          -->
+    <!-- ============================================ -->
+
+    <h2>Module Augmentation &amp; Declaration Merging</h2>
+
+    <p>You can extend third-party types without modifying their source code:</p>
+
+    <pre><code><span class="comment">// Add custom properties to Express Request</span>
+declare module "express" {
+  interface Request {
+    userId?: string;
+    sessionToken?: string;
+  }
+}
+
+<span class="comment">// Now TypeScript knows about these properties</span>
+app.use((req, res, next) =&gt; {
+  req.userId = "trevor-123";  <span class="comment">// No error</span>
+  next();
+});
+</code></pre>
+
+    <h3>Augmenting Global Types</h3>
+
+    <pre><code><span class="comment">// Add to the global Window type</span>
+declare global {
+  interface Window {
+    analytics: {
+      track(event: string, data?: Record&lt;string, unknown&gt;): void;
+    };
+  }
+}
+
+window.analytics.track("page_view", { page: "/articles" });
+</code></pre>
+
+    <h3>Augmenting Next.js Types</h3>
+
+    <pre><code><span class="comment">// Extend Next.js env types for type-safe environment variables</span>
+declare namespace NodeJS {
+  interface ProcessEnv {
+    DATABASE_URL: string;
+    API_KEY: string;
+    NODE_ENV: "development" | "production" | "test";
+  }
+}
+
+<span class="comment">// Now process.env.DATABASE_URL is typed as string, not string | undefined</span>
+const db = connect(process.env.DATABASE_URL);  <span class="comment">// No null check needed</span>
+</code></pre>
+
+    <div class="callout">
+      <p><strong>Declaration merging only works with <code>interface</code></strong>, not <code>type</code>. This is the one scenario where the <code>interface</code> vs <code>type</code> distinction truly matters. Third-party libraries expose interfaces specifically so consumers can augment them.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ADVANCED PATTERNS                            -->
+    <!-- ============================================ -->
+
+    <h2>Advanced Patterns</h2>
+
+    <h3>Type-Safe Builder Pattern</h3>
+
+    <pre><code>class QueryBuilder&lt;Selected extends string = never&gt; {
+  private fields: string[] = [];
+  private table = "";
+
+  from(table: string): this {
+    this.table = table;
+    return this;
+  }
+
+  select&lt;F extends string&gt;(field: F): QueryBuilder&lt;Selected | F&gt; {
+    this.fields.push(field);
+    return this as any;
+  }
+
+  execute(): Promise&lt;Record&lt;Selected, unknown&gt;[]&gt; {
+    const sql = `SELECT ${this.fields.join(", ")} FROM ${this.table}`;
+    <span class="comment">// Execute and return typed results</span>
+    return fetch(`/api/query?sql=${sql}`).then(r =&gt; r.json());
+  }
+}
+
+const results = await new QueryBuilder()
+  .from("articles")
+  .select("title")
+  .select("author")
+  .execute();
+
+<span class="comment">// results is Record&lt;"title" | "author", unknown&gt;[]</span>
+results[0].title;   <span class="comment">// OK</span>
+results[0].body;    <span class="comment">// Error: 'body' was not selected</span>
+</code></pre>
+
+    <h3>Recursive Types</h3>
+
+    <pre><code><span class="comment">// JSON type (recursive)</span>
+type JSONValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JSONValue[]
+  | { [key: string]: JSONValue };
+
+<span class="comment">// Deep partial (recursive mapped type)</span>
+type DeepPartial&lt;T&gt; = {
+  [K in keyof T]?: T[K] extends object ? DeepPartial&lt;T[K]&gt; : T[K];
+};
+
+<span class="comment">// Deep readonly</span>
+type DeepReadonly&lt;T&gt; = {
+  readonly [K in keyof T]: T[K] extends object ? DeepReadonly&lt;T[K]&gt; : T[K];
+};
+
+interface Config {
+  db: { host: string; port: number; };
+  cache: { ttl: number; };
+}
+
+type PartialConfig = DeepPartial&lt;Config&gt;;
+<span class="comment">// { db?: { host?: string; port?: number }; cache?: { ttl?: number } }</span>
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Knowledge Check</h4>
+
+      <div class="question">
+        <p>1. What type does this resolve to?</p>
+        <pre><code>type Route = `/${"users" | "posts"}/${"list" | "detail"}`;</code></pre>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer"><code>"/users/list" | "/users/detail" | "/posts/list" | "/posts/detail"</code>. Template literal types distribute over unions, producing all 4 combinations.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why do branded types use <code>string & { __brand: "X" }</code> instead of a class?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer">Because the brand needs to be invisible at runtime. A class would add runtime overhead and change the value's prototype. The intersection with a phantom property exists only in the type system (TypeScript's structural typing means the <code>__brand</code> property is checked at compile time but never needs to exist at runtime). The value remains a plain string.</div>
+      </div>
+
+      <div class="question">
+        <p>3. When does the <code>never</code> exhaustiveness check catch bugs?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer">When you add a new variant to a discriminated union but forget to handle it in a switch statement. After all known cases are handled, the default branch narrows the type to <code>never</code>. If a new case exists that isn't handled, the type in the default branch won't be <code>never</code> anymore, and the assignment to <code>const _: never = value</code> will fail at compile time.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Type-Safe Router</h4>
+      <p>Create a type-safe routing system using template literal types:</p>
+      <pre><code><span class="comment">// 1. Define route patterns with params</span>
+type Routes = {
+  "/articles": {};
+  "/articles/:id": { id: string };
+  "/articles/:id/comments/:commentId": { id: string; commentId: string };
+};
+
+<span class="comment">// 2. Build ExtractParams&lt;T&gt; that infers params from the path</span>
+type ExtractParams&lt;T extends string&gt; = ...
+<span class="comment">// ExtractParams&lt;"/articles/:id"&gt; → { id: string }</span>
+
+<span class="comment">// 3. Create a navigate function</span>
+function navigate&lt;P extends keyof Routes&gt;(
+  path: P,
+  params: Routes[P]
+): string { ... }
+
+navigate("/articles/:id", { id: "123" });  <span class="comment">// OK</span>
+navigate("/articles/:id", {});              <span class="comment">// Error: missing id</span>
+navigate("/articles", { id: "123" });       <span class="comment">// Error: no params expected</span></code></pre>
+      <p><strong>Bonus:</strong> Use <code>infer</code> to build <code>ExtractParams</code> automatically from the path pattern string.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/jsts/lessons/08-ts-generics/">&larr; TypeScript Generics</a>
+      <a href="/jsts/lessons/10-testing-patterns/">Testing Patterns &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

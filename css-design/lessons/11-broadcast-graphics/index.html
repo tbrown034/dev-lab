@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 11 - Broadcast Graphics</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #a855f7; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>11</span> Broadcast Graphics &mdash; CSS for Television</h1>
+    <a href="/css-design/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>Web technologies now power live TV graphics.</strong> Newsroom lower thirds, election night tickers, sports score bugs, and alert banners are increasingly built with HTML and CSS running in broadcast-grade renderers. This lesson teaches you to build them.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: CSS Under Broadcast Constraints</h2>
+
+    <p>Broadcast CSS has the hardest constraints in web development:</p>
+
+    <ul>
+      <li><strong>60fps or failure</strong> &mdash; a frame drop on live TV is visible to millions of viewers</li>
+      <li><strong>Pixel-perfect alignment</strong> &mdash; lower thirds must line up exactly when switching between reporters</li>
+      <li><strong>Safe zones</strong> &mdash; content must stay within title-safe areas (TVs crop the edges)</li>
+      <li><strong>Theme switching in real time</strong> &mdash; election night means switching between candidate/party colors instantly</li>
+      <li><strong>Animation smoothness</strong> &mdash; every entrance, exit, and transition must feel broadcast-quality</li>
+    </ul>
+
+    <div class="aha">
+      <p><strong>If your design system can handle broadcast, it can handle anything.</strong> Every principle from this course &mdash; tokens, layers, custom properties, performant animations, component contracts &mdash; gets stress-tested under broadcast constraints. The skills transfer directly to any production application.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SAFE ZONES                                   -->
+    <!-- ============================================ -->
+
+    <h2>Safe Zones: The Invisible Boundaries</h2>
+
+    <p>Television screens crop content differently than monitors. "Safe zones" define where content is guaranteed to be visible:</p>
+
+    <pre><code><span class="comment">/* Broadcast safe zones */</span>
+.broadcast-frame {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+}
+
+<span class="comment">/* Action Safe: 93% of frame — nothing critical beyond this */</span>
+.action-safe {
+  position: absolute;
+  top: 3.5%;
+  left: 3.5%;
+  right: 3.5%;
+  bottom: 3.5%;
+  <span class="comment">/* 67px inset on all sides at 1080p */</span>
+}
+
+<span class="comment">/* Title Safe: 90% of frame — all text must stay within this */</span>
+.title-safe {
+  position: absolute;
+  top: 5%;
+  left: 5%;
+  right: 5%;
+  bottom: 5%;
+  <span class="comment">/* 96px inset at 1080p */</span>
+}
+
+<span class="comment">/* Graphics Safe: 80% — the comfort zone for lower thirds */</span>
+.graphics-safe {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  right: 10%;
+  bottom: 10%;
+}
+
+<span class="comment">/* Debug overlay to visualize safe zones during development */</span>
+.safe-zone-debug .action-safe {
+  border: 1px dashed rgba(255, 0, 0, 0.3);
+}
+.safe-zone-debug .title-safe {
+  border: 1px dashed rgba(0, 255, 0, 0.3);
+}
+.safe-zone-debug .graphics-safe {
+  border: 1px dashed rgba(0, 0, 255, 0.3);
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>Modern TVs have less overscan, but the rules still apply.</strong> While today's flat screens don't crop as aggressively as CRT televisions, broadcast standards still require title-safe compliance. Networks can be fined for text outside safe zones. And many viewers watch on older TVs or projectors with significant overscan.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LOWER THIRDS                                 -->
+    <!-- ============================================ -->
+
+    <h2>Lower Thirds: The Signature Broadcast Element</h2>
+
+    <p>A lower third is the name/title graphic that appears in the bottom third of the screen. It's the most common broadcast graphic and a perfect design system exercise.</p>
+
+    <pre><code><span class="comment">/* Lower third token system */</span>
+:root {
+  --l3-bg: rgba(0, 0, 0, 0.85);
+  --l3-accent: var(--color-action);
+  --l3-text: white;
+  --l3-text-secondary: rgba(255, 255, 255, 0.75);
+  --l3-width: 480px;
+  --l3-enter-duration: 400ms;
+  --l3-exit-duration: 300ms;
+  --l3-hold-duration: 5000ms;
+}
+
+<span class="comment">/* Lower third structure */</span>
+.lower-third {
+  position: absolute;
+  bottom: 10%;
+  left: 10%;
+  width: var(--l3-width);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+<span class="comment">/* Accent bar — the colored stripe */</span>
+.l3-accent-bar {
+  height: 4px;
+  background: var(--l3-accent);
+  transform-origin: left;
+}
+
+<span class="comment">/* Name plate — primary info */</span>
+.l3-name {
+  background: var(--l3-bg);
+  padding: 10px 20px;
+  backdrop-filter: blur(12px);
+}
+
+.l3-name h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--l3-text);
+  letter-spacing: 0.02em;
+}
+
+<span class="comment">/* Title plate — secondary info */</span>
+.l3-title {
+  background: rgba(0, 0, 0, 0.65);
+  padding: 6px 20px;
+  backdrop-filter: blur(12px);
+}
+
+.l3-title p {
+  font-size: 0.85rem;
+  color: var(--l3-text-secondary);
+  letter-spacing: 0.03em;
+}</code></pre>
+
+    <h3>Lower third animation</h3>
+
+    <pre><code><span class="comment">/* Entrance: accent bar wipes in, then plates slide up */</span>
+@keyframes l3-accent-enter {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes l3-plate-enter {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+<span class="comment">/* Exit: plates slide down, then accent bar wipes out */</span>
+@keyframes l3-plate-exit {
+  from { transform: translateY(0); opacity: 1; }
+  to   { transform: translateY(100%); opacity: 0; }
+}
+
+@keyframes l3-accent-exit {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+<span class="comment">/* Orchestrated animation with delays */</span>
+.lower-third[data-state="entering"] .l3-accent-bar {
+  animation: l3-accent-enter 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.lower-third[data-state="entering"] .l3-name {
+  animation: l3-plate-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) 150ms forwards;
+  opacity: 0;
+}
+.lower-third[data-state="entering"] .l3-title {
+  animation: l3-plate-enter 350ms cubic-bezier(0.16, 1, 0.3, 1) 250ms forwards;
+  opacity: 0;
+}
+
+<span class="comment">/* CRITICAL: Only animate transform and opacity.
+   No width, height, margin, or padding animations.
+   60fps is non-negotiable in broadcast. */</span></code></pre>
+
+    <div class="aha">
+      <p><strong>The staggered entrance pattern.</strong> Accent bar first (150ms), then name plate (250ms delay), then title plate (350ms delay). This creates the classic broadcast "build" where elements appear one after another. The timing creates visual hierarchy &mdash; your eye follows the build sequence. This same pattern works for any multi-part UI animation.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TICKER                                       -->
+    <!-- ============================================ -->
+
+    <h2>Tickers: Continuous Scrolling Information</h2>
+
+    <pre><code><span class="comment">/* Breaking news / election ticker */</span>
+.ticker {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: var(--l3-bg);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+<span class="comment">/* Label (e.g., "BREAKING NEWS") */</span>
+.ticker-label {
+  flex-shrink: 0;
+  padding: 0 24px;
+  background: var(--l3-accent);
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+<span class="comment">/* Scrolling content */</span>
+.ticker-scroll {
+  display: flex;
+  white-space: nowrap;
+  animation: ticker-scroll 30s linear infinite;
+}
+
+.ticker-scroll span {
+  padding: 0 3rem;
+  color: var(--l3-text);
+  font-size: 0.9rem;
+}
+
+<span class="comment">/* Dot separator between items */</span>
+.ticker-scroll .dot {
+  color: var(--l3-accent);
+  padding: 0 1rem;
+}
+
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+  <span class="comment">/* Scroll exactly half the content, then loop.
+     Duplicate the content so the loop is seamless. */</span>
+}
+
+<span class="comment">/* Performance: transform-only animation = GPU compositor = 60fps */</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- ELECTION OVERLAYS                            -->
+    <!-- ============================================ -->
+
+    <h2>Election Night Overlays</h2>
+
+    <p>Election night graphics are the ultimate test of a token-driven design system. The same components display in different party colors, update in real time, and animate between states.</p>
+
+    <pre><code><span class="comment">/* Party color tokens */</span>
+:root {
+  --party-dem: #3b82f6;
+  --party-rep: #ef4444;
+  --party-ind: #a855f7;
+  --party-other: #6b7280;
+}
+
+<span class="comment">/* Results bar component */</span>
+.results-bar {
+  display: flex;
+  height: 32px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--color-surface);
+}
+
+.results-bar .segment {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: white;
+  transition: width 800ms cubic-bezier(0.16, 1, 0.3, 1);
+  <span class="comment">/* Animate width changes as votes come in.
+     Exception: we DO animate width here because the
+     visual meaning IS the width change. Use will-change. */</span>
+  will-change: width;
+}
+
+.segment[data-party="dem"] { background: var(--party-dem); }
+.segment[data-party="rep"] { background: var(--party-rep); }
+.segment[data-party="ind"] { background: var(--party-ind); }
+
+<span class="comment">/* Race call flash animation */</span>
+@keyframes race-call {
+  0%   { background: var(--party-dem); }
+  25%  { background: white; }
+  50%  { background: var(--party-dem); }
+  75%  { background: white; }
+  100% { background: var(--party-dem); }
+}
+
+.segment[data-called] {
+  animation: race-call 600ms ease-out;
+}
+
+<span class="comment">/* Electoral vote counter */</span>
+.ev-counter {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.ev-counter .count {
+  font-size: 3rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  <span class="comment">/* tabular-nums: all digits same width.
+     Critical for number animations —
+     prevents layout shift as digits change. */</span>
+  transition: color 300ms ease-out;
+}
+
+.ev-counter[data-party="dem"] .count { color: var(--party-dem); }
+.ev-counter[data-party="rep"] .count { color: var(--party-rep); }</code></pre>
+
+    <div class="callout">
+      <p><strong>font-variant-numeric: tabular-nums is critical for broadcast.</strong> Without it, digits have proportional widths (1 is narrower than 8). When numbers animate, the entire layout shifts. <code>tabular-nums</code> makes every digit the same width, so "192" and "888" take identical space. Use it on any number that changes dynamically.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SCORE BUG                                    -->
+    <!-- ============================================ -->
+
+    <h2>Score Bug: Sports Overlay</h2>
+
+    <pre><code><span class="comment">/* Compact score overlay — typically top-left of screen */</span>
+.score-bug {
+  position: absolute;
+  top: 5%;
+  left: 5%;
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.score-bug .team {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--team-color, var(--color-surface));
+}
+
+.score-bug .team-abbr {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: white;
+  min-width: 36px;
+}
+
+.score-bug .team-score {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: white;
+  min-width: 32px;
+  text-align: center;
+}
+
+.score-bug .game-info {
+  background: rgba(0, 0, 0, 0.9);
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.score-bug .quarter {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--l3-accent);
+  text-transform: uppercase;
+}
+
+.score-bug .clock {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  font-variant-numeric: tabular-nums;
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- PERFORMANCE CHECKLIST                        -->
+    <!-- ============================================ -->
+
+    <h2>Broadcast Performance Checklist</h2>
+
+    <pre><code><span class="comment">/* The 60fps broadcast checklist */</span>
+
+<span class="comment">/* 1. ONLY animate transform and opacity */</span>
+animation: slide-in 400ms ease-out;
+<span class="comment">/* NOT: animation that changes width, height, margin, padding */</span>
+
+<span class="comment">/* 2. Use will-change for known animations */</span>
+.animated-element {
+  will-change: transform, opacity;
+  <span class="comment">/* Tells GPU to prepare a layer. Remove after animation ends. */</span>
+}
+
+<span class="comment">/* 3. Use backdrop-filter sparingly */</span>
+<span class="comment">/* One backdrop-filter is fine. 10 stacked = frame drops. */</span>
+
+<span class="comment">/* 4. Avoid layout thrashing */</span>
+<span class="comment">/* Don't read layout → write layout → read layout in JS.
+   Batch reads, then batch writes. */</span>
+
+<span class="comment">/* 5. Use font-display: block for broadcast fonts */</span>
+@font-face {
+  font-family: 'Broadcast Sans';
+  src: url('broadcast-sans.woff2') format('woff2');
+  font-display: block;
+  <span class="comment">/* block: wait for font before displaying text.
+     In broadcast, FOUT (flash of unstyled text) = visible error.
+     Unlike web where swap is preferred, broadcast uses block. */</span>
+}
+
+<span class="comment">/* 6. Contain paint and layout */</span>
+.broadcast-element {
+  contain: paint layout;
+  <span class="comment">/* Tells browser this element's internals don't affect
+     anything outside it. Enables rendering optimizations. */</span>
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What are the three broadcast safe zones and their percentages?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Action Safe (93% of frame), Title Safe (90%), and Graphics Safe (80%). All text must be within Title Safe. Critical actions within Action Safe. Lower thirds typically in Graphics Safe zone.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why does the lower third animation use staggered delays?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Staggered delays create a "build" sequence: accent bar first, then name plate, then title plate. This creates visual hierarchy and gives the viewer's eye a clear path to follow. It's a standard broadcast motion design technique that communicates structure.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why is <code>font-variant-numeric: tabular-nums</code> critical for broadcast?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It makes all digits the same width. Without it, numbers have proportional widths (1 is narrower than 8), causing layout shifts when numbers change dynamically. In broadcast, any layout shift is a visible error. Scores, vote counts, and clocks all need tabular-nums.</div>
+      </div>
+
+      <div class="question">
+        <p>4. How does the ticker achieve seamless looping?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The content is duplicated so the element is twice as long as the visible items. The animation scrolls exactly 50% (translateX(-50%)), moving through the first copy. When it reaches the second copy (identical to the first), it resets to 0. The reset is invisible because the content looks the same.</div>
+      </div>
+
+      <div class="question">
+        <p>5. Why does broadcast CSS use <code>font-display: block</code> instead of <code>swap</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">In web development, <code>swap</code> is preferred to show text immediately (even in a fallback font). But in broadcast, a flash of unstyled text (FOUT) is a visible error on live television. <code>block</code> waits for the correct font to load before displaying any text, ensuring the on-air graphic always looks correct.</div>
+      </div>
+    </div>
+
+    <div class="exercise">
+      <h4>Exercise: Build a Broadcast Graphics Package</h4>
+      <ol>
+        <li><strong>Lower third:</strong> Build a two-line lower third (name + title) with accent bar, enter/exit animations, and staggered timing</li>
+        <li><strong>Ticker:</strong> Build a scrolling news ticker with a label, seamless loop, and dot separators</li>
+        <li><strong>Score bug:</strong> Build a sports score overlay with team colors, quarter indicator, and clock</li>
+        <li><strong>Safe zone debug overlay:</strong> Build toggleable safe zone indicators</li>
+        <li><strong>Theme switching:</strong> Make all graphics switch between "news" (red), "sports" (green), and "entertainment" (purple) brands by changing one data attribute</li>
+        <li><strong>Bonus:</strong> Add an election results bar with animated vote counts and a race-called flash</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Broadcast CSS has the hardest constraints</strong> &mdash; 60fps, safe zones, pixel-perfect alignment</li>
+      <li><strong>Safe zones: Action (93%), Title (90%), Graphics (80%)</strong></li>
+      <li><strong>Lower thirds use staggered build animations</strong> &mdash; accent, name, title in sequence</li>
+      <li><strong>Tickers use duplicated content + 50% translate</strong> for seamless loops</li>
+      <li><strong>tabular-nums prevents layout shift</strong> in dynamic numbers</li>
+      <li><strong>Election graphics = token system stress test</strong> &mdash; party colors, real-time updates, race calls</li>
+      <li><strong>Only animate transform and opacity</strong> &mdash; non-negotiable in broadcast</li>
+      <li><strong>font-display: block for broadcast fonts</strong> &mdash; no FOUT on live TV</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/css-design/lessons/10-component-systems/">&larr; Lesson 10: Components</a>
+      <a href="/css-design/lessons/12-capstone/">Lesson 12: Capstone &rarr;</a>
+    </div>
+  </div>
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

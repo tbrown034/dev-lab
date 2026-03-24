@@ -35,11 +35,11 @@ function loadHistory() {
 function saveHistory(h) { localStorage.setItem(getSkillStorageKey(), JSON.stringify(h.slice(-20))); }
 
 const STYLES = `
-#st-btn{position:fixed;bottom:24px;right:96px;z-index:9997;background:#1a1a1a;border:1px solid #444;border-radius:20px;padding:8px 16px;color:#ccc;font-size:13px;font-family:-apple-system,system-ui,sans-serif;cursor:pointer;transition:all .2s;white-space:nowrap}
-#st-btn:hover{border-color:#fff;color:#fff;box-shadow:0 2px 12px #fff2}
-#st-overlay{position:fixed;inset:0;z-index:10000;background:#0a0a0aee;display:none;align-items:center;justify-content:center;font-family:-apple-system,system-ui,sans-serif;overflow-y:auto}
+#st-btn{position:fixed;bottom:24px;right:96px;z-index:9997;background:#1a1a1a;border:1px solid #444;border-radius:6px;padding:8px 16px;color:#ccc;font-size:13px;font-family:var(--sans);cursor:pointer;transition:all .2s;white-space:nowrap}
+#st-btn:hover{border-color:#fff;color:#fff}
+#st-overlay{position:fixed;inset:0;z-index:10000;background:#0a0a0aee;display:none;align-items:center;justify-content:center;font-family:var(--sans);overflow-y:auto}
 #st-overlay.open{display:flex}
-#st-card{background:#141414;border:1px solid #333;border-radius:12px;width:100%;max-width:600px;margin:24px;padding:32px;position:relative;animation:st-in .3s ease}
+#st-card{background:#141414;border:1px solid #333;border-radius:8px;width:100%;max-width:600px;margin:24px;padding:32px;position:relative;animation:st-in .3s ease}
 @keyframes st-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .st-close{position:absolute;top:12px;right:16px;background:none;border:none;color:#666;font-size:22px;cursor:pointer;line-height:1}
 .st-close:hover{color:#fff}
@@ -63,7 +63,7 @@ const STYLES = `
 @keyframes st-spin{to{transform:rotate(360deg)}}
 .st-results h2{color:#fff;font-size:22px;margin-bottom:4px}
 .st-results .st-tier{font-size:14px;margin-bottom:20px}
-.st-results .st-score-big{font-size:48px;font-weight:700;color:#fff;margin-bottom:4px}
+.st-results .st-score-big{font-size:48px;font-weight:600;color:#fff;margin-bottom:4px}
 .st-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
 .st-stat{background:#1a1a1a;border-radius:8px;padding:12px;text-align:center}
 .st-stat .val{color:#fff;font-size:18px;font-weight:600}
@@ -282,9 +282,6 @@ export function initSkillTest() {
     history.push(entry);
     saveHistory(history);
 
-    // Award XP
-    if (typeof window.awardXP === 'function') window.awardXP(score * 5, 'Skill test');
-
     const best = Math.max(...history.map(h => h.score));
     const pastEntries = history.slice(0, -1); // all except current
 
@@ -298,7 +295,6 @@ export function initSkillTest() {
         <div class="st-stat-grid">
           <div class="st-stat"><div class="val">${formatTime(totalTime)}</div><div class="lbl">Total Time</div></div>
           <div class="st-stat"><div class="val">${formatTime(avgTime)}</div><div class="lbl">Avg / Question</div></div>
-          <div class="st-stat"><div class="val">${score * 5}</div><div class="lbl">XP Earned</div></div>
           <div class="st-stat"><div class="val">${difficulty}</div><div class="lbl">Final Difficulty</div></div>
         </div>
         ${pastEntries.length > 0 ? `

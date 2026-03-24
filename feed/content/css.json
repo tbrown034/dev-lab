@@ -1,0 +1,2991 @@
+[
+  {
+    "id": "css-001",
+    "track": "css",
+    "type": "interview",
+    "author": "cascader",
+    "time": "2h",
+    "content": "INTERVIEW Q: A designer hands you a comp where a card component needs to change its layout based on the card's OWN width — not the viewport. In a sidebar it's stacked, in the main content area it's horizontal. Viewport media queries won't cut it because the card appears at different sizes on the same page.\n\nHow do you solve this without JavaScript?",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/09-container-queries/",
+      "label": "container queries deep dive in Lesson 9 →"
+    },
+    "poll": null,
+    "likes": 892,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "Container queries. Set container-type: inline-size on the card's parent, then use @container (min-width: 400px) { } to swap the layout. The card responds to its container, not the viewport. This is the CSS feature we waited a decade for.",
+        "likes": 312
+      },
+      {
+        "author": "tailwinder",
+        "content": "Tailwind v4 has @container support built in. @container/card (min-width: 400px) maps to a @md utility in the container context. But understanding the raw CSS first is non-negotiable — you'll debug Tailwind output with the spec, not the other way around.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-002",
+    "track": "css",
+    "type": "hotTake",
+    "author": "cascader",
+    "time": "5h",
+    "content": "hot take: specificity isn't hard. people just refuse to learn three numbers.\n\nIDs = (1,0,0). Classes = (0,1,0). Elements = (0,0,1). Higher number wins. That's it.\n\nstop slapping !important on everything and then blaming CSS for being \"unpredictable.\" CSS is perfectly predictable. YOUR specificity is unpredictable.\n\nthe cascade is not your enemy. it's a feature you're too scared to learn.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/02-specificity-cascade/",
+      "label": "specificity wars explained in Lesson 2 →"
+    },
+    "poll": null,
+    "likes": 1567,
+    "reposts": 423,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "Design tokens solve this at the system level. If your button color comes from --color-primary and that token is defined once, specificity battles disappear. The cascade works FOR you when your values flow from a single source of truth.",
+        "likes": 289
+      },
+      {
+        "author": "grid_master",
+        "content": "I've seen production codebases with 47 !important declarations. Forty. Seven. At that point you're not writing CSS, you're playing specificity Whac-A-Mole.",
+        "likes": 445
+      }
+    ]
+  },
+  {
+    "id": "css-003",
+    "track": "css",
+    "type": "tip",
+    "author": "grid_master",
+    "time": "3h",
+    "content": "PSA: Stop reaching for flexbox when you need a 2D layout. Flexbox is 1D. Grid is 2D. That's the entire decision tree.\n\nRow of buttons? Flexbox.\nNavbar items? Flexbox.\nEntire page layout? Grid.\nCard grid? Grid.\nDashboard? Grid.\n\nIf you're nesting 3 flexbox containers to fake a grid, you already lost.",
+    "code": "/* Stop doing this */\n.container {\n  display: flex;\n  flex-wrap: wrap;\n}\n.item {\n  flex: 0 0 calc(33.33% - 1rem);\n  /* 14 lines of margin hacks... */\n}\n\n/* Start doing this */\n.container {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  gap: 1rem;\n}\n/* That's it. That's the whole thing. */",
+    "link": {
+      "url": "/css-design/lessons/05-grid-layout/",
+      "label": "CSS Grid mastery in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 734,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The gap property working in both flexbox AND grid was the real game changer. No more margin hacks. No more :last-child overrides. Just gap: 1rem and move on with your life.",
+        "likes": 267
+      },
+      {
+        "author": "tailwinder",
+        "content": "grid grid-cols-3 gap-4. Six words. But you should absolutely know what those six words compile to.",
+        "likes": 134
+      }
+    ]
+  },
+  {
+    "id": "css-004",
+    "track": "css",
+    "type": "spotBug",
+    "author": "animista",
+    "time": "8h",
+    "content": "SPOT THE BUG: I'm trying to animate a card flipping on hover. The back face shows up fine but the front face is visible through the back during the flip. What's wrong?",
+    "code": ".card {\n  width: 300px;\n  height: 200px;\n  perspective: 1000px;\n}\n\n.card-inner {\n  position: relative;\n  width: 100%;\n  height: 100%;\n  transition: transform 0.6s;\n  transform-style: preserve-3d;\n}\n\n.card:hover .card-inner {\n  transform: rotateY(180deg);\n}\n\n.card-front, .card-back {\n  position: absolute;\n  width: 100%;\n  height: 100%;\n}\n\n.card-back {\n  transform: rotateY(180deg);\n}",
+    "link": {
+      "url": "/css-design/lessons/11-animations/",
+      "label": "CSS animations & 3D transforms in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 412,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "You're missing backface-visibility: hidden on both .card-front AND .card-back. Without it, both faces are always visible — the back face just shows through. That one property is the entire trick behind CSS card flips.",
+        "likes": 278
+      },
+      {
+        "author": "grid_master",
+        "content": "Classic 3D transform gotcha. Also make sure perspective is on the PARENT, not the element being transformed. You have it right here, but I've seen it wrong more times than I can count.",
+        "likes": 145
+      }
+    ]
+  },
+  {
+    "id": "css-005",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "cascader",
+    "time": "1d",
+    "content": "MENTAL MODEL: CSS :has() is a parent selector that lets the child talk back to the parent.\n\nBefore :has(), CSS was a one-way street: parent styles child, never the other way around. Now? form:has(input:invalid) lets the form restyle itself because a child is invalid. The child's state bubbles UP.\n\nThis changes everything. Every \"I need JavaScript for that\" parent-based styling problem just... disappeared.",
+    "code": "/* Style the form wrapper when ANY input is invalid */\nform:has(input:invalid) {\n  border-color: var(--color-error);\n}\n\n/* Style a card differently when it contains an image */\n.card:has(img) {\n  grid-template-rows: 200px 1fr;\n}\n\n/* Dim sibling items when one is hovered */\n.nav:has(.nav-item:hover) .nav-item:not(:hover) {\n  opacity: 0.6;\n}",
+    "link": {
+      "url": "/css-design/lessons/08-has-selector/",
+      "label": ":has() selector patterns in Lesson 8 →"
+    },
+    "poll": null,
+    "likes": 1123,
+    "reposts": 298,
+    "comments": [
+      {
+        "author": "animista",
+        "content": "That sibling dimming pattern is GORGEOUS. I've been doing that with JavaScript event listeners for years. Three lines of CSS. Three. I need to go refactor everything.",
+        "likes": 367
+      },
+      {
+        "author": "tokenizer",
+        "content": "The design system implications are huge. We can now create context-aware tokens. A button inside a :has(dark-region) can auto-switch variants without a single prop or class toggle.",
+        "likes": 198
+      },
+      {
+        "author": "tailwinder",
+        "content": "Tailwind v4 supports has-[] variants. has-[img]:grid-rows-[200px_1fr] on the card. But yeah the raw CSS here is already clean enough. Sometimes vanilla wins.",
+        "likes": 145
+      }
+    ]
+  },
+  {
+    "id": "css-006",
+    "track": "css",
+    "type": "til",
+    "author": "tailwinder",
+    "time": "4h",
+    "content": "TIL: Tailwind v4 dropped the tailwind.config.js file. Everything is CSS-native now. Your theme lives in @theme { } blocks inside CSS. Custom colors? @theme { --color-brand: #3b82f6; }. No more context-switching between JS config and CSS output.\n\nThe config file is dead. Long live CSS.",
+    "code": "/* tailwind v4 — everything in CSS */\n@import \"tailwindcss\";\n\n@theme {\n  --color-brand: #3b82f6;\n  --color-surface: #f8fafc;\n  --font-display: \"Inter\", sans-serif;\n  --breakpoint-xl: 1280px;\n}\n\n/* Use it directly */\n.hero {\n  color: var(--color-brand);\n  font-family: var(--font-display);\n}",
+    "link": {
+      "url": "/css-design/lessons/14-tailwind-v4/",
+      "label": "Tailwind v4 migration in Lesson 14 →"
+    },
+    "poll": null,
+    "likes": 567,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "This is literally what design tokens always wanted to be. CSS custom properties as the source of truth, consumed by a utility framework. The tooling finally caught up to the concept. I might cry.",
+        "likes": 234
+      },
+      {
+        "author": "cascader",
+        "content": "Config in CSS instead of JS. Styles in CSS instead of JSX. It's almost like... CSS was the answer the whole time. Welcome back to the cascade, Tailwind. We saved you a seat.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "css-007",
+    "track": "css",
+    "type": "poll",
+    "author": "grid_master",
+    "time": "6h",
+    "content": "Your design system needs a layout component for a dashboard with a sidebar, header, and main content area. What's your go-to approach?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "CSS Grid with named areas",
+          "pct": 58
+        },
+        {
+          "text": "Flexbox with nested containers",
+          "pct": 22
+        },
+        {
+          "text": "Grid for outer, flex for inner",
+          "pct": 17
+        },
+        {
+          "text": "Absolute positioning (I'm unwell)",
+          "pct": 3
+        }
+      ],
+      "totalVotes": 3412
+    },
+    "likes": 623,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "58% with taste. Named grid areas are the closest CSS gets to visual design: grid-template-areas: 'header header' 'sidebar main'. You can literally SEE the layout in your code. That's not just readable, it's inspectable at a glance.",
+        "likes": 287
+      },
+      {
+        "author": "animista",
+        "content": "17% are correct for broadcast graphics. Grid for the overall viewport layout, flexbox for the ticker bars and score strips inside. Each tool in its lane.",
+        "likes": 145
+      }
+    ]
+  },
+  {
+    "id": "css-008",
+    "track": "css",
+    "type": "thread",
+    "author": "animista",
+    "time": "1d",
+    "content": "THREAD: How ESPN, CNN, and the BBC build those lower-third graphics entirely in CSS.\n\n1/ The scoreboard bar at the bottom of a broadcast? That's a fixed-position flex container with overflow: hidden and a clipping path.\n\n2/ The text ticker scrolling scores? That's a CSS animation with translateX(-100%) on a loop. No JavaScript. The browser's compositor handles the 60fps.\n\n3/ The \"BREAKING NEWS\" red banner that slides in? transform: translateY() with a transition triggered by adding a class. One class toggle, one smooth entrance.\n\n4/ The team colors that change per matchup? CSS custom properties set once on the container, inherited by every child. --team-home: #DA291C; and the entire scoreboard recolors.\n\n5/ The key insight: broadcast CSS is SIMPLE CSS used with extreme discipline. No fancy frameworks. No build tools. Just transforms, transitions, custom properties, and rock-solid timing.",
+    "code": "/* Broadcast-style lower third */\n.lower-third {\n  position: fixed;\n  bottom: 0;\n  left: 0;\n  right: 0;\n  height: 80px;\n  display: flex;\n  align-items: center;\n  background: var(--team-color, #1a1a2e);\n  transform: translateY(100%);\n  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);\n}\n\n.lower-third.visible {\n  transform: translateY(0);\n}\n\n/* Scrolling ticker */\n.ticker-text {\n  animation: scroll 20s linear infinite;\n}\n\n@keyframes scroll {\n  from { transform: translateX(100%); }\n  to { transform: translateX(-100%); }\n}",
+    "link": {
+      "url": "/css-design/lessons/12-broadcast-css/",
+      "label": "broadcast graphics with CSS in Lesson 12 →"
+    },
+    "poll": null,
+    "likes": 1834,
+    "reposts": 456,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The custom property trick for team colors is BRILLIANT. Set two variables on the container, and every child — scores, names, borders, backgrounds — all recolor automatically. That's the cascade doing exactly what it was designed for.",
+        "likes": 412
+      },
+      {
+        "author": "tailwinder",
+        "content": "No framework. No build step. Just CSS and a class toggle. Broadcast graphics engineers have been doing utility-first CSS since before Tailwind existed. Respect.",
+        "likes": 267
+      },
+      {
+        "author": "grid_master",
+        "content": "The lower-third is a flex container. The score strip is a grid. The ticker is a transform animation. Three CSS features, zero JavaScript, millions of viewers. This is peak CSS.",
+        "likes": 334
+      }
+    ]
+  },
+  {
+    "id": "css-009",
+    "track": "css",
+    "type": "tip",
+    "author": "tokenizer",
+    "time": "3h",
+    "content": "PRO TIP: Design tokens aren't just variables with fancy names. They're an abstraction layer.\n\nLevel 1 (primitive): --blue-500: #3b82f6\nLevel 2 (semantic): --color-primary: var(--blue-500)\nLevel 3 (component): --button-bg: var(--color-primary)\n\nChange --blue-500 and every button, link, and heading updates. Change --color-primary and only semantic uses update. That's the power of indirection.",
+    "code": ":root {\n  /* Primitive tokens */\n  --blue-500: #3b82f6;\n  --gray-900: #111827;\n  --gray-50: #f9fafb;\n\n  /* Semantic tokens */\n  --color-primary: var(--blue-500);\n  --color-text: var(--gray-900);\n  --color-surface: var(--gray-50);\n\n  /* Component tokens */\n  --button-bg: var(--color-primary);\n  --button-text: var(--color-surface);\n}\n\n/* Dark mode: only change semantic layer */\n[data-theme=\"dark\"] {\n  --color-text: var(--gray-50);\n  --color-surface: var(--gray-900);\n}",
+    "link": {
+      "url": "/css-design/lessons/13-design-tokens/",
+      "label": "design token architecture in Lesson 13 →"
+    },
+    "poll": null,
+    "likes": 678,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The dark mode pattern here is the real gem. You don't rewrite component styles — you swap the semantic layer and everything cascades. This is what the C in CSS was MADE for.",
+        "likes": 298
+      },
+      {
+        "author": "tailwinder",
+        "content": "This maps perfectly to Tailwind v4's @theme blocks. Your primitive tokens become the theme, your semantic tokens become utilities. The abstraction layers stay clean.",
+        "likes": 167
+      }
+    ]
+  },
+  {
+    "id": "css-010",
+    "track": "css",
+    "type": "spotBug",
+    "author": "grid_master",
+    "time": "5h",
+    "content": "SPOT THE BUG: I want my grid items to be at least 250px wide and fill the available space. This works on wide screens but on mobile the items overflow the viewport. What's wrong?",
+    "code": ".grid {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));\n  gap: 1rem;\n}",
+    "link": {
+      "url": "/css-design/lessons/05-grid-layout/",
+      "label": "responsive grid patterns in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 389,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The 250px minimum is a hard minimum. On a 320px phone screen, the item can't be smaller than 250px, so it overflows. Fix: grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)). The min() function says \"250px or 100% of the container, whichever is smaller.\" Responsive without a single media query.",
+        "likes": 312
+      },
+      {
+        "author": "tailwinder",
+        "content": "This is exactly why understanding the raw CSS matters. If you just copy grid-cols-[repeat(auto-fill,minmax(250px,1fr))] from a snippet, you'll ship the overflow bug to production. Know the min() trick.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "css-011",
+    "track": "css",
+    "type": "hotTake",
+    "author": "tailwinder",
+    "time": "12h",
+    "content": "hot take: Tailwind isn't \"inline styles with extra steps.\" It's a constrained design system enforced at the utility level.\n\ninline styles let you write margin: 13.7px. Tailwind gives you m-3 (12px) or m-4 (16px). no in-between. that's not freedom, that's CONSISTENCY.\n\nevery time someone says \"just use inline styles\" I know they've never maintained a codebase where 47 different developers each picked their own shade of blue.\n\ntailwind is guardrails. and guardrails aren't the same as walls.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1345,
+    "reposts": 389,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Counterpoint: the cascade IS the original constraint system. If you define your spacing scale in custom properties, any approach gets the same guardrails. Tailwind just makes the constraints impossible to ignore. Which... okay, fair. Developers will ignore anything optional.",
+        "likes": 456
+      },
+      {
+        "author": "tokenizer",
+        "content": "The real magic is that Tailwind v4 tokens ARE CSS custom properties now. So you get the cascade AND the constraints. The framework war is over. CSS won, and Tailwind is cool with that.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-012",
+    "track": "css",
+    "type": "eli5",
+    "author": "cascader",
+    "time": "2d",
+    "content": "ELI5: CSS Nesting\n\nOld CSS is like writing a letter. You write the full address every time:\n\"Dear .card .title, please be bold.\"\n\"Dear .card .subtitle, please be gray.\"\n\"Dear .card:hover .title, please be blue.\"\n\nNested CSS is like being inside the card's house. You just say:\n\"Title, be bold. Subtitle, be gray. Oh and when someone hovers me, title goes blue.\"\n\nSame instructions. Less repetition. You're already in context — why keep repeating the address?",
+    "code": "/* Old way: full address every time */\n.card .title { font-weight: bold; }\n.card .subtitle { color: gray; }\n.card:hover .title { color: blue; }\n\n/* Nested: you're inside the card */\n.card {\n  .title {\n    font-weight: bold;\n  }\n  .subtitle {\n    color: gray;\n  }\n  &:hover .title {\n    color: blue;\n  }\n}",
+    "link": {
+      "url": "/css-design/lessons/07-nesting/",
+      "label": "native CSS nesting in Lesson 7 →"
+    },
+    "poll": null,
+    "likes": 945,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "tailwinder",
+        "content": "Sass users have had this for 15 years. But native CSS nesting means no preprocessor, no build step, no node_modules. Just write CSS in CSS. What a concept.",
+        "likes": 367
+      },
+      {
+        "author": "grid_master",
+        "content": "The & symbol for parent references works exactly like Sass. &:hover, &::before, &.active — all valid in native CSS now. The muscle memory transfers directly.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "css-013",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "animista",
+    "time": "6h",
+    "content": "MENTAL MODEL: Scroll-driven animations are CSS's version of \"the page is the timeline.\"\n\nTraditional animations: play on load, run for a duration, done.\nScroll-driven: the scroll position IS the timeline. 0% scrolled = frame 1. 50% scrolled = frame 50. 100% scrolled = frame 100.\n\nYou're not triggering an animation on scroll. You're SCRUBBING through it. Like dragging the playhead in a video editor. The user's thumb is the director.\n\nNo JavaScript. No IntersectionObserver. No scroll event listeners eating your battery. Just CSS telling the browser: \"tie this animation to that scroll container.\"",
+    "code": "@keyframes reveal {\n  from {\n    opacity: 0;\n    transform: translateY(50px);\n  }\n  to {\n    opacity: 1;\n    transform: translateY(0);\n  }\n}\n\n.section {\n  animation: reveal linear both;\n  animation-timeline: view();\n  animation-range: entry 0% entry 100%;\n}",
+    "link": {
+      "url": "/css-design/lessons/15-scroll-animations/",
+      "label": "scroll-driven animations in Lesson 15 →"
+    },
+    "poll": null,
+    "likes": 1089,
+    "reposts": 267,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "animation-timeline: view() is the key. It says \"use this element's visibility in the viewport as the timeline.\" When the element enters the viewport, the animation starts scrubbing. When it's fully visible, the animation is complete. Pure declarative scroll effects.",
+        "likes": 334
+      },
+      {
+        "author": "tokenizer",
+        "content": "The performance difference is real. JavaScript scroll listeners run on the main thread. Scroll-driven animations run on the compositor thread. Your scroll stays buttery smooth even with complex animations. The browser was BUILT for this.",
+        "likes": 223
+      }
+    ]
+  },
+  {
+    "id": "css-014",
+    "track": "css",
+    "type": "commitMsg",
+    "author": "tokenizer",
+    "time": "3h",
+    "content": "real commit message from our design system repo:\n\nfeat: add dark mode support\n\n+2 lines changed:\n  [data-theme='dark'] { color-scheme: dark; }\n  body { background: var(--color-surface); color: var(--color-text); }\n\n-847 lines deleted:\n  every single component's manual dark mode override\n\nthe token architecture paid for itself in one PR. semantic tokens turn dark mode from a rewrite into a theme swap.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/10-dark-mode/",
+      "label": "dark mode patterns in Lesson 10 →"
+    },
+    "poll": null,
+    "likes": 1456,
+    "reposts": 378,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "847 lines deleted. That's not a refactor, that's a liberation. Every line of component-level color override was tech debt disguised as a feature. Semantic tokens are the fix.",
+        "likes": 412
+      },
+      {
+        "author": "grid_master",
+        "content": "We did this at our shop. Dark mode went from \"Q3 project\" to \"Tuesday afternoon.\" The PM was suspicious it was done so fast. I showed them the two-line diff. They still don't believe me.",
+        "likes": 334
+      },
+      {
+        "author": "animista",
+        "content": "Don't forget prefers-color-scheme: dark as the default, with data-theme as the manual override. Respect the user's OS preference, let them toggle if they want. Two layers of dark mode, one token system.",
+        "likes": 223
+      }
+    ]
+  },
+  {
+    "id": "css-015",
+    "track": "css",
+    "type": "ratiod",
+    "author": "grid_master",
+    "time": "4h",
+    "content": "Flexbox can do everything Grid can do. You just need to nest enough containers.\n\n[ratio: 2:1 disagree]",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 234,
+    "reposts": 567,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Show me flexbox doing grid-template-areas: 'header header' 'sidebar main' 'footer footer' in one container. I'll wait. Actually no I won't — I have a grid to build.",
+        "likes": 534
+      },
+      {
+        "author": "animista",
+        "content": "Flexbox: \"I lay things out in one direction.\" Grid: \"I lay things out in two directions.\" This isn't a debate. It's reading the spec.",
+        "likes": 445
+      },
+      {
+        "author": "tailwinder",
+        "content": "I've reviewed PRs with 6 nested flex containers trying to replicate a 2-column layout with a spanning header. It was 47 lines. The grid version was 4. FOUR.",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "css-016",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "cascader",
+    "time": "3h",
+    "content": "MENTAL MODEL: @layer is a specificity reset button.\n\nBefore @layer, specificity was a war of escalation. Library styles conflicted with your styles. You added more selectors. They added !important. You added !important too. Everyone lost.\n\n@layer creates explicit priority tiers. Styles in a lower layer ALWAYS lose to styles in a higher layer, regardless of specificity. An ID selector in the base layer loses to a single class in the theme layer.\n\nThink of it like floors in a building. The penthouse beats the basement no matter how big the basement apartment is.",
+    "code": "@layer base, components, utilities;\n\n@layer base {\n  /* Resets, typography — lowest priority */\n  a { color: blue; }        /* specificity: (0,0,1) */\n}\n\n@layer components {\n  /* Your design system */\n  .link { color: green; }    /* specificity: (0,1,0) */\n}\n\n@layer utilities {\n  /* Overrides — highest priority */\n  .text-red { color: red; }  /* specificity: (0,1,0) */\n}\n\n/* .text-red wins over a — not because of specificity,\n   but because utilities layer > base layer. Always. */",
+    "link": {
+      "url": "/css-design/lessons/02-specificity-cascade/",
+      "label": "cascade layers in Lesson 2 →"
+    },
+    "poll": null,
+    "likes": 1034,
+    "reposts": 289,
+    "comments": [
+      {
+        "author": "tailwinder",
+        "content": "Tailwind v4 uses @layer internally: base, components, utilities. That's why a utility class always beats a component class without !important. The layer order IS the specificity system. Understanding @layer means understanding why Tailwind works.",
+        "likes": 345
+      },
+      {
+        "author": "tokenizer",
+        "content": "The building metaphor is perfect. We restructured our entire design system into three layers: tokens, components, overrides. Third-party CSS goes in a reset layer below everything. Zero specificity wars since the migration.",
+        "likes": 267
+      },
+      {
+        "author": "grid_master",
+        "content": "The wild part: unlayered styles beat ALL layered styles. So if you forget to put something in a layer, it automatically wins. That tripped us up for a week. Layer everything or layer nothing.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-017",
+    "track": "css",
+    "type": "interview",
+    "author": "cascader",
+    "time": "5h",
+    "content": "INTERVIEW Q: You're maintaining a large codebase with dozens of CSS files from different teams. Styles are constantly colliding. An engineer added !important to fix a button color and it broke 3 other components.\n\nHow would you architect the CSS to prevent this from happening again?",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/02-specificity-cascade/",
+      "label": "cascade architecture in Lesson 2 →"
+    },
+    "poll": null,
+    "likes": 756,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Three strategies that work together: 1) @layer ordering — define explicit priority tiers so component styles always beat resets. 2) :where() to zero out specificity on utility selectors so they're easy to override. 3) Component-scoped custom properties so each component's colors/spacing come from its own namespace, not global selectors.",
+        "likes": 312
+      },
+      {
+        "author": "tokenizer",
+        "content": "The root cause is always the same: no agreed-upon specificity architecture. Whether you use BEM, CSS Modules, or @layer, the point is having A system. Any system beats the \"everyone writes whatever selectors they want\" approach that led to the !important chain.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "css-018",
+    "track": "css",
+    "type": "tip",
+    "author": "cascader",
+    "time": "2h",
+    "content": "PSA: :where() and :is() do the SAME thing with ONE critical difference.\n\n:is(.card, .panel) .title — specificity of the MOST specific selector in the list.\n:where(.card, .panel) .title — specificity of ZERO. Always.\n\n:is() is for when you want the selector to have weight in the cascade.\n:where() is for when you want to define defaults that are trivially overridable.\n\nLibrary authors: use :where() for everything. Let consumers override without fighting your specificity.",
+    "code": "/* :is() — takes the highest specificity in the list */\n:is(#sidebar, .panel) a { color: blue; }\n/* specificity: (1,0,1) — because #sidebar is (1,0,0) */\n\n/* :where() — always zero specificity */\n:where(#sidebar, .panel) a { color: blue; }\n/* specificity: (0,0,1) — only the 'a' counts */\n\n/* Perfect for CSS resets */\n:where(ul, ol) { margin: 0; padding: 0; list-style: none; }\n/* Anyone can override this with just ul { } */",
+    "link": {
+      "url": "/css-design/lessons/02-specificity-cascade/",
+      "label": ":where() vs :is() in Lesson 2 →"
+    },
+    "poll": null,
+    "likes": 823,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "This is why modern CSS resets use :where() everywhere. :where(body, h1, h2, h3, p) { margin: 0; } gives you a clean slate that a single element selector can override. No more fighting your reset.",
+        "likes": 289
+      },
+      {
+        "author": "tailwinder",
+        "content": "Tailwind's preflight reset uses :where() for exactly this reason. bg-white on a div beats the reset because the reset has zero specificity. It's invisible until you need it to be.",
+        "likes": 198
+      },
+      {
+        "author": "tokenizer",
+        "content": "Library authors take note: if you ship a component library with high-specificity selectors, your users will hate you. :where() everything. Let the consumer's cascade decisions win.",
+        "likes": 167
+      }
+    ]
+  },
+  {
+    "id": "css-019",
+    "track": "css",
+    "type": "spotBug",
+    "author": "cascader",
+    "time": "8h",
+    "content": "SPOT THE BUG: I'm trying to style a link that's inside either a .card or a .sidebar, but my styles aren't applying to the sidebar links. What's wrong?",
+    "code": ".card a,\n.sidebar a {\n  color: var(--color-primary);\n  text-decoration: none;\n}\n\n/* Later in the stylesheet... */\n#sidebar a {\n  color: inherit;\n}",
+    "link": {
+      "url": "/css-design/lessons/02-specificity-cascade/",
+      "label": "specificity conflicts in Lesson 2 →"
+    },
+    "poll": null,
+    "likes": 356,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Classic specificity collision. Your first rule uses .sidebar (class = 0,1,1). The second rule uses #sidebar (ID = 1,0,1). The ID selector wins, so sidebar links get color: inherit. Fix: either use the same selector type consistently, or wrap your earlier rule in @layer so the layer order controls priority instead of specificity math.",
+        "likes": 245
+      },
+      {
+        "author": "grid_master",
+        "content": "This is why codebases that mix IDs and classes for styling are a minefield. Pick one convention and stick with it. IDs for JavaScript hooks, classes for CSS. Always.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "css-020",
+    "track": "css",
+    "type": "hotTake",
+    "author": "cascader",
+    "time": "1d",
+    "content": "hot take: !important isn't a CSS problem. it's a TEAM problem.\n\nevery !important in your codebase is a developer saying \"I give up trying to understand why my style isn't applying.\" it's a white flag. a surrender.\n\nthe fix isn't banning !important. the fix is teaching specificity. if your team can read a selector and calculate its weight in their head, !important becomes unnecessary.\n\ntools don't fail. understanding fails.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/02-specificity-cascade/",
+      "label": "the !important escape hatch in Lesson 2 →"
+    },
+    "poll": null,
+    "likes": 1678,
+    "reposts": 445,
+    "comments": [
+      {
+        "author": "tailwinder",
+        "content": "The only legitimate use of !important is in utility classes that MUST win. Tailwind's ! modifier exists for this. !text-red-500 adds !important because you're saying \"I know what I'm doing and this override is intentional.\" Intentional > accidental.",
+        "likes": 389
+      },
+      {
+        "author": "tokenizer",
+        "content": "We added a stylelint rule that flags !important and requires a comment explaining WHY. The number dropped from 130 to 4. Three of the remaining four are in print stylesheets. The fourth is in a legacy widget we can't touch.",
+        "likes": 312
+      },
+      {
+        "author": "grid_master",
+        "content": "Accessibility styles are the one place !important is correct. .visually-hidden needs !important because it MUST override any layout style. Screen readers don't care about your specificity architecture.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-021",
+    "track": "css",
+    "type": "til",
+    "author": "cascader",
+    "time": "3h",
+    "content": "TIL: @scope lets you define where styles START applying and where they STOP. It's CSS containment boundaries.\n\n@scope (.card) to (.card-footer) means \"style everything inside .card but NOT inside .card-footer.\" The styles literally have a ceiling.\n\nThis is what Shadow DOM tried to solve but with the ergonomics of regular CSS. No JavaScript, no custom elements, just scoped styles.",
+    "code": "@scope (.card) to (.card-footer) {\n  /* These styles apply inside .card\n     but stop at .card-footer */\n  p {\n    color: var(--color-text);\n    line-height: 1.6;\n  }\n  a {\n    color: var(--color-primary);\n  }\n}\n\n/* The footer has its own scope */\n@scope (.card-footer) {\n  a {\n    color: var(--color-muted);\n    font-size: 0.875rem;\n  }\n}",
+    "link": {
+      "url": "/css-design/lessons/07-nesting/",
+      "label": "CSS scoping patterns in Lesson 7 →"
+    },
+    "poll": null,
+    "likes": 567,
+    "reposts": 123,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "This is massive for design systems. Component styles that genuinely can't leak into children they shouldn't affect. No BEM naming hacks, no CSS Modules compilation, just native scope boundaries.",
+        "likes": 234
+      },
+      {
+        "author": "grid_master",
+        "content": "The 'to' keyword is the game changer. Without it, @scope is just a fancier nesting syntax. WITH it, you get donut scoping — styles apply to the outer ring but not the inner hole. That's genuinely new CSS power.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "css-022",
+    "track": "css",
+    "type": "spotBug",
+    "author": "grid_master",
+    "time": "3h",
+    "content": "SPOT THE BUG: My two adjacent paragraphs have margin-top: 20px and margin-bottom: 20px. I expected 40px of space between them but I'm only getting 20px. My devtools confirm both margins are set. What's happening?",
+    "code": "p {\n  margin-top: 20px;\n  margin-bottom: 20px;\n}\n\n/* Expected: 40px between paragraphs */\n/* Actual: 20px between paragraphs */",
+    "link": {
+      "url": "/css-design/lessons/03-box-model/",
+      "label": "margin collapse explained in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 467,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Margin collapse. When two vertical margins meet, they don't add — the larger one wins. 20px bottom meets 20px top = 20px total, not 40px. This is BY DESIGN — it prevents paragraphs from having double spacing. It's a feature that feels like a bug until you understand why it exists.",
+        "likes": 312
+      },
+      {
+        "author": "grid_master",
+        "content": "Fun fact: margin collapse does NOT happen inside flex or grid containers. display: flex on the parent and suddenly your margins add up like you expected. This is why people say \"grid/flex fixed margin collapse\" — it didn't fix it, it just doesn't apply there.",
+        "likes": 256
+      },
+      {
+        "author": "tailwinder",
+        "content": "This is why Tailwind uses space-y-* utilities instead of individual margins. space-y-5 applies margin-top to all children except the first. No collapse, no surprises. But you need to know WHY it exists.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "css-023",
+    "track": "css",
+    "type": "eli5",
+    "author": "grid_master",
+    "time": "5h",
+    "content": "ELI5: Block Formatting Context (BFC)\n\nImagine a container is a room. Normally, things inside can \"leak out\" — floats overflow, margins collapse with neighbors.\n\nCreating a BFC is like putting walls around the room. Nothing leaks in. Nothing leaks out. Floats are contained. Margins stop collapsing with the outside world.\n\nHow to build the walls? overflow: hidden. display: flow-root (the modern way). display: flex. display: grid. Each of these creates a new BFC.\n\nThe container becomes its own little universe.",
+    "code": "/* Old way — hides overflow as a side effect */\n.container {\n  overflow: hidden; /* creates BFC */\n}\n\n/* Modern way — no side effects */\n.container {\n  display: flow-root; /* creates BFC, that's its whole job */\n}\n\n/* Also creates BFC automatically */\n.container {\n  display: flex; /* or grid */\n}",
+    "link": {
+      "url": "/css-design/lessons/03-box-model/",
+      "label": "formatting contexts in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 634,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "display: flow-root is the cleanest solution because it does ONE thing: create a BFC. overflow: hidden creates a BFC as a side effect, which means you also clip overflowing content. Know the difference.",
+        "likes": 289
+      },
+      {
+        "author": "animista",
+        "content": "The float-clearing hack (.clearfix::after { content: ''; display: block; clear: both; }) was just creating a BFC the hard way. If you're still using clearfix in 2026, please stop. display: flow-root exists.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-024",
+    "track": "css",
+    "type": "tip",
+    "author": "grid_master",
+    "time": "2h",
+    "content": "PRO TIP: Logical properties are the future. Stop writing margin-left and start writing margin-inline-start.\n\nWhy? Because margin-left is always left. But margin-inline-start is left in LTR languages and RIGHT in RTL languages. One property, works globally.\n\nIf your app will ever support Arabic, Hebrew, or any RTL language, logical properties save you from doubling every layout rule.",
+    "code": "/* Physical properties — breaks in RTL */\n.card {\n  margin-left: 1rem;\n  padding-right: 2rem;\n  border-bottom: 1px solid;\n  text-align: left;\n}\n\n/* Logical properties — works everywhere */\n.card {\n  margin-inline-start: 1rem;\n  padding-inline-end: 2rem;\n  border-block-end: 1px solid;\n  text-align: start;\n}",
+    "link": {
+      "url": "/css-design/lessons/04-logical-properties/",
+      "label": "logical properties in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "We switched our entire token system to logical properties. --spacing-inline-start instead of --spacing-left. When we launched the Arabic version, layout just... worked. Zero layout bugs. The naming convention did the heavy lifting.",
+        "likes": 267
+      },
+      {
+        "author": "tailwinder",
+        "content": "Tailwind v4 defaults to logical properties. ms-4 is margin-inline-start, me-4 is margin-inline-end. The physical classes (ml-4, mr-4) still work but the logical ones are the path forward.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-025",
+    "track": "css",
+    "type": "interview",
+    "author": "grid_master",
+    "time": "8h",
+    "content": "INTERVIEW Q: Explain the difference between auto-fit and auto-fill in CSS Grid. When would you use each?",
+    "code": "/* auto-fill */\ngrid-template-columns: repeat(auto-fill, minmax(200px, 1fr));\n\n/* auto-fit */\ngrid-template-columns: repeat(auto-fit, minmax(200px, 1fr));",
+    "link": {
+      "url": "/css-design/lessons/05-grid-layout/",
+      "label": "auto-fit vs auto-fill in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 678,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "auto-fill creates as many tracks as fit, even if they're empty. auto-fit creates tracks AND collapses empty ones to zero width. When you have fewer items than columns: auto-fill leaves gaps, auto-fit stretches items to fill the row. For a card grid with unknown item count, auto-fit is usually what you want.",
+        "likes": 345
+      },
+      {
+        "author": "cascader",
+        "content": "The visual test: put 2 items in a container wide enough for 4. With auto-fill, you see 2 items and 2 empty slots. With auto-fit, you see 2 items stretched across the full width. That's the entire difference.",
+        "likes": 267
+      },
+      {
+        "author": "tailwinder",
+        "content": "I have seen senior engineers mix these up in production. The names are too similar. I remember it as: auto-FIT fits items to the container. auto-FILL fills the container with tracks.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "css-026",
+    "track": "css",
+    "type": "thread",
+    "author": "grid_master",
+    "time": "1d",
+    "content": "THREAD: CSS Subgrid is here and it solves the alignment problem that has haunted component design for years.\n\n1/ The problem: You have a card grid. Each card has a title, description, and button. The titles are different lengths. The buttons don't align across cards because each card's internal layout is independent.\n\n2/ Without subgrid, you hack it: fixed heights on title areas, line-clamp, absolute positioning the button. All fragile. All break with dynamic content.\n\n3/ With subgrid: the card's children participate in the PARENT grid's row tracks. The title row, description row, and button row are shared across all cards. Everything aligns automatically.\n\n4/ grid-template-rows: subgrid on the card means \"don't create your own rows — inherit them from my parent grid.\" The parent defines the rhythm. The children follow it.\n\n5/ This is what CSS Grid was always building toward. A single grid that coordinates children, grandchildren, and great-grandchildren. No hacks. No fixed heights. Just alignment.",
+    "code": ".card-grid {\n  display: grid;\n  grid-template-columns: repeat(3, 1fr);\n  /* Each card spans 3 rows */\n  grid-template-rows: auto auto 1fr;\n  gap: 1rem;\n}\n\n.card {\n  display: grid;\n  grid-row: span 3;\n  /* Inherit parent's row tracks */\n  grid-template-rows: subgrid;\n  gap: 0.5rem;\n}\n\n/* Now .card > h3, .card > p, .card > button\n   all align across cards automatically */",
+    "link": {
+      "url": "/css-design/lessons/06-subgrid/",
+      "label": "subgrid patterns in Lesson 6 →"
+    },
+    "poll": null,
+    "likes": 1234,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The alignment problem has been CSS's biggest embarrassment for 20 years. Subgrid finally solves it natively. No JavaScript measurement, no ResizeObserver hacks, no fixed heights. Just grid-template-rows: subgrid.",
+        "likes": 412
+      },
+      {
+        "author": "tokenizer",
+        "content": "Design systems people are going to cry tears of joy. The \"cards with aligned content\" pattern is in literally every design system spec, and until now it required JavaScript or fragile CSS hacks. Subgrid makes it a two-line solution.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "css-027",
+    "track": "css",
+    "type": "poll",
+    "author": "grid_master",
+    "time": "12h",
+    "content": "CSS Grid named areas: love them or leave them?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "Love — readable layouts are worth the verbosity",
+          "pct": 52
+        },
+        {
+          "text": "Use for page layout, skip for components",
+          "pct": 31
+        },
+        {
+          "text": "Skip — line numbers and span are cleaner",
+          "pct": 12
+        },
+        {
+          "text": "Never used them honestly",
+          "pct": 5
+        }
+      ],
+      "totalVotes": 2134
+    },
+    "likes": 456,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "52% have taste. grid-template-areas is the ONLY CSS property where you can visually see the layout by reading the code. 'header header' / 'sidebar main' / 'footer footer' — that's ASCII art that actually compiles. Name one other CSS feature that does that.",
+        "likes": 234
+      },
+      {
+        "author": "cascader",
+        "content": "The 31% are pragmatic. Named areas shine for page-level layouts where the visual mapping matters. For a component with 2 rows and 2 columns, grid-row: 1 / -1 is honestly fine. Match the tool to the scale.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "css-028",
+    "track": "css",
+    "type": "hotTake",
+    "author": "grid_master",
+    "time": "3h",
+    "content": "hot take: CSS masonry layout doesn't need a new display value. grid-template-rows: masonry is the correct approach and the CSSWG made the right call.\n\nmasonry is just grid with relaxed row placement. items flow into the shortest column. that's it. it's not a new layout mode — it's a grid modifier.\n\nthe people wanting display: masonry are the same people who wanted display: flexgrid. not everything needs its own display type. sometimes a keyword on an existing system is the right abstraction.",
+    "code": "/* Masonry — when it ships */\n.gallery {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));\n  grid-template-rows: masonry;\n  gap: 1rem;\n}\n\n/* That's it. Items pack into the shortest column.\n   No JavaScript. No measuring heights.\n   Just grid doing what grid does best. */",
+    "link": {
+      "url": "/css-design/lessons/05-grid-layout/",
+      "label": "upcoming grid features in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 789,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "animista",
+        "content": "Pinterest engineers have been calculating column heights in JavaScript for 15 YEARS. One CSS property replaces thousands of lines of layout math. The browser already knows element heights — let it do the work.",
+        "likes": 334
+      },
+      {
+        "author": "tailwinder",
+        "content": "I want this so badly. Every masonry library I've used either causes layout shifts, requires ResizeObserver, or breaks with dynamic content. grid-template-rows: masonry would just... work. Ship it already.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "css-029",
+    "track": "css",
+    "type": "spotBug",
+    "author": "grid_master",
+    "time": "5h",
+    "content": "SPOT THE BUG: I'm trying to center a div both horizontally and vertically in its parent. It centers horizontally but stays stuck at the top. What's wrong?",
+    "code": ".parent {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}\n\n.child {\n  width: 200px;\n  height: 200px;\n  background: coral;\n}",
+    "link": {
+      "url": "/css-design/lessons/04-logical-properties/",
+      "label": "centering patterns in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 534,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The parent has no height. Flex containers don't magically become full-height. If .parent is a div, it's only as tall as its content. Add height: 100vh (or height: 100% with a html, body { height: 100% } chain). align-items: center can only center within the available space — and right now that space is 200px tall.",
+        "likes": 312
+      },
+      {
+        "author": "grid_master",
+        "content": "Even shorter: display: grid; place-items: center; height: 100vh; on the parent. Three properties. But you STILL need the height. That's the part everyone forgets.",
+        "likes": 245
+      },
+      {
+        "author": "tailwinder",
+        "content": "h-screen flex items-center justify-center. But yeah, the lesson is the same — you need an explicit height on the container. Tailwind's h-screen is just height: 100vh with a friendlier name.",
+        "likes": 167
+      }
+    ]
+  },
+  {
+    "id": "css-030",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "grid_master",
+    "time": "1d",
+    "content": "MENTAL MODEL: flex-grow doesn't set size. It distributes LEFTOVER space.\n\nflex-grow: 1 doesn't mean \"take up 1 unit of space.\" It means \"take up 1 share of whatever space is LEFT after all items reach their base size.\"\n\nThree items with flex-grow: 1, 2, 1 in a 1000px container where each item's content needs 100px: leftover = 1000 - 300 = 700px. Item 1 gets 100 + 175 = 275px. Item 2 gets 100 + 350 = 450px. Item 3 gets 100 + 175 = 275px.\n\nThe base size MATTERS. flex-grow divides the REMAINDER, not the total.",
+    "code": "/* Common misconception */\n.item-a { flex-grow: 1; } /* NOT 25% of container */\n.item-b { flex-grow: 3; } /* NOT 75% of container */\n\n/* What actually happens:\n   1. Each item starts at its content/basis size\n   2. LEFTOVER space is divided 1:3\n   3. Final sizes depend on content + share of remainder */\n\n/* If you want actual ratios, use flex-basis */\n.item-a { flex: 1 1 0%; } /* NOW it's 25% */\n.item-b { flex: 3 1 0%; } /* NOW it's 75% */\n/* flex-basis: 0% means \"start from zero,\n   so ALL space is leftover\" */",
+    "link": {
+      "url": "/css-design/lessons/04-logical-properties/",
+      "label": "flexbox sizing model in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 945,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "flex: 1 1 0% is the version most people actually want when they write flex-grow: 1. Setting basis to 0% means ALL container space is \"leftover,\" so flex-grow ratios become actual proportional sizes. The shorthand hides the critical detail.",
+        "likes": 367
+      },
+      {
+        "author": "tailwinder",
+        "content": "Tailwind's flex-1 class is flex: 1 1 0%. grow is flex-grow: 1 without changing the basis. Subtle but important difference. flex-1 items are proportional. grow items add leftover space to their natural size.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-031",
+    "track": "css",
+    "type": "tip",
+    "author": "grid_master",
+    "time": "2h",
+    "content": "PSA: align-items and align-content are NOT the same thing.\n\nalign-items: positions each item within its row/track.\nalign-content: positions all the rows/tracks within the container.\n\nalign-items affects individuals. align-content affects the group.\n\nIf you have a single row of flex items, align-content does nothing because there's only one row to position. align-items is what you want 95% of the time.",
+    "code": "/* align-items: each item within its row */\n.flex-container {\n  display: flex;\n  flex-wrap: wrap;\n  align-items: center; /* each item centered in ITS row */\n}\n\n/* align-content: all rows within container */\n.flex-container {\n  display: flex;\n  flex-wrap: wrap;\n  height: 500px;\n  align-content: center; /* all rows clustered in center */\n}\n\n/* align-content needs:\n   1. Multiple rows (flex-wrap: wrap)\n   2. Extra space (explicit height)\n   Without both, it has nothing to distribute */",
+    "link": null,
+    "poll": null,
+    "likes": 612,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Same distinction exists in Grid: align-items positions items within their cells, align-content positions the row tracks within the grid container. And justify-items/justify-content for the inline axis. Four properties, two axes, two scopes.",
+        "likes": 245
+      },
+      {
+        "author": "animista",
+        "content": "The naming is genuinely confusing. I remember it as: -items = each individual item. -content = the whole group of content. Works for align-, justify-, and place- prefixes.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "css-032",
+    "track": "css",
+    "type": "ratiod",
+    "author": "tailwinder",
+    "time": "6h",
+    "content": "gap is just margin with better marketing.\n\n[ratio: 3:1 disagree]",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 198,
+    "reposts": 456,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "Margin is on the ITEM. Gap is on the CONTAINER. margin adds spacing outside an element — including the first and last child. gap adds spacing BETWEEN items only. No :first-child { margin-left: 0 } overrides. No negative margin hacks. Gap is structurally different, not just cosmetically different.",
+        "likes": 445
+      },
+      {
+        "author": "cascader",
+        "content": "Margin collapses. Gap doesn't. Margin is directional (top, right, bottom, left). Gap is relational (between siblings). Try getting 20px between flex items with margin without also adding 20px before the first item. I'll wait.",
+        "likes": 389
+      },
+      {
+        "author": "animista",
+        "content": "Gap is also animatable in a clean way. Transition the gap on a container and ALL items re-space smoothly. Try that with individual margins. You'd need to transition every single item's margin property.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-033",
+    "track": "css",
+    "type": "interview",
+    "author": "grid_master",
+    "time": "1d",
+    "content": "INTERVIEW Q: You need to build a responsive product grid that works from mobile to 4K screens. Requirements: minimum card width of 280px, cards stretch to fill available space, no media queries, and no horizontal scroll on any screen size.\n\nWrite the CSS. One rule.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/05-grid-layout/",
+      "label": "intrinsic grid patterns in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 823,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)). That's it. auto-fit stretches items to fill the row. minmax(min(280px, 100%), 1fr) means \"at least 280px or the full container width (whichever is smaller), at most 1fr.\" The min() prevents overflow on screens smaller than 280px.",
+        "likes": 389
+      },
+      {
+        "author": "cascader",
+        "content": "One rule. Zero media queries. Works from 280px phone screens to 3840px monitors. This is why CSS Grid is the most important layout feature ever added to CSS. The browser does the responsive math FOR you.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "css-034",
+    "track": "css",
+    "type": "tip",
+    "author": "cascader",
+    "time": "8h",
+    "content": "PRO TIP: container queries can use container query units. cqi, cqb, cqw, cqh, cqmin, cqmax.\n\n1cqi = 1% of the query container's inline size. This means you can size things relative to their container, not the viewport.\n\nfont-size: 3cqi means the text grows and shrinks with the container width. Put a card in a sidebar: small text. Put it in the main area: bigger text. Same CSS, different context.\n\nViewport units are global. Container query units are local. That's the paradigm shift.",
+    "code": ".card-container {\n  container-type: inline-size;\n}\n\n.card h2 {\n  /* Font scales with container width */\n  font-size: clamp(1rem, 4cqi, 2rem);\n}\n\n.card .icon {\n  /* Icon scales with container too */\n  width: 8cqi;\n  height: 8cqi;\n}\n\n@container (min-width: 400px) {\n  .card {\n    /* Switch to horizontal layout */\n    flex-direction: row;\n  }\n}",
+    "link": {
+      "url": "/css-design/lessons/09-container-queries/",
+      "label": "container query units in Lesson 9 →"
+    },
+    "poll": null,
+    "likes": 712,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "Combine cqi with clamp() and you get truly fluid typography that respects the component's context, not the viewport. clamp(1rem, 4cqi, 2rem) is the container-aware version of clamp(1rem, 2vw, 2rem).",
+        "likes": 289
+      },
+      {
+        "author": "tokenizer",
+        "content": "We defined container-relative token scales: --text-responsive-sm: clamp(0.75rem, 3cqi, 0.875rem). The same component renders appropriately in a 200px sidebar widget and an 800px hero section. One token, infinite contexts.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-035",
+    "track": "css",
+    "type": "hotTake",
+    "author": "cascader",
+    "time": "12h",
+    "content": "hot take: container queries will kill most media queries within 5 years.\n\nmedia queries ask \"how wide is the VIEWPORT?\" but components don't live in viewports. they live in sidebars, modals, card grids, and dashboards.\n\na card that's 300px wide in a sidebar and 600px wide in the main content needs COMPONENT-level breakpoints, not viewport breakpoints.\n\ncontainer queries ask the right question: \"how wide is MY container?\" that's the question responsive design always should have been asking.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/09-container-queries/",
+      "label": "container queries replacing media queries in Lesson 9 →"
+    },
+    "poll": null,
+    "likes": 1345,
+    "reposts": 389,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "Media queries will stick around for top-level page layout decisions. Container queries will handle everything else. The two are complementary, not competitive. Use media queries for the scaffold, container queries for the furniture.",
+        "likes": 312
+      },
+      {
+        "author": "tailwinder",
+        "content": "Tailwind's @container support means writing @md:flex-row inside a container context. Same mental model as responsive utilities, but scoped to the container. If you already think in breakpoints, you already think in container queries.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "css-036",
+    "track": "css",
+    "type": "til",
+    "author": "cascader",
+    "time": "2h",
+    "content": "TIL: :has() can be combined with :not() for incredibly powerful selectors.\n\nform:has(input:invalid):not(:has(input:focus)) — style the form when there's an invalid input BUT only when that input isn't currently focused. Translation: show the error state only AFTER the user leaves the field.\n\nNo JavaScript. No onBlur handlers. No state management. One CSS selector doing what used to take 15 lines of React.",
+    "code": "/* Show error state only after user leaves the field */\nform:has(input:invalid):not(:has(input:focus)) {\n  .error-message {\n    display: block;\n  }\n}\n\n/* Style a fieldset when ALL its inputs are valid */\nfieldset:not(:has(input:invalid)) {\n  border-color: var(--color-success);\n}\n\n/* Show a submit button only when form is complete */\nform:not(:has(input:placeholder-shown)):not(:has(input:invalid)) {\n  .submit-btn {\n    opacity: 1;\n    pointer-events: auto;\n  }\n}",
+    "link": {
+      "url": "/css-design/lessons/08-has-selector/",
+      "label": "advanced :has() patterns in Lesson 8 →"
+    },
+    "poll": null,
+    "likes": 934,
+    "reposts": 245,
+    "comments": [
+      {
+        "author": "animista",
+        "content": "That submit button pattern is insane. The button appears only when all fields are filled AND valid. Pure CSS. No useState, no validation library, no form controller. I need to rethink every form I've ever built.",
+        "likes": 389
+      },
+      {
+        "author": "tokenizer",
+        "content": "The :placeholder-shown trick is clever — if the placeholder is showing, the input is empty. Combine with :invalid for type checking. CSS is becoming a state machine and I'm here for it.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-037",
+    "track": "css",
+    "type": "spotBug",
+    "author": "cascader",
+    "time": "5h",
+    "content": "SPOT THE BUG: I'm using CSS nesting but the nested class selector isn't working. Parent styles apply but child styles don't. What's wrong?",
+    "code": ".card {\n  background: white;\n  border-radius: 8px;\n\n  .title {\n    font-weight: bold;\n    font-size: 1.25rem;\n  }\n\n  p {\n    color: gray;\n  }\n}",
+    "link": {
+      "url": "/css-design/lessons/07-nesting/",
+      "label": "CSS nesting rules in Lesson 7 →"
+    },
+    "poll": null,
+    "likes": 378,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "This actually works in all modern browsers now! The original nesting spec required & before element selectors (& p { }), but that restriction was removed. Both .title and p selectors work nested. If this isn't applying, check your browser version — you need Chrome 120+, Firefox 117+, or Safari 17.2+. The early nesting implementations had the & requirement.",
+        "likes": 267
+      },
+      {
+        "author": "tailwinder",
+        "content": "If you're stuck on an older browser, the & prefix makes it work everywhere nesting is supported: & .title { } and & p { }. The & is never wrong — it's just no longer required for most cases. When in doubt, use &.",
+        "likes": 189
+      },
+      {
+        "author": "grid_master",
+        "content": "The one place you still NEED & is when the nested selector starts with an identifier that could be mistaken for a property. Like width { } inside a rule — the parser might think that's a declaration. & width { } removes ambiguity. Edge case but real.",
+        "likes": 134
+      }
+    ]
+  },
+  {
+    "id": "css-038",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "cascader",
+    "time": "8h",
+    "content": "MENTAL MODEL: The CSS cascade is a tiebreaker algorithm with 8 levels. Most people only know 2.\n\nFrom highest to lowest priority:\n1. Transitions (active transitions always win)\n2. !important user-agent styles\n3. !important user styles\n4. !important author styles\n5. Animations (@keyframes)\n6. Normal author styles (this is where you live)\n7. Normal user styles\n8. Normal user-agent styles (browser defaults)\n\nWithin level 6, the tiebreakers are: @layer order, specificity, then source order.\n\nMost CSS \"bugs\" happen because people skip straight to specificity without checking if they're even on the right level.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/02-specificity-cascade/",
+      "label": "the full cascade algorithm in Lesson 2 →"
+    },
+    "poll": null,
+    "likes": 1123,
+    "reposts": 289,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "Wait, transitions beat !important? Yes. An actively transitioning property ignores !important during the transition. That's why you can't !important your way out of a janky transition — the browser prioritizes smooth motion over your override.",
+        "likes": 312
+      },
+      {
+        "author": "tokenizer",
+        "content": "The @layer insertion at level 6 is the game changer. Before layers, specificity was the only tiebreaker at the author level. Now you have a whole new dimension to organize your styles before specificity even enters the conversation.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "css-039",
+    "track": "css",
+    "type": "tip",
+    "author": "tailwinder",
+    "time": "3h",
+    "content": "PRO TIP: @apply is an anti-pattern in Tailwind v4. Yes, it still works. No, you shouldn't use it.\n\n@apply takes utility classes and converts them back into regular CSS. You're literally undoing the entire point of utilities — co-location with markup.\n\nIf you need reusable styles, extract a component. If you need a one-off override, write vanilla CSS. @apply is the worst of both worlds: you lose the readability of utilities AND the power of the cascade.",
+    "code": "/* Don't do this */\n.btn-primary {\n  @apply bg-blue-500 text-white px-4 py-2 rounded-lg\n    hover:bg-blue-600 transition-colors;\n}\n\n/* Do this instead — extract a component */\n/* Button.tsx */\n<button className=\"bg-blue-500 text-white px-4 py-2\n  rounded-lg hover:bg-blue-600 transition-colors\">\n  {children}\n</button>\n\n/* Or write actual CSS if you need the cascade */\n.btn-primary {\n  background: var(--color-primary);\n  color: white;\n  padding: 0.5rem 1rem;\n  border-radius: 0.5rem;\n}",
+    "link": {
+      "url": "/css-design/lessons/14-tailwind-v4/",
+      "label": "@apply alternatives in Lesson 14 →"
+    },
+    "poll": null,
+    "likes": 789,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Thank you. @apply is Tailwind admitting that sometimes you need CSS. But instead of writing CSS, it makes you write CSS in Tailwind syntax compiled back to CSS. The indirection adds complexity without adding value.",
+        "likes": 345
+      },
+      {
+        "author": "tokenizer",
+        "content": "The one place @apply made sense was in global styles like typography that can't be tied to a component. But Tailwind v4's @theme and CSS custom properties handle that better. @apply was a bridge. The bridge isn't needed anymore.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-040",
+    "track": "css",
+    "type": "poll",
+    "author": "tailwinder",
+    "time": "5h",
+    "content": "Biggest Tailwind v4 change that will break existing projects?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "No more tailwind.config.js",
+          "pct": 38
+        },
+        {
+          "text": "Oxide engine (new compiler)",
+          "pct": 18
+        },
+        {
+          "text": "CSS-first configuration with @theme",
+          "pct": 29
+        },
+        {
+          "text": "Removed deprecated utilities",
+          "pct": 15
+        }
+      ],
+      "totalVotes": 1876
+    },
+    "likes": 534,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "tailwinder",
+        "content": "38% are right. The config file removal is the biggest migration pain. Every plugins array, every theme.extend, every custom utility defined in JS — all needs to move to CSS. But once it's there? Your config IS your CSS. No build-time surprises.",
+        "likes": 267
+      },
+      {
+        "author": "tokenizer",
+        "content": "The @theme migration is actually the smoothest path. Your JS config values map almost 1:1 to CSS custom properties. theme.colors.brand becomes --color-brand. The names change, the concepts don't.",
+        "likes": 198
+      },
+      {
+        "author": "cascader",
+        "content": "The Oxide engine rewrite is invisible to most users but it's a 10x speed improvement. Your Tailwind builds go from \"grab a coffee\" to \"it was already done.\" That's the change I care about most.",
+        "likes": 156
+      }
+    ]
+  },
+  {
+    "id": "css-041",
+    "track": "css",
+    "type": "hotTake",
+    "author": "tailwinder",
+    "time": "8h",
+    "content": "hot take: arbitrary values in Tailwind (like w-[137px] or bg-[#1a2b3c]) aren't cheating. they're the escape hatch for when the design doesn't fit the scale.\n\nevery design system has one-off values. a hero section that's exactly 680px tall. a brand color that doesn't fit the palette. pretending everything fits a 4px grid is a fantasy.\n\narbitrary values let you break the rules explicitly instead of fighting the framework silently. that's good DX.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 867,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "The danger is when arbitrary values become the norm. If more than 10% of your utilities are arbitrary, your design tokens are incomplete. The escape hatch should be rare, not the default route.",
+        "likes": 312
+      },
+      {
+        "author": "cascader",
+        "content": "In Tailwind v4, arbitrary values compile to CSS custom properties under the hood. w-[137px] becomes --tw-width: 137px. So even your escape hatches are inspectable in devtools. That's a nice touch.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-042",
+    "track": "css",
+    "type": "thread",
+    "author": "tailwinder",
+    "time": "2d",
+    "content": "THREAD: The utility-first vs semantic CSS debate is over. Here's why both sides were right.\n\n1/ Semantic CSS (BEM): .card__title--highlighted. Readable class names. Clear intent. But 47 developers writing 47 naming conventions. The abstraction leaks.\n\n2/ Utility-first (Tailwind): text-xl font-bold text-blue-600. No naming decisions. Constrained values. But the HTML gets noisy and you lose semantic meaning.\n\n3/ The synthesis: Tailwind v4 + CSS custom properties + component extraction. Use utilities for layout and spacing. Use semantic tokens for colors and typography. Extract components for reuse.\n\n4/ The real lesson: the methodology matters less than the constraints. Any system that prevents developers from inventing colors, choosing random spacing, and naming things inconsistently will work.\n\n5/ BEM people: your naming discipline was right. Tailwind people: your constraint enforcement was right. Token people: your abstraction layer was right. The answer was always all three.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1567,
+    "reposts": 412,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "\"The methodology matters less than the constraints.\" Frame this. Print it. Put it on the wall of every frontend standup room. I've seen clean BEM codebases and messy Tailwind codebases. The tool isn't the variable. The discipline is.",
+        "likes": 445
+      },
+      {
+        "author": "tokenizer",
+        "content": "Design tokens are the shared language between all three approaches. Whether your button is .btn-primary, bg-brand text-white, or styled with --button-bg — the TOKEN is what makes it consistent. Tokens are methodology-agnostic. That's their superpower.",
+        "likes": 334
+      }
+    ]
+  },
+  {
+    "id": "css-043",
+    "track": "css",
+    "type": "til",
+    "author": "animista",
+    "time": "3h",
+    "content": "TIL: The View Transitions API lets you animate between page states with CSS. Navigate between pages and the browser cross-fades them like a movie transition. Add view-transition-name to elements and they morph between pages.\n\nA product thumbnail on the listing page can MORPH into the full image on the detail page. The browser figures out the position, size, and timing. You just name the elements.\n\nNo FLIP technique. No JavaScript animation libraries. Just two CSS properties.",
+    "code": "/* Give elements a shared transition name */\n.product-image {\n  view-transition-name: product-hero;\n}\n\n/* Customize the transition animation */\n::view-transition-old(product-hero) {\n  animation: fade-out 0.3s ease-out;\n}\n\n::view-transition-new(product-hero) {\n  animation: fade-in 0.3s ease-in;\n}\n\n/* Or let the browser handle it — just morph */\n::view-transition-group(product-hero) {\n  animation-duration: 0.4s;\n}",
+    "link": {
+      "url": "/css-design/lessons/15-scroll-animations/",
+      "label": "view transitions in Lesson 15 →"
+    },
+    "poll": null,
+    "likes": 1123,
+    "reposts": 298,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The FLIP technique (First, Last, Invert, Play) was 40 lines of JavaScript to do what view-transition-name does in one line of CSS. Browser APIs keep eating JavaScript's lunch. And I love watching it happen.",
+        "likes": 378
+      },
+      {
+        "author": "grid_master",
+        "content": "This works with MPAs too, not just SPAs. Cross-document view transitions mean your server-rendered pages can have app-like transitions. The browser handles the snapshot, diff, and animation. Progressive enhancement at its finest.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-044",
+    "track": "css",
+    "type": "spotBug",
+    "author": "animista",
+    "time": "5h",
+    "content": "SPOT THE BUG: My animation runs but it snaps back to the start state when it finishes. I want it to stay at the final keyframe. What's missing?",
+    "code": "@keyframes slide-in {\n  from {\n    opacity: 0;\n    transform: translateX(-50px);\n  }\n  to {\n    opacity: 1;\n    transform: translateX(0);\n  }\n}\n\n.element {\n  animation: slide-in 0.5s ease-out;\n}",
+    "link": {
+      "url": "/css-design/lessons/11-animations/",
+      "label": "animation fill modes in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 445,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "You need animation-fill-mode: forwards (or use the shorthand: animation: slide-in 0.5s ease-out forwards). Without it, the element reverts to its pre-animation state when the animation ends. 'forwards' says \"keep the styles from the last keyframe.\" 'both' is even better — it applies the first keyframe immediately AND keeps the last one.",
+        "likes": 312
+      },
+      {
+        "author": "animista",
+        "content": "My mnemonic: forwards = stay at the finish line. backwards = start at the starting line (even during delay). both = do BOTH. none = pretend the animation never happened. I use 'both' 99% of the time.",
+        "likes": 234
+      },
+      {
+        "author": "tokenizer",
+        "content": "In the shorthand, 'both' or 'forwards' goes after the timing function. animation: slide-in 0.5s ease-out both. The order is: name, duration, easing, fill-mode. Or just use animation-fill-mode separately for clarity.",
+        "likes": 156
+      }
+    ]
+  },
+  {
+    "id": "css-045",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "animista",
+    "time": "1d",
+    "content": "MENTAL MODEL: CSS animations run on the compositor thread. BUT only if you're animating the right properties.\n\nTwo lanes:\n- Fast lane (compositor): transform, opacity. These don't trigger layout or paint. The GPU handles them at 60fps without touching the main thread.\n- Slow lane (main thread): width, height, top, left, margin, padding. These trigger layout recalculation. Every frame. On the main thread. Blocking JavaScript.\n\nRule: ONLY animate transform and opacity. Move things with translateX, not left. Resize things with scale, not width. Fade things with opacity, not visibility.\n\nSame visual result. Completely different performance.",
+    "code": "/* SLOW — triggers layout every frame */\n.element {\n  transition: left 0.3s, width 0.3s;\n}\n.element:hover {\n  left: 100px;\n  width: 200px;\n}\n\n/* FAST — compositor only, GPU-accelerated */\n.element {\n  transition: transform 0.3s;\n}\n.element:hover {\n  transform: translateX(100px) scaleX(1.5);\n}\n\n/* Both look the same to the user.\n   One runs at 60fps. One might not. */",
+    "link": {
+      "url": "/css-design/lessons/11-animations/",
+      "label": "animation performance in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 978,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Chrome DevTools → Performance → check \"Rendering\" → enable \"Paint flashing.\" Green rectangles show what's being repainted. If your animation is flashing green on every frame, you're on the slow lane. Transform/opacity animations show zero green flashes.",
+        "likes": 345
+      },
+      {
+        "author": "grid_master",
+        "content": "This is why all those \"smooth scroll\" libraries that animate scrollTop feel janky on mobile. They're running on the main thread. The native CSS scroll-behavior: smooth runs on the compositor. Let the browser do the work.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-046",
+    "track": "css",
+    "type": "tip",
+    "author": "animista",
+    "time": "2h",
+    "content": "PRO TIP: prefers-reduced-motion isn't optional. It's an accessibility requirement.\n\nSome users have vestibular disorders. Motion triggers nausea, dizziness, or seizures. Your parallax hero and slide-in animations are literally making people sick.\n\nThe fix takes 4 lines. Wrap your animations in a media query. Provide reduced alternatives. Always.",
+    "code": "/* Full animation for users who want it */\n.card {\n  animation: slide-in 0.5s ease-out both;\n}\n\n/* Reduced motion: instant appearance, no movement */\n@media (prefers-reduced-motion: reduce) {\n  .card {\n    animation: fade-in 0.2s ease-out both;\n  }\n}\n\n/* Nuclear option: disable ALL animations site-wide */\n@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: 0.01ms !important;\n    animation-iteration-count: 1 !important;\n    transition-duration: 0.01ms !important;\n  }\n}",
+    "link": {
+      "url": "/css-design/lessons/11-animations/",
+      "label": "accessible animations in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 1234,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The nuclear option is a good starting point. Put it in your reset stylesheet. Then selectively opt animations back in with prefers-reduced-motion: no-preference for animations you've verified are safe. Default to no motion, opt into motion.",
+        "likes": 378
+      },
+      {
+        "author": "tokenizer",
+        "content": "We add a --motion-duration token: 0.3s by default, 0.01ms in reduced-motion. Every animation uses var(--motion-duration). One token controls the entire system's motion. Reduced motion users get instant state changes.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "css-047",
+    "track": "css",
+    "type": "interview",
+    "author": "animista",
+    "time": "8h",
+    "content": "INTERVIEW Q: The design team wants a progress bar that fills from 0% to a dynamic value when it scrolls into view. The value comes from a data attribute. No JavaScript animation library allowed.\n\nHow do you build this with modern CSS?",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/15-scroll-animations/",
+      "label": "scroll-triggered CSS in Lesson 15 →"
+    },
+    "poll": null,
+    "likes": 623,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "animista",
+        "content": "Three pieces: 1) Register a custom property: @property --progress { syntax: '<percentage>'; initial-value: 0%; inherits: false; }. 2) Set the target value inline: style=\"--target: 75%\". 3) Use scroll-driven animation: animation-timeline: view() to scrub from 0% to var(--target) as the element enters the viewport. The @property registration is key — without it, CSS can't interpolate percentages in custom properties.",
+        "likes": 312
+      },
+      {
+        "author": "cascader",
+        "content": "The @property rule is the unsung hero here. It tells the browser \"this custom property is a percentage and you can transition it.\" Without the type declaration, --progress is just a string and the browser can't animate between values. Types make custom properties animatable.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "css-048",
+    "track": "css",
+    "type": "commitMsg",
+    "author": "animista",
+    "time": "2h",
+    "content": "real commit from a broadcast graphics project:\n\nfix: score bug ticker stutters during overtime\n\n- will-change: transform was set permanently, exhausting compositor layers\n- switched to adding will-change only during active animation via .animating class\n- ticker now holds 60fps even with 40+ scores scrolling simultaneously\n\nwill-change is a hint, not a permanent fixture. treat it like a hotel reservation — book it when you need it, check out when you're done.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/12-broadcast-css/",
+      "label": "broadcast performance in Lesson 12 →"
+    },
+    "poll": null,
+    "likes": 756,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "will-change: transform on every element is the CSS equivalent of adding index to every database column. Sure, each individual one is an optimization. All of them together is a performance disaster. The browser promotes each element to its own compositor layer. 40 layers = 40x the memory.",
+        "likes": 334
+      },
+      {
+        "author": "cascader",
+        "content": "The hotel reservation analogy is perfect. Check in: element.classList.add('animating'). Check out: transitionend event removes the class. The browser allocates the compositor layer just for the duration of the animation.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-049",
+    "track": "css",
+    "type": "tip",
+    "author": "animista",
+    "time": "5h",
+    "content": "PRO TIP: Scroll-driven animations have TWO timeline types and people keep confusing them.\n\nscroll() — tied to the scroll CONTAINER's position. 0% = top of page, 100% = bottom of page. The whole page is the timeline.\n\nview() — tied to the ELEMENT's visibility. 0% = element enters viewport, 100% = element exits viewport. Each element has its own timeline.\n\nscroll() = page-level effects (progress bars, parallax)\nview() = element-level effects (reveal on scroll, entrance animations)",
+    "code": "/* scroll() — progress bar that fills as you scroll the page */\n.progress-bar {\n  animation: fill linear;\n  animation-timeline: scroll();\n}\n@keyframes fill {\n  to { width: 100%; }\n}\n\n/* view() — element fades in when it enters viewport */\n.section {\n  animation: reveal linear both;\n  animation-timeline: view();\n  animation-range: entry 0% entry 100%;\n}\n@keyframes reveal {\n  from { opacity: 0; transform: translateY(30px); }\n  to { opacity: 1; transform: translateY(0); }\n}",
+    "link": {
+      "url": "/css-design/lessons/15-scroll-animations/",
+      "label": "scroll vs view timelines in Lesson 15 →"
+    },
+    "poll": null,
+    "likes": 845,
+    "reposts": 189,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "animation-range is the precision tool. 'entry 0% entry 100%' means \"start when the element begins entering, complete when it's fully entered.\" You can also use 'contain 0% contain 100%' for while it's fully in view, or 'exit 0% exit 100%' for the exit phase.",
+        "likes": 312
+      },
+      {
+        "author": "grid_master",
+        "content": "The page-level progress bar with scroll() is a one-liner that used to require an IntersectionObserver + requestAnimationFrame + manual width calculation. CSS ate JavaScript's lunch and didn't even burp.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-050",
+    "track": "css",
+    "type": "hotTake",
+    "author": "animista",
+    "time": "1d",
+    "content": "hot take: CSS animations are better than JavaScript animations for 90% of use cases.\n\nbut that last 10% — physics-based springs, gesture-driven interactions, complex choreography — that's where Framer Motion and GSAP earn their keep.\n\nknowing WHEN to reach for JavaScript is more important than knowing HOW to use it. if your animation can be described as \"from state A to state B over duration T,\" CSS handles it. if it needs to respond to velocity, momentum, or multi-gesture input, reach for JS.\n\nthe best animators use both. the worst use one for everything.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1089,
+    "reposts": 267,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The decision tree: Can I describe it with @keyframes? CSS. Does it need to react to user input mid-animation? JavaScript. Does it run on scroll? CSS (scroll-driven animations). Does it need spring physics? JavaScript. Simple framework.",
+        "likes": 345
+      },
+      {
+        "author": "tailwinder",
+        "content": "transition-* handles 80% of UI animations. @keyframes handles 10%. JavaScript handles 10%. If you're importing a 30KB animation library for hover effects, you have a tool selection problem, not an animation problem.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "css-051",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "tokenizer",
+    "time": "8h",
+    "content": "MENTAL MODEL: Design tokens have three audiences.\n\n1. Designers: tokens = constraints. \"You can use these 8 blues and nothing else.\" Prevents the 47-shades-of-blue problem.\n\n2. Developers: tokens = variables with meaning. --color-error isn't just red. It's \"the color that means something went wrong.\" Change the shade, keep the meaning.\n\n3. Machines: tokens = a format. The W3C Design Tokens spec defines a JSON schema. Figma exports it. Style Dictionary transforms it. CSS custom properties consume it. One truth, many outputs.\n\nIf your tokens only serve one audience, you're using a third of the power.",
+    "code": "/* W3C Design Token Format (tokens.json) */\n{\n  \"color\": {\n    \"primary\": {\n      \"$value\": \"#3b82f6\",\n      \"$type\": \"color\",\n      \"$description\": \"Primary brand color\"\n    }\n  }\n}\n\n/* Transformed to CSS */\n:root { --color-primary: #3b82f6; }\n\n/* Transformed to Tailwind v4 */\n@theme { --color-primary: #3b82f6; }\n\n/* Transformed to iOS */\nUIColor(red: 0.23, green: 0.51, blue: 0.96, alpha: 1)",
+    "link": {
+      "url": "/css-design/lessons/13-design-tokens/",
+      "label": "W3C token format in Lesson 13 →"
+    },
+    "poll": null,
+    "likes": 734,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The three-audience framing is perfect. Designers think in constraints. Developers think in variables. Build tools think in schemas. Tokens are the Rosetta Stone between all three worlds.",
+        "likes": 289
+      },
+      {
+        "author": "tailwinder",
+        "content": "Tailwind v4's @theme block IS the CSS output of a design token pipeline. If you're already doing tokens → Style Dictionary → CSS custom properties, Tailwind v4 just consumes them directly. Zero friction.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-052",
+    "track": "css",
+    "type": "tip",
+    "author": "tokenizer",
+    "time": "3h",
+    "content": "PRO TIP: Naming tokens semantically doesn't mean naming them after components. It means naming them after INTENT.\n\nBad: --button-blue, --card-border-gray\nBetter: --color-primary, --color-border\nBest: --color-action-default, --color-border-subtle\n\n\"action-default\" tells you when to use it (actions) and what variant it is (default). \"primary\" is vague — primary for what? Text? Backgrounds? Borders? Intent-based naming scales.",
+    "code": "/* Component-based (doesn't scale) */\n:root {\n  --button-bg: #3b82f6;\n  --card-border: #e5e7eb;\n  --nav-text: #111827;\n}\n\n/* Intent-based (scales beautifully) */\n:root {\n  --color-action-default: #3b82f6;\n  --color-action-hover: #2563eb;\n  --color-border-subtle: #e5e7eb;\n  --color-border-strong: #6b7280;\n  --color-text-primary: #111827;\n  --color-text-secondary: #6b7280;\n}",
+    "link": {
+      "url": "/css-design/lessons/13-design-tokens/",
+      "label": "token naming strategies in Lesson 13 →"
+    },
+    "poll": null,
+    "likes": 623,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Intent-based naming also makes dark mode trivial. --color-text-primary is #111827 in light mode and #f9fafb in dark mode. The name doesn't change. The intent is the same. Only the value swaps. If you named it --dark-gray, dark mode makes no sense.",
+        "likes": 312
+      },
+      {
+        "author": "grid_master",
+        "content": "We use a three-part convention: category-property-variant. --color-surface-raised, --spacing-inline-compact, --radius-component-pill. Once you internalize the pattern, you can guess any token name without looking it up.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-053",
+    "track": "css",
+    "type": "spotBug",
+    "author": "tokenizer",
+    "time": "5h",
+    "content": "SPOT THE BUG: My dark mode toggle works, but one component ignores the theme change. Its background stays white in dark mode. All other components switch correctly. What's going on?",
+    "code": ":root {\n  --color-surface: #ffffff;\n  --color-text: #111827;\n}\n\n[data-theme=\"dark\"] {\n  --color-surface: #1a1a2e;\n  --color-text: #f9fafb;\n}\n\n/* This component ignores dark mode */\n.modal {\n  background: white;\n  color: var(--color-text);\n}",
+    "link": {
+      "url": "/css-design/lessons/10-dark-mode/",
+      "label": "token-based dark mode in Lesson 10 →"
+    },
+    "poll": null,
+    "likes": 389,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "The background is hardcoded to 'white' instead of var(--color-surface). The color uses the token, so it switches. The background doesn't, so it stays white. This is why token adoption must be ALL or nothing within a component. One hardcoded value defeats the entire system.",
+        "likes": 312
+      },
+      {
+        "author": "cascader",
+        "content": "This is the #1 dark mode bug in every codebase. A search for 'background: white', 'background: #fff', 'color: black', 'color: #000' will find every component that's going to break in dark mode. Fix them ALL before shipping the toggle.",
+        "likes": 245
+      },
+      {
+        "author": "tailwinder",
+        "content": "Tailwind catches this because bg-white compiles to background: white, but bg-surface (custom token) compiles to background: var(--color-surface). If you're consistent with semantic utility names, hardcoded colors are visually obvious in code review.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "css-054",
+    "track": "css",
+    "type": "poll",
+    "author": "tokenizer",
+    "time": "6h",
+    "content": "How do you manage design tokens in a multi-brand design system (same components, different brand themes)?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "CSS custom properties with brand class on body",
+          "pct": 42
+        },
+        {
+          "text": "Separate token JSON files per brand, compiled to CSS",
+          "pct": 33
+        },
+        {
+          "text": "Tailwind config per brand with shared components",
+          "pct": 15
+        },
+        {
+          "text": "CSS @import with brand-specific theme sheets",
+          "pct": 10
+        }
+      ],
+      "totalVotes": 1543
+    },
+    "likes": 567,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "42% have the right instinct. [data-brand='acme'] { --color-primary: #E63946; } [data-brand='globex'] { --color-primary: #2A9D8F; }. Same component CSS, different token values. The cascade handles the rest. But for production scale, the 33% approach (compile from JSON) gives you type safety and platform outputs.",
+        "likes": 289
+      },
+      {
+        "author": "cascader",
+        "content": "The key insight: your component CSS should NEVER reference a brand directly. If a component says 'color: var(--acme-red)', you've coupled the component to the brand. Components consume semantic tokens. Brands define them. Indirection is the whole game.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-055",
+    "track": "css",
+    "type": "eli5",
+    "author": "tokenizer",
+    "time": "1d",
+    "content": "ELI5: Semantic vs Primitive Tokens\n\nPrimitive tokens are paint cans. --blue-500, --red-400, --gray-100. They tell you WHAT the color is.\n\nSemantic tokens are room labels. --color-danger, --color-surface, --color-brand. They tell you WHERE to use it.\n\nYou don't walk into a paint store and say \"give me danger-colored paint.\" You say \"give me red.\" But when painting your house, you don't say \"put red on the walls.\" You say \"paint the accent wall.\"\n\nPrimitives describe the palette. Semantics describe the purpose. You need both layers.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/13-design-tokens/",
+      "label": "token layers in Lesson 13 →"
+    },
+    "poll": null,
+    "likes": 845,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The paint store analogy is chef's kiss. Nobody walks into Home Depot and asks for \"danger red.\" But nobody labels their interior design plan with \"Sherwin-Williams SW 6871 Positive Red.\" Different contexts, different abstractions.",
+        "likes": 345
+      },
+      {
+        "author": "grid_master",
+        "content": "And the best part: you can swap the paint can without repainting the room. --color-danger: var(--red-500) → --color-danger: var(--orange-600). Every component using --color-danger updates automatically. The rooms don't know or care which paint can is underneath.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-056",
+    "track": "css",
+    "type": "tip",
+    "author": "cascader",
+    "time": "2h",
+    "content": "PRO TIP: color-mix() lets you derive colors mathematically instead of maintaining a full palette of hardcoded values.\n\nNeed a hover state 20% darker? color-mix(in oklch, var(--color-primary), black 20%). Need a transparent version? color-mix(in srgb, var(--color-primary), transparent 50%).\n\nOne base color, infinite variations. No more maintaining --blue-50 through --blue-950 manually.",
+    "code": ":root {\n  --color-primary: #3b82f6;\n}\n\n.button {\n  background: var(--color-primary);\n}\n\n.button:hover {\n  /* 20% darker, blended in oklch for perceptual accuracy */\n  background: color-mix(in oklch, var(--color-primary), black 20%);\n}\n\n.button:active {\n  background: color-mix(in oklch, var(--color-primary), black 35%);\n}\n\n.badge {\n  /* Semi-transparent version of the same color */\n  background: color-mix(in srgb, var(--color-primary), transparent 80%);\n}",
+    "link": {
+      "url": "/css-design/lessons/10-dark-mode/",
+      "label": "color-mix() patterns in Lesson 10 →"
+    },
+    "poll": null,
+    "likes": 734,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "This is transformative for design token systems. Instead of generating 11 shades for every color, we define one base color and derive the rest with color-mix(). Our token file went from 200 color definitions to 30. The math generates the rest.",
+        "likes": 312
+      },
+      {
+        "author": "animista",
+        "content": "The 'in oklch' part matters. oklch is perceptually uniform — mixing in oklch keeps consistent lightness. Mixing in srgb can produce muddy midtones. Use oklch for color variations, srgb for transparency blending.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "css-057",
+    "track": "css",
+    "type": "thread",
+    "author": "animista",
+    "time": "2d",
+    "content": "THREAD: Building an election night results overlay entirely in CSS. No canvas. No SVG. No JavaScript animations.\n\n1/ The base layout: a CSS Grid overlay pinned to the bottom 20% of the screen. position: fixed; bottom: 0; height: 20vh. This is the \"safe zone\" — broadcast standards say lower thirds live here.\n\n2/ The party color bars: flexbox containers where each segment has flex-basis set via a CSS custom property. --dem-pct: 48%; --gop-pct: 51%. The bar literally flexes to match the vote count.\n\n3/ The state flip animation: a transform: rotateY(180deg) transition when a state changes party. The state name card physically flips. Each side has the party color. backface-visibility: hidden. Same technique as a card flip.\n\n4/ The scrolling ticker: translate animation with duplicated content for seamless looping. The trick is duplicating the ticker text and setting animation-duration based on content width. Or use animation-iteration-count: infinite and let it loop.\n\n5/ Live updating? JavaScript pushes new --dem-pct values to custom properties. CSS transitions handle the smooth animation. The JS does data fetching. CSS does all the motion. Clean separation.",
+    "code": "/* Election results bar */\n.results-bar {\n  display: flex;\n  height: 40px;\n  border-radius: 4px;\n  overflow: hidden;\n  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);\n}\n\n.dem-bar {\n  flex-basis: var(--dem-pct, 50%);\n  background: var(--color-dem, #2563eb);\n  transition: flex-basis 0.8s ease-out;\n}\n\n.gop-bar {\n  flex-basis: var(--gop-pct, 50%);\n  background: var(--color-gop, #dc2626);\n  transition: flex-basis 0.8s ease-out;\n}",
+    "link": {
+      "url": "/css-design/lessons/12-broadcast-css/",
+      "label": "election overlay patterns in Lesson 12 →"
+    },
+    "poll": null,
+    "likes": 1456,
+    "reposts": 378,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "The flex-basis trick for vote bars is genius. JS sets --dem-pct: 52.3% and the bar smoothly transitions. No requestAnimationFrame. No interpolation library. CSS transitions do the easing for free.",
+        "likes": 389
+      },
+      {
+        "author": "tokenizer",
+        "content": "The custom properties as a data-binding layer between JS and CSS is the pattern broadcast teams have been using for years. JS manages state. CSS custom properties ARE the state. CSS transitions ARE the animations. Each language doing what it's best at.",
+        "likes": 312
+      },
+      {
+        "author": "cascader",
+        "content": "20% of viewport height for the lower third — that's the broadcast safe zone standard. Title safe area is the inner 80%. Graphics stay in the bottom 20% so they don't obscure talent framing. CSS respects these constraints naturally with vh units.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "css-058",
+    "track": "css",
+    "type": "tip",
+    "author": "animista",
+    "time": "3h",
+    "content": "PRO TIP: Broadcast score bugs (the persistent score display in the corner) use a CSS trick most web devs don't know: negative animation delay.\n\nanimation-delay: -2s on a 10s animation means it STARTS at the 2-second mark. The animation is already 20% complete on first render. No \"loading in\" effect.\n\nBroadcast graphics need to appear instantly mid-show. They can't \"slide in\" when the director cuts to them. Negative delay = already in position.",
+    "code": "/* Score bug — appears instantly, already positioned */\n.score-bug {\n  position: fixed;\n  top: 2vh;\n  right: 2vw;\n  animation: pulse 4s ease-in-out infinite;\n  /* Start at the midpoint — no entrance animation */\n  animation-delay: -2s;\n}\n\n@keyframes pulse {\n  0%, 100% { opacity: 1; }\n  50% { opacity: 0.8; }\n}\n\n/* Ticker that's already scrolling when it appears */\n.ticker {\n  animation: scroll 30s linear infinite;\n  animation-delay: -15s; /* Already halfway through */\n}",
+    "link": {
+      "url": "/css-design/lessons/12-broadcast-css/",
+      "label": "broadcast timing tricks in Lesson 12 →"
+    },
+    "poll": null,
+    "likes": 678,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Negative animation-delay is one of those CSS features that sounds wrong but is explicitly in the spec. The browser calculates the animation state at the negative offset and renders from there. It's time travel for animations.",
+        "likes": 289
+      },
+      {
+        "author": "grid_master",
+        "content": "This is also perfect for staggered animations. Give each item animation-delay: calc(-0.1s * var(--i)) where --i is the item index. The entire group appears to animate simultaneously but with offset timing. No JavaScript stagger logic needed.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-059",
+    "track": "css",
+    "type": "spotBug",
+    "author": "animista",
+    "time": "5h",
+    "content": "SPOT THE BUG: My broadcast ticker text scrolls smoothly in Chrome but stutters badly in Safari. Same CSS, same machine. What's different?",
+    "code": ".ticker-container {\n  overflow: hidden;\n  white-space: nowrap;\n}\n\n.ticker-text {\n  display: inline-block;\n  animation: scroll 20s linear infinite;\n}\n\n@keyframes scroll {\n  from { transform: translateX(100%); }\n  to { transform: translateX(-100%); }\n}",
+    "link": {
+      "url": "/css-design/lessons/12-broadcast-css/",
+      "label": "cross-browser animation fixes in Lesson 12 →"
+    },
+    "poll": null,
+    "likes": 423,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "animista",
+        "content": "Safari's compositor handles long-running transform animations differently. Add will-change: transform to the ticker-text element to explicitly promote it to a compositor layer. Also add -webkit-transform: translateZ(0) as a fallback hint. Safari sometimes needs the explicit GPU promotion that Chrome does automatically.",
+        "likes": 278
+      },
+      {
+        "author": "cascader",
+        "content": "Another Safari gotcha: if the ticker-container has border-radius, Safari creates a new stacking context that can de-optimize the animation. Check if removing border-radius fixes the stutter. If so, apply border-radius to a wrapper div instead.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-060",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "tokenizer",
+    "time": "1d",
+    "content": "MENTAL MODEL: Dark mode is not \"invert all the colors.\" It's a separate token layer.\n\nLight mode: bright surfaces, dark text, subtle shadows, raised cards.\nDark mode: dark surfaces, light text, NO shadows (they're invisible), glowing borders instead.\n\nThe mistake everyone makes: they invert --gray-100 to --gray-900 and call it done. But shadows don't work on dark backgrounds. Borders need to be lighter, not darker. Elevation in dark mode uses luminance, not box-shadow.\n\nDark mode is a complete reskin, not a CSS filter.",
+    "code": "/* Light mode tokens */\n:root {\n  --color-surface-raised: #ffffff;\n  --color-border: #e5e7eb;\n  --shadow-card: 0 1px 3px rgba(0,0,0,0.1);\n  --elevation-method: shadow;\n}\n\n/* Dark mode — NOT just inverted */\n[data-theme=\"dark\"] {\n  --color-surface-raised: #1e293b;\n  --color-border: #334155; /* lighter than surface, not darker */\n  --shadow-card: none; /* shadows invisible on dark bg */\n  --elevation-method: border; /* use borders for elevation */\n}\n\n.card {\n  background: var(--color-surface-raised);\n  border: 1px solid var(--color-border);\n  box-shadow: var(--shadow-card);\n}",
+    "link": {
+      "url": "/css-design/lessons/10-dark-mode/",
+      "label": "dark mode elevation in Lesson 10 →"
+    },
+    "poll": null,
+    "likes": 1012,
+    "reposts": 267,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "\"Shadows are invisible on dark backgrounds\" — this is the insight that separates good dark modes from bad ones. Material Design figured this out years ago: dark mode elevation uses surface color lightness, not shadow depth. Lighter surface = more elevated.",
+        "likes": 367
+      },
+      {
+        "author": "animista",
+        "content": "Another dark mode trap: pure white text (#ffffff) on pure dark backgrounds (#000000) is TOO much contrast. It causes eye strain. Use off-white (#e2e8f0) on dark gray (#0f172a). Softer contrast is more comfortable for extended reading.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "css-061",
+    "track": "css",
+    "type": "tip",
+    "author": "cascader",
+    "time": "3h",
+    "content": "PRO TIP: color-scheme: light dark; on :root does more than you think.\n\nIt tells the browser to use system-appropriate colors for native UI elements: form inputs, scrollbars, autofill backgrounds, focus rings. Without it, a dark mode page has BRIGHT WHITE scrollbars and form inputs.\n\nOne line. Entire native UI adapts. Most \"dark mode\" tutorials forget this and wonder why the scrollbar is blinding.",
+    "code": ":root {\n  color-scheme: light dark;\n}\n\n/* Or force a specific scheme */\n[data-theme=\"dark\"] {\n  color-scheme: dark;\n}\n\n[data-theme=\"light\"] {\n  color-scheme: light;\n}\n\n/* Without color-scheme: dark, these stay bright white:\n   - Scrollbars\n   - <input> backgrounds\n   - <select> dropdowns\n   - <textarea> backgrounds\n   - Autofill highlight\n   - Focus outlines */",
+    "link": {
+      "url": "/css-design/lessons/10-dark-mode/",
+      "label": "color-scheme property in Lesson 10 →"
+    },
+    "poll": null,
+    "likes": 823,
+    "reposts": 189,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "We add color-scheme to our dark mode token swap. It's the FIRST thing that gets set, before any custom properties. The native UI elements adapt instantly, then your tokens handle the rest.",
+        "likes": 312
+      },
+      {
+        "author": "grid_master",
+        "content": "The scrollbar thing drove me crazy for months. Beautiful dark mode, blinding white scrollbar. One CSS property fixed it. I wanted to scream and celebrate simultaneously.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-062",
+    "track": "css",
+    "type": "interview",
+    "author": "tokenizer",
+    "time": "8h",
+    "content": "INTERVIEW Q: Your company has three brands (consumer, enterprise, partner) that share the same component library but have different visual identities — colors, typography, border radius, spacing. How do you architect the CSS so components are brand-agnostic?",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/13-design-tokens/",
+      "label": "multi-brand tokens in Lesson 13 →"
+    },
+    "poll": null,
+    "likes": 712,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "Three-layer architecture: 1) Brand tokens (brand-consumer.css, brand-enterprise.css) define primitives. 2) Semantic tokens map brand primitives to component intentions: --color-action: var(--brand-primary). 3) Components ONLY consume semantic tokens. Loading a different brand CSS file rebrands the entire app. Components never know which brand they're wearing.",
+        "likes": 345
+      },
+      {
+        "author": "cascader",
+        "content": "The critical rule: components must NEVER import brand tokens directly. If a button says background: var(--consumer-blue), you've coupled the component to the brand. background: var(--color-action-default) is brand-agnostic. The semantic layer is the contract between brands and components.",
+        "likes": 289
+      },
+      {
+        "author": "tailwinder",
+        "content": "In Tailwind v4, each brand gets its own @theme block imported conditionally. @import 'brand-consumer-theme.css'; sets all the --color-* and --font-* variables. Components use the same utility classes regardless of brand. The theme IS the brand.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-063",
+    "track": "css",
+    "type": "hotTake",
+    "author": "tokenizer",
+    "time": "5h",
+    "content": "hot take: forced-colors mode (Windows High Contrast) is the accessibility feature every web developer ignores.\n\nforced-colors: active overrides ALL your colors. backgrounds, borders, text — everything gets replaced with system colors. your beautiful gradient buttons? solid color. your subtle borders? gone or system-color.\n\nif you don't test in forced-colors mode, you don't actually care about accessibility. you just care about screen readers. accessibility is bigger than aria labels.",
+    "code": "/* Your default styles */\n.button {\n  background: linear-gradient(135deg, #3b82f6, #8b5cf6);\n  color: white;\n  border: none;\n}\n\n/* In forced-colors mode, the gradient is gone.\n   The button might be invisible. Fix it: */\n@media (forced-colors: active) {\n  .button {\n    border: 2px solid ButtonText;\n    /* System colors: ButtonText, Canvas,\n       LinkText, HighlightText, etc. */\n  }\n}",
+    "link": null,
+    "poll": null,
+    "likes": 934,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Tested our design system in forced-colors mode for the first time. 40% of our interactive elements were invisible. Buttons with no borders disappeared. Icon-only buttons became empty rectangles. We added a @media (forced-colors: active) block to every component. Took two days. Should have been day one.",
+        "likes": 378
+      },
+      {
+        "author": "animista",
+        "content": "CSS custom properties are also overridden in forced-colors mode. var(--color-primary) becomes whatever the system dictates. The only way to use a specific color in forced-colors is forced-color-adjust: none, which should be used EXTREMELY sparingly.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "css-064",
+    "track": "css",
+    "type": "tip",
+    "author": "cascader",
+    "time": "5h",
+    "content": "PRO TIP: Fluid typography with clamp() means you NEVER write a media query for font sizes again.\n\nclamp(1rem, 2.5vw, 2rem) means: minimum 1rem, scales with viewport width, maximum 2rem. One line. Fully responsive. No breakpoints.\n\nThe middle value (2.5vw) is the rate of growth. Higher = grows faster. Lower = grows slower. The min and max are your guardrails.",
+    "code": "/* Fluid type scale — no media queries */\n:root {\n  --text-sm: clamp(0.8rem, 0.17vw + 0.76rem, 0.89rem);\n  --text-base: clamp(1rem, 0.34vw + 0.91rem, 1.19rem);\n  --text-lg: clamp(1.25rem, 0.61vw + 1.1rem, 1.58rem);\n  --text-xl: clamp(1.56rem, 1vw + 1.31rem, 2.11rem);\n  --text-2xl: clamp(1.95rem, 1.56vw + 1.56rem, 2.81rem);\n  --text-3xl: clamp(2.44rem, 2.38vw + 1.85rem, 3.75rem);\n}\n\nh1 { font-size: var(--text-3xl); }\nh2 { font-size: var(--text-2xl); }\np  { font-size: var(--text-base); }",
+    "link": {
+      "url": "/css-design/lessons/03-box-model/",
+      "label": "fluid typography in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 856,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "We generate these clamp values from a type scale tool (utopia.fyi). Input: min viewport, max viewport, min font size, max font size, scale ratio. Output: the exact clamp values. No manual math needed.",
+        "likes": 312
+      },
+      {
+        "author": "grid_master",
+        "content": "For container-responsive typography, replace vw with cqi: clamp(1rem, 4cqi, 2rem). Now the font scales with the component's container, not the viewport. Same technique, different reference.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "css-065",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "cascader",
+    "time": "1d",
+    "content": "MENTAL MODEL: Variable fonts are a single file that contains an infinite number of fonts.\n\nTraditional: load Regular.woff2, Bold.woff2, Italic.woff2 = 3 HTTP requests, ~150KB.\nVariable: load Inter-Variable.woff2 = 1 HTTP request, ~100KB. Contains EVERY weight from 100 to 900 and everything in between.\n\nfont-weight: 450? Sure. font-weight: 723? Why not. You're not picking from a list. You're sliding along a continuous axis.\n\nAnd weight is just one axis. Width, slant, optical size — variable fonts have multiple dimensions you can animate.",
+    "code": "@font-face {\n  font-family: 'Inter';\n  src: url('/fonts/Inter-Variable.woff2') format('woff2');\n  font-weight: 100 900; /* full range */\n  font-display: swap;\n}\n\n/* Use any weight — not just 400/700 */\n.body { font-weight: 380; }\n.heading { font-weight: 720; }\n\n/* Animate weight on hover */\n.link {\n  font-weight: 400;\n  transition: font-weight 0.2s;\n}\n.link:hover {\n  font-weight: 600;\n}\n\n/* Responsive weight — bolder on larger screens */\nh1 {\n  font-weight: clamp(500, 10vw, 800);\n}",
+    "link": null,
+    "poll": null,
+    "likes": 734,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "animista",
+        "content": "Animating font-weight with variable fonts is buttery smooth. Traditional fonts snap between 400 and 700 because those are the only files loaded. Variable fonts interpolate continuously. The transition is genuinely smooth, not stepped.",
+        "likes": 289
+      },
+      {
+        "author": "tokenizer",
+        "content": "We define weight tokens as ranges: --font-weight-body: 380, --font-weight-emphasis: 520, --font-weight-heading: 720. Designers pick the exact weight that looks right, not the nearest multiple of 100. Variable fonts give typography the same precision as color.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-066",
+    "track": "css",
+    "type": "poll",
+    "author": "cascader",
+    "time": "8h",
+    "content": "Mobile-first or desktop-first CSS? Final answer.",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "Mobile-first (min-width queries)",
+          "pct": 61
+        },
+        {
+          "text": "Desktop-first (max-width queries)",
+          "pct": 14
+        },
+        {
+          "text": "Container queries killed this debate",
+          "pct": 20
+        },
+        {
+          "text": "Depends on the audience",
+          "pct": 5
+        }
+      ],
+      "totalVotes": 2876
+    },
+    "likes": 712,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "61% are correct. Mobile-first means your base styles ARE the smallest screen. Then you ADD complexity with min-width. You're progressively enhancing, not regressively stripping away. The base should be the simplest version.",
+        "likes": 345
+      },
+      {
+        "author": "grid_master",
+        "content": "The 20% who said container queries are the future. Components don't know if they're on mobile or desktop — they know how wide their container is. @container replaces @media for component-level responsiveness. The device doesn't matter. The space does.",
+        "likes": 289
+      },
+      {
+        "author": "tailwinder",
+        "content": "Tailwind is mobile-first by default. sm: md: lg: are all min-width. Writing mobile styles first, then adding sm: and md: variants, is the natural Tailwind workflow. If you're fighting this, you're fighting the framework.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-067",
+    "track": "css",
+    "type": "ratiod",
+    "author": "cascader",
+    "time": "3h",
+    "content": "CSS Modules solved component scoping and we should all just use them.\n\n[ratio: 2:1 disagree]",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 267,
+    "reposts": 389,
+    "comments": [
+      {
+        "author": "tailwinder",
+        "content": "CSS Modules solved scoping by generating random class names. You know what else solves scoping? Just not writing conflicting class names. BEM solved this in 2010. Tailwind solved it by not using custom class names at all. CSS Modules are a build-tool solution to a discipline problem.",
+        "likes": 345
+      },
+      {
+        "author": "cascader",
+        "content": "@scope and @layer solve this natively now. CSS Modules were a necessary hack when the platform couldn't scope styles. The platform can scope styles now. Use the platform.",
+        "likes": 312
+      },
+      {
+        "author": "tokenizer",
+        "content": "CSS Modules have one genuine advantage: they guarantee no collisions without any developer discipline. In a 50-person team where you can't enforce naming conventions, auto-generated scoping is pragmatic. Not elegant, but effective.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-068",
+    "track": "css",
+    "type": "tip",
+    "author": "cascader",
+    "time": "2h",
+    "content": "PRO TIP: content-visibility: auto is the easiest performance win in CSS.\n\nIt tells the browser: \"Don't render this element until it's near the viewport.\" Off-screen content is skipped entirely — no layout, no paint, no composite. The browser renders a placeholder and swaps in the real content as you scroll.\n\nOn a page with 200 product cards, only the visible ~12 get rendered. The rest are deferred. Initial paint drops from 200ms to 30ms.\n\nOne property. 6x faster initial render.",
+    "code": ".product-card {\n  content-visibility: auto;\n  contain-intrinsic-size: 0 300px;\n  /* Tell the browser the approximate height\n     so scrollbar sizing is correct */\n}\n\n/* contain-intrinsic-size prevents layout shifts.\n   Without it, the scrollbar jumps as content\n   is rendered because the browser doesn't know\n   how tall the off-screen elements are. */",
+    "link": null,
+    "poll": null,
+    "likes": 945,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "contain-intrinsic-size is the gotcha. Without it, the scrollbar is wrong because the browser thinks off-screen elements are 0px tall. Set it to the average element height. It doesn't have to be exact — it's a placeholder size.",
+        "likes": 312
+      },
+      {
+        "author": "animista",
+        "content": "Warning: content-visibility: auto can break scroll-driven animations on off-screen elements because they don't exist yet. If you're using animation-timeline: view(), make sure the animated elements aren't hidden by content-visibility.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-069",
+    "track": "css",
+    "type": "spotBug",
+    "author": "cascader",
+    "time": "5h",
+    "content": "SPOT THE BUG: I set will-change: transform on my animated elements for better performance. But now my dropdown menu renders BEHIND elements it should be on top of. Removing will-change fixes the stacking. Why?",
+    "code": ".card {\n  will-change: transform;\n}\n\n.dropdown {\n  position: absolute;\n  z-index: 100;\n  /* Renders behind .card even with z-index: 100 */\n}",
+    "link": null,
+    "poll": null,
+    "likes": 478,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "will-change: transform creates a new stacking context. That means the .card is now its own z-index universe. The dropdown's z-index: 100 only competes within its OWN stacking context, not against the card's. The fix: put the dropdown OUTSIDE the card's DOM hierarchy, or give the card a lower z-index than the dropdown's stacking context.",
+        "likes": 312
+      },
+      {
+        "author": "grid_master",
+        "content": "This is the #1 will-change footgun. Properties that create stacking contexts: will-change: transform, opacity, filter, or any transform property. position: fixed/sticky. isolation: isolate. Every one of these changes how z-index works for all descendants.",
+        "likes": 245
+      },
+      {
+        "author": "animista",
+        "content": "Rule of thumb: never set will-change permanently. Add it just before the animation starts, remove it when the animation ends. This avoids permanent stacking context side effects AND saves GPU memory.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "css-070",
+    "track": "css",
+    "type": "tip",
+    "author": "grid_master",
+    "time": "3h",
+    "content": "PRO TIP: CSS contain property is like putting elements in a box the browser can optimize independently.\n\ncontain: layout — the element's layout doesn't affect siblings. Browser can skip re-laying-out the rest of the page when this element changes.\n\ncontain: paint — nothing inside paints outside the element's bounds. Browser can skip painting this element if it's off-screen.\n\ncontain: size — the element's size doesn't depend on its children. Browser can determine size without rendering children.\n\ncontain: content is shorthand for layout + paint. Use it on independent sections like cards, list items, or widget containers.",
+    "code": "/* Each card is independently contained */\n.card {\n  contain: content; /* layout + paint */\n}\n\n/* Sidebar changes don't trigger main content relayout */\n.sidebar {\n  contain: layout;\n}\n\n/* Strict containment for maximum optimization */\n.widget {\n  contain: strict; /* size + layout + paint */\n  /* Must have explicit width/height because\n     size containment ignores children for sizing */\n}",
+    "link": null,
+    "poll": null,
+    "likes": 567,
+    "reposts": 123,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "contain: content is the sweet spot for most use cases. It tells the browser \"this element is self-contained\" without the sizing restrictions of contain: strict. Use it on every repeated item in a long list.",
+        "likes": 256
+      },
+      {
+        "author": "tokenizer",
+        "content": "contain: layout is also required for container queries. container-type: inline-size implicitly adds containment. That's why container query elements need explicit or intrinsic sizing — the containment prevents them from sizing based on children in the inline axis.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-071",
+    "track": "css",
+    "type": "slackPost",
+    "author": "cascader",
+    "time": "1h",
+    "content": "#css-help\n\njust spent 2 hours debugging why my z-index wasn't working\n\nturns out z-index only works on positioned elements (position: relative/absolute/fixed/sticky) or flex/grid children\n\nmy element had position: static (the default) and I was just throwing bigger numbers at it like z-index: 99999\n\nz-index: 99999 on a static element = z-index: nothing\n\nI am a senior engineer. I have 8 years of experience. I am humbled.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1456,
+    "reposts": 345,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "Every developer has a z-index humbling moment. Mine was discovering that flex children participate in stacking WITHOUT position: relative. I had been adding position: relative to everything inside a flexbox for no reason. For years.",
+        "likes": 412
+      },
+      {
+        "author": "tailwinder",
+        "content": "This is why Tailwind's z-50 class is useless without relative, absolute, fixed, or sticky. The Tailwind docs don't make this clear enough. z-index without positioning is the CSS equivalent of honking in a parked car.",
+        "likes": 334
+      }
+    ]
+  },
+  {
+    "id": "css-072",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "cascader",
+    "time": "8h",
+    "content": "MENTAL MODEL: CSS custom properties are NOT preprocessor variables. They're live, inherited, scoped, and animatable.\n\nSass variables ($color): resolved at BUILD time. Gone from the output CSS. Static.\nCSS custom properties (--color): resolved at RENDER time. Present in the output. Dynamic.\n\nSass: $bg: blue → background: blue (value baked in)\nCSS: --bg: blue → background: var(--bg) (reference preserved)\n\nThe reference is the superpower. You can change --bg at runtime (dark mode toggle), scope it per component (card vs sidebar), inherit it down the DOM tree, and even animate it (with @property).",
+    "code": "/* Sass variable — resolved at build time */\n$spacing: 1rem;\n.card { padding: $spacing; }\n/* Output: .card { padding: 1rem; } — $spacing is GONE */\n\n/* CSS custom property — lives at runtime */\n:root { --spacing: 1rem; }\n.card { padding: var(--spacing); }\n/* Output: same code — var(--spacing) is LIVE */\n\n/* This means you can change it dynamically */\n.compact { --spacing: 0.5rem; }\n/* .card inside .compact uses 0.5rem automatically */",
+    "link": null,
+    "poll": null,
+    "likes": 823,
+    "reposts": 189,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "The scoping behavior is what makes custom properties magical for theming. --color-primary on .sidebar gives sidebar components a different primary color without ANY component code changes. The cascade inherits the scoped value. Sass variables can't do this.",
+        "likes": 345
+      },
+      {
+        "author": "tailwinder",
+        "content": "This is exactly why Tailwind v4 moved from JS config (Sass-like, build-time) to CSS @theme (custom properties, runtime). The entire framework can now be themed dynamically. That was impossible with the old architecture.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-073",
+    "track": "css",
+    "type": "interview",
+    "author": "cascader",
+    "time": "1d",
+    "content": "INTERVIEW Q: Two CSS selectors target the same element. Both have the exact same specificity. Both are in the same @layer. Which one wins and why?",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/02-specificity-cascade/",
+      "label": "cascade order of precedence in Lesson 2 →"
+    },
+    "poll": null,
+    "likes": 545,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Source order. The one that appears LATER in the stylesheet wins. This is the final tiebreaker in the cascade after importance, layer, and specificity are all equal. It's why putting utility classes at the END of your CSS file matters — they override component styles by appearing later.",
+        "likes": 312
+      },
+      {
+        "author": "grid_master",
+        "content": "Follow-up trap question: what if one is in an @import'd file and the other is inline? @import'd styles are inserted at the point of the @import statement. If @import is at the top, those styles come first. Inline styles later in the document win by source order.",
+        "likes": 234
+      },
+      {
+        "author": "tokenizer",
+        "content": "This is why @layer ordering is so powerful — it makes source order irrelevant for inter-layer conflicts. @layer base, components, utilities means utilities ALWAYS beat components regardless of where they appear in the file. Only within the same layer does source order matter.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-074",
+    "track": "css",
+    "type": "hotTake",
+    "author": "grid_master",
+    "time": "8h",
+    "content": "hot take: CSS Shadow DOM is over-engineered isolation for under-complicated problems.\n\nwant style scoping? use @scope. want DOM isolation? use an iframe. want custom elements? use web components without shadow DOM.\n\nshadow DOM creates a boundary so strict that even your OWN design tokens can't cross it without ::part() or CSS custom properties explicitly piercing the shadow boundary.\n\nyou wanted encapsulation. you got a walled garden with a moat, a drawbridge, and a dragon.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1023,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The custom property piercing is genuinely useful though. CSS custom properties DO cross shadow boundaries via inheritance. So your design tokens (--color-primary, --spacing-md) work inside shadow DOM automatically. The inheritance model saves shadow DOM from being completely unusable.",
+        "likes": 345
+      },
+      {
+        "author": "tokenizer",
+        "content": "Design systems teams who chose Shadow DOM for component libraries learned this the hard way. Global styles can't reach inside. Theme switches require custom property bridges. Every new design token needs explicit wiring. @scope gives you 80% of the isolation with 0% of the pain.",
+        "likes": 278
+      }
+    ]
+  },
+  {
+    "id": "css-075",
+    "track": "css",
+    "type": "spotBug",
+    "author": "tailwinder",
+    "time": "3h",
+    "content": "SPOT THE BUG: I'm using Tailwind's dark mode with the 'class' strategy but dark mode isn't activating even though I'm adding the 'dark' class to the <html> element. My config is correct. What's happening?",
+    "code": "<!-- HTML -->\n<html class=\"dark\">\n  <body>\n    <div class=\"bg-white dark:bg-gray-900\">\n      <!-- Always white background -->\n    </div>\n  </body>\n</html>\n\n/* CSS (Tailwind v4) */\n@import \"tailwindcss\";\n\n@custom-variant dark (&:where(.dark, .dark *));",
+    "link": {
+      "url": "/css-design/lessons/14-tailwind-v4/",
+      "label": "Tailwind v4 dark mode in Lesson 14 →"
+    },
+    "poll": null,
+    "likes": 356,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "tailwinder",
+        "content": "Tailwind v4 changed dark mode. It now uses @media (prefers-color-scheme: dark) by DEFAULT. The class strategy requires a custom variant definition. But the variant selector needs to match. Check that your @custom-variant actually generates the right selector. Also, make sure the dark class is on a parent of the element, not just on html — the :where(.dark *) part requires the element to be a descendant.",
+        "likes": 267
+      },
+      {
+        "author": "cascader",
+        "content": "Pro tip: inspect the generated CSS. dark:bg-gray-900 should compile to something like .dark .dark\\:bg-gray-900 { background: ... }. If the selector doesn't match your DOM structure, the custom variant definition is wrong. Always check the output.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-076",
+    "track": "css",
+    "type": "til",
+    "author": "tailwinder",
+    "time": "2h",
+    "content": "TIL: Tailwind v4 has first-class container query support. You can use @container queries with named containers, and there are special @min and @max container query variants.\n\nMark a parent as a container with @container, then use responsive variants scoped to that container's width. Same mental model as sm: md: lg: but relative to the container, not the viewport.",
+    "code": "<!-- Parent is the container -->\n<div class=\"@container\">\n  <!-- Responsive to container width -->\n  <div class=\"flex flex-col @md:flex-row @lg:gap-8\">\n    <img class=\"w-full @md:w-1/3\" />\n    <div class=\"@md:flex-1\">\n      <h2 class=\"text-lg @lg:text-2xl\">Title</h2>\n    </div>\n  </div>\n</div>\n\n<!-- Named container -->\n<div class=\"@container/sidebar\">\n  <div class=\"@md/sidebar:hidden\">\n    Mobile only content\n  </div>\n</div>",
+    "link": {
+      "url": "/css-design/lessons/14-tailwind-v4/",
+      "label": "Tailwind container queries in Lesson 14 →"
+    },
+    "poll": null,
+    "likes": 678,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "@md:flex-row means \"switch to horizontal when the CONTAINER is medium width.\" Not the viewport. The same component works in a narrow sidebar and a wide main area without any changes. This is the responsive design we always wanted.",
+        "likes": 289
+      },
+      {
+        "author": "cascader",
+        "content": "Named containers are the key for nested containers. @md/sidebar vs @md/main distinguish which container you're querying. Without names, the query targets the nearest ancestor container, which can be surprising in deeply nested layouts.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-077",
+    "track": "css",
+    "type": "commitMsg",
+    "author": "grid_master",
+    "time": "5h",
+    "content": "real commit from our app:\n\nrefactor: replace 23 media queries with 4 container queries\n\nThe card component had breakpoints at 480px, 640px, 768px, 1024px, and 1280px because it appeared in sidebars, modals, grids, and full-width sections. Each context needed different breakpoints for the SAME component.\n\nContainer queries: one set of breakpoints based on the card's actual width. Works in every context automatically.\n\n-145 lines. +12 lines.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/09-container-queries/",
+      "label": "container query migration in Lesson 9 →"
+    },
+    "poll": null,
+    "likes": 1234,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "-145 lines, +12 lines. Container queries don't just simplify code — they delete the CONCEPT of \"which viewport width corresponds to which layout context.\" The component knows its own width. That's all it needs to know.",
+        "likes": 389
+      },
+      {
+        "author": "tailwinder",
+        "content": "23 media queries for one component. I've seen worse. We had a data table with 31 media queries because it appeared in dashboards, modals, and sidebars. Container queries reduced it to 3. The PR review took 45 seconds because the before/after was obvious.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-078",
+    "track": "css",
+    "type": "eli5",
+    "author": "grid_master",
+    "time": "12h",
+    "content": "ELI5: auto-fit vs auto-fill\n\nImagine a shelf that holds books. The shelf is 1 meter wide. Each book is at least 20cm wide.\n\nauto-fill: Put as many 20cm slots on the shelf as possible (5 slots). If you only have 3 books, 2 slots stay empty. The books don't stretch.\n\nauto-fit: Put as many 20cm slots as possible, BUT if there aren't enough books, the empty slots COLLAPSE. The 3 books stretch to fill the whole meter.\n\nauto-fill reserves space for books that might come. auto-fit only cares about books that are there.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/05-grid-layout/",
+      "label": "auto-fit vs auto-fill in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 867,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The bookshelf analogy is the best one I've heard. auto-fill is a librarian who reserves shelf space. auto-fit is a minimalist who only uses what's needed. Most people want the minimalist. Use auto-fit.",
+        "likes": 345
+      },
+      {
+        "author": "tailwinder",
+        "content": "I have a sticky note on my monitor that just says \"auto-FIT = FIT to content, auto-FILL = FILL with empty tracks.\" After two years I still need it.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-079",
+    "track": "css",
+    "type": "interview",
+    "author": "animista",
+    "time": "8h",
+    "content": "INTERVIEW Q: A client wants their marketing page to have smooth, performant animations but also needs to be accessible. How do you approach the animation strategy to satisfy both requirements?",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/11-animations/",
+      "label": "accessible animation strategy in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 645,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "animista",
+        "content": "Three layers: 1) Default: full animations using transform/opacity only (compositor thread, 60fps). 2) prefers-reduced-motion: reduce — replace movement with opacity fades or instant state changes. No translateX, no scale, no rotate. 3) prefers-reduced-motion: no-preference — explicitly opt back in to motion. This way reduced motion is the accessible baseline, full motion is the enhancement.",
+        "likes": 312
+      },
+      {
+        "author": "tokenizer",
+        "content": "We use a --motion-duration token that's 0.3s by default and 0.01ms for reduced motion users. Every transition and animation references this token. One media query at the token level controls the entire site's motion. Components don't need individual reduced-motion overrides.",
+        "likes": 245
+      },
+      {
+        "author": "cascader",
+        "content": "Don't forget: prefers-reduced-motion doesn't mean NO motion. It means REDUCED motion. Subtle opacity fades are usually fine. What triggers vestibular issues is large-scale movement, parallax, and rapid direction changes. Keep accessibility conversations nuanced.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-080",
+    "track": "css",
+    "type": "tip",
+    "author": "tokenizer",
+    "time": "3h",
+    "content": "PRO TIP: The W3C Design Token Community Group format (DTCG) uses JSON with $value and $type properties. This is the standard that Figma, Style Dictionary, and design tools are converging on.\n\nIf you're building tokens in 2026 and not using this format, you're building a format that will need migrating. Start with the standard.",
+    "code": "/* W3C DTCG format — tokens.json */\n{\n  \"color\": {\n    \"brand\": {\n      \"primary\": {\n        \"$value\": \"#3b82f6\",\n        \"$type\": \"color\"\n      },\n      \"secondary\": {\n        \"$value\": \"{color.brand.primary}\",\n        \"$type\": \"color\"\n      }\n    },\n    \"text\": {\n      \"default\": {\n        \"$value\": \"#111827\",\n        \"$type\": \"color\"\n      }\n    }\n  },\n  \"spacing\": {\n    \"sm\": {\n      \"$value\": \"0.5rem\",\n      \"$type\": \"dimension\"\n    }\n  }\n}\n\n/* Curly brace references: {color.brand.primary}\n   resolves to #3b82f6 — token aliases! */",
+    "link": {
+      "url": "/css-design/lessons/13-design-tokens/",
+      "label": "W3C token format in Lesson 13 →"
+    },
+    "poll": null,
+    "likes": 578,
+    "reposts": 123,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The $type property is crucial. It tells build tools how to transform the value. A 'color' type becomes a CSS color value. A 'dimension' type becomes rem/px. A 'shadow' type becomes a box-shadow value. Without types, the tool has to guess.",
+        "likes": 267
+      },
+      {
+        "author": "tailwinder",
+        "content": "Style Dictionary 4 supports DTCG format natively. tokens.json → Style Dictionary → CSS custom properties → Tailwind @theme. The pipeline is clean and standardized. No more custom parsers for custom formats.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-081",
+    "track": "css",
+    "type": "hotTake",
+    "author": "cascader",
+    "time": "1d",
+    "content": "hot take: the biggest CSS skill gap isn't selectors, grid, or animations. it's understanding the BOX MODEL.\n\nI've interviewed 200+ frontend candidates. the ones who can't explain the difference between content-box and border-box, or why padding expands an element's size in one mode and doesn't in the other, consistently struggle with EVERYTHING else.\n\nthe box model is the foundation. if your foundation is shaky, every layout you build is shaky. learn the box model so well you could teach it to a child.",
+    "code": "/* content-box (default — this is the confusing one) */\n.box {\n  box-sizing: content-box;\n  width: 200px;\n  padding: 20px;\n  border: 2px solid;\n  /* Total rendered width: 200 + 20 + 20 + 2 + 2 = 244px */\n}\n\n/* border-box (the sane one) */\n.box {\n  box-sizing: border-box;\n  width: 200px;\n  padding: 20px;\n  border: 2px solid;\n  /* Total rendered width: 200px (padding and border inside) */\n  /* Content area: 200 - 20 - 20 - 2 - 2 = 156px */\n}\n\n/* Always use this reset */\n*, *::before, *::after {\n  box-sizing: border-box;\n}",
+    "link": {
+      "url": "/css-design/lessons/03-box-model/",
+      "label": "box model deep dive in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 1345,
+    "reposts": 356,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "box-sizing: border-box should have been the default from day one. The fact that we need a universal reset for the most basic sizing behavior is CSS's original sin. At least we have the reset. Use it. Always.",
+        "likes": 412
+      },
+      {
+        "author": "tailwinder",
+        "content": "Tailwind's preflight includes this reset automatically. If you're using Tailwind, you're already on border-box. If you're NOT using Tailwind, put *, *::before, *::after { box-sizing: border-box; } as the FIRST line of your CSS. Non-negotiable.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "css-082",
+    "track": "css",
+    "type": "spotBug",
+    "author": "grid_master",
+    "time": "5h",
+    "content": "SPOT THE BUG: I'm using CSS Grid with named areas. The layout works in Chrome but Firefox shows the sidebar spanning the wrong area. What's wrong?",
+    "code": ".layout {\n  display: grid;\n  grid-template-columns: 250px 1fr;\n  grid-template-rows: 60px 1fr 40px;\n  grid-template-areas:\n    \"header  header\"\n    \"sidebar main  \"\n    \"footer  footer\";\n}\n\n.sidebar {\n  grid-area: Sidebar; /* Capital S */\n}",
+    "link": {
+      "url": "/css-design/lessons/05-grid-layout/",
+      "label": "grid named areas in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 367,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "Grid area names are CASE SENSITIVE. You defined 'sidebar' (lowercase) in grid-template-areas but referenced 'Sidebar' (capital S) in grid-area. They don't match. grid-area: sidebar (lowercase) fixes it. Chrome was being lenient. Firefox followed the spec.",
+        "likes": 289
+      },
+      {
+        "author": "cascader",
+        "content": "Cross-browser bugs caused by case sensitivity are the worst to debug because the code looks correct at a glance. My rule: all grid area names are lowercase-with-hyphens, same as CSS class naming convention. Consistency prevents these gotchas.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-083",
+    "track": "css",
+    "type": "poll",
+    "author": "animista",
+    "time": "12h",
+    "content": "For a component library's animation system, what's your preferred approach?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "CSS transitions with class toggles",
+          "pct": 44
+        },
+        {
+          "text": "CSS @keyframes for everything",
+          "pct": 12
+        },
+        {
+          "text": "CSS for simple, JS (Framer/GSAP) for complex",
+          "pct": 36
+        },
+        {
+          "text": "Web Animations API",
+          "pct": 8
+        }
+      ],
+      "totalVotes": 1987
+    },
+    "likes": 523,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "animista",
+        "content": "44% nailed it. CSS transitions with class toggles is the backbone. State A → toggle class → State B with smooth transition. Simple, performant, declarative. Save @keyframes for multi-step animations and JavaScript for physics and gesture interactions.",
+        "likes": 267
+      },
+      {
+        "author": "tokenizer",
+        "content": "The 36% hybrid approach is what we ship. Our design system defines --transition-fast (150ms), --transition-normal (250ms), --transition-slow (400ms) tokens. Components use CSS transitions with these tokens. Complex choreography uses Framer Motion. Clear boundary, clear responsibility.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-084",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "tailwinder",
+    "time": "1d",
+    "content": "MENTAL MODEL: Tailwind v4 isn't a CSS framework anymore. It's a CSS compiler.\n\nFramework: provides pre-built styles, you consume them.\nCompiler: reads your code, generates only the CSS you use.\n\nTailwind v4 scans your HTML/JSX, finds utility classes, generates CSS for ONLY those classes. Unused utilities don't exist in the output. The framework is zero-cost at runtime — it's a build-time code generator.\n\nThis is why the output is tiny. You're not loading a framework. You're loading a custom stylesheet generated from YOUR code.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/14-tailwind-v4/",
+      "label": "Tailwind v4 architecture in Lesson 14 →"
+    },
+    "poll": null,
+    "likes": 912,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "This reframing is important. \"Tailwind is a big CSS file\" was always wrong. The OUTPUT is only the CSS you use. A Tailwind site with 50 unique utilities generates ~3KB of CSS. A Tailwind site with 500 utilities generates ~15KB. It scales with YOUR usage, not Tailwind's feature set.",
+        "likes": 345
+      },
+      {
+        "author": "tokenizer",
+        "content": "The compiler model also means Tailwind can do things traditional CSS can't. Arbitrary values, computed utilities, variant combinations — the compiler generates these on-demand. It's Sass-like code generation with CSS-native output.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-085",
+    "track": "css",
+    "type": "thread",
+    "author": "animista",
+    "time": "1d",
+    "content": "THREAD: How to build a broadcast-style overscan-safe layout that works on TV displays.\n\n1/ TVs cut off the edges of the picture. The outer 5% on each side might not be visible. This is called overscan. If your graphics extend to the edge, viewers on older TVs won't see them.\n\n2/ Title safe area: the inner 80% of the screen. ALL text and logos must stay inside this zone. padding: 10vh 10vw on the broadcast container.\n\n3/ Action safe area: the inner 90%. Graphical elements (bars, backgrounds) can extend here but critical content stays in title safe.\n\n4/ Modern 1080p/4K TVs have minimal overscan. But broadcast standards still require compliance. Your CSS should use the safe zones as padding constraints.\n\n5/ The technique: a CSS Grid container with padding for safe zones, position: fixed for overlay graphics, and CSS custom properties for zone boundaries. --title-safe-inset: 10%; --action-safe-inset: 5%;",
+    "code": ":root {\n  --title-safe-inset: 10%;\n  --action-safe-inset: 5%;\n}\n\n.broadcast-overlay {\n  position: fixed;\n  inset: 0;\n  display: grid;\n  grid-template-rows: auto 1fr auto;\n  padding: var(--action-safe-inset);\n}\n\n.broadcast-text {\n  /* Text must stay in title-safe zone */\n  padding: calc(var(--title-safe-inset) - var(--action-safe-inset));\n}\n\n/* Lower third stays inside action safe */\n.lower-third {\n  grid-row: 3;\n  margin-inline: calc(var(--title-safe-inset) - var(--action-safe-inset));\n}",
+    "link": {
+      "url": "/css-design/lessons/12-broadcast-css/",
+      "label": "broadcast safe zones in Lesson 12 →"
+    },
+    "poll": null,
+    "likes": 934,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "CSS custom properties for safe zone insets is the right approach. Different broadcast standards use different margins — NTSC vs PAL, SD vs HD. Set the variables once per standard and the entire layout adjusts. The cascade handles the broadcast spec compliance.",
+        "likes": 312
+      },
+      {
+        "author": "cascader",
+        "content": "The calc() for nested safe zones is clever. Title safe is inside action safe, so the inner padding is the difference. 10% - 5% = 5% additional padding for text. The math is explicit and auditable.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "css-086",
+    "track": "css",
+    "type": "spotBug",
+    "author": "cascader",
+    "time": "8h",
+    "content": "SPOT THE BUG: I'm trying to make a sticky header but it's not sticking. It just scrolls away with the rest of the content. position: sticky is set. What am I missing?",
+    "code": ".page {\n  overflow: auto;\n  height: 100vh;\n}\n\n.header {\n  position: sticky;\n  top: 0;\n  background: white;\n  z-index: 10;\n}\n\n.content {\n  /* lots of content */\n}",
+    "link": null,
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Check if ANY ancestor between the sticky element and the scroll container has overflow: hidden, overflow: auto, or overflow: scroll. Sticky positioning requires the element to have a scrolling ancestor that's also its containing block. An intermediate overflow: hidden creates a new scroll container that clips the sticky behavior. The most common culprit is a wrapper div with overflow: hidden for some unrelated reason.",
+        "likes": 312
+      },
+      {
+        "author": "grid_master",
+        "content": "Another common cause: the sticky element's parent is only as tall as the header itself. Sticky elements stick within their parent's bounds. If the parent is a flex item that shrinks to content size, there's nowhere to stick. The parent needs to be taller than the sticky element for sticking to happen.",
+        "likes": 267
+      },
+      {
+        "author": "tailwinder",
+        "content": "In this specific code: the .page div with overflow: auto becomes the scroll container. The header should stick within .page. If it's not working, check that .header and .content are DIRECT children of .page. If there's a wrapper div between them, the sticky behavior can break.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "css-087",
+    "track": "css",
+    "type": "tip",
+    "author": "animista",
+    "time": "2h",
+    "content": "PRO TIP: CSS cubic-bezier() curves are how you make animations feel physical instead of robotic.\n\nease-in: slow start, fast end — objects falling (accelerating under gravity)\nease-out: fast start, slow end — objects decelerating (sliding to a stop)\nease-in-out: slow start, fast middle, slow end — natural movement\n\nBut the REAL magic is custom curves:\ncubic-bezier(0.34, 1.56, 0.64, 1) — overshoot! The element goes past its target and bounces back. This is what makes UI animations feel alive.",
+    "code": "/* Standard easing — fine but boring */\n.modal {\n  transition: transform 0.3s ease-out;\n}\n\n/* Custom overshoot — feels physical */\n.modal {\n  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);\n}\n\n/* Broadcast-style snap entrance */\n.lower-third {\n  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);\n  /* Fast in, gentle deceleration — professional feel */\n}\n\n/* Material Design standard curve */\n.drawer {\n  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);\n}",
+    "link": {
+      "url": "/css-design/lessons/11-animations/",
+      "label": "easing curves in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 756,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "We define easing tokens: --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1). --ease-overshoot: cubic-bezier(0.34, 1.56, 0.64, 1). Consistent motion language across all components. Designers specify the easing token, not the curve values.",
+        "likes": 289
+      },
+      {
+        "author": "cascader",
+        "content": "cubic-bezier.com lets you visually design curves and see them applied to a moving element. Bookmark it. Every animation professional has this site in muscle memory. Drag the handles, feel the motion, copy the values.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-088",
+    "track": "css",
+    "type": "slackPost",
+    "author": "tokenizer",
+    "time": "2h",
+    "content": "#design-systems\n\njust discovered our token file has --color-grey-500 AND --color-gray-500\n\none is British spelling. the other is American.\n\nthey're different values.\n\n12 components use grey. 34 components use gray. they look identical on screen but they're technically different hex codes (#6b7280 vs #71717a).\n\nI'm adding a linter rule. I'm adding a dictionary. I'm adding a PR template question that says \"did you spell gray correctly?\" I'm losing my mind.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/13-design-tokens/",
+      "label": "token naming conventions in Lesson 13 →"
+    },
+    "poll": null,
+    "likes": 1567,
+    "reposts": 389,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "This is why token naming conventions need to be documented AND enforced. Not just \"we use this naming pattern\" but actually linted. stylelint-config-standard can catch custom property naming inconsistencies. Humans are terrible at consistency. Machines are great at it.",
+        "likes": 412
+      },
+      {
+        "author": "grid_master",
+        "content": "We had --spacing-sm, --spacing-small, and --space-sm in the same codebase. Three tokens. Same value. Different names. Different authors. Different weeks. Naming conventions without enforcement are wishes, not rules.",
+        "likes": 345
+      },
+      {
+        "author": "tailwinder",
+        "content": "Tailwind avoids this entirely because the token names are decided by the framework. gray-500 is gray-500. You don't get to name it. Constraints. Again.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-089",
+    "track": "css",
+    "type": "interview",
+    "author": "animista",
+    "time": "1d",
+    "content": "INTERVIEW Q: Your team is building an interactive data dashboard. Charts, tables, and widgets need to animate smoothly while the main thread handles data processing. How do you ensure animations don't jank when heavy JavaScript is running?",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/11-animations/",
+      "label": "main thread vs compositor in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 678,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "animista",
+        "content": "The core principle: keep animations OFF the main thread. 1) Only animate transform and opacity — these run on the compositor thread, independent of JavaScript. 2) Use CSS animations/transitions instead of requestAnimationFrame for UI motion. 3) For scroll-linked effects, use scroll-driven animations (compositor) instead of scroll event listeners (main thread). 4) will-change: transform promotes elements to their own compositor layer — but use it sparingly.",
+        "likes": 312
+      },
+      {
+        "author": "grid_master",
+        "content": "Practical test: open DevTools → Performance → record while your dashboard updates. Yellow blocks = JavaScript (main thread). Green blocks = paint. Purple blocks = layout. If your animation timing correlates with yellow blocks, it's on the main thread. Compositor animations run independently — no correlation with JS execution.",
+        "likes": 267
+      },
+      {
+        "author": "tokenizer",
+        "content": "We define an --animate-safe property list in our design system: transform, opacity, clip-path, filter. Components can ONLY transition these properties. Any PR that transitions width, height, top, or left gets flagged automatically. Constraint enforcement at the system level.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-090",
+    "track": "css",
+    "type": "ratiod",
+    "author": "tailwinder",
+    "time": "5h",
+    "content": "You don't need to learn CSS if you know Tailwind.\n\n[ratio: 5:1 disagree]",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 178,
+    "reposts": 678,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Tailwind IS CSS. bg-blue-500 compiles to background-color: #3b82f6. flex compiles to display: flex. If you don't understand the CSS that Tailwind generates, you can't debug it. And you WILL need to debug it. Tailwind is a shorthand, not a replacement.",
+        "likes": 534
+      },
+      {
+        "author": "grid_master",
+        "content": "Try debugging a layout issue using only Tailwind class names. \"Why is my flex container not wrapping?\" If you don't know what flex-wrap does and how the flex algorithm distributes space, no amount of Tailwind documentation helps. The mental model IS the CSS spec.",
+        "likes": 445
+      },
+      {
+        "author": "animista",
+        "content": "I've interviewed Tailwind-only developers who couldn't center a div without utilities. Not because they're bad — because they never needed to learn the underlying properties. Then they hit a bug that requires CSS knowledge and they're stuck. Learn CSS first. Then Tailwind is a superpower.",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "css-091",
+    "track": "css",
+    "type": "til",
+    "author": "grid_master",
+    "time": "3h",
+    "content": "TIL: CSS has native aspect-ratio now. No more padding-top hacks.\n\naspect-ratio: 16/9 on an element and it maintains that ratio regardless of width. Works on images, videos, divs, containers — anything.\n\nThe old hack: padding-top: 56.25% (which is 9/16 as a percentage). Worked but was unintuitive. The new way is self-documenting. aspect-ratio: 16/9 tells you exactly what it does.",
+    "code": "/* Old hack — confusing but it worked */\n.video-container {\n  width: 100%;\n  padding-top: 56.25%; /* 9/16 = 0.5625 */\n  position: relative;\n}\n.video-container iframe {\n  position: absolute;\n  inset: 0;\n  width: 100%;\n  height: 100%;\n}\n\n/* Modern — clear and direct */\n.video-container {\n  width: 100%;\n  aspect-ratio: 16/9;\n}\n.video-container iframe {\n  width: 100%;\n  height: 100%;\n}",
+    "link": null,
+    "poll": null,
+    "likes": 678,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The padding-top hack worked because percentage padding is calculated relative to the ELEMENT'S WIDTH, not its height. 56.25% of the width = the correct height for 16:9. Clever but deeply confusing for anyone reading the code. aspect-ratio replaces the hack with intent.",
+        "likes": 289
+      },
+      {
+        "author": "tailwinder",
+        "content": "Tailwind has aspect-video (16/9), aspect-square (1/1), and aspect-auto. Or use arbitrary values: aspect-[4/3]. But it all compiles to the same CSS property. No more padding-top calculations.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "css-092",
+    "track": "css",
+    "type": "hotTake",
+    "author": "grid_master",
+    "time": "12h",
+    "content": "hot take: the best CSS architecture is the one your team will actually follow.\n\nBEM with perfect discipline beats @layer with no discipline. Tailwind with consistent usage beats CSS Modules with random overrides.\n\nI've seen pristine BEM codebases and disastrous Tailwind codebases. the tool is never the bottleneck. the team's agreement on HOW to use the tool is.\n\nstop debating architectures. start enforcing the one you picked.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1234,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "\"Stop debating architectures. Start enforcing the one you picked.\" This should be the first line of every CSS architecture document. The decision is 10% of the value. The enforcement is 90%.",
+        "likes": 389
+      },
+      {
+        "author": "tokenizer",
+        "content": "Enforcement tools: stylelint for CSS conventions, eslint-plugin-tailwindcss for Tailwind order, Style Dictionary for token validation, PR templates with a CSS checklist. Humans agree on rules. Machines enforce them.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "css-093",
+    "track": "css",
+    "type": "spotBug",
+    "author": "animista",
+    "time": "3h",
+    "content": "SPOT THE BUG: I'm trying to create a smooth height transition when toggling a collapsible section. The collapse works but the expansion snaps open instantly — no smooth animation. What's wrong?",
+    "code": ".section {\n  overflow: hidden;\n  transition: height 0.3s ease-out;\n}\n\n.section.collapsed {\n  height: 0;\n}\n\n.section.expanded {\n  height: auto;\n}",
+    "link": {
+      "url": "/css-design/lessons/11-animations/",
+      "label": "height transition tricks in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "animista",
+        "content": "CSS can't transition TO or FROM 'auto'. It doesn't know the numeric value of 'auto' until layout is calculated, and transitions need numeric start and end values. Options: 1) Use max-height instead (e.g., max-height: 0 → max-height: 500px). 2) Use CSS Grid: grid-template-rows: 0fr → grid-template-rows: 1fr (the modern clean solution). 3) Use interpolate-size: allow-keywords (new property that enables transitioning to auto!).",
+        "likes": 378
+      },
+      {
+        "author": "cascader",
+        "content": "The grid-template-rows: 0fr to 1fr trick is the cleanest solution available today. The content div inside the grid wrapper gets overflow: hidden, and the row transition from 0fr to 1fr smoothly reveals it. No max-height guessing. No JavaScript measuring.",
+        "likes": 289
+      },
+      {
+        "author": "grid_master",
+        "content": "interpolate-size: allow-keywords is shipping in browsers and it FINALLY lets you transition height: 0 → height: auto natively. Put it on :root and height transitions to auto just work everywhere. The 15-year-old bug is being fixed.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-094",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "grid_master",
+    "time": "8h",
+    "content": "MENTAL MODEL: CSS Grid has two sizing philosophies and mixing them up causes layout confusion.\n\nIntrinsic sizing: the grid track sizes based on CONTENT. auto, min-content, max-content, fit-content(). The content dictates the size.\n\nExtrinsic sizing: the grid track sizes based on the CONTAINER. fr, percentages, fixed lengths. The available space dictates the size.\n\n1fr means \"1 share of leftover space after intrinsic tracks are sized.\" It's extrinsic. auto means \"as wide as the content needs.\" It's intrinsic.\n\nMixing them: grid-template-columns: auto 1fr auto. The sidebar and aside size to their content. The main area takes everything left. Intrinsic + extrinsic = the holy grail layout.",
+    "code": "/* Pure intrinsic — content decides everything */\ngrid-template-columns: auto auto auto;\n/* Each column = width of its widest item */\n\n/* Pure extrinsic — container decides everything */\ngrid-template-columns: 1fr 2fr 1fr;\n/* Columns split the container 25% / 50% / 25% */\n\n/* Mixed — the sweet spot */\ngrid-template-columns: auto 1fr auto;\n/* Sidebars: content width. Main: all remaining space. */\n\n/* fit-content() — intrinsic with a cap */\ngrid-template-columns: fit-content(200px) 1fr;\n/* Sidebar: as wide as content, but max 200px.\n   Main: everything else. */",
+    "link": {
+      "url": "/css-design/lessons/05-grid-layout/",
+      "label": "grid sizing models in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 823,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "fit-content() is the underused gem here. It's like auto with a max-width. fit-content(300px) means \"take as much space as the content needs, but never more than 300px.\" Perfect for sidebars that should shrink on small screens but not grow past a comfortable reading width.",
+        "likes": 312
+      },
+      {
+        "author": "tailwinder",
+        "content": "In Tailwind, auto columns are grid-cols-[auto_1fr_auto]. Not the prettiest syntax, but it compiles to exactly this. Understanding the CSS behind the arbitrary value makes the Tailwind usage intuitive instead of magical.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-095",
+    "track": "css",
+    "type": "tip",
+    "author": "tokenizer",
+    "time": "5h",
+    "content": "PRO TIP: CSS custom properties have a fallback mechanism that's more powerful than most developers realize.\n\nvar(--color-brand, var(--color-primary, blue)) — tries --color-brand first, falls back to --color-primary, then falls back to the literal value blue.\n\nThis creates a resolution chain. Component tokens fall back to semantic tokens which fall back to hardcoded defaults. If ANY level in the chain is defined, it gets used. If nothing is defined, the hardcoded value saves you from a broken UI.",
+    "code": ".button {\n  /* Resolution chain:\n     1. Component token (most specific)\n     2. Semantic token (design system default)\n     3. Hardcoded fallback (safety net) */\n  background: var(--button-bg, var(--color-primary, #3b82f6));\n  color: var(--button-text, var(--color-on-primary, white));\n  padding: var(--button-padding, var(--spacing-md, 0.75rem 1.5rem));\n}\n\n/* Override at any level */\n.card .button {\n  --button-bg: var(--color-secondary); /* component level */\n}\n\n[data-theme=\"dark\"] {\n  --color-primary: #60a5fa; /* semantic level */\n}",
+    "link": {
+      "url": "/css-design/lessons/13-design-tokens/",
+      "label": "token fallback chains in Lesson 13 →"
+    },
+    "poll": null,
+    "likes": 645,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The fallback chain pattern means components are resilient by default. If someone forgets to define --button-bg, it falls back to --color-primary. If THAT'S missing, it falls back to a hardcoded blue. The button never breaks. It just uses a less specific value.",
+        "likes": 289
+      },
+      {
+        "author": "grid_master",
+        "content": "One gotcha: if a custom property IS defined but set to an invalid value for the property, the fallback is NOT used. var() fallbacks only apply when the property is not defined at all. An empty --button-bg: ; is \"defined\" and will produce an invalid value, not trigger the fallback.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-096",
+    "track": "css",
+    "type": "eli5",
+    "author": "animista",
+    "time": "1d",
+    "content": "ELI5: The difference between transitions and animations.\n\nTransitions are like a light SWITCH. You flip it: off to on. It can dim smoothly between the two states. But it only goes from A to B.\n\nAnimations are like a CHOREOGRAPHY. You can go A → B → C → D → back to A. Multiple steps. Loops. Delays. Direction changes. The whole dance.\n\nUse transitions for: hover effects, state changes, toggles.\nUse animations for: loading spinners, attention seekers, multi-step sequences, anything that runs without user interaction.",
+    "code": "/* Transition — A to B, triggered by state change */\n.button {\n  background: blue;\n  transition: background 0.2s ease;\n}\n.button:hover {\n  background: darkblue;\n  /* Smoothly goes from blue → darkblue */\n}\n\n/* Animation — multi-step, runs on its own */\n@keyframes pulse {\n  0% { transform: scale(1); }\n  50% { transform: scale(1.05); }\n  100% { transform: scale(1); }\n}\n.badge {\n  animation: pulse 2s ease-in-out infinite;\n  /* Loops forever, no trigger needed */\n}",
+    "link": {
+      "url": "/css-design/lessons/11-animations/",
+      "label": "transitions vs animations in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 912,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The switch vs choreography analogy is perfect. And here's the bridge between them: if you find yourself chaining transition with setTimeout in JavaScript to create multi-step sequences, you need @keyframes instead. Let CSS handle the choreography.",
+        "likes": 345
+      },
+      {
+        "author": "tokenizer",
+        "content": "In our design system, transitions are for user-initiated state changes (hover, focus, open/close). Animations are for system-initiated motion (loading, notifications, progress). The trigger source determines which tool to use.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-097",
+    "track": "css",
+    "type": "hotTake",
+    "author": "cascader",
+    "time": "3d",
+    "content": "hot take: CSS is the most misunderstood programming language in web development.\n\nit's not procedural — it's declarative. you describe WHAT you want, not HOW to do it. that's the same paradigm as SQL.\n\nit's not sequential — it's resolved. the cascade resolves conflicts, not execution order. the last line doesn't \"overwrite\" the first — both are evaluated and the cascade picks a winner.\n\nit's not broken — it's designed for a hostile environment where ANY content, in ANY language, at ANY screen size, must be readable. it makes different tradeoffs than other languages because it solves a different problem.\n\nrespect the medium.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1789,
+    "reposts": 456,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "\"Designed for a hostile environment\" is the insight. CSS must handle a 320px phone in Arabic, a 3840px monitor in English, a screen reader, a TV, a printer, and a high-contrast mode. Name one other language that targets that many output environments simultaneously.",
+        "likes": 512
+      },
+      {
+        "author": "tokenizer",
+        "content": "The SQL comparison is underrated. SELECT * FROM elements WHERE class = 'card' isn't that different from .card { }. Both are declarative queries over a dataset (DOM/database). Both resolve conflicts with precedence rules. Both are misunderstood by developers who only think procedurally.",
+        "likes": 389
+      },
+      {
+        "author": "animista",
+        "content": "\"Respect the medium.\" I want this tattooed. CSS isn't broken because it doesn't work like JavaScript. A hammer isn't broken because it doesn't work like a screwdriver. Different tools, different problems, different paradigms.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "css-098",
+    "track": "css",
+    "type": "thread",
+    "author": "tokenizer",
+    "time": "2d",
+    "content": "THREAD: Building a design token pipeline from Figma to production CSS.\n\n1/ Source of truth: Figma. Designers define tokens as Figma variables. Colors, spacing, typography, radii, shadows. All named using the team's convention.\n\n2/ Export: Use the Figma Variables API or a plugin like Tokens Studio to export tokens in W3C DTCG JSON format. This is the interchange format.\n\n3/ Transform: Style Dictionary 4 reads the JSON and generates platform-specific outputs. CSS custom properties, Tailwind @theme blocks, iOS Swift, Android XML. One source, many targets.\n\n4/ Consume: CSS files import the generated custom properties. Components use var(--token-name). Tailwind @theme references the same properties. Everything is connected.\n\n5/ The pipeline: Figma → JSON → Style Dictionary → CSS/Tailwind/iOS/Android. Designers change a color in Figma, the pipeline generates new CSS, CI deploys it. Designer intent flows to production without developer translation.",
+    "code": "/* Style Dictionary config */\n{\n  \"source\": [\"tokens/**/*.json\"],\n  \"platforms\": {\n    \"css\": {\n      \"transformGroup\": \"css\",\n      \"files\": [{\n        \"destination\": \"tokens.css\",\n        \"format\": \"css/variables\"\n      }]\n    },\n    \"tailwind\": {\n      \"transformGroup\": \"css\",\n      \"files\": [{\n        \"destination\": \"theme.css\",\n        \"format\": \"css/tailwind-theme\"\n      }]\n    }\n  }\n}\n\n/* Output: tokens.css */\n:root {\n  --color-primary: #3b82f6;\n  --spacing-md: 1rem;\n  --radius-lg: 0.75rem;\n}",
+    "link": {
+      "url": "/css-design/lessons/13-design-tokens/",
+      "label": "token pipeline in Lesson 13 →"
+    },
+    "poll": null,
+    "likes": 867,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The key insight: designers change tokens in Figma, not CSS files. The pipeline makes designer intent the source of truth. No more \"the designer said blue but the dev used a different blue.\" It's the SAME blue, generated from the SAME source.",
+        "likes": 345
+      },
+      {
+        "author": "tailwinder",
+        "content": "The Tailwind @theme output is the bridge. Style Dictionary generates @theme { --color-primary: #3b82f6; } and Tailwind consumes it. The utility classes (bg-primary, text-primary) reference the generated tokens. Zero manual mapping.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "css-099",
+    "track": "css",
+    "type": "interview",
+    "author": "grid_master",
+    "time": "1d",
+    "content": "INTERVIEW Q: You're building a responsive dashboard with a collapsible sidebar, a sticky header, a main content area with scrollable cards, and a footer that only appears when you scroll to the bottom. Walk me through the CSS architecture.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/05-grid-layout/",
+      "label": "complex layout architecture in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 789,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "CSS Grid for the page scaffold: grid-template-areas: 'header header' / 'sidebar main' / 'footer footer'. grid-template-rows: auto 1fr auto. The header gets position: sticky; top: 0. The sidebar width uses a CSS custom property toggled by a class: --sidebar-width: 250px collapsed to --sidebar-width: 60px. Transition the grid-template-columns for the smooth collapse.",
+        "likes": 345
+      },
+      {
+        "author": "cascader",
+        "content": "The main content area with scrollable cards: overflow-y: auto on the main grid area. Cards inside use CSS Grid with auto-fit. The footer: it lives inside the main scroll area at the bottom, not in a fixed position. It naturally appears when you scroll past all content.",
+        "likes": 289
+      },
+      {
+        "author": "tailwinder",
+        "content": "Container queries on the main area handle card layout responsiveness. When the sidebar is open, the main area is narrower, and cards stack. When the sidebar collapses, the main area widens, and cards go horizontal. @container queries, not @media queries — because the viewport didn't change, only the available space did.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "css-100",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "cascader",
+    "time": "2d",
+    "content": "MENTAL MODEL: Modern CSS has four pillars. Master all four and you can build anything.\n\n1. THE CASCADE: How styles are resolved. Specificity, @layer, :where(), !important, source order. This is the conflict resolution system.\n\n2. THE BOX MODEL: How elements are sized. content-box vs border-box, margin collapse, padding, borders. This is the spatial system.\n\n3. LAYOUT: How elements are arranged. Grid for 2D, Flexbox for 1D, container queries for responsive, subgrid for alignment. This is the positioning system.\n\n4. CUSTOM PROPERTIES: How values are managed. Design tokens, theming, runtime changes, scoping, fallbacks. This is the value system.\n\nEvery CSS problem maps to one of these four pillars. If you're stuck, identify which pillar you're fighting. The solution lives in that pillar's mental model.",
+    "code": null,
+    "link": {
+      "url": "/css-design/lessons/01-how-css-works/",
+      "label": "the four pillars of CSS in Lesson 1 →"
+    },
+    "poll": null,
+    "likes": 1678,
+    "reposts": 412,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "This is the best framework for thinking about CSS I've ever seen. Layout problem? Pillar 3. Styles not applying? Pillar 1. Element wrong size? Pillar 2. Theming issue? Pillar 4. Diagnosis before debugging.",
+        "likes": 445
+      },
+      {
+        "author": "tokenizer",
+        "content": "Custom properties as a full pillar is the right call. Five years ago it would have been an afterthought. Now? Tokens, theming, dark mode, container-relative values, animation with @property — custom properties are load-bearing infrastructure, not a convenience feature.",
+        "likes": 389
+      },
+      {
+        "author": "animista",
+        "content": "I'd add a fifth: MOTION. Transitions, animations, scroll-driven timelines, view transitions. It's big enough to be its own pillar now. But maybe that's the animation person in me talking.",
+        "likes": 312
+      }
+    ]
+  }
+]

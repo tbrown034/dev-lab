@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 05 - React Server Components</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #06b6d4; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>05</span> React Server Components &mdash; The Biggest Paradigm Shift Since Hooks</h1>
+    <a href="/react/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">RSC changes what "React component" means.</strong> Some components run only on the server. Their JavaScript never ships to the browser. This isn't SSR &mdash; it's a fundamentally new architecture. Let's build the mental model.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: Two Computers</h2>
+
+    <p>Before RSC, all React components ultimately ran in the browser. Even with SSR, the same code ran on the server (for initial HTML) and then again in the browser (hydration). Same code, two environments.</p>
+
+    <p>RSC splits components into two categories that run on different machines:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Server Components (default)</h5>
+        <pre><code><span class="comment">// Runs ONLY on the server.</span>
+<span class="comment">// JS never ships to client.</span>
+<span class="comment">// Can access DB, filesystem, env vars.</span>
+<span class="comment">// Cannot use hooks, event handlers, </span>
+<span class="comment">// or browser APIs.</span>
+
+async function ArticlePage({ id }) {
+  <span class="comment">// Direct database query — no API needed</span>
+  const article = await db.article.findUnique({
+    where: { id }
+  });
+
+  return (
+    &lt;article&gt;
+      &lt;h1&gt;{article.title}&lt;/h1&gt;
+      &lt;p&gt;{article.body}&lt;/p&gt;
+      &lt;LikeButton articleId={id} /&gt;
+    &lt;/article&gt;
+  );
+}</code></pre>
+      </div>
+      <div>
+        <h5>Client Components ("use client")</h5>
+        <pre><code><span class="comment">// Runs in the browser.</span>
+<span class="comment">// JS ships to client bundle.</span>
+<span class="comment">// Can use hooks, state, event handlers,</span>
+<span class="comment">// and browser APIs.</span>
+
+'use client';
+
+function LikeButton({ articleId }) {
+  const [liked, setLiked] = useState(false);
+
+  async function handleClick() {
+    setLiked(true);
+    await fetch(`/api/like/${articleId}`, {
+      method: 'POST'
+    });
+  }
+
+  return (
+    &lt;button onClick={handleClick}&gt;
+      {liked ? 'Liked!' : 'Like'}
+    &lt;/button&gt;
+  );
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The newsroom analogy:</strong> Think of Server Components as the research department. They have access to all the archives, databases, and confidential sources (server resources). They produce content (HTML/data) that gets published. Client Components are the interactive elements &mdash; the comment section, the poll widget, the share button. The research doesn't ship to the reader's doorstep; only the published article and the interactive widgets do.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHAT RSC IS NOT                              -->
+    <!-- ============================================ -->
+
+    <h2>What RSC Is Not (Debunking Confusion)</h2>
+
+    <h3>RSC is not SSR</h3>
+
+    <p>SSR renders components to HTML on the server, then ships all the JavaScript to the browser for hydration. The same code runs in both places.</p>
+
+    <p>RSC renders server components to a <strong>serialized format</strong> (not HTML) that includes pre-rendered output AND placeholders for client components. Server component code <strong>never reaches the browser</strong>. Client components hydrate normally.</p>
+
+    <pre><code><span class="comment">// SSR: Server renders to HTML, client re-runs everything</span>
+Server: ArticlePage() → HTML string
+Client: ArticlePage() → hydrate (re-run SAME code, attach event listeners)
+
+<span class="comment">// RSC: Server renders server components, client only runs client components</span>
+Server: ArticlePage() → serialized tree (includes rendered HTML + client component markers)
+Client: Only LikeButton() runs → hydrate just the interactive parts</code></pre>
+
+    <h3>RSC is not "components that render on the server"</h3>
+
+    <p>SSR components also render on the server. The key difference: RSC components produce <strong>zero client-side JavaScript</strong>. A Server Component that imports a 200KB markdown parser sends zero bytes of that parser to the browser. The parsing happens on the server, and only the rendered HTML reaches the client.</p>
+
+    <div class="callout">
+      <p><strong>Bundle size implications:</strong> Imagine a data journalism article that uses D3, lodash, a date formatting library, and a CSV parser to process data. As a Server Component, all of that processing happens on the server. The client receives pre-rendered HTML. The JavaScript bundle for that page: ~0KB from those libraries. This is transformative for performance.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE SERIALIZATION BOUNDARY                   -->
+    <!-- ============================================ -->
+
+    <h2>The Serialization Boundary</h2>
+
+    <p>The boundary between server and client components is the serialization boundary. Data crossing this boundary must be serializable &mdash; it gets turned into a wire format (React's RSC payload).</p>
+
+    <h3>What can cross the boundary (as props)</h3>
+
+    <ul>
+      <li>Primitives: strings, numbers, booleans, null, undefined</li>
+      <li>Plain objects and arrays (of serializable values)</li>
+      <li>Date objects (serialized as ISO strings)</li>
+      <li>Server Actions (special function references)</li>
+      <li>JSX (pre-rendered by the server)</li>
+    </ul>
+
+    <h3>What cannot cross the boundary</h3>
+
+    <ul>
+      <li>Functions (except Server Actions)</li>
+      <li>Classes / class instances</li>
+      <li>DOM nodes / Refs</li>
+      <li>Symbols</li>
+      <li>Closures</li>
+    </ul>
+
+    <pre><code><span class="comment">// Server Component passing data to Client Component</span>
+async function Dashboard() {
+  const data = await getAnalytics();  <span class="comment">// Server-side fetch</span>
+
+  return (
+    &lt;div&gt;
+      &lt;h1&gt;Analytics Dashboard&lt;/h1&gt;
+      {/* These props must be serializable */}
+      &lt;InteractiveChart
+        data={data.chartPoints}      <span class="comment">// ✓ array of objects</span>
+        title="Monthly Visitors"      <span class="comment">// ✓ string</span>
+        onHover={handleHover}         <span class="comment">// ✗ FAILS — functions can't serialize</span>
+      /&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+    <div class="warning">
+      <p><strong>The most common RSC error:</strong> "Functions cannot be passed directly to Client Components unless you explicitly expose them with 'use server'." This means you tried to pass a regular function from a server component to a client component. The fix: either make it a Server Action (with "use server") or define the function inside the client component.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- COMPOSITION PATTERNS                         -->
+    <!-- ============================================ -->
+
+    <h2>Composition Patterns: Server Wrapping Client</h2>
+
+    <p>Server Components can render Client Components. Client Components can render Server Components <strong>only if passed as children or props</strong>.</p>
+
+    <pre><code><span class="comment">// PATTERN: Server Component wraps Client Component</span>
+<span class="comment">// (This is the most common pattern)</span>
+async function ArticlePage({ id }) {
+  const article = await db.article.findUnique({ where: { id } });
+
+  return (
+    &lt;article&gt;
+      &lt;h1&gt;{article.title}&lt;/h1&gt;
+      &lt;ArticleContent content={article.body} /&gt;
+      {/* Client component — only this ships JS */}
+      &lt;CommentSection articleId={id} /&gt;
+    &lt;/article&gt;
+  );
+}
+
+<span class="comment">// PATTERN: Client Component receives Server Component as children</span>
+'use client';
+function Sidebar({ children }) {
+  const [isOpen, setIsOpen] = useState(true);
+
+  return (
+    &lt;aside className={isOpen ? 'open' : 'closed'}&gt;
+      &lt;button onClick={() =&gt; setIsOpen(!isOpen)}&gt;Toggle&lt;/button&gt;
+      {isOpen &amp;&amp; children} {/* children can be Server Components! */}
+    &lt;/aside&gt;
+  );
+}
+
+<span class="comment">// In a Server Component:</span>
+function Layout() {
+  return (
+    &lt;Sidebar&gt;
+      &lt;ServerRenderedNav /&gt;  {/* Pre-rendered on server, passed as children */}
+    &lt;/Sidebar&gt;
+  );
+}</code></pre>
+
+    <div class="aha">
+      <p><strong>The children slot is the escape hatch.</strong> A Client Component can't import and render a Server Component directly (it would need to run on the server). But it <em>can</em> receive pre-rendered Server Component output via the <code>children</code> prop. The parent (a Server Component) does the rendering, and the Client Component just places the result in its tree. This is composition at its finest.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SERVER ACTIONS                               -->
+    <!-- ============================================ -->
+
+    <h2>Server Actions: Functions That Cross the Boundary</h2>
+
+    <p>Server Actions are the mechanism for Client Components to call server-side code. They're functions marked with <code>"use server"</code> that get serialized into RPC-style endpoints.</p>
+
+    <pre><code><span class="comment">// Server Action — defined in a server file or inline with "use server"</span>
+'use server';
+
+export async function publishArticle(formData: FormData) {
+  const title = formData.get('title') as string;
+  const body = formData.get('body') as string;
+
+  <span class="comment">// Direct database access — this runs on the server</span>
+  const article = await db.article.create({
+    data: { title, body, published: true },
+  });
+
+  <span class="comment">// Revalidate the articles page cache</span>
+  revalidatePath('/articles');
+
+  <span class="comment">// Redirect to the new article</span>
+  redirect(`/articles/${article.id}`);
+}
+
+<span class="comment">// Client Component using the Server Action</span>
+'use client';
+
+function PublishForm() {
+  return (
+    &lt;form action={publishArticle}&gt;
+      &lt;input name="title" required /&gt;
+      &lt;textarea name="body" required /&gt;
+      &lt;button type="submit"&gt;Publish&lt;/button&gt;
+    &lt;/form&gt;
+  );
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>Server Actions work with progressive enhancement.</strong> The form above works even without JavaScript. The browser submits the form as a standard POST request, the server action processes it, and the browser receives the redirect. When JS is available, React intercepts the submission and handles it with a fetch call, preserving client-side state. This is the best of both worlds.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL SUMMARY                     -->
+    <!-- ============================================ -->
+
+    <h2>The Complete Mental Model</h2>
+
+    <p>Think of your application as two programs that communicate over a wire:</p>
+
+    <ol>
+      <li><strong>The Server Program:</strong> Has access to databases, environment variables, file system. Runs Server Components. Produces serialized UI descriptions. Handles Server Actions.</li>
+      <li><strong>The Client Program:</strong> Runs in the browser. Hydrates Client Components. Handles user interactions. Calls Server Actions when it needs the server to do something.</li>
+    </ol>
+
+    <p>The "wire" between them is the RSC payload &mdash; a serialized format that includes rendered Server Component output and markers for where Client Components should be placed.</p>
+
+    <pre><code><span class="comment">// What flows over the wire (simplified RSC payload):</span>
+[
+  "div",
+  null,
+  [
+    ["h1", null, "Breaking: Budget Bill Passes"],       <span class="comment">// Pre-rendered server output</span>
+    ["p", null, "By Trevor Brown · March 18, 2026"],    <span class="comment">// Pre-rendered server output</span>
+    ["$client", "CommentSection", { articleId: "42" }]  <span class="comment">// Client component marker</span>
+  ]
+]</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What's the key difference between SSR and RSC?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">SSR renders components to HTML on the server but ships all the component JavaScript to the browser for hydration. RSC keeps server component code entirely on the server &mdash; zero bytes of server component JS reach the browser. Only client component JS ships.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Can a Client Component import and render a Server Component?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Not directly. A Client Component runs in the browser and can't execute server-side code. However, a Client Component can <em>receive</em> pre-rendered Server Component output via the children prop or other JSX props. The parent Server Component does the rendering; the Client Component just places the result.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why can't you pass a regular function from a Server Component to a Client Component?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Functions can't be serialized over the wire. The RSC payload is JSON-like &mdash; it can carry strings, numbers, objects, and arrays, but not function closures. Server Actions are the exception: they're special functions marked with "use server" that React serializes as RPC endpoint references.</div>
+      </div>
+
+      <div class="question">
+        <p>4. A Server Component imports a 500KB charting library. How much of that library reaches the browser?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Zero bytes. The library runs on the server to produce the rendered output (SVG, HTML, etc.). Only the output reaches the browser. This is one of RSC's biggest wins for bundle size &mdash; heavy processing libraries stay on the server.</div>
+      </div>
+
+      <div class="question">
+        <p>5. When would you add "use client" to a component?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">When the component needs browser-only features: useState, useEffect, event handlers (onClick, onChange), browser APIs (window, document, localStorage), or third-party libraries that use any of these. The "use client" directive marks the boundary &mdash; this component and everything it imports becomes part of the client bundle.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Draw the Boundary</h4>
+      <p>For each component tree below, identify which components should be Server Components and which need "use client":</p>
+      <ol>
+        <li>A blog post page: Header (static), Article body (fetched from DB), Share buttons (onClick), Comment form (useState + form submission), Related articles sidebar (fetched from DB)</li>
+        <li>A dashboard: Stats cards (DB query), Interactive chart (D3 + mouse events), Data table (sortable columns with onClick), Export CSV button (triggers download)</li>
+        <li>An e-commerce product page: Product info (DB), Image carousel (useState for current slide), Add to cart button (onClick + animation), Reviews list (DB), Review form (useState + validation)</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">The goal: minimize the "use client" boundary. Push it as deep as possible so the maximum amount of code stays on the server.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/react/lessons/04-state-management/">&larr; Lesson 04: State Management</a>
+      <a href="/react/lessons/06-nextjs-app-router/">Lesson 06: Next.js App Router &rarr;</a>
+    </div>
+  </div>
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

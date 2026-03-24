@@ -1,0 +1,158 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+EPISODE TITLE: D3.js — Everything You Need to Know for the Interview
+SERIES: Interview Prep — Texas Tribune Crash Course
+EPISODE: 2 of 3
+
+--- CONTEXT FOR HOSTS ---
+
+Who the learner is: Trevor Brown, investigative journalist with 15+ years experience, self-taught web developer comfortable with React/Next.js/TypeScript. He has an interview at the Texas Tribune tomorrow. He's learned some D3 basics recently but needs to solidify his mental model so he can talk about D3 confidently — not write code from memory, but understand the concepts deeply enough to have an intelligent conversation.
+
+What this episode should accomplish: Trevor should walk away understanding what D3 is and isn't, how it thinks differently from other tools, the key vocabulary he'll need, and be able to describe how you'd approach building a chart or map with D3. He should also understand how D3 fits into the Tribune's work specifically — election maps, data explorers, interactive graphics.
+
+Tone: Two people having a real conversation about D3. Not a lecture. Use analogies from journalism and newsroom life. Be honest about what's hard and what's intuitive. The hosts should occasionally say things like "okay but here's the thing that clicks for most people" or "this is the part that sounds weird until you see it."
+
+--- SOURCE CONTENT ---
+
+WHAT D3 ACTUALLY IS
+
+D3 stands for Data-Driven Documents. It was created by Mike Bostock while he was at the New York Times, which tells you everything about its pedigree in journalism.
+
+D3 is NOT a charting library. This is the single most important thing to understand. Chart.js gives you a bar chart function. Tableau gives you drag-and-drop dashboards. D3 gives you BUILDING BLOCKS. It's a toolkit for connecting data to visual elements on a web page. There is no "bar chart" function in D3. You create bar charts by creating rectangles and using data to control their size and position.
+
+The analogy: Chart.js is like ordering from a menu. D3 is like having access to the kitchen. You can cook anything, but you need to know the ingredients. The tradeoff is creative freedom versus ease of use.
+
+Why does the Texas Tribune use D3 and not just Chart.js or Datawrapper? Because every graphic they build is DIFFERENT. An election results map is not the same as a housing zoning visualization. A voter turnout fish-in-a-pond metaphor is not the same as a measles outbreak tracker. D3 lets you build exactly what the story requires.
+
+HOW D3 THINKS — THE CORE MENTAL MODEL
+
+D3 does one fundamental thing: it BINDS DATA TO DOM ELEMENTS.
+
+Here's the concept without code:
+1. You have data — say, an array of 254 Texas counties with population numbers.
+2. You have shapes on the page — SVG rectangles, circles, paths.
+3. D3 connects them: one shape per data point. Each shape's size, position, and color are DRIVEN BY the data.
+
+That's the whole library. Everything else is support for that core idea.
+
+SVG — THE CANVAS
+
+D3 doesn't draw anything proprietary. It creates standard SVG (Scalable Vector Graphics) elements — the same HTML tags that browsers already understand. When you inspect a D3 chart in the browser, you see regular HTML: rect tags for bars, circle tags for dots, path tags for lines and map boundaries, text tags for labels.
+
+SVG is like a coordinate-based version of HTML. Regular HTML flows content down the page. SVG lets you place shapes at exact pixel coordinates. Every D3 visualization is just a bunch of SVG elements positioned by data.
+
+One important gotcha: SVG's coordinate system has Y=0 at the TOP, not the bottom. Y increases going DOWN. This is why D3 charts invert the y-axis range — high data values need to map to LOW pixel values (near the top of the chart). This trips everyone up once, and then it clicks.
+
+SELECTIONS — GRABBING ELEMENTS
+
+D3 uses "selections" to interact with the DOM. A selection is like document.querySelector but built for data work. You select elements, then set their attributes based on data.
+
+d3.select() grabs one element. d3.selectAll() grabs all matching elements. Then you chain methods like .attr() and .style() to set properties. The key thing: every setter can take a FUNCTION that receives the bound data. So instead of saying "make all bars orange," you say "make each bar the color that corresponds to its data's party field." This is what makes D3 data-driven.
+
+DATA BINDING — THE HARDEST CONCEPT
+
+This is the part that sounds weird until it clicks. In most libraries, you loop through your data and create elements. In D3, you DECLARE the relationship between data and elements, and D3 figures out the rest.
+
+The pattern: select elements, bind data, join. D3 looks at how many data points you have and how many elements exist, then creates, updates, or removes elements to make them match.
+
+The classic version of this is called "enter-update-exit":
+- ENTER: data points that don't have elements yet — D3 creates new ones
+- UPDATE: data points that already have elements — D3 updates them
+- EXIT: elements whose data was removed — D3 removes them
+
+Why this matters for newsroom work: On election night, results come in over time. New counties report. Numbers change. The enter-update-exit pattern means your chart can smoothly handle live-updating data without rebuilding everything from scratch. New results enter, existing results update, and it all transitions smoothly.
+
+Modern D3 (v5+) simplifies this with .join() which handles all three cases in one call. But knowing the old enter-update-exit pattern shows depth and understanding.
+
+SCALES — THE BRIDGE BETWEEN DATA AND PIXELS
+
+Scales are functions that convert data values to visual values. Your data says "population: 4,800,000." The scale converts that to "bar width: 450 pixels" or "color: dark blue."
+
+Think of a scale like a converter. Domain is the input range (your data). Range is the output range (pixels, colors, etc.).
+
+The three scales used constantly:
+1. scaleLinear — continuous numbers to continuous numbers (data values to pixel positions)
+2. scaleBand — categories to pixel positions with even spacing (county names to bar positions)
+3. scaleOrdinal — categories to discrete values (party names to colors)
+
+Other important ones: scaleTime (dates to pixels, used for line chart x-axes), scaleSqrt (for bubble charts where area should be proportional to data), scaleSequential (for color gradients in choropleth maps).
+
+AXES — THE LABELS
+
+D3 generates axes automatically from scales. You create an axis generator (axisBottom, axisLeft, etc.), give it a scale, and call it. It creates all the tick marks, labels, and gridlines for you. You can customize tick count, format (like turning 4800000 into "4.8M"), and rotation.
+
+THE MARGIN CONVENTION
+
+Every D3 chart uses a standard pattern for handling margins — the space around the chart where axes and labels live. You define a margin object (top, right, bottom, left), calculate inner dimensions, create the SVG at full size, then add a translated group element (g) inside that's offset by the margins. All chart elements go inside this group.
+
+This is a universal pattern in D3. Every tutorial uses it. Every production chart uses it. It's like the HTML boilerplate of D3.
+
+PATH GENERATORS — LINES, AREAS, MAPS
+
+For shapes more complex than rectangles and circles, D3 has "generators" that convert data into SVG path strings (the d attribute of a path element).
+
+d3.line() — Takes an array of data points, outputs a path string for a line chart
+d3.area() — Same but with a filled area under the line
+d3.geoPath() — Takes GeoJSON geographic data and a projection, outputs path strings for maps
+
+This is how the Tribune draws Texas county boundaries. GeoJSON files define the shape of each county as coordinate arrays. A projection converts latitude/longitude to pixel positions. geoPath converts those projected coordinates into SVG path strings. The result: 254 path elements, one per county, that you can color based on election results.
+
+MAPS AND PROJECTIONS — THE TRIBUNE'S BREAD AND BUTTER
+
+The Tribune makes Texas maps constantly — election results by county, legislative districts, school districts, border wall progress. Understanding this conceptually is high-value for the interview.
+
+The pipeline:
+1. Get GeoJSON or TopoJSON files (geographic boundary data for Texas counties, districts, etc.)
+2. Create a projection — a mathematical function that converts latitude/longitude to pixel positions. Different projections distort the map differently. For a single state like Texas, geoAlbers or geoMercator work well. D3 can auto-fit the projection to your SVG dimensions.
+3. Create a path generator using the projection
+4. Bind the GeoJSON features (one per county) to path elements
+5. Color each path based on data (election results, population, etc.)
+
+The coloring step is called a "choropleth" — a map where areas are shaded proportional to a data variable. Election result maps are choropleths. The Tribune's are some of the best in the country.
+
+To merge data (election results) with geography (county shapes), you use a lookup — typically a JavaScript Map keyed by FIPS code (a standard county identifier). For each county shape, look up its data and apply the color.
+
+D3 VS OTHER TOOLS — THE LANDSCAPE
+
+Chart.js — Pre-built chart types. Fast for simple charts, but no customization for unique graphics. The Tribune would use something like this for a quick embedded chart in a daily story, not for feature graphics.
+
+Datawrapper — No-code chart tool popular in newsrooms for reporters who don't code. Many newsrooms use Datawrapper for daily graphics and D3 for special projects. It's not an either/or — they serve different purposes.
+
+Observable Plot — Created by Mike Bostock (the D3 creator). A higher-level charting library built on D3. Faster for standard charts, falls back to D3 for complex custom work. Relatively new. Worth asking the Tribune if they're exploring it.
+
+Mapbox / Leaflet — Better for "slippy maps" (pan and zoom like Google Maps). D3 is better for static thematic maps (choropleths). The Tribune probably uses both depending on the project.
+
+Tableau — Enterprise dashboarding. Not suitable for embedded web graphics with custom design.
+
+D3 + REACT
+
+Many modern newsrooms combine React and D3. The tension is: who controls the DOM?
+
+Approach 1: "D3 for math, React for rendering" — Use D3 only for scales, layouts, and generators. React renders the SVG elements using JSX. Cleaner, plays nice with React's state management.
+
+Approach 2: "D3 owns a ref" — Give D3 a useRef container and let it do everything inside a useEffect. The React component is just a shell. Better for heavily animated or complex charts.
+
+The Tribune uses React alongside D3 in some projects. Just knowing this tension exists shows sophistication. You don't need a strong opinion on which approach is better.
+
+ACCESSIBILITY AND MOBILE — THINGS THE TRIBUNE CARES ABOUT
+
+Newsroom graphics need to be accessible and mobile-friendly:
+- SVG viewBox attribute makes charts scale to any container width
+- aria-label attributes on SVG elements for screen readers
+- Tabular fallbacks for people who can't see the chart
+- Touch-friendly interactions (no hover-only tooltips on mobile)
+- Fast load times — especially important for readers in rural Texas on slower connections
+
+THE KEY TALKING POINTS FOR TREVOR
+
+1. "D3 isn't a charting library — it's a data binding toolkit. That's what makes it right for newsroom work where every graphic is different."
+
+2. "The core idea is simple: bind data to DOM elements. Everything else — scales, axes, path generators, projections — is support for that core concept."
+
+3. "For a place like the Tribune, D3's map capabilities are essential. Being able to draw 254 Texas counties from GeoJSON and color them by election results — that's not something Chart.js can do."
+
+4. "I understand the enter-update-exit pattern and why it matters for live-updating graphics like election night results."
+
+5. "The separation between D3 (visualization) and Django (data serving) is clean and powerful. Django handles ingestion and API, D3 handles rendering. Two independent systems that meet at the API."

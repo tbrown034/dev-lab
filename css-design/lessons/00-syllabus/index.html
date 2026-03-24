@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 00 - The Syllabus</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #a855f7; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>00</span> The Syllabus &mdash; CSS + Design Systems</h1>
+    <a href="/css-design/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>You already know Tailwind.</strong> That's an advantage, not a crutch. This course goes beneath the utilities to the engine that powers them. By the end, you'll think in CSS the way a systems architect thinks in abstractions.</p>
+
+    <!-- ============================================ -->
+    <!-- WHY THIS TRACK EXISTS                        -->
+    <!-- ============================================ -->
+
+    <h2>Why This Track Exists</h2>
+
+    <p>Most developers learn CSS backwards. They memorize properties, hack at layouts until they work, and never build a mental model of <em>why</em> CSS behaves the way it does. This course fixes that.</p>
+
+    <p>You'll learn CSS the same way an investigative journalist learns a beat: understand the system first, then work within it. Every lesson starts with the <strong>mental model</strong>, then shows you the syntax that expresses it.</p>
+
+    <div class="aha">
+      <p><strong>The Tailwind advantage.</strong> You already know what <code>flex</code>, <code>grid-cols-3</code>, and <code>bg-zinc-900</code> do visually. Now you'll learn the CSS spec that makes them work. When you read <code>justify-between</code> in Tailwind, you'll understand the flexbox alignment algorithm it triggers. That's the difference between using a tool and understanding it.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHAT YOU'LL BUILD                            -->
+    <!-- ============================================ -->
+
+    <h2>What You'll Build</h2>
+
+    <p>This isn't a "make pretty things" course. You'll build <strong>systems</strong>:</p>
+
+    <ul>
+      <li><strong>A complete design token architecture</strong> &mdash; primitive, semantic, and component-level tokens that power multi-brand themes</li>
+      <li><strong>A component CSS system</strong> &mdash; reusable patterns using modern CSS features (container queries, :has(), nesting)</li>
+      <li><strong>Broadcast-ready TV graphics</strong> &mdash; lower thirds, election tickers, score bugs, and alert banners built entirely in CSS</li>
+      <li><strong>A capstone design system</strong> &mdash; everything combined into a production-grade system from scratch</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- THE ROADMAP                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Roadmap</h2>
+
+    <h3>Week 1: Foundations &mdash; How CSS Actually Works</h3>
+
+    <p>Before you can master layout, you need to understand the rules engine. These five lessons build your mental model of CSS from the ground up.</p>
+
+    <table>
+      <tr><th>Lesson</th><th>Core Concept</th><th>You'll Understand</th></tr>
+      <tr><td><code>01</code></td><td>Cascade &amp; Specificity</td><td>Why your styles get overridden, how the algorithm decides what wins, and why <code>!important</code> is almost never the answer</td></tr>
+      <tr><td><code>02</code></td><td>Layout Mental Models</td><td>Block, inline, flex, grid as four different universes with different physics. Formatting contexts explained.</td></tr>
+      <tr><td><code>03</code></td><td>Flexbox Mastery</td><td>The main-axis/cross-axis model, how flex-grow actually distributes space, every alignment pattern</td></tr>
+      <tr><td><code>04</code></td><td>CSS Grid Mastery</td><td>Two-dimensional thinking: named lines, subgrid, auto-fit vs auto-fill, and the grid vs flex decision</td></tr>
+      <tr><td><code>05</code></td><td>Custom Properties</td><td>CSS variables as a runtime API &mdash; scoping, fallbacks, and how they differ from Sass variables</td></tr>
+    </table>
+
+    <h3>Week 2: Modern CSS &mdash; The New Power Features</h3>
+
+    <p>CSS has changed more in the last 3 years than the previous 10. These lessons cover the features that make CSS feel like a real language.</p>
+
+    <table>
+      <tr><th>Lesson</th><th>Core Concept</th><th>You'll Understand</th></tr>
+      <tr><td><code>06</code></td><td>Modern CSS</td><td>Container queries, :has(), nesting, @layer, @scope &mdash; and when to actually use each one</td></tr>
+      <tr><td><code>07</code></td><td>Animation &amp; Motion</td><td>Transitions, keyframes, scroll-driven animations, View Transitions API</td></tr>
+      <tr><td><code>08</code></td><td>Tailwind v4</td><td>The CSS-first architecture, @theme directive, custom utilities, and Oxide engine internals</td></tr>
+      <tr><td><code>09</code></td><td>Design Tokens</td><td>Token architecture, semantic layers, multi-brand systems, the W3C Design Tokens spec</td></tr>
+    </table>
+
+    <h3>Week 3: Systems &mdash; Building for Production</h3>
+
+    <p>This is where everything comes together. You'll build component systems, broadcast graphics, and a complete capstone project.</p>
+
+    <table>
+      <tr><th>Lesson</th><th>Core Concept</th><th>You'll Understand</th></tr>
+      <tr><td><code>10</code></td><td>Component Systems</td><td>BEM vs utility vs CSS Modules, Radix primitives, shadcn/ui, headless styling</td></tr>
+      <tr><td><code>11</code></td><td>Broadcast Graphics</td><td>CSS for TV &mdash; safe zones, lower thirds, tickers, election overlays</td></tr>
+      <tr><td><code>12</code></td><td>Capstone</td><td>A production-grade design system built from scratch &mdash; tokens, components, themes, broadcast</td></tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- HOW LESSONS WORK                             -->
+    <!-- ============================================ -->
+
+    <h2>How Lessons Work</h2>
+
+    <p>Every lesson follows the same rhythm:</p>
+
+    <ol>
+      <li><strong>Mental model first</strong> &mdash; We start with the "why" and the conceptual framework. No code yet.</li>
+      <li><strong>Syntax second</strong> &mdash; Once you understand the model, the properties and values map onto it naturally.</li>
+      <li><strong>Side-by-side comparisons</strong> &mdash; See the wrong way and the right way next to each other. See the CSS and the Tailwind equivalent.</li>
+      <li><strong>Quizzes</strong> &mdash; Check your understanding of the mental model, not just syntax recall.</li>
+      <li><strong>Exercises</strong> &mdash; Build something that forces you to apply the concept.</li>
+    </ol>
+
+    <div class="callout">
+      <p><strong>Tailwind bridges.</strong> Throughout the course, you'll see callouts that connect CSS concepts to Tailwind utilities you already know. When we talk about <code>justify-content: space-between</code>, we'll note that's <code>justify-between</code> in Tailwind. This builds connections in both directions.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PREREQUISITES                                -->
+    <!-- ============================================ -->
+
+    <h2>Prerequisites</h2>
+
+    <ul>
+      <li><strong>HTML basics</strong> &mdash; You know what <code>&lt;div&gt;</code>, <code>&lt;section&gt;</code>, and <code>&lt;span&gt;</code> are</li>
+      <li><strong>Tailwind experience</strong> &mdash; You've built pages with Tailwind (even if you don't understand every utility)</li>
+      <li><strong>Browser DevTools</strong> &mdash; You can open the Elements panel and inspect styles</li>
+      <li><strong>No deep CSS knowledge required</strong> &mdash; That's what this course teaches</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- THE BROADCAST CONNECTION                     -->
+    <!-- ============================================ -->
+
+    <h2>The Broadcast Connection</h2>
+
+    <p>Lessons 11 and 12 focus on something unusual: CSS for television broadcast graphics. Lower thirds, election night overlays, live tickers, and score bugs.</p>
+
+    <p>This isn't a gimmick. Broadcast CSS is where design system principles get stress-tested under the hardest constraints:</p>
+
+    <ul>
+      <li><strong>Safe zones</strong> &mdash; Content must stay within title-safe and action-safe areas</li>
+      <li><strong>Overscan</strong> &mdash; TVs crop the edges differently than monitors</li>
+      <li><strong>60fps or nothing</strong> &mdash; Animations must be butter-smooth on live television</li>
+      <li><strong>Pixel-perfect alignment</strong> &mdash; Lower thirds must line up exactly when switching between different reporters</li>
+      <li><strong>Theme switching</strong> &mdash; Election night means switching between candidate colors in real time</li>
+    </ul>
+
+    <div class="aha">
+      <p><strong>If your design system can handle broadcast TV, it can handle anything.</strong> The constraints of live television force you to build truly robust, token-driven, performant CSS. The skills transfer directly to any production web application.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- KEY MENTAL MODELS                            -->
+    <!-- ============================================ -->
+
+    <h2>Key Mental Models You'll Develop</h2>
+
+    <p>By the end of this course, you'll think about CSS differently. Here are the mental models we'll build:</p>
+
+    <ol>
+      <li><strong>CSS is a rules engine, not a programming language</strong> &mdash; It resolves conflicts, it doesn't execute instructions</li>
+      <li><strong>Layout modes are universes</strong> &mdash; Block, flex, and grid each have their own physics. Properties that work in one may not work in another.</li>
+      <li><strong>Custom properties are a runtime API</strong> &mdash; They cascade, they scope, they change dynamically. Sass variables compile away.</li>
+      <li><strong>Tokens are the single source of truth</strong> &mdash; Colors, spacing, typography all flow from one system</li>
+      <li><strong>Components are contracts</strong> &mdash; A component's CSS defines what can vary and what's fixed</li>
+      <li><strong>Motion has meaning</strong> &mdash; Every animation should communicate something, not just look cool</li>
+    </ol>
+
+    <!-- ============================================ -->
+    <!-- TOOLS                                        -->
+    <!-- ============================================ -->
+
+    <h2>Tools You'll Need</h2>
+
+    <ul>
+      <li><strong>A modern browser</strong> &mdash; Chrome or Firefox with DevTools (we'll use container query debugging tools)</li>
+      <li><strong>VS Code</strong> &mdash; With the CSS Variable Autocomplete and Tailwind CSS IntelliSense extensions</li>
+      <li><strong>This platform</strong> &mdash; Every lesson has live demos, quizzes, and exercises built right in</li>
+    </ul>
+
+    <div class="exercise">
+      <h4>Exercise: Set Up Your Environment</h4>
+      <ol>
+        <li>Open your browser DevTools, go to the Elements panel, and inspect this page's styles</li>
+        <li>Find the <code>--track-color</code> custom property in the computed styles</li>
+        <li>Try changing its value to <code>#22c55e</code> (green) and watch the page update in real time</li>
+        <li>That's the power of CSS custom properties. You just changed the entire page's accent color with one value.</li>
+      </ol>
+    </div>
+
+    <h2>Let's Go</h2>
+
+    <p>Start with Lesson 01: Cascade &amp; Specificity. It's the foundation everything else is built on. Even if you think you know CSS specificity, I guarantee the mental model will change how you think about it.</p>
+
+    <div class="nav-footer">
+      <a href="/css-design/">&larr; Home</a>
+      <a href="/css-design/lessons/01-cascade-specificity/">Lesson 01: Cascade &amp; Specificity &rarr;</a>
+    </div>
+  </div>
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

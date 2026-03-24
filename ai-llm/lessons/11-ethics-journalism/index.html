@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 11 - Ethics &amp; Journalism</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #f472b6; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>11</span> Ethics &amp; Journalism &mdash; The Responsibility Layer</h1>
+    <a href="/ai-llm/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">You're not just building software. You're building journalism tools.</strong> The ethical stakes are higher. Misinformation, bias, transparency, and accountability aren't abstract concerns &mdash; they're editorial standards.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>Mental Model: The Editorial Standards Meeting</h2>
+
+    <p>Every newsroom has editorial standards. When you introduce AI tools into the workflow, those standards don't disappear &mdash; they need to be <strong>extended to cover AI</strong>. Think of this lesson as drafting the AI section of your newsroom's style guide.</p>
+
+    <div class="aha">
+      <p><strong>The core question:</strong> "Would I be comfortable if readers knew exactly how this AI tool was used in producing this story?" If yes, proceed. If no, stop and figure out why.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HALLUCINATION ETHICS                         -->
+    <!-- ============================================ -->
+
+    <h2>Hallucinations Are Not Just Bugs &mdash; They're Ethical Failures</h2>
+
+    <p>In software, a wrong output is a bug. In journalism, a wrong fact is misinformation. When you deploy AI tools that generate text, every hallucination is a potential credibility crisis.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Acceptable AI use</h5>
+        <pre><code><span class="comment">// AI as a tool:
+// - Draft summaries (human verifies)
+// - Suggest headlines (human chooses)
+// - Surface relevant sources (human reads)
+// - Extract structured data (human checks)
+// - Transcribe interviews (human corrects)
+//
+// Human is always in the loop
+// AI assists, human decides</span></code></pre>
+      </div>
+      <div>
+        <h5>Dangerous AI use</h5>
+        <pre><code><span class="comment">// AI replacing judgment:
+// - Auto-publishing AI-generated text
+// - Using AI "facts" without verification
+// - AI-generated quotes attributed to sources
+// - Automated fact-checking without review
+// - AI writing entire stories unsupervised
+//
+// No human verification
+// AI decides, human trusts blindly</span></code></pre>
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong>Rule #1:</strong> Never publish AI-generated factual claims without human verification against primary sources. The model doesn't know what's true &mdash; it knows what's probable. Those are very different things.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- BIAS                                         -->
+    <!-- ============================================ -->
+
+    <h2>Bias in AI: What Journalists Need to Know</h2>
+
+    <p>LLMs inherit biases from their training data. This affects journalism tools in concrete ways:</p>
+
+    <h3>1. Representation bias</h3>
+    <p>The model may default to certain perspectives. If asked to "write about community concerns," it may reflect the concerns of demographics overrepresented in its training data. Ask yourself: whose voice is missing?</p>
+
+    <h3>2. Framing bias</h3>
+    <p>The model may frame stories in ways that reflect dominant narratives. "The homeless problem" vs. "The housing crisis" &mdash; framing shapes reader perception, and the model picks up framing patterns from its training.</p>
+
+    <h3>3. Source bias</h3>
+    <p>When generating suggestions for sources to interview, the model tends to suggest institutional voices (officials, executives) over community voices (residents, workers, advocates). Your tool should actively counteract this.</p>
+
+    <pre><code><span class="comment">// Bias mitigation in a source suggestion tool</span>
+const system = `You are a source suggestion tool for journalists.
+
+CRITICAL RULES:
+- For every institutional source, suggest at least one community voice
+- Actively suggest sources from underrepresented communities
+- Flag when the suggested sources lack diversity
+- Never suggest only officials or spokespeople
+- Include: affected community members, local advocates,
+  independent experts, people with lived experience`;
+
+<span class="comment">// Bias audit: check your tool's outputs</span>
+async function auditSourceDiversity(suggestions) {
+  const types = suggestions.map(s =&gt; s.type);
+  const institutional = types.filter(t =&gt;
+    ["official", "executive", "spokesperson"].includes(t)
+  ).length;
+  const community = types.filter(t =&gt;
+    ["resident", "advocate", "worker", "community_member"].includes(t)
+  ).length;
+
+  if (institutional &gt; community * 2) {
+    console.warn("Source suggestions skew institutional. Review for diversity.");
+  }
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- TRANSPARENCY                                 -->
+    <!-- ============================================ -->
+
+    <h2>Transparency: Tell Your Readers</h2>
+
+    <p>Readers deserve to know when AI was involved in creating content. Major newsrooms are establishing disclosure standards:</p>
+
+    <table>
+      <tr><th>AI Use Level</th><th>Disclosure Needed</th><th>Example</th></tr>
+      <tr><td><strong>Research assistance</strong></td><td>None or minimal</td><td>AI helped search archives, similar to using a search engine</td></tr>
+      <tr><td><strong>Draft assistance</strong></td><td>Editor's note</td><td>"AI tools were used in the preparation of this article. All facts were independently verified."</td></tr>
+      <tr><td><strong>Content generation</strong></td><td>Clear labeling</td><td>"This summary was generated by AI and reviewed by [reporter name]."</td></tr>
+      <tr><td><strong>Automated stories</strong></td><td>Prominent disclosure</td><td>"This article was generated by AI from structured data. No reporter was involved."</td></tr>
+    </table>
+
+    <div class="callout">
+      <p><strong>The AP's position (2024):</strong> "The AP does not use AI to create publishable content. AI tools may be used for research and inspiration, but the final content must be the work of a journalist." Most major outlets have similar policies. Know your newsroom's policy &mdash; or help create one.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FACT CHECKING WITH AI                        -->
+    <!-- ============================================ -->
+
+    <h2>Fact-Checking WITH AI (Not BY AI)</h2>
+
+    <p>AI can be a powerful fact-checking <em>tool</em>, but it should never be the final fact-checker. Here's the responsible pattern:</p>
+
+    <pre><code><span class="comment">// AI-ASSISTED fact-checking workflow</span>
+
+<span class="comment">// Step 1: AI extracts claims from the article</span>
+const claims = await extractClaims(articleText);
+<span class="comment">// [{ claim: "voted 7-2", type: "verifiable" },
+//  { claim: "budget increased 15%", type: "verifiable" },
+//  { claim: "residents are unhappy", type: "subjective" }]</span>
+
+<span class="comment">// Step 2: AI searches for evidence (via RAG)</span>
+for (const claim of claims.filter(c =&gt; c.type === "verifiable")) {
+  claim.evidence = await searchEvidence(claim.claim);
+  claim.ai_assessment = await assessClaim(claim.claim, claim.evidence);
+}
+
+<span class="comment">// Step 3: HUMAN reviews each claim + evidence + AI assessment
+// The journalist makes the final call. Always.
+// AI surfaces the evidence. Human makes the judgment.</span>
+
+<span class="comment">// Step 4: Flag unverifiable claims</span>
+const unverified = claims.filter(c =&gt; !c.evidence || c.evidence.length === 0);
+if (unverified.length &gt; 0) {
+  console.warn("These claims could not be verified:", unverified);
+  <span class="comment">// These need primary source verification</span>
+}</code></pre>
+
+    <div class="aha">
+      <p><strong>The pattern:</strong> AI does the legwork (extracting claims, searching evidence, flagging discrepancies). The human does the judgment (is this evidence reliable? does it actually support the claim? are there caveats?). Never automate the judgment part.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- RESPONSIBLE DEPLOYMENT                       -->
+    <!-- ============================================ -->
+
+    <h2>A Checklist for Responsible AI Deployment</h2>
+
+    <ol>
+      <li><strong>Human in the loop.</strong> Does a journalist review every AI output before it reaches readers?</li>
+      <li><strong>Disclosure.</strong> Do readers know when AI was involved?</li>
+      <li><strong>Bias audit.</strong> Have you tested the tool with diverse inputs and checked for systematic biases?</li>
+      <li><strong>Error handling.</strong> What happens when the AI is wrong? Is there a correction process?</li>
+      <li><strong>Source protection.</strong> Does the tool handle confidential sources and sensitive information securely? Are you sending source names to an API?</li>
+      <li><strong>Cost awareness.</strong> Are you sending copyrighted text to APIs? Do you have rights to the training data your tool depends on?</li>
+      <li><strong>Eval suite.</strong> Are you measuring quality over time? Would you notice if the tool started performing worse?</li>
+      <li><strong>Kill switch.</strong> Can you disable the tool instantly if something goes wrong?</li>
+    </ol>
+
+    <div class="warning">
+      <p><strong>Source protection is critical.</strong> If you're building a tool that processes documents from confidential sources, be aware that anything sent to an API leaves your control. Use local models for sensitive material, or ensure your API provider has appropriate data handling agreements.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CASE STUDIES                                  -->
+    <!-- ============================================ -->
+
+    <h2>Case Studies: When It Went Wrong</h2>
+
+    <h3>CNET's AI articles (2023)</h3>
+    <p>CNET published AI-generated financial advice articles without disclosure. Readers and reporters found factual errors. The damage: loss of credibility, reader trust, and staff morale. <strong>Lesson:</strong> Disclose AI use. Verify facts. Don't skip editorial review.</p>
+
+    <h3>Sports Illustrated AI authors (2023)</h3>
+    <p>The magazine published articles under fake AI-generated author names and headshots. When exposed, it destroyed trust. <strong>Lesson:</strong> Never create fake identities for AI-generated content. Transparency is non-negotiable.</p>
+
+    <h3>Lawyer cites fake cases (2023)</h3>
+    <p>A lawyer used ChatGPT to research case law. The AI hallucinated fake cases that didn't exist. The lawyer cited them in court. <strong>Lesson:</strong> Always verify AI-generated references against primary sources. The model doesn't distinguish real from plausible.</p>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What's the fundamental ethical risk of using AI for journalism?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Publishing misinformation that appears credible. AI-generated text sounds authoritative even when factually wrong. In journalism, credibility is the product, and AI hallucinations can destroy it. The mitigation is always: human verification before publication.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Name three types of bias that affect AI journalism tools.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Representation bias (defaulting to overrepresented perspectives), framing bias (reflecting dominant narrative framings), and source bias (suggesting institutional voices over community voices). All three can be mitigated through deliberate prompting and output auditing.</div>
+      </div>
+
+      <div class="question">
+        <p>3. When should you disclose AI use to readers?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">At minimum: whenever AI generated or significantly shaped any content that reaches readers. The more AI is involved, the more prominent the disclosure should be. Research assistance may need minimal disclosure. Content generation needs clear labeling. Fully automated stories need prominent disclosure.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What's the difference between fact-checking WITH AI and fact-checking BY AI?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">WITH AI: the AI extracts claims, searches for evidence, and flags discrepancies, but a human journalist makes all judgment calls. BY AI: the AI makes the final determination of truth (dangerous and irresponsible for journalism). Always use AI as the tool, never as the judge.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Draft an AI Ethics Policy</h4>
+      <ol>
+        <li>Write a one-page AI ethics policy for a fictional newsroom. Cover: acceptable uses, prohibited uses, disclosure requirements, verification standards, and bias mitigation.</li>
+        <li>Design a bias audit for a source suggestion tool: create 10 test scenarios across different topics and demographics, run them, and analyze whether suggestions are balanced.</li>
+        <li>Build a fact-checking assistant that extracts claims, flags confidence levels, and explicitly marks claims it cannot verify &mdash; with clear UI indicators for the journalist reviewing the results.</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">This is the most important exercise in the course. The tools you build will only be as good as the ethics baked into them.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/ai-llm/lessons/10-eval-testing/">&larr; Eval &amp; Testing</a>
+      <a href="/ai-llm/lessons/12-capstone/">Lesson 12: Capstone &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

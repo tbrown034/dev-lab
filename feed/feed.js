@@ -3,7 +3,7 @@ import { PERSONAS_FLAT, POST_TYPES, TRACK_META, TRACK_COLORS } from './feed-data
 
 // ─── State ───
 let allPosts = [];
-let currentFilter = 'all';
+let activeTracks = new Set(['d3', 'django', 'sql', 'jsts', 'react', 'css', 'ai']);
 let focusedIndex = -1;
 let likedPosts = JSON.parse(localStorage.getItem('scroll-likes') || '{}');
 let bookmarkedPosts = JSON.parse(localStorage.getItem('scroll-bookmarks') || '{}');
@@ -35,12 +35,16 @@ async function loadPosts() {
   container.innerHTML = '<div class="feed-loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>';
 
   try {
-    const [d3, django, sql] = await Promise.all([
+    const [d3, django, sql, jsts, react, css, ai] = await Promise.all([
       fetch('/feed/content/d3.json').then(r => r.json()),
       fetch('/feed/content/django.json').then(r => r.json()),
       fetch('/feed/content/sql.json').then(r => r.json()),
+      fetch('/feed/content/jsts.json').then(r => r.json()).catch(() => []),
+      fetch('/feed/content/react.json').then(r => r.json()).catch(() => []),
+      fetch('/feed/content/css.json').then(r => r.json()).catch(() => []),
+      fetch('/feed/content/ai.json').then(r => r.json()).catch(() => []),
     ]);
-    allPosts = resolvePosts([...d3, ...django, ...sql]);
+    allPosts = resolvePosts([...d3, ...django, ...sql, ...jsts, ...react, ...css, ...ai]);
   } catch (err) {
     console.error('Failed to load feed:', err);
     container.innerHTML = '<div class="feed-empty">Failed to load the feed. Try refreshing.</div>';
@@ -66,9 +70,7 @@ function renderFeed() {
   const container = document.getElementById('feed-posts');
   container.innerHTML = '';
 
-  const filtered = currentFilter === 'all'
-    ? allPosts
-    : allPosts.filter(p => p.track === currentFilter);
+  const filtered = allPosts.filter(p => activeTracks.has(p.track));
 
   if (filtered.length === 0) {
     container.innerHTML = '<div class="feed-empty">No posts yet for this track.</div>';
@@ -468,20 +470,54 @@ function toggleShortcutHint() {
   hint.addEventListener('click', () => hint.remove());
 }
 
-// ─── Filter Tabs ───
+// ─── Filter Toggles ───
 function setupFilterTabs() {
   const tabs = document.querySelectorAll('.filter-tab');
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      currentFilter = tab.dataset.track;
-      const meta = TRACK_META[currentFilter];
-      document.getElementById('feed-subtitle').textContent = meta.subtitle;
-      document.getElementById('feed-title').textContent = meta.name;
+      const track = tab.dataset.track;
+      if (activeTracks.has(track)) {
+        // Don't allow deselecting all
+        if (activeTracks.size <= 1) return;
+        activeTracks.delete(track);
+        tab.classList.remove('active');
+      } else {
+        activeTracks.add(track);
+        tab.classList.add('active');
+      }
+      updateSubtitle();
       renderFeed();
     });
   });
+
+  // Shuffle button
+  const refreshBtn = document.getElementById('refresh-btn');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      refreshBtn.classList.add('spinning');
+      setTimeout(() => refreshBtn.classList.remove('spinning'), 400);
+      shuffleFeed();
+    });
+  }
+}
+
+function updateSubtitle() {
+  const nameMap = { d3: 'D3', django: 'Python', sql: 'SQL', jsts: 'JS/TS', react: 'React', css: 'CSS', ai: 'AI' };
+  const names = Object.keys(nameMap).filter(k => activeTracks.has(k)).map(k => nameMap[k]);
+  const subtitle = activeTracks.size === 7
+    ? 'your algorithm, but useful'
+    : names.join(' + ');
+  document.getElementById('feed-subtitle').textContent = subtitle;
+}
+
+function shuffleFeed() {
+  // Fisher-Yates shuffle
+  for (let i = allPosts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [allPosts[i], allPosts[j]] = [allPosts[j], allPosts[i]];
+  }
+  renderFeed();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ─── Init ───

@@ -5,14 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mail Voting in America — Data Workstation — Learn D3</title>
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
   <style>
-    /* ── Reset & Base ── */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: #0a0a0a;
-      color: #e5e5e5;
-      min-height: 100vh;
       line-height: 1.6;
     }
 
@@ -64,7 +59,7 @@
     }
     .page-hero .kicker {
       font-size: 0.75rem;
-      font-weight: 700;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.12em;
       color: #f472b6;
@@ -111,7 +106,7 @@
     }
     .viz-section .section-num {
       font-size: 0.7rem;
-      font-weight: 700;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.12em;
       color: #f97316;
@@ -119,7 +114,7 @@
     }
     .viz-section h3 {
       font-size: 1.6rem;
-      font-weight: 700;
+      font-weight: 600;
       margin-bottom: 0.5rem;
       line-height: 1.3;
     }
@@ -134,7 +129,7 @@
     .chart-container {
       background: #141414;
       border: 1px solid #222;
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 2rem;
       margin-bottom: 1rem;
       overflow: hidden;
@@ -340,7 +335,7 @@
       z-index: 1000;
       max-width: 300px;
       line-height: 1.4;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      border: 1px solid #333;
     }
     .tooltip.visible { opacity: 1; }
     .tooltip .tip-label { font-weight: 600; margin-bottom: 0.15rem; }
@@ -372,7 +367,7 @@
     .sources-section, .notes-section {
       background: #141414;
       border: 1px solid #222;
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 2rem;
       margin-top: 2rem;
     }

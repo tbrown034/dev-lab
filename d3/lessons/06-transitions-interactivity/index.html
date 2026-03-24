@@ -5,43 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lesson 06 - Axes & The Margins Convention</title>
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #f97316; }</style>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
-    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-    .header a { color: #f97316; text-decoration: none; font-size: 0.85rem; }
-    .header h1 { font-size: 1.2rem; }
-    .header h1 span { color: #f97316; }
-    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    h2 { color: #f97316; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
-    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
-    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
-    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
-    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #f97316; }
-    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
-    pre code { background: none; padding: 0; color: #e5e5e5; }
-    .comment { color: #6b7280; }
-    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .demo h4 { color: #f97316; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
-    .demo svg { background: #1a1a1a; border-radius: 4px; display: block; }
-    .quiz { background: #1a1500; border: 1px solid #f9731644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .quiz h4 { color: #f97316; margin-bottom: 1rem; }
-    .quiz .question { margin-bottom: 1.25rem; }
-    .quiz .question p { color: #e5e5e5; font-weight: 500; }
-    .quiz button { background: #f97316; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
-    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
-    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
-    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
-    .nav-footer a { color: #f97316; text-decoration: none; }
-    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
-    .callout p { color: #a5b4fc; }
-    .aha { background: #1a0a00; border-left: 3px solid #f97316; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
-    .aha p { color: #fdba74; }
-    .aha strong { color: #f97316; }
-    .step-num { display: inline-block; background: #f97316; color: #000; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 700; font-size: 0.85rem; margin-right: 0.5rem; }
-    .try-it { background: #0a0a1a; border: 1px solid #818cf844; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .try-it h4 { color: #818cf8; margin-bottom: 0.75rem; }
+    .step-num { display: inline-block; background: var(--track-color); color: #000; width: 28px; height: 28px; border-radius: 50%; text-align: center; line-height: 28px; font-weight: 600; font-size: 0.85rem; margin-right: 0.5rem; }
   </style>
 </head>
 <body>
@@ -52,7 +20,7 @@
 
   <div class="content">
 
-    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #f97316;">Mental Model:</strong> An axis is a "name tag" for your scale. It shows the viewer what the pixel positions mean. The margins convention is like the matting inside a picture frame &mdash; it creates space around the art for labels.</p>
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Mental Model:</strong> An axis is a "name tag" for your scale. It shows the viewer what the pixel positions mean. The margins convention is like the matting inside a picture frame &mdash; it creates space around the art for labels.</p>
 
     <h2>The Problem</h2>
 
@@ -99,7 +67,7 @@ yAxis(svg.append("g"));
 
     <pre><code>d3.axisLeft(yScale)
   .ticks(5)                          <span class="comment">// suggest ~5 ticks</span>
-  .tickFormat(d => `$${d / 1000}k`)  <span class="comment">// custom labels</span>
+  .tickFormat(d =&gt; `$${d / 1000}k`)  <span class="comment">// custom labels</span>
   .tickSize(-width)                  <span class="comment">// extend ticks = grid lines!</span>
   .tickValues([0, 25, 50, 75, 100]) <span class="comment">// exact tick positions</span></code></pre>
 
@@ -135,7 +103,7 @@ const svg = d3.select("#chart")
 
     <div class="demo">
       <h4>Live: Margins visualized</h4>
-      <p style="color: #888; font-size: 0.85rem; margin-bottom: 1rem;">Orange = chart area where data goes. Gray = margins where axes and labels live.</p>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Orange = chart area where data goes. Gray = margins where axes and labels live.</p>
       <div id="margins-diagram"></div>
     </div>
 
@@ -174,12 +142,12 @@ const svg = d3.select("#chart")
   .append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
 <span class="comment">// 3. Scales</span>
-const x = d3.scaleBand().domain(data.map(d => d.state)).range([0, width]).padding(0.2);
-const y = d3.scaleLinear().domain([0, d3.max(data, d => d.income)]).nice().range([height, 0]);
+const x = d3.scaleBand().domain(data.map(d =&gt; d.state)).range([0, width]).padding(0.2);
+const y = d3.scaleLinear().domain([0, d3.max(data, d =&gt; d.income)]).nice().range([height, 0]);
 
 <span class="comment">// 4. Axes</span>
 svg.append("g").attr("transform", `translate(0,${height})`).call(d3.axisBottom(x));
-svg.append("g").call(d3.axisLeft(y).tickFormat(d => `$${d/1000}k`));
+svg.append("g").call(d3.axisLeft(y).tickFormat(d =&gt; `$${d/1000}k`));
 
 <span class="comment">// 5. Grid lines (just long ticks)</span>
 svg.append("g").call(d3.axisLeft(y).tickSize(-width).tickFormat(""))
@@ -187,8 +155,8 @@ svg.append("g").call(d3.axisLeft(y).tickSize(-width).tickFormat(""))
 
 <span class="comment">// 6. Bars</span>
 svg.selectAll("rect").data(data).join("rect")
-  .attr("x", d => x(d.state)).attr("y", d => y(d.income))
-  .attr("width", x.bandwidth()).attr("height", d => height - y(d.income))
+  .attr("x", d =&gt; x(d.state)).attr("y", d =&gt; y(d.income))
+  .attr("width", x.bandwidth()).attr("height", d =&gt; height - y(d.income))
   .attr("fill", "#f97316");</code></pre>
 
     <!-- ============================================ -->

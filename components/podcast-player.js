@@ -8,11 +8,10 @@ const PODCAST_STYLES = `
   #podcast-btn {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(calc(-50% + 110px));
     z-index: 9001; background: #1a1a1a; color: #ccc; border: 1px solid #333;
-    padding: 8px 20px; border-radius: 20px; cursor: pointer;
-    font-size: 14px; font-family: -apple-system, system-ui, sans-serif;
+    padding: 8px 20px; border-radius: 6px; cursor: pointer;
+    font-size: 14px; font-family: var(--sans);
     display: none; align-items: center; gap: 6px;
     transition: opacity 0.2s, transform 0.3s;
-    box-shadow: 0 4px 16px #0006;
   }
   #podcast-btn:hover { background: #222; color: #fff; }
   #podcast-btn.solo { transform: translateX(-50%); }
@@ -21,9 +20,8 @@ const PODCAST_STYLES = `
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 9002;
     background: #1a1a1a; border-top: 1px solid #333;
     padding: 10px 16px; display: none; flex-direction: column; gap: 8px;
-    font-family: -apple-system, system-ui, sans-serif;
+    font-family: var(--sans);
     transform: translateY(100%); transition: transform 0.3s ease;
-    box-shadow: 0 -4px 20px #0006;
   }
   #podcast-bar.visible { display: flex; transform: translateY(0); }
 
@@ -148,8 +146,6 @@ export function initPodcastPlayer() {
   const currentTime = bar.querySelector('[data-role="current"]');
   const durationEl = bar.querySelector('[data-role="duration"]');
 
-  let xpAwarded = false;
-
   // Try loading the audio - only show button if file exists
   audio.src = audioSrc;
   audio.addEventListener('loadedmetadata', () => {
@@ -199,15 +195,6 @@ export function initPodcastPlayer() {
     playBtn.textContent = audio.paused ? '\u25B6' : '\u23F8';
   }
 
-  // XP tracking
-  function checkXP() {
-    if (xpAwarded) return;
-    if (audio.currentTime >= 120 && typeof window.awardXP === 'function') {
-      window.awardXP(10, 'Podcast listened');
-      xpAwarded = true;
-    }
-  }
-
   // Button click - start
   btn.addEventListener('click', () => {
     showBar();
@@ -243,12 +230,10 @@ export function initPodcastPlayer() {
       scrubber.value = (audio.currentTime / audio.duration) * 100 || 0;
       currentTime.textContent = formatTime(audio.currentTime);
     }
-    checkXP();
   });
 
   audio.addEventListener('ended', () => {
     updatePlayButton();
-    checkXP();
   });
 
   // Scrubber

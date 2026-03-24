@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 12 - Capstone: Broadcast Design System</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #a855f7; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>12</span> Capstone &mdash; Build a Broadcast Design System</h1>
+    <a href="/css-design/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>This is the final project.</strong> You'll build a complete, broadcast-ready design system from scratch. Tokens, components, themes, animations, and live broadcast overlays &mdash; everything from this course, combined into one system.</p>
+
+    <!-- ============================================ -->
+    <!-- THE PROJECT                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Project: "Studio" Design System</h2>
+
+    <p>You're building a design system called <strong>Studio</strong>. It powers a fictional broadcast news network that covers news, sports, and elections. The system must support:</p>
+
+    <ul>
+      <li><strong>3 brands</strong> &mdash; News (red/orange), Sports (green/emerald), Elections (blue/purple)</li>
+      <li><strong>2 themes</strong> &mdash; Dark (on-air) and Light (web/mobile)</li>
+      <li><strong>Core UI components</strong> &mdash; buttons, cards, inputs, badges</li>
+      <li><strong>Broadcast components</strong> &mdash; lower thirds, ticker, score bug, results bar</li>
+      <li><strong>Smooth animations</strong> &mdash; all broadcast-quality (60fps, transform/opacity only)</li>
+      <li><strong>Safe zone compliance</strong> &mdash; all broadcast elements within title-safe boundaries</li>
+    </ul>
+
+    <div class="aha">
+      <p><strong>This project proves you understand CSS at a systems level.</strong> It's not about making pretty things &mdash; it's about building an architecture that's maintainable, themeable, performant, and production-ready. This is the kind of work that gets you hired at design-driven companies.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PHASE 1: TOKENS                              -->
+    <!-- ============================================ -->
+
+    <h2>Phase 1: Token Architecture</h2>
+
+    <p>Build the three-layer token system that powers everything.</p>
+
+    <h3>Deliverables</h3>
+
+    <pre><code><span class="comment">/* tokens/primitives.css */</span>
+<span class="comment">/* All raw values: full color palette, spacing scale,
+   font sizes, radii, shadows, easing curves */</span>
+
+:root {
+  <span class="comment">/* Color palettes (3 hues x 11 shades + neutrals) */</span>
+  --red-50: ...; --red-100: ...; ... --red-950: ...;
+  --green-50: ...; ... --green-950: ...;
+  --blue-50: ...; ... --blue-950: ...;
+  --gray-50: ...; ... --gray-950: ...;
+
+  <span class="comment">/* Spacing (8px base, powers of 2) */</span>
+  --space-0: 0; --space-1: 0.25rem; ...
+
+  <span class="comment">/* Typography */</span>
+  --text-xs: 0.75rem; --text-sm: 0.875rem; ...
+  --font-sans: ...; --font-mono: ...; --font-display: ...;
+
+  <span class="comment">/* Motion */</span>
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+}</code></pre>
+
+    <pre><code><span class="comment">/* tokens/semantic.css */</span>
+<span class="comment">/* Map primitives to purposes. Theme-switchable. */</span>
+
+:root {
+  <span class="comment">/* Surfaces */</span>
+  --color-bg: var(--gray-950);
+  --color-surface: var(--gray-900);
+  --color-surface-elevated: var(--gray-800);
+
+  <span class="comment">/* Text */</span>
+  --color-text: var(--gray-50);
+  --color-text-secondary: var(--gray-400);
+  --color-text-muted: var(--gray-600);
+
+  <span class="comment">/* Actions & Feedback */</span>
+  --color-action: var(--blue-500);
+  --color-success: var(--green-500);
+  --color-error: var(--red-500);
+  --color-warning: var(--amber-400);
+
+  <span class="comment">/* Borders */</span>
+  --color-border: var(--gray-800);
+}
+
+<span class="comment">/* Light theme override */</span>
+[data-theme="light"] {
+  --color-bg: var(--gray-50);
+  --color-surface: white;
+  --color-text: var(--gray-900);
+  ...
+}
+
+<span class="comment">/* Brand overrides */</span>
+[data-brand="news"] { --color-action: var(--red-600); }
+[data-brand="sports"] { --color-action: var(--green-600); }
+[data-brand="elections"] { --color-action: var(--blue-600); }</code></pre>
+
+    <div class="callout">
+      <p><strong>Start here.</strong> Everything else depends on tokens. Get this right and the rest follows naturally. Get it wrong and you'll be fighting overrides everywhere.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PHASE 2: CORE COMPONENTS                     -->
+    <!-- ============================================ -->
+
+    <h2>Phase 2: Core UI Components</h2>
+
+    <p>Build these four foundational components. Each must use component tokens, support all themes and brands, and have proper interactive states.</p>
+
+    <h3>Component checklist</h3>
+
+    <table>
+      <tr><th>Component</th><th>Variants</th><th>States</th><th>Key Features</th></tr>
+      <tr><td>Button</td><td>default, outline, ghost, destructive + sm/md/lg</td><td>hover, focus, active, disabled</td><td>Component tokens, focus ring, icon slot</td></tr>
+      <tr><td>Card</td><td>default, featured, compact</td><td>hover (link cards)</td><td>Compound parts (header/body/footer), :has() for conditional styling</td></tr>
+      <tr><td>Input</td><td>text, search, select</td><td>focus, error, disabled</td><td>Label, helper text, error message, icon slots</td></tr>
+      <tr><td>Badge</td><td>default, success, warning, error + sm/md</td><td>—</td><td>Pill shape, icon support, dot indicator</td></tr>
+    </table>
+
+    <pre><code><span class="comment">/* Example: Button with full component token API */</span>
+@layer components {
+  .studio-btn {
+    --btn-bg: var(--color-action);
+    --btn-text: white;
+    --btn-border: transparent;
+    --btn-padding: var(--space-2) var(--space-4);
+    --btn-radius: var(--radius-md);
+    --btn-font: var(--text-sm);
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--btn-padding);
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    border: 1px solid var(--btn-border);
+    border-radius: var(--btn-radius);
+    font-size: var(--btn-font);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--duration-fast) ease-out,
+                border-color var(--duration-fast) ease-out;
+
+    &:hover { filter: brightness(1.1); }
+    &:focus-visible {
+      outline: 2px solid var(--color-action);
+      outline-offset: 2px;
+    }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+  }
+
+  .studio-btn-outline {
+    --btn-bg: transparent;
+    --btn-text: var(--color-action);
+    --btn-border: var(--color-action);
+  }
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- PHASE 3: BROADCAST COMPONENTS                -->
+    <!-- ============================================ -->
+
+    <h2>Phase 3: Broadcast Components</h2>
+
+    <p>Build broadcast-specific components that work within safe zones and meet 60fps requirements.</p>
+
+    <h3>Required broadcast components</h3>
+
+    <table>
+      <tr><th>Component</th><th>Requirements</th></tr>
+      <tr><td>Lower Third</td><td>Name + title plates, accent bar, staggered enter/exit, within title-safe zone</td></tr>
+      <tr><td>Ticker</td><td>Scrolling text, label badge, seamless loop, separator dots</td></tr>
+      <tr><td>Alert Banner</td><td>Full-width breaking news bar, pulse animation, slide enter/exit</td></tr>
+      <tr><td>Score Bug</td><td>Two teams, scores, period/quarter, clock, compact overlay</td></tr>
+      <tr><td>Results Bar</td><td>Animated segments, party colors, percentage labels, race-call flash</td></tr>
+    </table>
+
+    <h3>Animation requirements</h3>
+
+    <pre><code><span class="comment">/* All broadcast animations must: */</span>
+
+<span class="comment">/* 1. Use ONLY transform and opacity */</span>
+<span class="comment">/* 2. Use the system's easing curves */</span>
+animation-timing-function: var(--ease-out-expo);
+
+<span class="comment">/* 3. Respect the duration scale */</span>
+<span class="comment">/* Enter: --duration-normal (300ms)
+   Exit:  --duration-fast (150ms)
+   Hold:  5000ms minimum for readability */</span>
+
+<span class="comment">/* 4. Use staggered delays for multi-part components */</span>
+<span class="comment">/* 5. Use will-change on elements ABOUT to animate */</span>
+<span class="comment">/* 6. Remove will-change after animation completes */</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- PHASE 4: THEMING                             -->
+    <!-- ============================================ -->
+
+    <h2>Phase 4: Theme Engine</h2>
+
+    <p>Wire everything together so the entire system responds to theme and brand changes.</p>
+
+    <pre><code><span class="comment">/* The theme engine: ONE data attribute changes everything */</span>
+&lt;body data-brand="news" data-theme="dark"&gt;
+  <span class="comment">&lt;!-- All components automatically use news brand, dark theme --&gt;</span>
+&lt;/body&gt;
+
+<span class="comment">/* JavaScript: switch brands */</span>
+document.body.dataset.brand = 'sports';
+<span class="comment">/* Every component updates: buttons turn green, lower thirds turn green,
+   tickers turn green, score bugs use sports styling. Zero CSS changes. */</span>
+
+<span class="comment">/* JavaScript: switch themes */</span>
+document.body.dataset.theme = 'light';
+<span class="comment">/* Every surface, text color, border color updates.
+   Brand colors stay the same. Components adapt. */</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- PHASE 5: DOCUMENTATION PAGE                  -->
+    <!-- ============================================ -->
+
+    <h2>Phase 5: Living Documentation</h2>
+
+    <p>Build a documentation page that displays every component in every variant, with brand/theme toggles and live previews.</p>
+
+    <pre><code><span class="comment">/* Documentation page requirements: */</span>
+
+<span class="comment">/* 1. Token showcase — color palette, spacing scale, typography */</span>
+<span class="comment">/* 2. Component gallery — every component, every variant, every state */</span>
+<span class="comment">/* 3. Brand switcher — toggle between news/sports/elections */</span>
+<span class="comment">/* 4. Theme switcher — toggle between dark/light */</span>
+<span class="comment">/* 5. Broadcast preview — 16:9 canvas with safe zone overlay,
+      lower third, ticker, and score bug all visible */</span>
+<span class="comment">/* 6. Animation preview — trigger enter/exit on each broadcast component */</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- GRADING RUBRIC                               -->
+    <!-- ============================================ -->
+
+    <h2>Evaluation Criteria</h2>
+
+    <table>
+      <tr><th>Category</th><th>Weight</th><th>What We're Looking For</th></tr>
+      <tr><td>Token Architecture</td><td>25%</td><td>Clean 3-layer system, proper naming, semantic mapping, theme overrides</td></tr>
+      <tr><td>Component Quality</td><td>25%</td><td>Component token APIs, proper states, :has() usage, encapsulation</td></tr>
+      <tr><td>Broadcast Components</td><td>20%</td><td>Safe zone compliance, 60fps animations, staggered timing, seamless ticker</td></tr>
+      <tr><td>Theming</td><td>15%</td><td>3 brands + 2 themes all working, single data-attribute switching</td></tr>
+      <tr><td>Code Quality</td><td>15%</td><td>@layer usage, flat specificity, no !important, clean organization</td></tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- STRETCH GOALS                                -->
+    <!-- ============================================ -->
+
+    <h2>Stretch Goals</h2>
+
+    <ul>
+      <li><strong>Container-responsive components</strong> &mdash; Cards and lower thirds adapt to container width, not viewport</li>
+      <li><strong>Scroll-driven effects</strong> &mdash; Parallax hero, progress bar, or reveal animations on the doc page</li>
+      <li><strong>View Transitions</strong> &mdash; Animate between documentation sections using the View Transitions API</li>
+      <li><strong>Figma token export</strong> &mdash; Export your tokens in W3C Design Tokens format</li>
+      <li><strong>Tailwind v4 integration</strong> &mdash; Import your tokens into a <code>@theme</code> block and generate utilities</li>
+      <li><strong>prefers-reduced-motion</strong> &mdash; Comprehensive motion reduction that preserves meaning</li>
+      <li><strong>Election night simulation</strong> &mdash; A live demo that simulates vote counting with animated results bars, race calls, and electoral vote counters updating in real time</li>
+    </ul>
+
+    <div class="aha">
+      <p><strong>This capstone demonstrates mastery of every lesson.</strong> Cascade control (L01). Layout modes (L02-04). Custom properties (L05). Modern CSS features (L06). Animation (L07). Tailwind architecture (L08). Token systems (L09). Component patterns (L10). Broadcast constraints (L11). Every concept is exercised in one coherent system.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- GETTING STARTED                              -->
+    <!-- ============================================ -->
+
+    <h2>Getting Started</h2>
+
+    <pre><code><span class="comment">/* Suggested file structure */</span>
+studio/
+  tokens/
+    primitives.css      <span class="comment">/* Layer 1: raw values */</span>
+    semantic.css         <span class="comment">/* Layer 2: purpose-mapped tokens */</span>
+    brands/
+      news.css           <span class="comment">/* News brand semantic overrides */</span>
+      sports.css         <span class="comment">/* Sports brand overrides */</span>
+      elections.css       <span class="comment">/* Elections brand overrides */</span>
+  components/
+    button.css
+    card.css
+    input.css
+    badge.css
+  broadcast/
+    lower-third.css
+    ticker.css
+    alert-banner.css
+    score-bug.css
+    results-bar.css
+    safe-zones.css
+  themes/
+    dark.css             <span class="comment">/* Default (dark on-air theme) */</span>
+    light.css            <span class="comment">/* Light web/mobile theme */</span>
+  studio.css             <span class="comment">/* Entry point: imports all layers */</span>
+  docs/
+    index.html           <span class="comment">/* Living documentation page */</span></code></pre>
+
+    <pre><code><span class="comment">/* studio.css — entry point */</span>
+@layer reset, tokens, base, components, broadcast, utilities;
+
+@import "tokens/primitives.css" layer(tokens);
+@import "tokens/semantic.css" layer(tokens);
+@import "tokens/brands/news.css" layer(tokens);
+@import "tokens/brands/sports.css" layer(tokens);
+@import "tokens/brands/elections.css" layer(tokens);
+@import "themes/dark.css" layer(base);
+@import "themes/light.css" layer(base);
+@import "components/button.css" layer(components);
+@import "components/card.css" layer(components);
+@import "components/input.css" layer(components);
+@import "components/badge.css" layer(components);
+@import "broadcast/safe-zones.css" layer(broadcast);
+@import "broadcast/lower-third.css" layer(broadcast);
+@import "broadcast/ticker.css" layer(broadcast);
+@import "broadcast/alert-banner.css" layer(broadcast);
+@import "broadcast/score-bug.css" layer(broadcast);
+@import "broadcast/results-bar.css" layer(broadcast);</code></pre>
+
+    <div class="callout">
+      <p><strong>Start with tokens, then components, then broadcast, then theming.</strong> Each phase depends on the previous one. Get your tokens right first &mdash; everything else references them. Test theming early and often &mdash; don't leave it until the end.</p>
+    </div>
+
+    <h2>What You've Learned</h2>
+
+    <p>You started this course knowing Tailwind. Now you understand the engine under it:</p>
+
+    <ol>
+      <li>How the cascade decides which styles win</li>
+      <li>Why layout modes are different universes</li>
+      <li>How flexbox and grid actually distribute space</li>
+      <li>Why custom properties are a runtime API, not compile-time variables</li>
+      <li>How modern CSS (container queries, :has(), nesting, layers) enables design systems</li>
+      <li>How animation communicates meaning and how to keep it performant</li>
+      <li>How Tailwind v4 is built on the CSS features you now understand</li>
+      <li>How design tokens create maintainable, themeable, multi-brand systems</li>
+      <li>How component CSS serves as an API contract</li>
+      <li>How broadcast CSS stress-tests every principle under the hardest constraints</li>
+    </ol>
+
+    <p>Build this capstone. Then go build something real.</p>
+
+    <div class="nav-footer">
+      <a href="/css-design/lessons/11-broadcast-graphics/">&larr; Lesson 11: Broadcast</a>
+      <a href="/css-design/">Back to CSS + Design &rarr;</a>
+    </div>
+  </div>
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

@@ -1,0 +1,2946 @@
+[
+  {
+    "id": "jsts-001",
+    "track": "jsts",
+    "type": "interview",
+    "author": "closure_king",
+    "time": "2h",
+    "content": "INTERVIEW Q: You're building a rate limiter for an API client. Each endpoint gets its own limit — 10 requests per second for /search, 100 for /read, 2 for /write.\n\nYou need a function that returns a new rate-limited wrapper for any given endpoint. The interviewer wants to see closures, not classes.\n\nHow do you design it?",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/03-closures-scope/",
+      "label": "closures deep dive in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 892,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "createRateLimiter(limit) returns a function that closes over a `timestamps` array. On each call, filter out timestamps older than 1s, check length < limit, push Date.now() if allowed. The array lives in the closure — no global state, no class instance. Each endpoint gets its own little universe.",
+        "likes": 312
+      },
+      {
+        "author": "event_looper",
+        "content": "Bonus points if you mention that setTimeout cleanup of the timestamps array matters for long-running processes. Closures hold references — that array never gets GC'd unless you prune it. Memory leaks are closures' shadow side.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "jsts-002",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "type_narrow",
+    "time": "4h",
+    "content": "hot take: if you're using `any` in TypeScript, you're paying the TypeScript tax (build step, syntax overhead, config files) and getting none of the benefits.\n\nyou're wearing a seatbelt but not clicking it in.\n\neither commit to the type system or use JavaScript. the middle ground is the worst of both worlds.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1567,
+    "reposts": 423,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "Counterpoint: `any` as a migration strategy is valid. You're converting a 200-file JS codebase. You start with `any` everywhere and tighten incrementally. The alternative — typing everything perfectly on day one — means the migration never ships.",
+        "likes": 389
+      },
+      {
+        "author": "async_await",
+        "content": "There's a difference between `any` as a TODO and `any` as a lifestyle. Check your codebase. If the `any` count is going up over time, you have a culture problem, not a type problem.",
+        "likes": 256
+      },
+      {
+        "author": "type_narrow",
+        "content": "Fine. I'll accept `any` with a // TODO comment and a linked ticket. But `any` without a plan is just JavaScript cosplaying as TypeScript.",
+        "likes": 445
+      }
+    ]
+  },
+  {
+    "id": "jsts-003",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "event_looper",
+    "time": "6h",
+    "content": "SPOT THE BUG: This code is supposed to log numbers 0 through 4 with a 1-second delay between each. Instead it logs 5 five times. Why?",
+    "code": "for (var i = 0; i < 5; i++) {\n  setTimeout(function() {\n    console.log(i);\n  }, i * 1000);\n}\n\n// Expected: 0, 1, 2, 3, 4\n// Actual:   5, 5, 5, 5, 5",
+    "link": {
+      "url": "/jsts/lessons/03-closures-scope/",
+      "label": "closures + loop gotcha in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "`var` is function-scoped, not block-scoped. All 5 callbacks close over the SAME `i`. By the time any callback fires, the loop is done and `i` is 5. Fix: use `let` instead of `var`. `let` creates a new binding per iteration. This is literally the reason `let` exists.",
+        "likes": 345
+      },
+      {
+        "author": "proto_chain",
+        "content": "The pre-`let` fix was an IIFE: `(function(j) { setTimeout(() => console.log(j), j*1000); })(i)`. Creating a new scope manually. We suffered so you could type three letters instead of three.",
+        "likes": 201
+      }
+    ]
+  },
+  {
+    "id": "jsts-004",
+    "track": "jsts",
+    "type": "tip",
+    "author": "type_narrow",
+    "time": "1d",
+    "content": "PSA: Stop using type assertions (`as`) when you can use type narrowing.\n\n`as` tells the compiler \"trust me.\" Type narrowing tells the compiler \"check me.\" One of these catches bugs. The other creates them.",
+    "code": "// BAD: assertion — you're lying to the compiler\nfunction getLength(x: string | string[]) {\n  return (x as string[]).length; // crashes if x is a string... wait, no, strings have .length too\n  // but .push() would crash: (x as string[]).push('oops')\n}\n\n// GOOD: narrowing — compiler verified\nfunction getLength(x: string | string[]) {\n  if (Array.isArray(x)) {\n    return x.length; // TS knows x is string[] here\n  }\n  return x.length; // TS knows x is string here\n}",
+    "link": {
+      "url": "/jsts/lessons/08-type-narrowing/",
+      "label": "type narrowing patterns in Lesson 8 →"
+    },
+    "poll": null,
+    "likes": 678,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "The `as` keyword should have been named `trustMeBro`. Would have prevented a lot of misuse.",
+        "likes": 512
+      },
+      {
+        "author": "closure_king",
+        "content": "Discriminated unions + narrowing is the real TypeScript superpower. `if (event.type === 'click')` and suddenly TS knows the shape of the entire event payload. Zero runtime cost, full type safety.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-005",
+    "track": "jsts",
+    "type": "mentalModel",
+    "author": "event_looper",
+    "time": "3h",
+    "content": "MENTAL MODEL: The event loop is a restaurant.\n\nThe call stack is the chef — can only cook one dish at a time.\nThe callback queue is the order tickets lined up on the counter.\nThe microtask queue (Promises) is the VIP line — always served before regular tickets.\nsetTimeout(fn, 0) doesn't mean \"run now.\" It means \"put this ticket at the back of the line.\"\n\nThe chef never looks at the tickets until the current dish is done. That's why a while(true) freezes the browser — the chef never finishes, never checks the tickets, never serves the customer.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/05-event-loop/",
+      "label": "event loop visualization in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 1123,
+    "reposts": 298,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "And async/await is the chef saying \"I need to wait for the oven — let me check other tickets while this bakes.\" The dish isn't abandoned, it's paused. When the oven dings (Promise resolves), the ticket goes back in the VIP line.",
+        "likes": 367
+      },
+      {
+        "author": "closure_king",
+        "content": "This also explains why Promise.resolve().then(fn) runs before setTimeout(fn, 0). Microtask queue (VIP) gets drained completely before the next macrotask (regular ticket) is picked up. The restaurant has a strict policy.",
+        "likes": 245
+      }
+    ]
+  },
+  {
+    "id": "jsts-006",
+    "track": "jsts",
+    "type": "poll",
+    "author": "proto_chain",
+    "time": "8h",
+    "content": "Be honest. When you need to check if a value is an array in JavaScript, what do you actually reach for?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "Array.isArray(x)",
+          "pct": 61
+        },
+        {
+          "text": "x instanceof Array",
+          "pct": 22
+        },
+        {
+          "text": "typeof x === 'object' && x.length",
+          "pct": 12
+        },
+        {
+          "text": "Object.prototype.toString.call(x)",
+          "pct": 5
+        }
+      ],
+      "totalVotes": 3847
+    },
+    "likes": 489,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "proto_chain",
+        "content": "61% correct. `instanceof` breaks across iframes and realms because each realm has its own Array constructor. `typeof` with `.length` matches strings, arguments objects, and anything with a length property. `Array.isArray` is the only one that's both correct and readable.",
+        "likes": 278
+      },
+      {
+        "author": "type_narrow",
+        "content": "5% of you are war veterans from the pre-ES5 era and I salute your `toString.call` trauma. You earned that knowledge the hard way.",
+        "likes": 189
+      },
+      {
+        "author": "event_looper",
+        "content": "The `typeof` crowd: you know `typeof null === 'object'` right? If you're checking types with `typeof` you're building on a foundation of lies. JS types are a crime scene and `typeof` is the unreliable witness.",
+        "likes": 334
+      }
+    ]
+  },
+  {
+    "id": "jsts-007",
+    "track": "jsts",
+    "type": "til",
+    "author": "async_await",
+    "time": "1h",
+    "content": "TIL: `Promise.allSettled()` exists and it's what you actually want 90% of the time you're using `Promise.all()`.\n\n`Promise.all()` rejects if ANY promise rejects. One failure kills everything.\n`Promise.allSettled()` waits for ALL promises and gives you the status of each one.\n\nStop losing successful results because one request out of twenty failed.",
+    "code": "const results = await Promise.allSettled([\n  fetch('/api/users'),\n  fetch('/api/posts'),\n  fetch('/api/comments')  // this one 500s\n]);\n\n// results:\n// [\n//   { status: 'fulfilled', value: Response },\n//   { status: 'fulfilled', value: Response },\n//   { status: 'rejected', reason: Error }\n// ]\n\nconst succeeded = results.filter(r => r.status === 'fulfilled');\nconst failed = results.filter(r => r.status === 'rejected');",
+    "link": null,
+    "poll": null,
+    "likes": 723,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "The naming is perfect too. `all` = I need ALL of these or nothing. `allSettled` = I need all of these to FINISH, pass or fail. `race` = first one wins. `any` = first SUCCESS wins. The Promise static methods are a decision tree and nobody reads the docs.",
+        "likes": 267
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript tip: the discriminated union on `status` means narrowing just works. `if (r.status === 'fulfilled') r.value` — TS knows. `if (r.status === 'rejected') r.reason` — TS knows. Beautiful API design.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "jsts-008",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "async_await",
+    "time": "2d",
+    "content": "SPOT THE BUG: This async function is supposed to process items sequentially (order matters). But they're firing all at once. Why?",
+    "code": "async function processSequentially(items) {\n  items.forEach(async (item) => {\n    await processItem(item);\n    console.log(`Done: ${item.id}`);\n  });\n  console.log('All done!');\n}\n\n// Expected: processes one by one, then \"All done!\"\n// Actual: \"All done!\" logs immediately, items process in random order",
+    "link": {
+      "url": "/jsts/lessons/06-async-patterns/",
+      "label": "sequential vs parallel async in Lesson 6 →"
+    },
+    "poll": null,
+    "likes": 612,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "`.forEach()` doesn't await! It calls each callback and moves on. Each `async` callback returns a Promise that forEach ignores completely. You get N unrelated Promises floating in the void. Use a `for...of` loop instead — that actually respects `await` because it's a real loop, not a callback-based iterator.",
+        "likes": 389
+      },
+      {
+        "author": "closure_king",
+        "content": "The fix:\n```\nfor (const item of items) {\n  await processItem(item);\n}\n```\nOr if you want parallel: `await Promise.all(items.map(item => processItem(item)))`. But pick ONE. `.forEach` with `async` is neither sequential nor properly parallel — it's chaos.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-009",
+    "track": "jsts",
+    "type": "thread",
+    "author": "proto_chain",
+    "time": "5h",
+    "content": "THREAD: The prototype chain explained in 60 seconds.\n\nEvery object in JS has a hidden link to another object — its prototype. When you access a property that doesn't exist on the object, JS follows the link. Then follows that object's link. And so on until it hits null.\n\nThat's inheritance in JS. There are no classes. `class` is syntax sugar over this chain. Always has been.\n\n`dog.speak()` → not on dog → check Dog.prototype → found it → call it with `this` = dog.\n\nThe chain is just a linked list of objects. That's it. That's the whole model.",
+    "code": "const animal = { eats: true };\nconst dog = Object.create(animal);\ndog.barks = true;\n\ndog.barks;  // true (own property)\ndog.eats;   // true (found on prototype: animal)\ndog.flies;  // undefined (not on dog, not on animal, not on Object.prototype)\n\nObject.getPrototypeOf(dog) === animal;  // true\nObject.getPrototypeOf(animal) === Object.prototype;  // true\nObject.getPrototypeOf(Object.prototype) === null;  // true — end of chain",
+    "link": {
+      "url": "/jsts/lessons/04-prototypes-classes/",
+      "label": "prototype chain walkthrough in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 834,
+    "reposts": 201,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "And this is why `typeof` and `instanceof` behave differently. `typeof` checks the value's runtime tag. `instanceof` walks the prototype chain looking for a constructor's `.prototype`. They answer fundamentally different questions.",
+        "likes": 256
+      },
+      {
+        "author": "closure_king",
+        "content": "Classes are prototype chains in a trench coat. Always have been, always will be. The `class` keyword just makes the trench coat look nicer.",
+        "likes": 445
+      }
+    ]
+  },
+  {
+    "id": "jsts-010",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "closure_king",
+    "time": "1d",
+    "content": "hot take: most \"memory leaks\" in JavaScript apps are just closures holding references you forgot about.\n\nevent listeners that capture `this`. Callbacks that close over a DOM node. Intervals that reference a component that's been unmounted.\n\nthe garbage collector can't help you if your closures are hoarding references like a digital packrat.\n\nclosures are the most powerful feature in the language AND the most common source of memory leaks. that's not a contradiction — it's the price of power.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/03-closures-scope/",
+      "label": "closure lifecycle in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 1034,
+    "reposts": 289,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "addEventListener without removeEventListener. setInterval without clearInterval. WebSocket onmessage callbacks on unmounted components. The holy trinity of closure leaks. The event loop keeps ticking, the closure keeps holding, the memory keeps growing.",
+        "likes": 312
+      },
+      {
+        "author": "async_await",
+        "content": "AbortController + signal is the modern answer. Pass a signal to your fetch, your event listener, your observable. One abort() tears down everything. Stop managing cleanup manually — use the primitives.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-011",
+    "track": "jsts",
+    "type": "mentalModel",
+    "author": "type_narrow",
+    "time": "12h",
+    "content": "MENTAL MODEL: TypeScript generics are function parameters for types.\n\nA regular function: `function first(arr) { return arr[0]; }` — works on any array but you lose the type.\n\nA generic function: `function first<T>(arr: T[]): T` — works on any array AND preserves the type.\n\n`T` is just a variable. Instead of holding a value, it holds a type. You're writing functions that compute types the same way you write functions that compute values.\n\nIf you can write `(x) => x`, you can write `<T>(x: T) => T`. Same concept, different dimension.",
+    "code": "// Without generics: works but returns `any`\nfunction first(arr: any[]): any {\n  return arr[0];\n}\nconst x = first([1, 2, 3]); // x: any 😞\n\n// With generics: works AND preserves the type\nfunction first<T>(arr: T[]): T {\n  return arr[0];\n}\nconst x = first([1, 2, 3]); // x: number 🎯\nconst y = first(['a', 'b']); // y: string 🎯\n\n// T is inferred from what you pass in.\n// You're not writing types. TS is computing them.",
+    "link": {
+      "url": "/jsts/lessons/09-generics/",
+      "label": "generics from zero in Lesson 9 →"
+    },
+    "poll": null,
+    "likes": 945,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "\"Function parameters for types\" is the best one-line explanation of generics I've ever heard. It immediately makes `<T, U>` feel like `(a, b)` — two inputs, used in the body. Nothing scary about it.",
+        "likes": 423
+      },
+      {
+        "author": "async_await",
+        "content": "And just like function params, you can add constraints: `<T extends HasId>` is like saying \"this function only accepts objects with an id property.\" Bounded generics = typed function params with validation.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "jsts-012",
+    "track": "jsts",
+    "type": "ratiod",
+    "author": "event_looper",
+    "time": "3d",
+    "content": "JavaScript is single-threaded, so it can't do real concurrency.\n\n(ratio: 12K quote tweets)",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 234,
+    "reposts": 12453,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "JS is single-threaded for YOUR code. The runtime is absolutely not. Network I/O, file system, timers, DNS lookups — all happening on separate threads managed by libuv (Node) or the browser's internals. You write single-threaded code that orchestrates multi-threaded work. That's the whole genius of the event loop.",
+        "likes": 567
+      },
+      {
+        "author": "proto_chain",
+        "content": "Also: Web Workers exist. SharedArrayBuffer exists. Atomics exist. Worker threads in Node exist. JS has concurrency primitives — they're just not shared-memory-by-default because shared mutable state is a footgun in ANY language. JS chose message passing. Erlang made the same choice. Nobody ratios Erlang.",
+        "likes": 445
+      },
+      {
+        "author": "closure_king",
+        "content": "Tell me you've never built anything at scale without telling me you've never built anything at scale. Node handles millions of concurrent connections with a single thread. Your Java server needs a thread pool the size of a small country to do the same thing.",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "jsts-013",
+    "track": "jsts",
+    "type": "commitMsg",
+    "author": "proto_chain",
+    "time": "4h",
+    "content": "git log --oneline:\n\na1b2c3d fix: === instead of ==, this is not a philosophy class\n7d8e9f0 refactor: replaced 47 `any` types with actual types. tech debt is real debt\nf4a5b6c feat: added runtime type validation because TypeScript disappears at runtime and so does my trust\n2c3d4e5 fix: removed console.log('here') console.log('here2') console.log('WHY')\ne6f7a8b chore: updated .prettierrc because tabs vs spaces is the only war worth fighting",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1245,
+    "reposts": 345,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "\"TypeScript disappears at runtime and so does my trust\" belongs in a museum.",
+        "likes": 567
+      },
+      {
+        "author": "type_narrow",
+        "content": "47 `any` types. FORTY SEVEN. That's not a codebase, that's a cry for help. Glad you made it to the other side.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "jsts-014",
+    "track": "jsts",
+    "type": "eli5",
+    "author": "closure_king",
+    "time": "7h",
+    "content": "ELI5: What's a closure?\n\nImagine you have a backpack. When you leave a room, you take some of the room's stuff in your backpack. Even though the room is gone, you still have the stuff.\n\nA closure is a function that left its original scope but packed the variables it needed in its backpack. The outer function returned, the scope \"closed,\" but the inner function still has access to those variables.\n\nThat's it. Function + its backpack of captured variables = closure.",
+    "code": "function makeCounter() {\n  let count = 0; // this goes in the backpack\n  return function() {\n    count++; // still accessible!\n    return count;\n  };\n}\n\nconst counter = makeCounter();\n// makeCounter is done. Its scope is \"closed.\"\n// But the returned function has `count` in its backpack.\n\ncounter(); // 1\ncounter(); // 2\ncounter(); // 3 — the backpack persists!",
+    "link": {
+      "url": "/jsts/lessons/03-closures-scope/",
+      "label": "closures explained in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 1456,
+    "reposts": 378,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "The backpack analogy is S-tier. Way better than \"a closure is a function that has access to its lexical scope\" which technically correct but about as helpful as reading the ECMAScript spec for fun.",
+        "likes": 389
+      },
+      {
+        "author": "type_narrow",
+        "content": "And in TypeScript, the backpack has a type. `() => number`. You know what's in the backpack without opening it. That's the whole point.",
+        "likes": 201
+      }
+    ]
+  },
+  {
+    "id": "jsts-015",
+    "track": "jsts",
+    "type": "slackPost",
+    "author": "async_await",
+    "time": "30m",
+    "content": "#frontend-team Slack:\n\n@async_await: why is the checkout page hanging on submit?\n@event_looper: found it. someone put an `await` inside a `.forEach()` on the cart items\n@async_await: ah. sequential accident or parallel accident?\n@event_looper: neither. it's the third kind. fire-and-forget-and-pray\n@closure_king: the forEach is also inside a try/catch that catches nothing because the promises aren't awaited\n@type_narrow: I added a lint rule for async-forEach six months ago and someone disabled it with a comment that says \"I know what I'm doing\"\n@proto_chain: narrator: they did not know what they were doing\n@async_await: converting to for...of. deploying in 10.\n@event_looper: add the lint rule back. make it an error, not a warning. warnings are suggestions. errors are laws.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1678,
+    "reposts": 456,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "\"fire-and-forget-and-pray\" is going on my resume under Methodologies.",
+        "likes": 567
+      },
+      {
+        "author": "type_narrow",
+        "content": "eslint-disable with a confidence comment is the developer equivalent of removing a smoke detector because it keeps going off while you cook.",
+        "likes": 445
+      }
+    ]
+  },
+  {
+    "id": "jsts-016",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "closure_king",
+    "time": "3h",
+    "content": "SPOT THE BUG: React component that shows a counter. Click the button, wait 3 seconds, and the alert shows the WRONG count. Why?",
+    "code": "function Counter() {\n  const [count, setCount] = useState(0);\n\n  function handleClick() {\n    setCount(count + 1);\n    setTimeout(() => {\n      alert('Count is: ' + count);\n    }, 3000);\n  }\n\n  return <button onClick={handleClick}>Count: {count}</button>;\n}\n\n// Click 3 times quickly, wait 3 seconds:\n// UI shows 3, but alert says 0, then 1, then 2\n// WHY?",
+    "link": {
+      "url": "/jsts/lessons/03-closures-scope/",
+      "label": "stale closures in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 934,
+    "reposts": 212,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "Classic stale closure. Each render creates a new `handleClick` that closes over THAT render's `count`. The setTimeout callback captures the value at click time, not at alert time. It's the var-in-a-loop bug wearing a React costume.",
+        "likes": 345
+      },
+      {
+        "author": "async_await",
+        "content": "Fix: use a ref. `const countRef = useRef(count)` and update it in useEffect. Or use the functional updater: `setCount(prev => prev + 1)` and read from the ref in the timeout. Refs are the escape hatch from the closure trap.",
+        "likes": 278
+      },
+      {
+        "author": "type_narrow",
+        "content": "This is why I tell people: understanding closures isn't academic. React hooks ARE closures. Every re-render is a new closure scope. If you don't get closures, you don't get hooks. Period.",
+        "likes": 412
+      }
+    ]
+  },
+  {
+    "id": "jsts-017",
+    "track": "jsts",
+    "type": "tip",
+    "author": "type_narrow",
+    "time": "5h",
+    "content": "TypeScript tip: `satisfies` is the keyword you didn't know you needed.\n\n`as const` locks the type down. Type annotation widens it. `satisfies` validates the shape WITHOUT changing the inferred type.\n\nYou get validation AND inference. Best of both worlds.",
+    "code": "// With type annotation — too wide\nconst routes: Record<string, string> = {\n  home: '/',\n  about: '/about',\n};\nroutes.home; // string — lost the literal type\n\n// With as const — too narrow, no validation\nconst routes = {\n  home: '/',\n  about: '/about',\n} as const;\n// But what if I typo a route? No validation.\n\n// With satisfies — perfect\nconst routes = {\n  home: '/',\n  about: '/about',\n} satisfies Record<string, string>;\nroutes.home; // '/' — literal type preserved!\n// AND it validates against Record<string, string>",
+    "link": {
+      "url": "/jsts/lessons/10-advanced-ts/",
+      "label": "satisfies deep dive in Lesson 10 →"
+    },
+    "poll": null,
+    "likes": 823,
+    "reposts": 189,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "So `satisfies` is like showing your ID at the door. You prove you meet the requirements, but you get to keep your full identity once you're inside. Type annotations strip your identity and hand you a generic badge.",
+        "likes": 356
+      },
+      {
+        "author": "async_await",
+        "content": "I've been replacing `as const` with `satisfies` everywhere. Config objects, route maps, theme tokens. The migration is satisfying. Pun absolutely intended.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "jsts-018",
+    "track": "jsts",
+    "type": "thread",
+    "author": "event_looper",
+    "time": "1d",
+    "content": "THREAD: Microtasks vs Macrotasks — the full picture.\n\nMacrotasks: setTimeout, setInterval, setImmediate, I/O, UI rendering\nMicrotasks: Promise.then/catch/finally, queueMicrotask, MutationObserver\n\nThe rule: after each macrotask completes, drain ALL microtasks before the next macrotask.\n\nThis means: Promise.resolve().then(fn) always runs before setTimeout(fn, 0). Always. Even if the setTimeout was registered first.\n\nThis isn't a quirk. It's the spec. Microtasks get priority because they represent continuations of the current logical operation.",
+    "code": "console.log('1: sync');\n\nsetTimeout(() => console.log('2: macrotask'), 0);\n\nPromise.resolve().then(() => console.log('3: microtask'));\n\nqueueMicrotask(() => console.log('4: also microtask'));\n\nconsole.log('5: sync');\n\n// Output: 1, 5, 3, 4, 2\n// Sync first, then ALL microtasks, then macrotask",
+    "link": {
+      "url": "/jsts/lessons/05-event-loop/",
+      "label": "microtask queue deep dive in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 756,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "The dangerous corollary: if a microtask queues another microtask, that runs too — before any macrotask. You can starve the macrotask queue with recursive microtasks. `function evil() { queueMicrotask(evil); }` — congratulations, you just froze the browser without a while(true).",
+        "likes": 345
+      },
+      {
+        "author": "closure_king",
+        "content": "This is also why `await` in a loop can be subtle. Each `await` queues the continuation as a microtask. If you're awaiting inside a tight loop, you're creating microtasks faster than the runtime processes them. The macrotask queue (including rendering) starves.",
+        "likes": 234
+      },
+      {
+        "author": "proto_chain",
+        "content": "Node.js adds its own twist: `process.nextTick()` runs BEFORE Promise microtasks. It's like a VIP-VIP queue. The Node event loop has 6 phases and each one drains its microtask queue. It's turtles all the way down.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "jsts-019",
+    "track": "jsts",
+    "type": "interview",
+    "author": "async_await",
+    "time": "8h",
+    "content": "INTERVIEW Q: Implement a `debounce` function from scratch.\n\nThe interviewer says: \"I don't care about lodash. Show me you understand closures, timers, and `this` binding.\"\n\nBonus: support a `leading` option that fires immediately on the first call, then debounces subsequent calls.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/03-closures-scope/",
+      "label": "closures + timers in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 645,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "The core is 4 lines: close over a `timerId`, clearTimeout on each call, set a new setTimeout. The closure holds the timer reference between calls. That's it. Everything else is options.\n\nThe `this` trap: use `.apply(this, args)` inside the timeout callback, otherwise `this` points to window/undefined. Arrow functions in the outer wrapper break it too since they don't have their own `this`.",
+        "likes": 289
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript challenge: type it properly. `function debounce<T extends (...args: any[]) => any>(fn: T, ms: number): (...args: Parameters<T>) => void`. The return type is void because debounced functions don't return values synchronously. Watch the interviewer's eyebrows go up.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "jsts-020",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "proto_chain",
+    "time": "2h",
+    "content": "hot take: `class` in JavaScript was a mistake.\n\nnot because classes are bad. because JS already had a perfectly good object model — prototypal delegation — and `class` taught an entire generation to think in classical inheritance instead.\n\nnow everyone writes `class Dog extends Animal` when `Object.create(animal)` was always simpler, more flexible, and more honest about what JS actually does under the hood.\n\n`class` is a gateway drug to inheritance hierarchies. composition was always the answer.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/04-prototypes-classes/",
+      "label": "prototypes vs classes in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 1345,
+    "reposts": 456,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "Counterpoint: `class` gave us a standard syntax that works with TypeScript beautifully. `implements`, `abstract`, access modifiers — none of that works cleanly with raw prototypes. The DX improvement was worth the philosophical compromise.",
+        "likes": 567
+      },
+      {
+        "author": "closure_king",
+        "content": "I write closures that return objects with methods. No `this`, no `new`, no prototype confusion, no `class`. Factory functions are closures wearing a utility belt. Fight me.",
+        "likes": 423
+      },
+      {
+        "author": "async_await",
+        "content": "The real take: use whatever your team reads fastest. A codebase that mixes classes, prototypes, and factory functions is worse than a codebase that commits to any ONE of them. Consistency beats philosophy.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "jsts-021",
+    "track": "jsts",
+    "type": "til",
+    "author": "type_narrow",
+    "time": "1h",
+    "content": "TIL: TypeScript has `const` type parameters (since 5.0) and they're a game changer.\n\nWithout `const`, TS infers `['hello', 'world']` as `string[]`.\nWith `const`, it infers `readonly ['hello', 'world']` — the literal tuple type.\n\nNo more `as const` on every call site.",
+    "code": "// Before: caller has to remember `as const`\nfunction routes<T extends readonly string[]>(paths: T) { return paths; }\nconst r = routes(['home', 'about'] as const);\n// r: readonly ['home', 'about']\n\n// After: function declares the intent\nfunction routes<const T extends readonly string[]>(paths: T) { return paths; }\nconst r = routes(['home', 'about']);\n// r: readonly ['home', 'about'] — no `as const` needed!",
+    "link": null,
+    "poll": null,
+    "likes": 567,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "The burden shifts from the caller to the author. That's good API design in one sentence. The person writing the library knows the constraint — why should every consumer have to remember `as const`?",
+        "likes": 234
+      },
+      {
+        "author": "async_await",
+        "content": "Used this for a command-line arg parser. `defineCommand(const T)(['--verbose', '--dry-run'])` and now every flag is a literal type. Autocomplete just works. Changed my life.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "jsts-022",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "event_looper",
+    "time": "12h",
+    "content": "SPOT THE BUG: This Node.js server is supposed to handle errors gracefully. But unhandled promise rejections are crashing the process. The try/catch is RIGHT THERE. What's wrong?",
+    "code": "app.get('/users/:id', async (req, res) => {\n  try {\n    const user = await db.findUser(req.params.id);\n    const posts = fetchUserPosts(user.id); // <- look closely\n    const comments = await db.getComments(user.id);\n    res.json({ user, posts: await posts, comments });\n  } catch (err) {\n    res.status(500).json({ error: 'Internal error' });\n  }\n});\n\n// fetchUserPosts rejects → process crash\n// WHY? The try/catch is right there!",
+    "link": {
+      "url": "/jsts/lessons/06-async-patterns/",
+      "label": "error handling patterns in Lesson 6 →"
+    },
+    "poll": null,
+    "likes": 712,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "Missing `await` on `fetchUserPosts`. Without `await`, the promise rejection is unhandled at the point it rejects. The `try/catch` only catches rejections from awaited promises. The unawaited promise floats free, rejects, and nobody catches it. It's a ghost rejection.",
+        "likes": 378
+      },
+      {
+        "author": "closure_king",
+        "content": "This is why `unhandledRejection` exists as a process event. It's the safety net for exactly this pattern. But the real fix: ALWAYS await your promises inside try/catch. If you need parallelism, use `Promise.all()` — at least that properly propagates the rejection.",
+        "likes": 234
+      },
+      {
+        "author": "type_narrow",
+        "content": "ESLint rule `no-floating-promises` from typescript-eslint catches this at lint time. If you're using async code without this rule, you're driving without headlights.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "jsts-023",
+    "track": "jsts",
+    "type": "mentalModel",
+    "author": "type_narrow",
+    "time": "2d",
+    "content": "MENTAL MODEL: Discriminated unions are TypeScript's pattern matching.\n\nGive each variant a shared `type` (or `kind`, `tag`) property with a unique literal value. Then `switch` on it. TypeScript narrows the entire object in each case branch.\n\nIt's the same idea as Rust's enums, Haskell's ADTs, or Swift's associated values. TypeScript just does it with plain objects and string literals.\n\nOnce you see code through the lens of \"what are the possible shapes?\", discriminated unions become your default modeling tool.",
+    "code": "type Shape =\n  | { type: 'circle'; radius: number }\n  | { type: 'rect'; width: number; height: number }\n  | { type: 'triangle'; base: number; height: number };\n\nfunction area(shape: Shape): number {\n  switch (shape.type) {\n    case 'circle':\n      return Math.PI * shape.radius ** 2; // TS knows: radius exists\n    case 'rect':\n      return shape.width * shape.height;  // TS knows: width + height exist\n    case 'triangle':\n      return 0.5 * shape.base * shape.height;\n    default:\n      const _exhaustive: never = shape; // compile error if you miss a case\n      return _exhaustive;\n  }\n}",
+    "link": {
+      "url": "/jsts/lessons/08-type-narrowing/",
+      "label": "discriminated unions in Lesson 8 →"
+    },
+    "poll": null,
+    "likes": 1089,
+    "reposts": 267,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "The `never` exhaustive check is the real gem here. Add a new shape to the union? The compiler immediately tells you every switch statement you forgot to update. It's like having a TODO list that auto-generates itself.",
+        "likes": 456
+      },
+      {
+        "author": "async_await",
+        "content": "I use this for every API response, every state machine, every event system. `type AppState = { status: 'loading' } | { status: 'success'; data: T } | { status: 'error'; error: Error }`. The status field is the discriminant. Narrowing does the rest.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "jsts-024",
+    "track": "jsts",
+    "type": "poll",
+    "author": "async_await",
+    "time": "5h",
+    "content": "You need to make 10 API calls. The results are independent of each other. What's your go-to?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "Promise.all() — fail fast",
+          "pct": 34
+        },
+        {
+          "text": "Promise.allSettled() — get everything",
+          "pct": 41
+        },
+        {
+          "text": "for...of with await — sequential",
+          "pct": 8
+        },
+        {
+          "text": "p-limit or custom concurrency pool",
+          "pct": 17
+        }
+      ],
+      "totalVotes": 2934
+    },
+    "likes": 534,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "8% of you are awaiting in a for loop for INDEPENDENT calls. That's serial execution by accident. You're waiting for call 1 to finish before starting call 2. Each one takes 200ms. Sequential: 2 seconds. Parallel: 200ms. Ten times slower for zero benefit.",
+        "likes": 389
+      },
+      {
+        "author": "proto_chain",
+        "content": "The 17% using concurrency pools are the senior devs. You don't want to fire 10,000 fetches at once — that's a self-DDoS. `p-limit(5)` means max 5 in flight at a time. Controlled parallelism > unbounded parallelism.",
+        "likes": 267
+      },
+      {
+        "author": "type_narrow",
+        "content": "allSettled vs all depends on your failure mode. Dashboard loading 10 widgets? allSettled — show what you can. Payment flow with 3 validation checks? all — if one fails, the whole thing should fail.",
+        "likes": 312
+      }
+    ]
+  },
+  {
+    "id": "jsts-025",
+    "track": "jsts",
+    "type": "tip",
+    "author": "event_looper",
+    "time": "2h",
+    "content": "Stop using `setTimeout(fn, 0)` to \"defer\" work. Use `queueMicrotask(fn)` instead.\n\nsetTimeout(fn, 0) doesn't actually run after 0ms. Browsers clamp it to ~4ms. It creates a macrotask, which means rendering can happen before your callback.\n\n`queueMicrotask(fn)` runs at the end of the current task, before rendering. It's genuinely immediate-ish, not fake-immediate like setTimeout(0).",
+    "code": "// Old way: setTimeout(0) — delayed by ~4ms, after rendering\nsetTimeout(() => {\n  console.log('macrotask — rendering might happen before me');\n}, 0);\n\n// New way: queueMicrotask — runs before rendering\nqueueMicrotask(() => {\n  console.log('microtask — runs before any rendering');\n});\n\n// Use case: batching DOM reads after state updates\nfunction setState(newValue) {\n  state = newValue;\n  queueMicrotask(() => flushDOMUpdates());\n}",
+    "link": {
+      "url": "/jsts/lessons/05-event-loop/",
+      "label": "microtask timing in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 623,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "This is exactly what React's batching does internally. State updates are synchronous but flushing is deferred to a microtask. That's why `setState` doesn't re-render immediately — it batches, then flushes before the browser paints.",
+        "likes": 234
+      },
+      {
+        "author": "proto_chain",
+        "content": "Careful though: recursive microtasks block rendering forever. `queueMicrotask(() => queueMicrotask(() => ...))` in a loop = frozen page. setTimeout(0) at least lets the browser breathe between iterations. Pick the right tool.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "jsts-026",
+    "track": "jsts",
+    "type": "ratiod",
+    "author": "type_narrow",
+    "time": "1d",
+    "content": "TypeScript is just documentation that slows down your build.\n\n(ratio: 8K quote tweets)",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 189,
+    "reposts": 8234,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "\"Just documentation\" that catches null reference errors at compile time, auto-completes your API calls, prevents impossible state combinations, and refactors 500 files in one rename. What documentation does THAT?",
+        "likes": 678
+      },
+      {
+        "author": "closure_king",
+        "content": "The build time argument was valid in 2020. Today: `tsc --noEmit` for checking, `esbuild` or `swc` for compilation. Type checking in parallel, build in under a second. The slow TypeScript build is a config problem, not a TypeScript problem.",
+        "likes": 445
+      },
+      {
+        "author": "async_await",
+        "content": "Every time I hear \"TypeScript is slow\" I ask: slower than debugging a production undefined is not a function error at 3am? Because I've never been paged for a type error.",
+        "likes": 512
+      }
+    ]
+  },
+  {
+    "id": "jsts-027",
+    "track": "jsts",
+    "type": "eli5",
+    "author": "event_looper",
+    "time": "8h",
+    "content": "ELI5: What's the event loop?\n\nImagine a single cashier at a grocery store. They can only help one person at a time.\n\nWhen someone has a special order (like a birthday cake), the cashier doesn't stop everything and wait. They write a note: \"call me when the cake is ready.\" Then they help the next customer.\n\nWhen the bakery shouts \"cake's done!\", the note goes in a queue. The cashier finishes the current customer, checks the queue, and processes the cake order.\n\nJavaScript is that cashier. It never waits. It delegates, keeps working, and checks for completed tasks between customers.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/05-event-loop/",
+      "label": "event loop explained in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 1234,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "And `async/await` is the cashier saying \"I'll hold your spot, go get the cake, come back when it's ready.\" The illusion of waiting, but the cashier (call stack) is actually free to do other work behind the scenes.",
+        "likes": 345
+      },
+      {
+        "author": "proto_chain",
+        "content": "What happens when the cashier runs `while(true)`? They're stuck counting to infinity and never check the queue. Every customer behind them waits forever. That's what a blocking operation does to the event loop. Don't hog the cashier.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-028",
+    "track": "jsts",
+    "type": "interview",
+    "author": "type_narrow",
+    "time": "3h",
+    "content": "INTERVIEW Q: Implement a type-safe event emitter in TypeScript.\n\nThe catch: events should be typed. `emitter.on('click', (x, y) => ...)` should know `x` and `y` are numbers. `emitter.emit('click', 'hello')` should be a compile error.\n\nThe interviewer wants to see mapped types, generics, and conditional types working together.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/09-generics/",
+      "label": "advanced generics in Lesson 9 →"
+    },
+    "poll": null,
+    "likes": 756,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "Start with the event map: `type Events = { click: [x: number, y: number]; resize: [width: number, height: number]; close: [] }`. Then: `on<K extends keyof Events>(event: K, handler: (...args: Events[K]) => void)`. The key insight is that the event map is the source of truth — everything else is derived.",
+        "likes": 389
+      },
+      {
+        "author": "closure_king",
+        "content": "The implementation is closures all the way down. `on` pushes to a Map<string, Set<Function>> that lives in the constructor closure. `emit` looks up the set and calls each handler. The type system constrains what goes in and out — the runtime is just maps and sets.",
+        "likes": 234
+      },
+      {
+        "author": "async_await",
+        "content": "Bonus: add `once()` that auto-removes after first call. Now you need a wrapper function, and you need to store the original reference for `off()`. This is where most candidates trip — the wrapper obscures the original handler identity.",
+        "likes": 178
+      }
+    ]
+  },
+  {
+    "id": "jsts-029",
+    "track": "jsts",
+    "type": "commitMsg",
+    "author": "async_await",
+    "time": "1h",
+    "content": "git log --oneline:\n\nc9d8e7f fix: awaited the promise that was silently failing for 3 months\nb6a5c4d refactor: replaced 12 nested callbacks with async/await. we are no longer in callback hell, we have ascended\na3b2c1d feat: added retry logic with exponential backoff. third time's the charm, mathematically\n8f7e6d5 fix: race condition in checkout — Promise.all was Promise.random\n4a3b2c1 chore: added error boundaries because optimism is not an error handling strategy",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1567,
+    "reposts": 423,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "\"silently failing for 3 months\" — this is what unhandled promise rejections look like in production. Nobody noticed because the feature still \"worked\" 90% of the time. The other 10% was a mystery to the support team.",
+        "likes": 445
+      },
+      {
+        "author": "type_narrow",
+        "content": "\"optimism is not an error handling strategy\" should be on a plaque in every engineering office. Right next to \"it works on my machine.\"",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "jsts-030",
+    "track": "jsts",
+    "type": "tip",
+    "author": "proto_chain",
+    "time": "3d",
+    "content": "PSA: `Object.hasOwn(obj, prop)` replaced `obj.hasOwnProperty(prop)` in ES2022. Use it.\n\nWhy? `hasOwnProperty` can be shadowed. If someone does `const obj = { hasOwnProperty: () => true }`, your check is now broken. `Object.hasOwn` is a static method — it can't be overridden.",
+    "code": "// DANGEROUS: can be shadowed\nconst obj = { hasOwnProperty: () => true, evil: 'yes' };\nobj.hasOwnProperty('anything'); // always true 💀\n\n// OLD SAFE WAY: verbose\nObject.prototype.hasOwnProperty.call(obj, 'evil'); // true\n\n// NEW WAY: clean and safe\nObject.hasOwn(obj, 'evil'); // true\nObject.hasOwn(obj, 'missing'); // false\n\n// Works with Object.create(null) too — no prototype!\nconst bare = Object.create(null);\nbare.key = 'value';\n// bare.hasOwnProperty('key') → TypeError!\nObject.hasOwn(bare, 'key'); // true ✓",
+    "link": null,
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "TypeScript narrows correctly with both, but `Object.hasOwn` is cleaner to type. No need for the `call` pattern. The TS team specifically added narrowing support for it. Use it.",
+        "likes": 234
+      },
+      {
+        "author": "closure_king",
+        "content": "Fun fact: `Object.create(null)` objects have NO prototype, which means no `.hasOwnProperty` method at all. Before `Object.hasOwn`, the only safe check was `Object.prototype.hasOwnProperty.call()`. Disgusting but necessary.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "jsts-031",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "type_narrow",
+    "time": "5h",
+    "content": "SPOT THE BUG: This TypeScript code compiles with zero errors. But it crashes at runtime. How is that possible?",
+    "code": "interface User {\n  name: string;\n  email: string;\n}\n\nasync function getUser(id: string): Promise<User> {\n  const res = await fetch(`/api/users/${id}`);\n  const data = await res.json(); // returns `any`\n  return data; // no error — but what if the API returns { error: 'not found' }?\n}\n\nconst user = await getUser('123');\nconsole.log(user.name.toUpperCase()); // 💥 Cannot read properties of undefined",
+    "link": {
+      "url": "/jsts/lessons/08-type-narrowing/",
+      "label": "runtime validation in Lesson 8 →"
+    },
+    "poll": null,
+    "likes": 823,
+    "reposts": 189,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "`res.json()` returns `Promise<any>`. And `any` is assignable to EVERYTHING. TypeScript trusts you when you say the API returns a User. The API doesn't care about your types. Use Zod, valibot, or a runtime schema validator at the boundary. Types are compile-time fiction. The network speaks JSON.",
+        "likes": 412
+      },
+      {
+        "author": "closure_king",
+        "content": "This is the \"TypeScript disappears at runtime\" problem in its purest form. The type annotation is a promise to the compiler, not a contract with the API. External data needs runtime validation. Period.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "jsts-032",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "closure_king",
+    "time": "12h",
+    "content": "hot take: barrel files (index.ts that re-exports everything) are a performance anti-pattern.\n\nimport one function from a barrel? your bundler loads every module the barrel touches. tree shaking helps in theory. in practice, side effects, circular dependencies, and eager evaluation mean you're importing the whole world.\n\ndelete your barrel files. import from the source directly. your build times will thank you. your bundle size will thank you.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 978,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "Next.js literally warns about this now. Barrel files in server components cause client-side code to leak into the server bundle. The Next team added `optimizePackageImports` specifically because barrel files were doubling bundle sizes.",
+        "likes": 456
+      },
+      {
+        "author": "async_await",
+        "content": "Counter: barrel files are fine for INTERNAL library boundaries where the whole module is cohesive. `import { Button, Input, Select } from './components'` is cleaner than three separate imports. The anti-pattern is barrel files that aggregate UNRELATED modules.",
+        "likes": 312
+      },
+      {
+        "author": "event_looper",
+        "content": "I once traced a 14-second dev server startup to a single barrel file that re-exported 400+ components. Deleted the barrel, imported directly. Startup: 3 seconds. The barrel was importing the universe on every file change.",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "jsts-033",
+    "track": "jsts",
+    "type": "thread",
+    "author": "type_narrow",
+    "time": "1d",
+    "content": "THREAD: TypeScript's `infer` keyword explained like you're not a compiler engineer.\n\n`infer` lets you EXTRACT a type from inside another type. Think of it like destructuring, but for types.\n\n`T extends Promise<infer U> ? U : never` — if T is a Promise, pull out what's inside it.\n\nThat's Awaited<T>. That's ReturnType<T>. That's Parameters<T>. All built on `infer`.\n\nOnce you understand `infer`, you can read 90% of utility types in any TypeScript codebase.",
+    "code": "// Extract return type of a function\ntype ReturnType<T> = T extends (...args: any[]) => infer R ? R : never;\n\ntype A = ReturnType<() => string>;  // string\ntype B = ReturnType<(x: number) => boolean>;  // boolean\n\n// Extract element type of an array\ntype ElementOf<T> = T extends (infer E)[] ? E : never;\n\ntype C = ElementOf<string[]>;  // string\ntype D = ElementOf<number[]>;  // number\n\n// Extract the resolved type of a Promise\ntype Unwrap<T> = T extends Promise<infer U> ? Unwrap<U> : T;\n\ntype E = Unwrap<Promise<Promise<number>>>;  // number (recursive!)",
+    "link": {
+      "url": "/jsts/lessons/10-advanced-ts/",
+      "label": "conditional types + infer in Lesson 10 →"
+    },
+    "poll": null,
+    "likes": 867,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "`infer` is pattern matching for types. `T extends Promise<infer U>` is like saying \"if T looks like Promise<something>, call that something U and let me use it.\" Regex for the type system.",
+        "likes": 345
+      },
+      {
+        "author": "async_await",
+        "content": "The recursive `Unwrap` blew my mind. `Promise<Promise<Promise<number>>>` → `number`. TS can recursively unwrap types. We're writing recursive functions at the type level. The type system IS a programming language.",
+        "likes": 278
+      }
+    ]
+  },
+  {
+    "id": "jsts-034",
+    "track": "jsts",
+    "type": "slackPost",
+    "author": "type_narrow",
+    "time": "2h",
+    "content": "#typescript-help Slack:\n\n@proto_chain: why does `{} extends { a: string }` return false but `{} extends object` return true?\n@type_narrow: because `{}` in TS means \"any non-null, non-undefined value\" not \"empty object\"\n@proto_chain: WHAT\n@type_narrow: yeah. `{}` matches strings, numbers, booleans, objects, functions. Everything except null and undefined.\n@closure_king: so what type means \"an actual empty object\"?\n@type_narrow: `Record<string, never>` or the new `type EmptyObject = { [K in string]: never }`\n@proto_chain: I've been using `{}` wrong for 3 years\n@type_narrow: you and about 90% of TypeScript developers. the `{}` type is TypeScript's biggest naming footgun\n@event_looper: should I tell him about `Object` vs `object` vs `{}`?\n@type_narrow: let him recover first",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1345,
+    "reposts": 345,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "Wait until you learn that `object` (lowercase) means \"any non-primitive\" and `Object` (uppercase) means basically the same as `{}`. There are THREE types that all look like they mean \"object\" and they ALL mean something different.",
+        "likes": 456
+      },
+      {
+        "author": "closure_king",
+        "content": "TypeScript's type naming conventions are like JavaScript's equality operators. There's the one you think you want, the one you actually want, and the one that'll ruin your day.",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "jsts-035",
+    "track": "jsts",
+    "type": "tip",
+    "author": "async_await",
+    "time": "8h",
+    "content": "Stop writing `.then().catch()` chains. Use async/await with try/catch.\n\nBut also: stop putting try/catch around EVERYTHING. Only catch errors you can handle. Let the rest bubble up to a centralized error handler.\n\nThe worst codebase I ever saw had try/catch in every single function, each one silently logging and swallowing the error. Errors went in but never came out. The app \"never crashed\" but was silently broken everywhere.",
+    "code": "// BAD: catching everything, handling nothing\nasync function getUser(id) {\n  try {\n    return await db.findUser(id);\n  } catch (err) {\n    console.log('error', err); // swallowed!\n    return null; // caller has no idea something broke\n  }\n}\n\n// GOOD: only catch what you can handle\nasync function getUser(id) {\n  const user = await db.findUser(id); // let it throw\n  if (!user) throw new NotFoundError(`User ${id}`);\n  return user;\n}\n\n// Centralized handler at the boundary\napp.use((err, req, res, next) => {\n  if (err instanceof NotFoundError) return res.status(404).json(...);\n  return res.status(500).json(...);\n});",
+    "link": {
+      "url": "/jsts/lessons/06-async-patterns/",
+      "label": "error handling strategies in Lesson 6 →"
+    },
+    "poll": null,
+    "likes": 845,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "The `return null` pattern is the silent killer. Every caller has to check `if (user === null)` and they NEVER do. You turned a loud crash into a quiet data corruption. Errors should be loud. Silence is not stability.",
+        "likes": 367
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript + custom Error subclasses + discriminated unions = typed error handling. `throw new NotFoundError()` → catch block narrows by `instanceof` → each error type has its own typed data. The type system makes error handling safe.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-036",
+    "track": "jsts",
+    "type": "mentalModel",
+    "author": "closure_king",
+    "time": "3h",
+    "content": "MENTAL MODEL: JavaScript modules are singletons.\n\nWhen you `import` a module, the file runs ONCE. Every subsequent import gets the same cached module object. It's not re-evaluated.\n\nThat means module-level variables are shared across all importers. A module-level `let count = 0` is effectively a global — anyone who imports the module sees the same `count`.\n\nThis is why module-level state works as a singleton pattern without needing the classic getInstance() nonsense. It's also why module-level side effects (network calls, DOM mutations) on import are dangerous — they run exactly once, in import order, at startup.",
+    "code": "// counter.js\nlet count = 0;\nexport const increment = () => ++count;\nexport const getCount = () => count;\n\n// a.js\nimport { increment, getCount } from './counter.js';\nincrement(); // count is now 1\n\n// b.js\nimport { getCount } from './counter.js';\ngetCount(); // 1 — SAME instance, SAME count\n// The module was NOT re-evaluated for b.js",
+    "link": null,
+    "poll": null,
+    "likes": 678,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "proto_chain",
+        "content": "This is also why circular imports sometimes work and sometimes don't. If module A imports B and B imports A, one of them gets a partially-initialized module. The values that haven't been assigned yet are undefined. Import order matters. A LOT.",
+        "likes": 289
+      },
+      {
+        "author": "event_looper",
+        "content": "CJS (`require`) also caches, but there's a key difference: ESM bindings are LIVE. If the exporting module updates a value, importers see the update. CJS exports are copies. This subtle difference has caused more debugging hours than I care to admit.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-037",
+    "track": "jsts",
+    "type": "poll",
+    "author": "closure_king",
+    "time": "1d",
+    "content": "What's your error handling strategy for async code?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "try/catch around every await",
+          "pct": 28
+        },
+        {
+          "text": "try/catch at the boundary only",
+          "pct": 42
+        },
+        {
+          "text": "Result/Either pattern (no exceptions)",
+          "pct": 19
+        },
+        {
+          "text": ".catch() at the end of the chain",
+          "pct": 11
+        }
+      ],
+      "totalVotes": 2456
+    },
+    "likes": 567,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "Result pattern gang. `type Result<T, E> = { ok: true; value: T } | { ok: false; error: E }`. No exceptions, no try/catch, no hidden control flow. The error is in the return type. You HAVE to handle it. TypeScript makes this ergonomic. Rust proved it works.",
+        "likes": 345
+      },
+      {
+        "author": "async_await",
+        "content": "Boundary-only catching + letting errors bubble is the right default. The function that KNOWS how to recover catches. Everyone else just passes it up. This is how Express middleware, React error boundaries, and every well-designed error system works.",
+        "likes": 289
+      },
+      {
+        "author": "event_looper",
+        "content": "If you're doing try/catch around every single await, you're writing Go error handling in JavaScript but without the clarity. At that point just use the Result pattern and make it explicit.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-038",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "proto_chain",
+    "time": "2h",
+    "content": "SPOT THE BUG: This class seems correct but `super()` is doing something unexpected. The child constructor's property is always undefined. Why?",
+    "code": "class Base {\n  constructor() {\n    this.init();\n  }\n  init() {\n    // base init\n  }\n}\n\nclass Child extends Base {\n  #name;\n  constructor(name) {\n    super(); // calls Base constructor, which calls this.init()\n    this.#name = name;\n  }\n  init() {\n    console.log(this.#name); // undefined!\n    // setup that depends on #name...\n  }\n}",
+    "link": {
+      "url": "/jsts/lessons/04-prototypes-classes/",
+      "label": "class initialization order in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 645,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "Classic OOP trap. `super()` calls Base's constructor, which calls `this.init()`. Since `this` is the Child instance, it calls Child's `init()`. But `this.#name = name` hasn't run yet — it's AFTER `super()`. So `init()` sees `#name` as undefined. Initialization order: super() → parent constructor → overridden init() → THEN child assignment.",
+        "likes": 345
+      },
+      {
+        "author": "type_narrow",
+        "content": "This is why \"don't call virtual methods in constructors\" is a golden rule in every OOP language. C++, Java, C# all have variants of this footgun. JS just makes it worse because there's no compile-time warning.",
+        "likes": 267
+      },
+      {
+        "author": "async_await",
+        "content": "Factory functions don't have this problem. No `super()`, no constructor ordering, no hidden init calls. `createChild(name)` → set everything up → return the object. Closures over classes, every time.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "jsts-039",
+    "track": "jsts",
+    "type": "til",
+    "author": "proto_chain",
+    "time": "5h",
+    "content": "TIL: `structuredClone()` is built into every browser and Node 17+. It deep copies objects, arrays, Maps, Sets, Dates, RegExps, ArrayBuffers, and even circular references.\n\nStop using `JSON.parse(JSON.stringify(x))`. That hack drops undefined values, kills Dates (turns them to strings), chokes on Maps/Sets, and explodes on circular refs.\n\n`structuredClone(x)` just works.",
+    "code": "const original = {\n  date: new Date(),\n  set: new Set([1, 2, 3]),\n  nested: { deep: { value: 42 } },\n  map: new Map([['key', 'value']]),\n};\n\n// JSON hack: BROKEN\nconst bad = JSON.parse(JSON.stringify(original));\nbad.date;  // \"2024-01-15T...\" — it's a STRING now 💀\nbad.set;   // {} — Set is gone 💀\nbad.map;   // {} — Map is gone 💀\n\n// structuredClone: CORRECT\nconst good = structuredClone(original);\ngood.date;  // Date object ✓\ngood.set;   // Set {1, 2, 3} ✓\ngood.map;   // Map {'key' => 'value'} ✓\ngood.nested.deep.value = 99;\noriginal.nested.deep.value; // still 42 — deep copy ✓",
+    "link": null,
+    "poll": null,
+    "likes": 912,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "Caveat: `structuredClone` can't clone functions, DOM nodes, or symbols. Those throw DataCloneError. If your object has methods, you still need a custom clone function. But for data objects? It's perfect.",
+        "likes": 312
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript types it correctly too: `structuredClone<T>(value: T): T`. Same type in, same type out. No `any` pollution like the JSON hack gives you.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-040",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "event_looper",
+    "time": "3d",
+    "content": "hot take: Node.js streams are the most powerful and most avoided API in the entire ecosystem.\n\nEveryone reads the whole file into memory. Everyone buffers the entire HTTP response. Everyone loads the full JSON array, processes it, and writes a new one.\n\nStreams process data chunk by chunk. Constant memory. 10MB file or 10GB file — same RAM usage.\n\nThe API is ugly, yes. The docs are confusing, yes. But if your app ever handles files, HTTP, or databases, you're paying a memory tax for ignoring streams.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/11-node-deep-dive/",
+      "label": "streams in depth in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 734,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "The modern API is actually decent: `for await (const chunk of readStream)` works natively. No more `.on('data')` + `.on('end')` + `.on('error')` callback soup. Async iterators made streams bearable.",
+        "likes": 345
+      },
+      {
+        "author": "proto_chain",
+        "content": "I once replaced a `JSON.parse(fs.readFileSync('huge.json'))` with a streaming JSON parser. Memory usage went from 2GB to 50MB. Same output, same speed. The readFileSync was loading the entire file into a string, then the parser was building a second copy. Streams fix both.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "jsts-041",
+    "track": "jsts",
+    "type": "tip",
+    "author": "type_narrow",
+    "time": "1h",
+    "content": "TypeScript tip: Use template literal types to create type-safe string patterns.\n\nYou can build types that enforce string formats at compile time. No regex needed. No runtime validation. The compiler does it.",
+    "code": "// Type-safe CSS units\ntype CSSUnit = 'px' | 'em' | 'rem' | '%' | 'vh' | 'vw';\ntype CSSValue = `${number}${CSSUnit}`;\n\nconst width: CSSValue = '100px';   // ✓\nconst height: CSSValue = '2.5rem'; // ✓\nconst bad: CSSValue = '100';       // ✗ Error!\nconst worse: CSSValue = 'wide';    // ✗ Error!\n\n// Type-safe event names\ntype EventName<T extends string> = `on${Capitalize<T>}`;\ntype ClickEvent = EventName<'click'>;  // 'onClick'\ntype HoverEvent = EventName<'hover'>;  // 'onHover'\n\n// Type-safe routes\ntype Route = `/${string}`;\nconst valid: Route = '/users/123';  // ✓\nconst invalid: Route = 'users/123'; // ✗ Missing leading slash",
+    "link": {
+      "url": "/jsts/lessons/10-advanced-ts/",
+      "label": "template literal types in Lesson 10 →"
+    },
+    "poll": null,
+    "likes": 756,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "I used this to type a SQL query builder. `select<T>(table: T): SelectQuery<T>` where column names are derived from the table type. Autocomplete gives you the actual column names. TypeScript just became a compile-time ORM.",
+        "likes": 312
+      },
+      {
+        "author": "async_await",
+        "content": "Template literal types + mapped types = you can transform every key in an object. `type Getters<T> = { [K in keyof T as `get${Capitalize<K>}`]: () => T[K] }`. Auto-generate getter method types from any interface. The type system is Turing complete and we're all fine with that.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-042",
+    "track": "jsts",
+    "type": "interview",
+    "author": "event_looper",
+    "time": "12h",
+    "content": "INTERVIEW Q: Explain what happens, step by step, when you type a URL in the browser and press Enter. But the twist: focus on JavaScript.\n\nWhen does JS execute? What blocks what? Where does the event loop start? What happens to scripts with `async` vs `defer`?",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/05-event-loop/",
+      "label": "browser rendering + JS execution in Lesson 5 →"
+    },
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "Key points: 1) HTML parsing starts. 2) `<script>` without async/defer BLOCKS parsing — the parser waits. 3) `<script defer>` downloads in parallel, executes after HTML parsing, in document order. 4) `<script async>` downloads in parallel, executes whenever ready, NO guaranteed order. 5) DOMContentLoaded fires after deferred scripts. 6) The event loop starts processing user events only after the initial script execution is done.",
+        "likes": 345
+      },
+      {
+        "author": "proto_chain",
+        "content": "Most candidates say \"the script loads and runs.\" The senior ones explain WHY `defer` is almost always what you want: it doesn't block HTML parsing, it maintains execution order, and it runs before DOMContentLoaded. `async` is for truly independent scripts like analytics.",
+        "likes": 234
+      },
+      {
+        "author": "type_narrow",
+        "content": "Bonus points: mention that `type=\"module\"` scripts are deferred by default. And they run in strict mode. And they have their own scope. Modules fixed three problems with one attribute.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "jsts-043",
+    "track": "jsts",
+    "type": "mentalModel",
+    "author": "proto_chain",
+    "time": "2d",
+    "content": "MENTAL MODEL: `this` in JavaScript is not about where a function is DEFINED. It's about how a function is CALLED.\n\n`obj.method()` → `this` = obj (method call)\n`method()` → `this` = undefined in strict mode, window in sloppy\n`new Constructor()` → `this` = fresh object\n`method.call(x)` → `this` = x (explicit)\n`() => {}` → `this` = whatever `this` was in the enclosing scope (lexical)\n\n5 rules. That's all of `this`. The confusion comes from expecting it to work like Java/Python where `this`/`self` is always the instance. In JS, `this` is determined by the CALL SITE, not the definition site.",
+    "code": "const obj = {\n  name: 'Proto',\n  greet() { console.log(this.name); },\n  greetArrow: () => { console.log(this.name); },\n};\n\nobj.greet();        // 'Proto' — method call, this = obj\n\nconst fn = obj.greet;\nfn();               // undefined — standalone call, this = undefined (strict)\n\nobj.greetArrow();   // undefined — arrow captures outer `this`, not obj\n\nconst bound = obj.greet.bind(obj);\nbound();            // 'Proto' — bind locks `this` permanently",
+    "link": {
+      "url": "/jsts/lessons/04-prototypes-classes/",
+      "label": "this binding rules in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 1023,
+    "reposts": 256,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "Arrow functions are closures over `this`. That's all they are. They don't have their own `this` — they capture it from the enclosing scope, just like they capture any other variable. If you understand closures, you understand arrow functions. Same mechanism.",
+        "likes": 378
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript's `this` parameter feature lets you annotate what `this` should be: `function greet(this: User)`. Call it wrong and TS yells at you. It's the only way to make `this` safe without arrow functions or `.bind()`.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-044",
+    "track": "jsts",
+    "type": "slackPost",
+    "author": "closure_king",
+    "time": "5h",
+    "content": "#dev-help Slack:\n\n@closure_king: why is our bundle 4.2MB? the app is a todo list.\n@type_narrow: lol. let me check.\n@type_narrow: found it. someone imported `import _ from 'lodash'` for `_.get()`\n@closure_king: we shipped the entire lodash library for one function?\n@type_narrow: technically two. there's a `_.isNil()` in the user service\n@event_looper: `obj?.prop ?? fallback` replaces both of those. zero imports, zero bytes.\n@async_await: optional chaining and nullish coalescing have been in every browser since 2020. we are shipping a 70KB library to avoid two operators that are built into the language.\n@proto_chain: installing lodash-es and doing `import { get } from 'lodash-es'` would at least tree-shake\n@type_narrow: or we could just delete lodash. because it's 2026.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1456,
+    "reposts": 389,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "The lodash default import is the JavaScript equivalent of buying an entire hardware store because you needed one screw. Named imports + lodash-es + tree shaking. Or just use native methods. Most of lodash is polyfills for features JS has had for years.",
+        "likes": 456
+      },
+      {
+        "author": "async_await",
+        "content": "Real talk: `Array.prototype.at()`, `Object.groupBy()`, `structuredClone()`, optional chaining, nullish coalescing, `.flat()`, `.flatMap()`, `.findLast()`. The platform caught up. Audit your dependencies.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "jsts-045",
+    "track": "jsts",
+    "type": "til",
+    "author": "event_looper",
+    "time": "3h",
+    "content": "TIL: `Promise.withResolvers()` is a thing now (ES2024). It gives you the promise, resolve, and reject as separate variables. No more wrapping everything in `new Promise((resolve, reject) => { ... })`.\n\nPerfect for bridging callback-based APIs, event emitters, or any situation where you need to resolve a promise from outside its constructor.",
+    "code": "// Before: callback inception\nfunction waitForEvent(emitter, event) {\n  return new Promise((resolve, reject) => {\n    emitter.on(event, resolve);\n    emitter.on('error', reject);\n  });\n}\n\n// After: clean separation\nfunction waitForEvent(emitter, event) {\n  const { promise, resolve, reject } = Promise.withResolvers();\n  emitter.on(event, resolve);\n  emitter.on('error', reject);\n  return promise;\n}\n\n// Also great for: timeout wrappers, test helpers,\n// deferred resolution patterns",
+    "code": "// Before: awkward extraction pattern\nlet resolve, reject;\nconst promise = new Promise((res, rej) => {\n  resolve = res;\n  reject = rej;\n});\n\n// After: one line\nconst { promise, resolve, reject } = Promise.withResolvers();\n\n// Use case: resolve from outside\nsetTimeout(() => resolve('done!'), 1000);\nconst result = await promise; // 'done!'",
+    "link": null,
+    "poll": null,
+    "likes": 645,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "I've been writing the `let resolve; const p = new Promise(r => resolve = r)` hack for YEARS. This is the official version of that hack. The TC39 committee saw our sins and gave us absolution.",
+        "likes": 312
+      },
+      {
+        "author": "type_narrow",
+        "content": "The typing is clean too: `Promise.withResolvers<string>()` gives you `{ promise: Promise<string>, resolve: (value: string) => void, reject: (reason: any) => void }`. Fully generic. No `any` leakage.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-046",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "closure_king",
+    "time": "1d",
+    "content": "SPOT THE BUG: This equality check is supposed to detect changes. It works for primitives but breaks for objects. The developer swears the values are identical.",
+    "code": "function hasChanged(oldVal, newVal) {\n  return oldVal !== newVal;\n}\n\nhasChanged(1, 1);           // false ✓\nhasChanged('a', 'b');       // true ✓\nhasChanged(NaN, NaN);       // true 💀 (NaN !== NaN is true!)\n\nhasChanged(\n  { x: 1 },\n  { x: 1 }\n);  // true 💀 (different references, same shape)\n\nhasChanged(0, -0);          // false 💀 (0 === -0 is true!)",
+    "link": null,
+    "poll": null,
+    "likes": 567,
+    "reposts": 123,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "`Object.is()` fixes the NaN and -0 cases. `Object.is(NaN, NaN)` is true. `Object.is(0, -0)` is false. It's what === SHOULD have been. React uses Object.is for its state comparison. For objects, you still need shallow or deep comparison — no operator handles that.",
+        "likes": 345
+      },
+      {
+        "author": "type_narrow",
+        "content": "This is why React.memo takes an optional comparator. The default is shallow comparison of props (Object.is on each prop). If your props contain objects, you need either memoized references or a custom comparator. Identity vs equality — the eternal JS struggle.",
+        "likes": 234
+      },
+      {
+        "author": "proto_chain",
+        "content": "`NaN !== NaN` is true. `typeof NaN` is 'number'. JavaScript: where Not a Number is a number that doesn't equal itself. I want to speak to the manager of IEEE 754.",
+        "likes": 456
+      }
+    ]
+  },
+  {
+    "id": "jsts-047",
+    "track": "jsts",
+    "type": "thread",
+    "author": "async_await",
+    "time": "8h",
+    "content": "THREAD: The 5 patterns of async JavaScript, ranked from worst to best.\n\n1. CALLBACKS — the OG. Works, but nesting creates \"callback hell.\" Error handling is manual (error-first convention). No composition.\n\n2. EVENT EMITTERS — good for multiple events over time. Bad for one-shot async operations. Can't await them natively.\n\n3. PROMISES — composable, chainable, built-in error propagation. .then() chains can still get messy.\n\n4. ASYNC/AWAIT — Promises with sync-looking syntax. Try/catch for errors. The standard today.\n\n5. ASYNC ITERATORS — for-await-of over streams of async data. The most underused and most powerful for repeated async values.",
+    "code": "// 1. Callback\nfs.readFile('f.txt', (err, data) => {\n  if (err) return handleError(err);\n  parse(data, (err, result) => { /* nested deeper... */ });\n});\n\n// 4. Async/Await\nconst data = await fs.promises.readFile('f.txt');\nconst result = await parse(data);\n\n// 5. Async Iterator\nfor await (const chunk of stream) {\n  process(chunk); // handles backpressure naturally\n}",
+    "link": {
+      "url": "/jsts/lessons/06-async-patterns/",
+      "label": "async patterns compared in Lesson 6 →"
+    },
+    "poll": null,
+    "likes": 923,
+    "reposts": 212,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "Async iterators are criminally underrated. Paginated APIs? `for await (const page of fetchPages(url))`. WebSocket messages? `for await (const msg of socket)`. Anything that produces values over time. They're the async version of for...of and nobody uses them.",
+        "likes": 389
+      },
+      {
+        "author": "closure_king",
+        "content": "Callbacks are still the fastest at the engine level — no Promise allocation, no microtask scheduling overhead. That's why Node internals still use them. But for application code? Readability > raw performance. Always.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-048",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "type_narrow",
+    "time": "2h",
+    "content": "hot take: `unknown` is the most important type in TypeScript and nobody talks about it enough.\n\n`any` opts OUT of the type system. `unknown` opts IN to the strictest version of it.\n\n`unknown` means \"I don't know what this is, and TypeScript won't let me DO anything with it until I check.\" It forces narrowing. It forces validation. It's `any` with a conscience.\n\nevery function parameter that accepts \"anything\" should be `unknown`, not `any`. every `catch(err)` should be `unknown`. every external data boundary should be `unknown`.\n\n`any` is permission to skip. `unknown` is permission to check.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/08-type-narrowing/",
+      "label": "unknown + narrowing in Lesson 8 →"
+    },
+    "poll": null,
+    "likes": 1123,
+    "reposts": 289,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "Since TS 4.4, you can set `useUnknownInCatchVariables: true` in tsconfig. Every `catch(err)` becomes `unknown` instead of `any`. Forces you to check `err instanceof Error` before accessing `.message`. Annoying for two minutes. Life-saving forever.",
+        "likes": 456
+      },
+      {
+        "author": "closure_king",
+        "content": "The symmetry is beautiful: `any` is the top type that lets everything through. `never` is the bottom type that lets nothing through. `unknown` is the top type that forces you to narrow down. Three types, three philosophies. `unknown` is the responsible adult.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "jsts-049",
+    "track": "jsts",
+    "type": "tip",
+    "author": "proto_chain",
+    "time": "1d",
+    "content": "WeakRef and FinalizationRegistry exist. If you're building caches, memoization layers, or anything that holds references to objects, these let you observe garbage collection without preventing it.\n\nWeakMap holds weak references (no GC prevention, but no notification). WeakRef gives you a reference you can check. FinalizationRegistry tells you when something got collected.",
+    "code": "// Cache that doesn't prevent GC\nconst cache = new Map();\nconst registry = new FinalizationRegistry(key => {\n  cache.delete(key); // clean up when the value is GC'd\n});\n\nfunction cacheResult(key, value) {\n  const ref = new WeakRef(value);\n  cache.set(key, ref);\n  registry.register(value, key); // clean up cache entry on GC\n}\n\nfunction getCached(key) {\n  const ref = cache.get(key);\n  if (!ref) return undefined;\n  const value = ref.deref(); // returns object or undefined if GC'd\n  if (!value) cache.delete(key); // clean up stale entry\n  return value;\n}",
+    "link": null,
+    "poll": null,
+    "likes": 456,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "Important caveat: GC timing is non-deterministic. You can't rely on FinalizationRegistry for correctness — only for optimization. The spec explicitly says cleanup callbacks may never run. Use it for cache eviction, not for critical resource cleanup.",
+        "likes": 267
+      },
+      {
+        "author": "closure_king",
+        "content": "WeakRef + FinalizationRegistry is how you build LRU caches that cooperate with the GC instead of fighting it. The GC knows better than you when memory pressure is high. Let it do its job.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "jsts-050",
+    "track": "jsts",
+    "type": "eli5",
+    "author": "type_narrow",
+    "time": "3h",
+    "content": "ELI5: TypeScript generics.\n\nYou know how a vending machine has a slot? You put in coins, you get a drink.\n\nA generic is a vending machine where the TYPE of drink depends on the TYPE of coin you put in.\n\nPut in a gold coin? You get a gold drink. Put in a silver coin? Silver drink. The machine itself doesn't change — it just passes through whatever type you give it.\n\n`function identity<T>(x: T): T` is the simplest vending machine. Put in a string, get a string. Put in a number, get a number. The machine just passes it through. But TypeScript KNOWS what comes out based on what went in.",
+    "code": "// The vending machine\nfunction wrap<T>(value: T): { value: T } {\n  return { value };\n}\n\n// Gold coin in → gold drink out\nconst a = wrap('hello');  // { value: string } — TS inferred T = string\n\n// Silver coin in → silver drink out\nconst b = wrap(42);       // { value: number } — TS inferred T = number\n\n// You never told TS what T is. It figured it out\n// from what you put in. That's inference.",
+    "link": {
+      "url": "/jsts/lessons/09-generics/",
+      "label": "generics simplified in Lesson 9 →"
+    },
+    "poll": null,
+    "likes": 934,
+    "reposts": 245,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "And `<T extends Drink>` is a vending machine that only accepts coins for drinks — not snacks, not toys. Constraints tell the machine: I work with anything, as long as it's at least THIS type. Bounded generics = machines with standards.",
+        "likes": 312
+      },
+      {
+        "author": "proto_chain",
+        "content": "This analogy is why ELI5 posts exist. I explained generics to a junior dev last week using \"it's like a function parameter but for types\" and got a blank stare. Vending machine? Instant understanding. Metaphors matter.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-051",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "event_looper",
+    "time": "2d",
+    "content": "SPOT THE BUG: This code tries to add a timeout to any promise. Looks reasonable. But there's a resource leak even when the promise resolves before the timeout.",
+    "code": "function withTimeout(promise, ms) {\n  const timeout = new Promise((_, reject) => {\n    setTimeout(() => reject(new Error('Timeout')), ms);\n  });\n  return Promise.race([promise, timeout]);\n}\n\n// If `promise` resolves in 100ms with a 5000ms timeout,\n// the setTimeout still fires 4900ms later.\n// In a server handling 1000 req/sec, that's 1000 dangling timers.",
+    "link": {
+      "url": "/jsts/lessons/06-async-patterns/",
+      "label": "timeout patterns in Lesson 6 →"
+    },
+    "poll": null,
+    "likes": 712,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "Use AbortController to clean up: `const ac = new AbortController(); const timeout = new Promise((_, rej) => { const id = setTimeout(...); ac.signal.addEventListener('abort', () => clearTimeout(id)); }); return Promise.race([promise, timeout]).finally(() => ac.abort());`. Or just use `AbortSignal.timeout(ms)` — it's built in now.",
+        "likes": 389
+      },
+      {
+        "author": "closure_king",
+        "content": "The closure inside setTimeout holds a reference to the reject function, which holds a reference to the Promise, which holds references to its .then() handlers. One dangling timer = one leaked closure chain. Multiply by request volume and your server's memory graph looks like a hockey stick.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-052",
+    "track": "jsts",
+    "type": "poll",
+    "author": "type_narrow",
+    "time": "12h",
+    "content": "How do you handle configuration objects in TypeScript?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "interface + Partial<Config> for defaults",
+          "pct": 38
+        },
+        {
+          "text": "Zod schema with .parse()",
+          "pct": 31
+        },
+        {
+          "text": "as const + typeof",
+          "pct": 18
+        },
+        {
+          "text": "Just a plain object, YOLO",
+          "pct": 13
+        }
+      ],
+      "totalVotes": 2134
+    },
+    "likes": 423,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "Zod gang is the correct answer for configs that come from external sources (env vars, files, API). You get runtime validation AND type inference from one schema. `const Config = z.object({...}); type Config = z.infer<typeof Config>;`. One source of truth.",
+        "likes": 345
+      },
+      {
+        "author": "async_await",
+        "content": "13% YOLO in production. These are the people whose apps crash at 2am because someone set `PORT=eight-zero-eight-zero` as a string instead of a number and nobody validated it.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "jsts-053",
+    "track": "jsts",
+    "type": "thread",
+    "author": "closure_king",
+    "time": "1h",
+    "content": "THREAD: Why React hooks work — the closure model.\n\nEvery time your component renders, it's a new function call. Each call creates a new closure scope with that render's state values.\n\nuseState doesn't \"update\" a variable. It schedules a re-render. The NEXT render call creates a NEW closure with the NEW value.\n\nThat's why you can't `console.log(count)` right after `setCount(count + 1)` and see the new value. You're reading from THIS render's closure. The new value lives in the NEXT render's closure.\n\nHooks are closures. Closures are hooks. Once this clicks, React stops being magical and starts being mechanical.",
+    "code": "// Each render is a snapshot — a new closure\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  // `count` is a const in THIS closure\n  // It will never change. It's frozen in this render.\n\n  function handleClick() {\n    setCount(count + 1); // schedules re-render with new value\n    console.log(count);   // still 0! This closure's count is 0.\n    // The next render will create a new closure where count = 1\n  }\n\n  // useEffect also closes over this render's values\n  useEffect(() => {\n    // This closure sees count = 0 (or whatever this render's value is)\n    const id = setInterval(() => console.log(count), 1000);\n    return () => clearInterval(id); // cleanup on next render\n  }, [count]); // re-subscribe when count changes\n}",
+    "link": {
+      "url": "/jsts/lessons/03-closures-scope/",
+      "label": "closures in React in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 1289,
+    "reposts": 334,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "This is why the deps array in useEffect matters. It's not \"telling React when to run.\" It's telling React \"these are the closure variables I read — re-run me when they change so I get a fresh closure.\" Without deps, you're running with stale closure values forever.",
+        "likes": 456
+      },
+      {
+        "author": "type_narrow",
+        "content": "The exhaustive-deps ESLint rule exists because humans are bad at tracking which closure variables they use. The linter can statically analyze your closure scope and tell you what you missed. Trust the linter. It sees your closures better than you do.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "jsts-054",
+    "track": "jsts",
+    "type": "tip",
+    "author": "async_await",
+    "time": "5h",
+    "content": "Node.js has worker threads. Use them.\n\nThe event loop is for I/O. CPU-intensive work (image processing, crypto, JSON parsing of huge payloads) blocks it. Worker threads move the CPU work off the main thread.\n\nRule of thumb: if an operation takes more than ~50ms of pure computation, move it to a worker.",
+    "code": "// main.js\nimport { Worker } from 'worker_threads';\n\nfunction runInWorker(data) {\n  return new Promise((resolve, reject) => {\n    const worker = new Worker('./heavy-task.js', {\n      workerData: data,\n    });\n    worker.on('message', resolve);\n    worker.on('error', reject);\n  });\n}\n\n// Non-blocking! Main thread stays responsive\nconst result = await runInWorker({ items: bigArray });\n\n// heavy-task.js\nimport { parentPort, workerData } from 'worker_threads';\nconst result = expensiveComputation(workerData.items);\nparentPort.postMessage(result);",
+    "link": {
+      "url": "/jsts/lessons/11-node-deep-dive/",
+      "label": "worker threads in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 567,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "Don't create a new worker for every request — that's expensive. Use a worker pool (piscina is great). Pre-spawn N workers, round-robin tasks to them. Same concept as a database connection pool. Reuse > recreate.",
+        "likes": 312
+      },
+      {
+        "author": "proto_chain",
+        "content": "Data between main thread and workers is COPIED by default (structured clone). For large buffers, use SharedArrayBuffer to avoid the copy. But then you need Atomics for synchronization. Welcome to shared-memory programming. It's fun until it isn't.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-055",
+    "track": "jsts",
+    "type": "ratiod",
+    "author": "closure_king",
+    "time": "1d",
+    "content": "You don't need TypeScript if you write good tests.\n\n(ratio: 6K quote tweets)",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 312,
+    "reposts": 6234,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "Tests verify behavior. Types verify structure. They catch DIFFERENT bugs. Tests won't tell you that you passed an email where a userId was expected — the test passes because both are strings. A branded type catches it at compile time with zero tests.",
+        "likes": 567
+      },
+      {
+        "author": "async_await",
+        "content": "Types are documentation that can't go stale. They're refactoring safety nets that work at the speed of keystrokes, not test suites. Try renaming a field across 200 files with tests-only. I'll wait.",
+        "likes": 445
+      },
+      {
+        "author": "event_looper",
+        "content": "\"Good tests\" — the two most expensive words in software engineering. You know how long it takes to write tests that cover every type error TypeScript catches for free? Longer than setting up tsconfig. By a factor of 100.",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "jsts-056",
+    "track": "jsts",
+    "type": "tip",
+    "author": "type_narrow",
+    "time": "2h",
+    "content": "TypeScript branded types: make the compiler distinguish between structurally identical types.\n\nA userId and an orderId are both strings. But they're not interchangeable. Branded types make TypeScript enforce this, with zero runtime cost.",
+    "code": "// Branded types — compile-time only, zero runtime overhead\ntype UserId = string & { readonly __brand: 'UserId' };\ntype OrderId = string & { readonly __brand: 'OrderId' };\n\n// Smart constructors\nfunction userId(id: string): UserId { return id as UserId; }\nfunction orderId(id: string): OrderId { return id as OrderId; }\n\n// Now TypeScript prevents mixing them up\nfunction getUser(id: UserId) { /* ... */ }\nfunction getOrder(id: OrderId) { /* ... */ }\n\nconst uid = userId('user-123');\nconst oid = orderId('order-456');\n\ngetUser(uid);  // ✓\ngetUser(oid);  // ✗ Error: OrderId is not assignable to UserId\ngetUser('raw-string'); // ✗ Error: string is not assignable to UserId",
+    "link": {
+      "url": "/jsts/lessons/10-advanced-ts/",
+      "label": "branded types in Lesson 10 →"
+    },
+    "poll": null,
+    "likes": 734,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "I used this to prevent a production bug where someone passed a Stripe payment intent ID to a function expecting a customer ID. Both are strings starting with different prefixes. The compiler could have caught it. Types are cheaper than incidents.",
+        "likes": 345
+      },
+      {
+        "author": "proto_chain",
+        "content": "The `__brand` property doesn't exist at runtime — it's a phantom type. The `as` assertion is the only lie. But it's a controlled lie: you lie once in the constructor, then the compiler protects every usage forever after.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-057",
+    "track": "jsts",
+    "type": "mentalModel",
+    "author": "event_looper",
+    "time": "8h",
+    "content": "MENTAL MODEL: ESM vs CJS is not just syntax. It's a fundamental design difference.\n\nCJS (require): synchronous, dynamic, copies values. You can require() inside an if statement. Modules run when required.\n\nESM (import): asynchronous, static, live bindings. Imports must be at the top level. The engine analyzes the dependency graph BEFORE any code runs.\n\nStatic analysis means: tree shaking works, circular deps are detectable, import typos are compile errors (not runtime surprises). This is why the ecosystem is moving to ESM. It's not just new syntax — it's a better model.",
+    "code": "// CJS: dynamic, copies\nconst lib = require(condition ? './a' : './b'); // works!\nlet { count } = require('./counter');\ncount; // 0 (copied value — never updates)\n\n// ESM: static, live\nimport { count } from './counter.js';\n// count is a live binding — if the module updates it, you see the change\n\n// Dynamic import in ESM (for conditional loading)\nconst lib = await import(condition ? './a.js' : './b.js');",
+    "link": null,
+    "poll": null,
+    "likes": 645,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "The live bindings thing trips people up. In ESM, `import { count }` is not destructuring — it's creating a live reference. If the exporting module calls `count++`, your imported `count` updates too. CJS copies the value. Different semantics, same syntax feel.",
+        "likes": 289
+      },
+      {
+        "author": "proto_chain",
+        "content": "Fun edge case: you can `require()` an ESM module from CJS — but only with dynamic `import()` (which returns a Promise). You can't `import` a CJS module from ESM... wait, actually you CAN with default import. The interop is a maze and I hate it.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-058",
+    "track": "jsts",
+    "type": "interview",
+    "author": "proto_chain",
+    "time": "3d",
+    "content": "INTERVIEW Q: What's the difference between `Object.freeze()`, `Object.seal()`, and `Object.preventExtensions()`?\n\nFollow-up: Are any of them deep? What happens if you freeze an object with nested objects?",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/04-prototypes-classes/",
+      "label": "object immutability in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 423,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "proto_chain",
+        "content": "`preventExtensions`: no new properties, but existing ones can be modified/deleted. `seal`: no new properties, no deletion, but values can change. `freeze`: no new, no delete, no modify. Fully immutable. But ALL are SHALLOW. `Object.freeze({nested: {x: 1}}).nested.x = 99` works! The inner object isn't frozen.",
+        "likes": 312
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript's `Readonly<T>` is also shallow by the way. `Readonly<{nested: {x: number}}>` — the nested object is still mutable. You need a recursive `DeepReadonly<T>` utility type. Types mirror the runtime behavior here.",
+        "likes": 234
+      },
+      {
+        "author": "closure_king",
+        "content": "If you need deep immutability, use `structuredClone()` to create a copy, then don't expose mutation methods. Or use Immer. Or just use TypeScript's `as const` which is deep by default. Let the compiler enforce immutability instead of the runtime.",
+        "likes": 189
+      }
+    ]
+  },
+  {
+    "id": "jsts-059",
+    "track": "jsts",
+    "type": "commitMsg",
+    "author": "event_looper",
+    "time": "5h",
+    "content": "git log --oneline:\n\nd4e5f6a fix: clearInterval on unmount. the interval was outliving the component like a bad roommate\n9a8b7c6 feat: added AbortController to all fetch calls. we can cancel things now. like adults.\n3f2e1d0 refactor: replaced event emitter with async iterator. fewer callbacks, same events, more sanity\nb5c4d3e fix: race condition between WebSocket reconnect and user navigation. turns out two async things at once is hard. who knew\n7e6f5a4 chore: upgraded Node from 16 to 22. skipped 3 LTS versions. it's fine. everything is fine.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1123,
+    "reposts": 289,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "\"the interval was outliving the component like a bad roommate\" — this is the setInterval/clearInterval lifecycle bug and it NEVER stops showing up in code reviews. useEffect cleanup exists for a reason.",
+        "likes": 456
+      },
+      {
+        "author": "async_await",
+        "content": "\"skipped 3 LTS versions. it's fine. everything is fine.\" — narrator: it was not fine. The breaking changes compounded. `fs.promises` API changed, the test runner was added, ESM became default. That's three rewrites in one upgrade.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "jsts-060",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "async_await",
+    "time": "1h",
+    "content": "hot take: Vitest replaced Jest and the migration took 15 minutes.\n\nSame API. Same matchers. Same mock functions. But native ESM support, near-instant startup, and watch mode that actually works.\n\nJest was great for its era. That era ended when the ecosystem moved to ESM and Jest couldn't keep up without babel transforms, experimental flags, and prayer.\n\nif your test runner needs a blog post to configure, it's not a test runner. it's a project.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1345,
+    "reposts": 378,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "The in-source testing feature alone is worth the switch. Put `if (import.meta.vitest)` at the bottom of any file and write tests right next to the code. They get tree-shaken out of production. Colocation without the ceremony.",
+        "likes": 456
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript support out of the box. No `ts-jest`. No `@types/jest`. No transform config. Just... works. The way testing should be.",
+        "likes": 345
+      },
+      {
+        "author": "proto_chain",
+        "content": "Counterpoint: Jest's ecosystem is massive. Custom matchers, snapshot serializers, coverage reporters — some projects need the ecosystem. Vitest is catching up fast but \"15-minute migration\" assumes you aren't using Jest's deep features.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-061",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "type_narrow",
+    "time": "3h",
+    "content": "SPOT THE BUG: This TypeScript function uses a type guard, but it doesn't narrow correctly. The compiler still thinks `input` could be `string` after the check. Why?",
+    "code": "function isNumber(value: unknown): boolean {\n  return typeof value === 'number';\n}\n\nfunction process(input: string | number) {\n  if (isNumber(input)) {\n    input.toFixed(2); // TS Error: Property 'toFixed' does not exist on type 'string'\n    // WHY? We just checked it's a number!\n  }\n}",
+    "link": {
+      "url": "/jsts/lessons/08-type-narrowing/",
+      "label": "type predicates in Lesson 8 →"
+    },
+    "poll": null,
+    "likes": 623,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "The return type is `boolean`, not a type predicate. TS can't infer narrowing from a plain boolean return. Change it to `value is number`: `function isNumber(value: unknown): value is number`. Now TS knows that `true` means the value is a number. Type predicates are the bridge between runtime checks and compile-time narrowing.",
+        "likes": 389
+      },
+      {
+        "author": "closure_king",
+        "content": "Inline `typeof` checks narrow automatically: `if (typeof input === 'number')` just works. The issue is that wrapping the check in a helper function severs the connection between the boolean result and the type implication. Type predicates restore it.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-062",
+    "track": "jsts",
+    "type": "til",
+    "author": "proto_chain",
+    "time": "2d",
+    "content": "TIL: `Object.groupBy()` is now a standard method (ES2024). No more lodash `_.groupBy` or hand-rolled reduce patterns.\n\nIt takes an iterable and a callback that returns the group key. Returns a null-prototype object with arrays as values.",
+    "code": "const people = [\n  { name: 'Alice', dept: 'eng' },\n  { name: 'Bob', dept: 'design' },\n  { name: 'Charlie', dept: 'eng' },\n  { name: 'Diana', dept: 'design' },\n  { name: 'Eve', dept: 'eng' },\n];\n\nconst byDept = Object.groupBy(people, p => p.dept);\n// {\n//   eng: [Alice, Charlie, Eve],\n//   design: [Bob, Diana]\n// }\n\n// Also: Map.groupBy() for when you need non-string keys\nconst byNameLength = Map.groupBy(people, p => p.name.length);\n// Map { 3 => [Bob, Eve], 5 => [Alice, Diana], 7 => [Charlie] }",
+    "link": null,
+    "poll": null,
+    "likes": 578,
+    "reposts": 123,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "The reduce pattern for groupBy was always the same 5 lines and everyone wrote it slightly differently. Now it's one line. One standard line. The language is finally absorbing the patterns the community standardized decades ago.",
+        "likes": 312
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript types it as `Partial<Record<string, T[]>>` — note the Partial. Any key might not exist in the result. You have to check `byDept.eng?.length` not `byDept.eng.length`. Smart typing.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-063",
+    "track": "jsts",
+    "type": "slackPost",
+    "author": "event_looper",
+    "time": "8h",
+    "content": "#backend-team Slack:\n\n@event_looper: why is the API returning 504s under load?\n@async_await: let me check the event loop lag\n@async_await: oh. oh no.\n@event_looper: what\n@async_await: someone's doing `JSON.parse()` on a 200MB payload synchronously in the request handler\n@proto_chain: in the HOT PATH?\n@async_await: in the hot path.\n@closure_king: the event loop is blocked for 3 seconds per request. every other request queues behind it.\n@event_looper: that explains the cascade. one slow parse blocks 3000 requests behind it.\n@type_narrow: stream it. use `JSONStream.parse()` or a worker thread. do NOT parse 200MB on the main thread.\n@async_await: shipping a fix with worker_threads now. also adding event loop lag monitoring so we catch this next time.\n@event_looper: we should have had that monitoring from day one. the event loop is the heartbeat. if it stutters, everything dies.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1234,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "proto_chain",
+        "content": "Event loop lag monitoring is free: `setInterval(() => { const start = Date.now(); setImmediate(() => { const lag = Date.now() - start; if (lag > 100) alert(); }); }, 1000)`. If the lag is high, your event loop is blocked. Ship this on day one.",
+        "likes": 456
+      },
+      {
+        "author": "closure_king",
+        "content": "200MB JSON payload. In a request handler. On the main thread. This is the Node.js equivalent of doing heavy lifting while standing on a tightrope. The tightrope (event loop) doesn't care how strong you are — it only has one thread.",
+        "likes": 345
+      }
+    ]
+  },
+  {
+    "id": "jsts-064",
+    "track": "jsts",
+    "type": "mentalModel",
+    "author": "async_await",
+    "time": "1d",
+    "content": "MENTAL MODEL: Error handling is like insurance.\n\ntry/catch at every line = insuring every item in your house individually. Expensive, tedious, and you're still going to miss something.\n\ntry/catch at the boundary = one good homeowner's policy. Covers everything. You only file a claim when something actually goes wrong.\n\nLet errors bubble up. Catch them at the boundary (API handler, event listener, top-level). Handle them there with context about what the user was trying to do.\n\nThe middle layers should be transparent pipes. They don't catch — they transform and propagate.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/06-async-patterns/",
+      "label": "error boundaries in Lesson 6 →"
+    },
+    "poll": null,
+    "likes": 834,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "The insurance analogy is perfect. And just like insurance, you customize for specific valuable items: `try { await chargeCreditCard() } catch { ... }` — some operations deserve specific handling. Everything else? Let the policy handle it.",
+        "likes": 345
+      },
+      {
+        "author": "event_looper",
+        "content": "React Error Boundaries are literal implementations of this. A single component catches rendering errors for its entire subtree. The subtree doesn't need try/catch — it just renders. The boundary handles the failure. Same pattern, component edition.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-065",
+    "track": "jsts",
+    "type": "tip",
+    "author": "closure_king",
+    "time": "3h",
+    "content": "The `using` keyword (TC39 stage 3) brings automatic resource cleanup to JavaScript. Think of it as `defer` from Go or `with` from Python. When the scope exits, cleanup runs automatically.\n\nNo more forgetting to close files, release locks, or disconnect databases. The language handles it.",
+    "code": "// Without `using`: manual cleanup\nconst file = await openFile('data.txt');\ntry {\n  const data = await file.read();\n  process(data);\n} finally {\n  await file.close(); // you WILL forget this someday\n}\n\n// With `using`: automatic cleanup\n{\n  using file = await openFile('data.txt');\n  // file has a [Symbol.dispose]() method\n  const data = await file.read();\n  process(data);\n} // file.close() called automatically here\n\n// Works with `await using` for async cleanup\nawait using db = await connectToDatabase();\nawait db.query('SELECT ...');\n// connection released when scope exits",
+    "link": null,
+    "poll": null,
+    "likes": 623,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "This pairs perfectly with AbortController. `using controller = new AbortController()` — when the scope exits, all signals abort. Automatic cancellation. No more leaked fetch requests or dangling event listeners.",
+        "likes": 312
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript 5.2+ already supports this. The `Disposable` and `AsyncDisposable` interfaces are built in. If your class implements `[Symbol.dispose]()`, it works with `using`. Type-safe RAII in JavaScript. What a time to be alive.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-066",
+    "track": "jsts",
+    "type": "poll",
+    "author": "event_looper",
+    "time": "2h",
+    "content": "Your server needs to handle CPU-intensive work (image resizing, PDF generation). How do you keep the event loop responsive?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "Worker threads",
+          "pct": 42
+        },
+        {
+          "text": "Child processes (fork/exec)",
+          "pct": 23
+        },
+        {
+          "text": "Offload to a queue (Redis/Bull)",
+          "pct": 28
+        },
+        {
+          "text": "Just do it on the main thread, it's fine",
+          "pct": 7
+        }
+      ],
+      "totalVotes": 1876
+    },
+    "likes": 489,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "The queue answer (28%) is the real production answer. Worker threads are great for moderate CPU work. But image resizing at scale? Dedicated workers consuming from a Redis queue, with retries, monitoring, and scaling independent of your API server. Separation of concerns.",
+        "likes": 345
+      },
+      {
+        "author": "closure_king",
+        "content": "7% doing it on the main thread. These are the servers that respond in 50ms for 99 requests and then take 30 seconds for the 100th request because it's resizing an 8MB PNG. Your p99 latency is a horror story.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "jsts-067",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "async_await",
+    "time": "1d",
+    "content": "SPOT THE BUG: This memoization function seems right. But it returns stale results for object arguments. Why?",
+    "code": "function memoize(fn) {\n  const cache = new Map();\n  return function(...args) {\n    const key = JSON.stringify(args);\n    if (cache.has(key)) return cache.get(key);\n    const result = fn.apply(this, args);\n    cache.set(key, result);\n    return result;\n  };\n}\n\nconst getUser = memoize(async (query) => {\n  return await db.findUser(query);\n});\n\n// Bug: getUser({ id: 1, name: 'Alice' }) and\n//      getUser({ name: 'Alice', id: 1 })\n// have different JSON.stringify outputs but are the same query!",
+    "link": null,
+    "poll": null,
+    "likes": 567,
+    "reposts": 123,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "JSON.stringify doesn't guarantee key order. `{a:1, b:2}` and `{b:2, a:1}` produce different strings in some engines. Also: functions, undefined, Symbols are silently dropped. Dates become strings. Two different objects with the same shape produce different cache misses if you ever mutate one. JSON as a cache key is a lie.",
+        "likes": 345
+      },
+      {
+        "author": "proto_chain",
+        "content": "For object keys, use a WeakMap when the argument is a single object. For multiple/mixed args, you need a trie-based cache (like `memoize-one` for single-arg) or a sorted-key serializer. The cache key problem is deceptively hard.",
+        "likes": 234
+      },
+      {
+        "author": "type_narrow",
+        "content": "Also: this memoizes the Promise, not the result. If the first call rejects, every subsequent call with the same key gets the cached rejected promise. You need to delete the cache entry on rejection. Memoizing async functions is a whole sub-genre of bugs.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "jsts-068",
+    "track": "jsts",
+    "type": "thread",
+    "author": "type_narrow",
+    "time": "5h",
+    "content": "THREAD: Mapped types — TypeScript's object transformation superpower.\n\nA mapped type iterates over keys and transforms them. It's `Array.map()` but for object types.\n\n`{ [K in keyof T]: ... }` — for each key K in T, compute a new value type.\n\nPartial<T>? Mapped type. Required<T>? Mapped type. Readonly<T>? Mapped type. Pick<T, K>? Mapped type.\n\nOnce you understand the pattern, you can build ANY object type transformation.",
+    "code": "// Partial: make all properties optional\ntype Partial<T> = { [K in keyof T]?: T[K] };\n\n// Readonly: make all properties readonly\ntype Readonly<T> = { readonly [K in keyof T]: T[K] };\n\n// Nullable: make all properties nullable\ntype Nullable<T> = { [K in keyof T]: T[K] | null };\n\n// Getters: transform keys and values\ntype Getters<T> = {\n  [K in keyof T as `get${Capitalize<string & K>}`]: () => T[K]\n};\n\ninterface User { name: string; age: number; }\ntype UserGetters = Getters<User>;\n// { getName: () => string; getAge: () => number }",
+    "link": {
+      "url": "/jsts/lessons/10-advanced-ts/",
+      "label": "mapped types in Lesson 10 →"
+    },
+    "poll": null,
+    "likes": 823,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "The `as` clause in mapped types (key remapping) is what takes it from useful to powerful. Filter keys, rename keys, transform keys — all at the type level. `[K in keyof T as T[K] extends Function ? never : K]` removes all method keys. Type-level filter().",
+        "likes": 345
+      },
+      {
+        "author": "closure_king",
+        "content": "I think of mapped types as a for-loop over an object type. `for (const K of keyof T) { result[K] = transform(T[K]) }`. Same mental model, different dimension. Types are just data structures you iterate over.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-069",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "async_await",
+    "time": "12h",
+    "content": "hot take: snapshot testing is code review for cowards.\n\nyou don't understand the output, so you snapshot it. the snapshot changes, you don't understand why, so you press `u` to update it. now your test passes but you've verified nothing.\n\nsnapshot tests don't test behavior. they test that the output didn't change. those are not the same thing. output can change for GOOD reasons, and bad output can persist because nobody reads the diff.\n\nwrite assertions that describe WHAT your code should do, not WHAT your code happens to produce today.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1567,
+    "reposts": 423,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "Snapshots are fine for ONE thing: detecting unintended visual changes in component rendering. CSS regression, markup structure, accessibility attributes. For logic? Never. `expect(result).toMatchSnapshot()` is \"I don't know what the answer should be but I'll know if it changes.\" That's monitoring, not testing.",
+        "likes": 456
+      },
+      {
+        "author": "event_looper",
+        "content": "I've seen codebases where 90% of test suite is snapshots and the team has a Slack macro: \"snapshot tests failing, run `npm test -- -u` and push.\" At that point delete the tests. They're creating noise and providing zero signal.",
+        "likes": 389
+      },
+      {
+        "author": "proto_chain",
+        "content": "Inline snapshots are better than external snapshots because at least the expected output is IN the test file. You see what you're asserting when you read the test. External snapshots are a separate file you never look at until the diff is 500 lines.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-070",
+    "track": "jsts",
+    "type": "tip",
+    "author": "event_looper",
+    "time": "1d",
+    "content": "Node.js has a built-in test runner since v18. No jest. No mocha. No vitest. Just `node --test`.\n\nIt has `describe`, `it`, `before`, `after`, `mock`. It supports async tests natively. It has a TAP reporter. It even has `--watch` mode now.\n\nFor small projects, scripts, or CLI tools — stop installing test frameworks. The runtime has one built in.",
+    "code": "import { describe, it, mock } from 'node:test';\nimport assert from 'node:assert/strict';\n\ndescribe('math', () => {\n  it('adds numbers', () => {\n    assert.equal(1 + 1, 2);\n  });\n\n  it('handles async', async () => {\n    const result = await fetchData();\n    assert.deepEqual(result, { ok: true });\n  });\n\n  it('mocks functions', () => {\n    const fn = mock.fn(() => 42);\n    fn();\n    assert.equal(fn.mock.calls.length, 1);\n  });\n});\n\n// Run: node --test\n// Watch: node --test --watch",
+    "link": null,
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "The built-in runner is fast because there's zero startup cost — no framework to load, no config to parse, no plugins to initialize. For CI pipelines on small projects, this shaves seconds off every run. Seconds that add up to hours over a year.",
+        "likes": 267
+      },
+      {
+        "author": "type_narrow",
+        "content": "For TypeScript projects, you still need something. `node --test` doesn't transform `.ts` files natively. You need `tsx` or `ts-node` as a loader. At that point you might as well use Vitest for the DX. Built-in runner shines for pure JS.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-071",
+    "track": "jsts",
+    "type": "eli5",
+    "author": "async_await",
+    "time": "2h",
+    "content": "ELI5: Promises.\n\nYou order food at a restaurant. The waiter gives you a numbered ticket. That ticket is a Promise.\n\nThe food isn't ready yet (pending). You don't stand at the counter and wait — you sit down, check your phone, talk to friends (other code runs).\n\nEventually one of two things happens:\n1. \"Order #7 is ready!\" — the promise fulfilled. You get your food (the resolved value).\n2. \"Sorry, we're out of that dish.\" — the promise rejected. You get an error (the rejection reason).\n\n`.then()` is you saying: \"When my ticket is called, here's what I'll do with the food.\"\n`.catch()` is your backup plan for when they're out of your dish.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/06-async-patterns/",
+      "label": "promises explained in Lesson 6 →"
+    },
+    "poll": null,
+    "likes": 1345,
+    "reposts": 356,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "And `async/await` is the restaurant adding table service. Instead of a ticket number, the waiter just brings the food to your table when it's ready. Same kitchen, same process — but YOU don't have to manage the ticket. The syntax handles it.",
+        "likes": 412
+      },
+      {
+        "author": "type_narrow",
+        "content": "A Promise can only settle ONCE. You can't \"un-resolve\" it. Once the food arrives, it stays arrived. That's why `Promise.resolve(5).then(x => x)` always returns 5, even if you `.then()` it a hundred times. Settled means settled.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-072",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "proto_chain",
+    "time": "3d",
+    "content": "SPOT THE BUG: This comparison function for Array.sort() looks correct. It even handles strings and numbers. But it produces wrong results for some arrays.",
+    "code": "const items = [\n  { name: 'Banana', price: 1.5 },\n  { name: 'apple', price: 2.0 },\n  { name: 'Cherry', price: 3.0 },\n];\n\n// Sort by name alphabetically\nitems.sort((a, b) => {\n  if (a.name < b.name) return -1;\n  if (a.name > b.name) return 1;\n  return 0;\n});\n\n// Result: ['Banana', 'Cherry', 'apple']\n// Expected: ['apple', 'Banana', 'Cherry']\n// WHY is apple last?",
+    "link": null,
+    "poll": null,
+    "likes": 423,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "String comparison in JS is case-sensitive by default using Unicode code points. Uppercase letters (A-Z: 65-90) come BEFORE lowercase (a-z: 97-122). So 'B' < 'a' is true. Fix: `a.name.localeCompare(b.name)` handles case-insensitive, locale-aware sorting. Or `.toLowerCase()` both sides.",
+        "likes": 312
+      },
+      {
+        "author": "type_narrow",
+        "content": "`Intl.Collator` is even better for performance: `const collator = new Intl.Collator('en', { sensitivity: 'base' }); items.sort((a, b) => collator.compare(a.name, b.name))`. It's reusable and handles Unicode properly. Stop reinventing locale-aware comparison.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-073",
+    "track": "jsts",
+    "type": "mentalModel",
+    "author": "closure_king",
+    "time": "5h",
+    "content": "MENTAL MODEL: Currying is closure assembly.\n\nA curried function doesn't take all its arguments at once. Each call returns a new function that \"remembers\" the argument via closure. The final call has all the arguments accumulated in nested closures.\n\n`add(1)(2)(3)` = three functions, three closures, one result.\n\nWhy? Partial application. `const addTax = multiply(1.08)` — you configure a function once, reuse it everywhere. The configuration lives in the closure. Same mechanism as a factory function, just expressed differently.",
+    "code": "// Manual currying — closure in action\nfunction multiply(a) {\n  return function(b) {\n    return a * b; // `a` lives in the outer closure\n  };\n}\n\nconst double = multiply(2);\nconst triple = multiply(3);\n\ndouble(5);  // 10 — the `2` was remembered\ntriple(5);  // 15 — the `3` was remembered\n\n// Practical: event handler factory\nconst handleClick = (action) => (event) => {\n  analytics.track(action, event.target.id);\n};\n\nbutton.addEventListener('click', handleClick('signup'));\n// The 'signup' string is captured in the closure",
+    "link": {
+      "url": "/jsts/lessons/03-closures-scope/",
+      "label": "currying and closures in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 689,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "React's `useCallback(() => handleDelete(id), [id])` is currying in disguise. You're creating a function that has `id` baked in via closure. Every React hook that returns a callback is a curried function. You've been currying all along.",
+        "likes": 312
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript handles curried types beautifully: `const multiply: (a: number) => (b: number) => number`. Each layer of the function type corresponds to a layer of closure. The type IS the closure architecture.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-074",
+    "track": "jsts",
+    "type": "slackPost",
+    "author": "proto_chain",
+    "time": "1d",
+    "content": "#code-review Slack:\n\n@proto_chain: who wrote this?\n@proto_chain: `if (x == null)` in 47 places\n@type_narrow: WHAT. everyone knows it's ===\n@proto_chain: wait. actually... `== null` checks for BOTH null AND undefined. it's one of the only cases where == is intentionally useful\n@closure_king: you're kidding\n@proto_chain: I'm not. `x == null` is equivalent to `x === null || x === undefined`. it's in the spec.\n@type_narrow: I... did not know that. I've been writing the long version for years.\n@event_looper: eslint's `eqeqeq` rule has a `\"smart\"` option that allows `== null`. the rule KNOWS it's the exception.\n@async_await: so the code review is... approved?\n@proto_chain: approved. I learned something. I hate it. but approved.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1567,
+    "reposts": 412,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "I've been writing `x === null || x === undefined` for seven years. Seven. Years. This is the JavaScript equivalent of finding out there's a shortcut on your daily commute that saves 20 minutes.",
+        "likes": 567
+      },
+      {
+        "author": "closure_king",
+        "content": "`== null` is the ONE place where loose equality is actually cleaner and correct. Everywhere else: `===`. But null checks? `==` is the right tool. JavaScript gives you exactly one good use of `==` and then gaslights you about the rest.",
+        "likes": 445
+      }
+    ]
+  },
+  {
+    "id": "jsts-075",
+    "track": "jsts",
+    "type": "interview",
+    "author": "closure_king",
+    "time": "8h",
+    "content": "INTERVIEW Q: Implement a `pipe()` function that composes multiple functions left-to-right.\n\n`pipe(add1, double, toString)(5)` should return `'12'` — add1(5)=6, double(6)=12, toString(12)='12'.\n\nThe interviewer wants to see: closures, reduce, and TypeScript generics if applicable. Bonus: type it so the output type of each function must match the input type of the next.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/03-closures-scope/",
+      "label": "function composition in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 712,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "The core: `const pipe = (...fns) => (x) => fns.reduce((v, fn) => fn(v), x)`. One line. The returned function closes over `fns`. Each call walks the array, passing the result of each function to the next. Reduce is the engine. Closures are the memory.",
+        "likes": 345
+      },
+      {
+        "author": "type_narrow",
+        "content": "Typing `pipe` in TypeScript is famously hard. For N functions, you need each output to match the next input. TypeScript can't express infinite overloads, so libraries like fp-ts use overload declarations up to ~20 functions. There's no clean generic solution. It's a known limitation.",
+        "likes": 267
+      },
+      {
+        "author": "proto_chain",
+        "content": "The F# and Haskell people are reading this thread and laughing. Pipeline operator `|>` when, TC39? We've been waiting since 2017. The proposal has been in stage 2 purgatory for years.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "jsts-076",
+    "track": "jsts",
+    "type": "til",
+    "author": "closure_king",
+    "time": "3h",
+    "content": "TIL: `AbortSignal.any()` exists (2024). It combines multiple abort signals into one. If ANY of the input signals abort, the combined signal aborts.\n\nPerfect for: timeout + user cancellation, or any situation where multiple conditions should stop an operation.",
+    "code": "// Abort if EITHER the user cancels OR the timeout fires\nconst userCancel = new AbortController();\nconst timeout = AbortSignal.timeout(5000);\n\nconst combined = AbortSignal.any([userCancel.signal, timeout]);\n\nfetch('/api/slow-endpoint', { signal: combined });\n\n// User clicks cancel:\nuserCancel.abort(); // fetch aborts\n\n// OR if 5 seconds pass:\n// timeout signal fires → fetch aborts\n\n// One signal, multiple abort conditions. Clean.",
+    "link": null,
+    "poll": null,
+    "likes": 534,
+    "reposts": 123,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "Before `AbortSignal.any()` you had to manually wire up listeners: `userCancel.signal.addEventListener('abort', () => combinedController.abort())`. For every signal. It was callback management on top of the thing that was supposed to replace callback management.",
+        "likes": 289
+      },
+      {
+        "author": "async_await",
+        "content": "AbortSignal.timeout() + AbortSignal.any() + the `using` keyword = automatic, composable cancellation. The platform is finally building the primitives we've been hacking together for years.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-077",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "event_looper",
+    "time": "2d",
+    "content": "hot take: if your test mocks more than 2 dependencies, your function has too many dependencies.\n\nmocking is a code smell detector. a function that needs 5 mocks to test is a function that does 5 things. it violates single responsibility. the test is screaming at you: THIS FUNCTION IS TOO BIG.\n\nsplit the function. each piece needs 0-1 mocks. now your tests are simple, your functions are focused, and your mocks aren't building a parallel universe of fake dependencies.\n\nmocking should be a surgical tool, not an architectural crutch.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 934,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "There's a corollary: if you're mocking the module you're testing, you're testing your mocks, not your code. `jest.mock('./database')` and then testing that the mock was called correctly tells you nothing about whether the database interaction works.",
+        "likes": 456
+      },
+      {
+        "author": "closure_king",
+        "content": "Dependency injection via function arguments > DI containers > jest.mock(). `function createUser(db, logger, emailer)` — in tests, pass fakes. In production, pass real ones. No magic, no mock framework, no module patching. Just functions taking arguments.",
+        "likes": 345
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript makes this even better: `function createUser(db: Pick<Database, 'insert' | 'findOne'>)` — the type says exactly which database methods you use. Test with a simple object that has those two methods. No full mock needed.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "jsts-078",
+    "track": "jsts",
+    "type": "tip",
+    "author": "proto_chain",
+    "time": "1h",
+    "content": "Performance tip: property access on the prototype chain is slower than own properties.\n\nEach property lookup walks the chain until it finds the property or hits null. Own properties are O(1). Prototype lookups are O(n) where n is the chain depth.\n\nFor hot paths (called thousands of times), cache prototype-chain lookups in local variables.",
+    "code": "// Slow in a hot loop: walks prototype chain every iteration\nfor (let i = 0; i < 1000000; i++) {\n  arr.push(obj.inherited.deep.method()); // 3 lookups per call\n}\n\n// Fast: cache the reference\nconst method = obj.inherited.deep.method;\nfor (let i = 0; i < 1000000; i++) {\n  arr.push(method()); // direct call, no lookup\n}\n\n// Same principle applies to Math methods:\nconst { floor, random } = Math;\nfor (let i = 0; i < 1000000; i++) {\n  result = floor(random() * 100); // no Math.floor lookup each time\n}",
+    "link": {
+      "url": "/jsts/lessons/04-prototypes-classes/",
+      "label": "prototype performance in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 412,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "Modern engines (V8) use inline caches to optimize repeated property lookups. If the object shape doesn't change, the engine caches the lookup offset. So this matters less than it used to — but in truly hot paths, the local variable pattern still wins in benchmarks.",
+        "likes": 234
+      },
+      {
+        "author": "closure_king",
+        "content": "Destructuring at the top of a function is basically this pattern: `const { method1, method2 } = heavyObject`. You're caching references in local variables (which live in the closure scope). Closures making things faster for once instead of leaking memory.",
+        "likes": 198
+      }
+    ]
+  },
+  {
+    "id": "jsts-079",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "closure_king",
+    "time": "5h",
+    "content": "SPOT THE BUG: This React hook creates a click handler. But every re-render creates a new function, causing child components to re-render unnecessarily. The developer added useCallback but it still re-renders. Why?",
+    "code": "function SearchPage() {\n  const [query, setQuery] = useState('');\n  const [results, setResults] = useState([]);\n\n  const handleSearch = useCallback(() => {\n    fetch(`/api/search?q=${query}`)\n      .then(res => res.json())\n      .then(setResults);\n  }, [query]); // query changes on every keystroke!\n\n  return (\n    <>\n      <input onChange={e => setQuery(e.target.value)} />\n      <ExpensiveList onSearch={handleSearch} results={results} />\n    </>\n  );\n}",
+    "link": null,
+    "poll": null,
+    "likes": 645,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "`useCallback` with `[query]` in the dep array creates a new function on EVERY keystroke (because query changes every keystroke). The memoization is pointless — it's equivalent to no useCallback at all. Fix: debounce the query, or use a ref for the current query value inside the callback.",
+        "likes": 345
+      },
+      {
+        "author": "async_await",
+        "content": "Better fix: `const queryRef = useRef(query); queryRef.current = query;` Then `useCallback(() => fetch(queryRef.current), [])` — empty deps, stable reference, always reads the latest query. The ref is the escape hatch from the closure-per-render trap.",
+        "likes": 289
+      },
+      {
+        "author": "type_narrow",
+        "content": "The deeper issue: useCallback doesn't prevent the function from being created. It just returns the SAME function if deps haven't changed. A new function is created every render regardless — useCallback just decides whether to keep the old one. It's memoization, not prevention.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-080",
+    "track": "jsts",
+    "type": "thread",
+    "author": "async_await",
+    "time": "2d",
+    "content": "THREAD: The 3 types of equality in JavaScript, and when to use each.\n\n1. `==` (loose): coerces types before comparing. `'5' == 5` is true. Almost never what you want. One exception: `x == null` checks for both null AND undefined.\n\n2. `===` (strict): no coercion. Same type AND same value. Your default choice for 99% of comparisons.\n\n3. `Object.is()`: like === but fixes two edge cases. `NaN` equals `NaN` (=== says false). `0` does not equal `-0` (=== says true).\n\nReact uses Object.is() for state comparison. That's why `setState(NaN)` doesn't cause infinite re-renders — Object.is(NaN, NaN) is true, so React sees no change.",
+    "code": "// == (loose) — coercion chaos\n'' == false;     // true (both coerce to 0)\n[] == false;     // true ([] → '' → 0)\n'0' == false;    // true ('0' → 0)\n\n// === (strict) — sane but imperfect\nNaN === NaN;     // false 😱\n0 === -0;        // true (mathematically different!)\n\n// Object.is() — actually correct\nObject.is(NaN, NaN);  // true ✓\nObject.is(0, -0);     // false ✓\nObject.is(1, 1);      // true ✓\nObject.is('a', 'a');   // true ✓",
+    "link": null,
+    "poll": null,
+    "likes": 756,
+    "reposts": 178,
+    "comments": [
+      {
+        "author": "proto_chain",
+        "content": "The `==` coercion algorithm is 16 steps long in the spec. SIXTEEN STEPS. Nobody can hold that in their head. `===` is 3 steps: same type? no → false. same value? yes → true. Simplicity wins.",
+        "likes": 345
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript actually WARNS you about some of these. `if (x === undefined)` works, but `if (x == undefined)` triggers ESLint. The tooling knows that `==` is a footgun and actively discourages it. Listen to your linter.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-081",
+    "track": "jsts",
+    "type": "tip",
+    "author": "type_narrow",
+    "time": "3h",
+    "content": "TypeScript assertion functions: like type predicates, but they throw instead of returning boolean. Use them for input validation at the top of functions.\n\nAfter the assertion call, TypeScript narrows the type for the rest of the scope. If the assertion didn't throw, the type must be valid.",
+    "code": "// Type predicate: returns boolean\nfunction isString(x: unknown): x is string {\n  return typeof x === 'string';\n}\n\n// Assertion function: throws or narrows\nfunction assertString(x: unknown): asserts x is string {\n  if (typeof x !== 'string') {\n    throw new TypeError(`Expected string, got ${typeof x}`);\n  }\n}\n\nfunction processInput(input: unknown) {\n  // After this line, TS knows input is a string\n  assertString(input);\n\n  // No type assertion needed — TS narrowed it\n  console.log(input.toUpperCase()); // ✓ TS knows it's a string\n  console.log(input.length);        // ✓\n}\n\n// Great for: API boundary validation, config parsing,\n// invariant checks at function entry points",
+    "link": {
+      "url": "/jsts/lessons/08-type-narrowing/",
+      "label": "assertion functions in Lesson 8 →"
+    },
+    "poll": null,
+    "likes": 567,
+    "reposts": 123,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "This is the Node.js `assert` pattern but with type narrowing. `assert(condition)` → if it doesn't throw, the condition is true and TS narrows accordingly. Validation + type narrowing in one operation. No separate if-check needed.",
+        "likes": 289
+      },
+      {
+        "author": "async_await",
+        "content": "Combine with Zod: `function assertUser(x: unknown): asserts x is User { UserSchema.parse(x); }`. Zod throws on invalid data. The assertion function tells TS what the throw means. Runtime validation meets compile-time narrowing.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-082",
+    "track": "jsts",
+    "type": "poll",
+    "author": "proto_chain",
+    "time": "1d",
+    "content": "How do you clone an object in JavaScript?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "structuredClone(obj)",
+          "pct": 28
+        },
+        {
+          "text": "{ ...obj } (spread)",
+          "pct": 39
+        },
+        {
+          "text": "JSON.parse(JSON.stringify(obj))",
+          "pct": 25
+        },
+        {
+          "text": "Object.assign({}, obj)",
+          "pct": 8
+        }
+      ],
+      "totalVotes": 2567
+    },
+    "likes": 478,
+    "reposts": 89,
+    "comments": [
+      {
+        "author": "proto_chain",
+        "content": "Spread and Object.assign are SHALLOW copies. Nested objects are still shared references. JSON.parse/stringify is deep but drops functions, undefined, Symbols, Dates, Maps, Sets. `structuredClone` is the only correct deep copy for data objects. The 72% not using it need to update their muscle memory.",
+        "likes": 389
+      },
+      {
+        "author": "event_looper",
+        "content": "The real answer depends on context. Shallow copy of a flat config? Spread is fine. Deep clone of complex data? structuredClone. Need to clone something with methods? None of these work — you need a custom clone function. Know your data shape.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-083",
+    "track": "jsts",
+    "type": "commitMsg",
+    "author": "type_narrow",
+    "time": "2h",
+    "content": "git log --oneline:\n\nf1e2d3c feat: added branded types for UserId, OrderId, ProductId. never mixing them up again\na4b5c6d fix: removed 23 `as any` casts. each one was a suppressed bug report from the compiler\n8e9f0a1 refactor: switched from enum to discriminated union. enums are TypeScript's biggest regret\n2b3c4d5 feat: added exhaustive switch check with `never`. the compiler now tells us when we miss a case\n6a7b8c9 chore: enabled strict mode. 847 errors. today we confront our sins.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1345,
+    "reposts": 356,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "\"847 errors. today we confront our sins.\" The moment of enabling strict mode is the TypeScript equivalent of finally checking your credit score. You knew it was bad. You just didn't know HOW bad.",
+        "likes": 567
+      },
+      {
+        "author": "async_await",
+        "content": "\"enums are TypeScript's biggest regret\" — correct. They emit runtime code, they don't tree-shake well, they have weird nominal behavior. `as const` objects + `typeof` give you everything enums do, without the baggage.",
+        "likes": 445
+      }
+    ]
+  },
+  {
+    "id": "jsts-084",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "proto_chain",
+    "time": "12h",
+    "content": "hot take: JavaScript's type coercion is not a bug — it's a design decision you should understand but almost never use.\n\n`[] + []` is `''`. `[] + {}` is `'[object Object]'`. `{} + []` is `0` (in the console). These are not bugs. They follow the spec perfectly. The spec is just... surprising.\n\nThe problem isn't that coercion is broken. The problem is that coercion's rules are so complex that no human can reliably predict the output for edge cases.\n\nSo: use `===`, use explicit conversions (`Number()`, `String()`, `Boolean()`), and treat implicit coercion as a language feature you've opted out of.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 645,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "`Number()` vs `parseInt()` is another coercion trap. `Number('')` is `0`. `parseInt('')` is `NaN`. `Number('123abc')` is `NaN`. `parseInt('123abc')` is `123`. They parse differently because they're designed for different use cases. Know which one you need.",
+        "likes": 345
+      },
+      {
+        "author": "type_narrow",
+        "content": "Template literals do implicit coercion too and nobody talks about it. `` `count: ${myObj}` `` calls `myObj.toString()` silently. If your object doesn't have a meaningful `toString()`, you get `[object Object]` in your string. Template literals are coercion in a tuxedo.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "jsts-085",
+    "track": "jsts",
+    "type": "til",
+    "author": "event_looper",
+    "time": "1h",
+    "content": "TIL: `AbortSignal.timeout(ms)` replaces the entire \"Promise.race with a setTimeout\" pattern. One line. Built into the platform.\n\nIt creates a signal that automatically aborts after the specified milliseconds. Pass it to fetch, addEventListener, or any API that accepts a signal.",
+    "code": "// Old way: 10 lines of boilerplate\nconst controller = new AbortController();\nconst timeoutId = setTimeout(() => controller.abort(), 5000);\ntry {\n  const res = await fetch(url, { signal: controller.signal });\n  clearTimeout(timeoutId);\n  return await res.json();\n} catch (err) {\n  clearTimeout(timeoutId);\n  throw err;\n}\n\n// New way: 1 line\nconst res = await fetch(url, { signal: AbortSignal.timeout(5000) });\nconst data = await res.json();",
+    "link": null,
+    "poll": null,
+    "likes": 712,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "And it cleans up after itself. No dangling setTimeout. No closure holding the controller reference. The browser manages the timer internally and garbage collects it when the fetch completes. Zero-boilerplate, zero-leak timeouts.",
+        "likes": 345
+      },
+      {
+        "author": "closure_king",
+        "content": "Combine with `AbortSignal.any()` for user-cancel + timeout: `AbortSignal.any([userController.signal, AbortSignal.timeout(5000)])`. Two lines replaces 20 lines of manual wiring. The platform is finally building the right primitives.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-086",
+    "track": "jsts",
+    "type": "interview",
+    "author": "async_await",
+    "time": "3d",
+    "content": "INTERVIEW Q: Implement a basic Promise from scratch. Not the full A+ spec — just constructor, `.then()`, `.catch()`, and `resolve`/`reject` behavior.\n\nThe interviewer wants to see: state machine (pending/fulfilled/rejected), callback queuing, and microtask scheduling. This question tests whether you understand promises at a mechanical level, not just how to use them.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/06-async-patterns/",
+      "label": "promises under the hood in Lesson 6 →"
+    },
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "The key insight: if the promise is already settled when `.then()` is called, you schedule the callback as a microtask immediately. If it's still pending, you QUEUE the callback and run it when `resolve`/`reject` is called. Two code paths, and most implementations forget the first one.",
+        "likes": 345
+      },
+      {
+        "author": "closure_king",
+        "content": "The state machine is a closure. `let state = 'pending'; let value;` — closed over by `resolve`, `reject`, and `then`. `resolve` changes state, stores the value, and flushes the callback queue. The entire Promise is a closure with a state machine inside.",
+        "likes": 289
+      },
+      {
+        "author": "type_narrow",
+        "content": "Use `queueMicrotask()` for the scheduling, not `setTimeout(0)`. Real promises use the microtask queue. Using setTimeout makes your implementation subtly wrong — it's a macrotask, which means timing differs from real promises. The interviewer might test this.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-087",
+    "track": "jsts",
+    "type": "mentalModel",
+    "author": "async_await",
+    "time": "5h",
+    "content": "MENTAL MODEL: Promises are state machines with 3 states.\n\nPENDING → the operation is in flight. No result yet.\nFULFILLED → the operation succeeded. The value is locked in.\nREJECTED → the operation failed. The reason is locked in.\n\nTransitions: pending → fulfilled, OR pending → rejected. That's it. No going back. No fulfilled → rejected. No re-pending.\n\nOnce settled, a Promise's value NEVER changes. `.then()` on a settled promise always returns the same value. This immutability is what makes Promises composable — you can pass them around without worrying about them changing under you.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/06-async-patterns/",
+      "label": "Promise state machine in Lesson 6 →"
+    },
+    "poll": null,
+    "likes": 678,
+    "reposts": 145,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "This is why `new Promise((resolve) => { resolve(1); resolve(2); })` resolves to 1, not 2. The second `resolve()` is a no-op. The state already transitioned. The machine is done. You can't unstamp a passport.",
+        "likes": 312
+      },
+      {
+        "author": "closure_king",
+        "content": "State machines are everywhere once you start looking. Promises, React component lifecycles, Redux reducers, network connections. If your code has a `status` variable that goes through defined transitions, you have a state machine. Name it. Type it. Make it explicit.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-088",
+    "track": "jsts",
+    "type": "ratiod",
+    "author": "proto_chain",
+    "time": "8h",
+    "content": "Semicolons in JavaScript are optional. I never use them. ASI handles everything.\n\n(ratio: 5K quote tweets)",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 267,
+    "reposts": 5123,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "Until it doesn't. `return\\n{value: 1}` returns undefined, not the object. ASI inserts a semicolon after `return`. Your function silently returns nothing. This isn't a hypothetical — it's a real bug I've debugged in production. Twice. On the same codebase. Because someone said \"ASI handles everything.\"",
+        "likes": 567
+      },
+      {
+        "author": "closure_king",
+        "content": "Lines starting with `(`, `[`, `/`, `+`, `-`, or `` ` `` are ambiguous without semicolons. `const x = 1\\n[1,2,3].forEach(...)` — ASI does NOT insert a semicolon because `1[1,2,3]` is valid syntax (property access). The `forEach` never runs. Your code fails silently.",
+        "likes": 445
+      },
+      {
+        "author": "type_narrow",
+        "content": "Prettier adds semicolons by default. ESLint recommends them. The TypeScript team uses them. The V8 team uses them. But sure, you know better than all of them because you saw a conference talk in 2015.",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "jsts-089",
+    "track": "jsts",
+    "type": "tip",
+    "author": "async_await",
+    "time": "2h",
+    "content": "Stop writing `if/else if/else if/else` chains for value mapping. Use an object lookup.\n\nFaster (O(1) vs O(n) comparison), more readable, and trivially extensible. This is the most underused pattern in JavaScript.",
+    "code": "// BAD: O(n) comparisons, hard to maintain\nfunction getStatusText(code) {\n  if (code === 200) return 'OK';\n  else if (code === 201) return 'Created';\n  else if (code === 400) return 'Bad Request';\n  else if (code === 404) return 'Not Found';\n  else if (code === 500) return 'Server Error';\n  else return 'Unknown';\n}\n\n// GOOD: O(1) lookup, easy to extend\nconst STATUS_TEXT = {\n  200: 'OK',\n  201: 'Created',\n  400: 'Bad Request',\n  404: 'Not Found',\n  500: 'Server Error',\n};\n\nfunction getStatusText(code) {\n  return STATUS_TEXT[code] ?? 'Unknown';\n}",
+    "link": null,
+    "poll": null,
+    "likes": 712,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "In TypeScript, add `as const` to the lookup object and you get literal return types: `STATUS_TEXT[200]` returns type `'OK'`, not `string`. Combine with `satisfies Record<number, string>` for validation + inference. The object lookup becomes a type-level function.",
+        "likes": 345
+      },
+      {
+        "author": "proto_chain",
+        "content": "For actions (not just values), use functions as values: `const handlers = { click: handleClick, hover: handleHover }; handlers[eventType]?.()`. Strategy pattern without classes. An object of functions is the simplest polymorphism in JS.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-090",
+    "track": "jsts",
+    "type": "slackPost",
+    "author": "async_await",
+    "time": "12h",
+    "content": "#incident-response Slack:\n\n@async_await: production is down. getting `Cannot read properties of undefined (reading 'map')`\n@type_narrow: where?\n@async_await: the user dashboard. `user.preferences.notifications.map(...)` \n@closure_king: which part is undefined? user? preferences? notifications?\n@async_await: preferences. the new user migration didn't backfill the preferences field\n@event_looper: optional chaining? `user.preferences?.notifications?.map(...) ?? []`\n@type_narrow: that's the band-aid. the real fix is making preferences non-optional in the type AND the database\n@proto_chain: or a default: `const { preferences = DEFAULT_PREFS } = user`\n@type_narrow: we need all three. default value for the migration, optional chaining for safety, and the type to enforce it going forward\n@async_await: deploying the optional chaining fix now. filing tickets for the other two. this is why we need runtime validation at the database boundary.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1123,
+    "reposts": 267,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "\"Cannot read properties of undefined\" is the #1 JavaScript runtime error across the entire internet. Optional chaining alone reduced Sentry error volume by 40% at my last company. `?.` is not optional. It's mandatory.",
+        "likes": 456
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript told them. The type said `preferences: Preferences` not `preferences?: Preferences`. But somewhere between the type and the database, the contract was broken. Types end at the boundary. The database doesn't read your interfaces.",
+        "likes": 389
+      }
+    ]
+  },
+  {
+    "id": "jsts-091",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "event_looper",
+    "time": "1d",
+    "content": "SPOT THE BUG: This debounced search input works, but typing fast causes stale results to appear AFTER newer results. The response for 'ap' arrives after the response for 'apple', overwriting the correct results.",
+    "code": "function SearchInput() {\n  const [query, setQuery] = useState('');\n  const [results, setResults] = useState([]);\n\n  useEffect(() => {\n    const timer = setTimeout(async () => {\n      const res = await fetch(`/api/search?q=${query}`);\n      const data = await res.json();\n      setResults(data); // stale response can overwrite fresh one!\n    }, 300);\n    return () => clearTimeout(timer);\n  }, [query]);\n\n  return /* ... */;\n}",
+    "link": null,
+    "poll": null,
+    "likes": 756,
+    "reposts": 167,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "Race condition. Debounce prevents rapid-fire requests, but network latency is unpredictable. The request for 'ap' might take 500ms while 'apple' takes 100ms. The 'ap' response arrives last and overwrites 'apple' results. Fix: use AbortController in the cleanup. `return () => { clearTimeout(timer); controller.abort(); }` — cancel the in-flight request when a new one starts.",
+        "likes": 389
+      },
+      {
+        "author": "closure_king",
+        "content": "Or use an `ignore` flag: `let ignore = false; ... if (!ignore) setResults(data); return () => { ignore = true; }`. The cleanup sets the flag, so stale responses are discarded even if the fetch completes. This is the pattern the React docs recommend.",
+        "likes": 312
+      },
+      {
+        "author": "type_narrow",
+        "content": "This is a solved problem with the right abstraction. `useSWR`, `TanStack Query`, or any data-fetching library handles race conditions, caching, deduplication, and stale data out of the box. Stop hand-rolling fetch-in-useEffect.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-092",
+    "track": "jsts",
+    "type": "eli5",
+    "author": "proto_chain",
+    "time": "8h",
+    "content": "ELI5: Prototypes.\n\nYou have a recipe card for making cookies. Your friend doesn't have a recipe card, but you tell them: \"If you don't know how to make something, ask me.\"\n\nYour friend's recipe card has a link to yours. If someone asks them to make brownies and they don't know how, they check YOUR card. If you don't know either, you check your TEACHER's card. And so on.\n\nThat chain of \"ask the next person\" is the prototype chain. Every JavaScript object can say \"if I don't have this, check my prototype.\" The chain ends at `Object.prototype`, which is like the head chef who knows the basics.",
+    "code": "// You (child) link to a parent\nconst chef = { makeSoup: () => 'soup!' };\nconst apprentice = Object.create(chef);\napprentice.makeSalad = () => 'salad!';\n\napprentice.makeSalad();  // 'salad!' — knows this one\napprentice.makeSoup();   // 'soup!'  — asked the chef (prototype)\napprentice.makeCake?.(); // undefined — nobody in the chain knows",
+    "link": {
+      "url": "/jsts/lessons/04-prototypes-classes/",
+      "label": "prototypes for beginners in Lesson 4 →"
+    },
+    "poll": null,
+    "likes": 1067,
+    "reposts": 267,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "And `class` is like a franchise training manual. `class Apprentice extends Chef` means \"every apprentice gets a link to the Chef recipe book.\" But under the hood, it's the same chain of asking the next person. Classes are just a nice way to set up the chain.",
+        "likes": 345
+      },
+      {
+        "author": "type_narrow",
+        "content": "The beauty of this model: the apprentice can OVERRIDE a recipe. `apprentice.makeSoup = () => 'better soup!'` — now they have their own version. The chef's recipe is still there, just shadowed. That's method overriding via the prototype chain.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-093",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "type_narrow",
+    "time": "3h",
+    "content": "hot take: TypeScript enums should be deprecated.\n\nthey emit runtime JavaScript (unlike every other TS feature). they're nominal (unlike every other TS type). they don't tree-shake well. const enums are a different footgun with isolatedModules issues. string enums don't reverse-map. numeric enums DO reverse-map and it's confusing.\n\nuse `as const` objects instead:\n`const Direction = { Up: 'UP', Down: 'DOWN' } as const;`\n`type Direction = typeof Direction[keyof typeof Direction];`\n\nsame result. no runtime emission. tree-shakes perfectly. works with isolatedModules. no surprises.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/10-advanced-ts/",
+      "label": "enums vs const objects in Lesson 10 →"
+    },
+    "poll": null,
+    "likes": 1234,
+    "reposts": 312,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "The TypeScript team has basically said the same thing. They've acknowledged that enums were designed before the type system matured, and if they were redesigning TS today, enums wouldn't exist. Even the TS handbook now recommends alternatives.",
+        "likes": 456
+      },
+      {
+        "author": "proto_chain",
+        "content": "The reverse-mapping on numeric enums is the most confusing feature in TypeScript. `enum Dir { Up, Down }` generates `Dir[0] = 'Up'` AND `Dir['Up'] = 0`. The object has BOTH directions. `Object.keys(Dir)` returns `['0', '1', 'Up', 'Down']`. Good luck explaining that to a junior.",
+        "likes": 345
+      },
+      {
+        "author": "closure_king",
+        "content": "I'll die on this hill: the two-line `as const` + `typeof` pattern is better in every way. It's just JavaScript objects with TypeScript inference. No magic, no special syntax, no gotchas. Boring is good. Boring works.",
+        "likes": 289
+      }
+    ]
+  },
+  {
+    "id": "jsts-094",
+    "track": "jsts",
+    "type": "tip",
+    "author": "closure_king",
+    "time": "2d",
+    "content": "JavaScript memory leak checklist:\n\n1. Event listeners not removed on cleanup\n2. setInterval without clearInterval\n3. Closures holding references to unmounted DOM nodes\n4. Global variables accumulating data (arrays that only push, never pop)\n5. Forgotten subscriptions (WebSocket, Observable, EventSource)\n6. Console.log in production (yes, the console retains references to logged objects)\n7. Detached DOM trees (removed from DOM but referenced in JS)\n\nIf your app gets slower over time, it's probably one of these seven.",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/03-closures-scope/",
+      "label": "memory management in Lesson 3 →"
+    },
+    "poll": null,
+    "likes": 923,
+    "reposts": 234,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "#6 surprises everyone. `console.log(hugeObject)` in Chrome keeps a reference to `hugeObject` alive because the console needs to display it. In production with verbose logging, you're pinning every logged object in memory. Strip console.log in production builds.",
+        "likes": 456
+      },
+      {
+        "author": "async_await",
+        "content": "AbortController addresses #1 and #5. `signal` parameter for event listeners AND fetch. One `.abort()` cleans up everything registered with that signal. It's the universal cleanup primitive.",
+        "likes": 312
+      },
+      {
+        "author": "type_narrow",
+        "content": "Chrome DevTools → Memory tab → take two heap snapshots → compare. Objects that grew between snapshots are your leak suspects. The tooling exists. Use it before guessing.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-095",
+    "track": "jsts",
+    "type": "thread",
+    "author": "event_looper",
+    "time": "1h",
+    "content": "THREAD: The Node.js cluster module — scaling to multiple CPU cores.\n\nNode is single-threaded. Your 8-core server is using 1 core. The cluster module forks your process N times, one per core. Incoming connections are distributed across workers.\n\nIt's the simplest way to scale Node vertically. Zero code changes to your server — just wrap it in a cluster manager.\n\nBut know the tradeoffs: each worker is a separate process with its own memory. No shared state between workers. Session data, caches, rate limiters — all need to be externalized (Redis, database).",
+    "code": "import cluster from 'node:cluster';\nimport { cpus } from 'node:os';\nimport { createServer } from 'node:http';\n\nif (cluster.isPrimary) {\n  const numCPUs = cpus().length;\n  console.log(`Primary ${process.pid}: forking ${numCPUs} workers`);\n  for (let i = 0; i < numCPUs; i++) {\n    cluster.fork();\n  }\n  cluster.on('exit', (worker) => {\n    console.log(`Worker ${worker.process.pid} died. Restarting...`);\n    cluster.fork(); // auto-restart dead workers\n  });\n} else {\n  createServer((req, res) => {\n    res.end(`Handled by worker ${process.pid}`);\n  }).listen(3000);\n}",
+    "link": {
+      "url": "/jsts/lessons/11-node-deep-dive/",
+      "label": "cluster module in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 567,
+    "reposts": 123,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "In production, use PM2 instead of hand-rolling cluster management. `pm2 start app.js -i max` — done. It handles forking, restart on crash, log management, zero-downtime reload, and monitoring. Don't reinvent process management.",
+        "likes": 312
+      },
+      {
+        "author": "proto_chain",
+        "content": "Docker + horizontal scaling has largely replaced the cluster module. Instead of one server with 8 workers, run 8 containers with 1 worker each. Kubernetes handles distribution, restart, and scaling. Cluster is for when you want simplicity without orchestration.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-096",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "type_narrow",
+    "time": "5h",
+    "content": "SPOT THE BUG: This TypeScript code uses a `const` assertion and a generic function. It compiles fine, but the type inference isn't working as expected.",
+    "code": "function createStore<T>(initial: T) {\n  let state = initial;\n  return {\n    get: () => state,\n    set: (val: T) => { state = val; },\n  };\n}\n\nconst store = createStore({\n  theme: 'dark',\n  fontSize: 14,\n});\n\n// Expected: store.set({ theme: 'light', fontSize: 14 }) ✓\n//           store.set({ theme: 'blue', fontSize: 14 }) should error!\n\n// Actual: T is inferred as { theme: string; fontSize: number }\n// So 'blue' is accepted! The literal types are lost.",
+    "link": {
+      "url": "/jsts/lessons/10-advanced-ts/",
+      "label": "const type parameters in Lesson 10 →"
+    },
+    "poll": null,
+    "likes": 534,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "Two fixes: 1) Use `as const` at the call site: `createStore({ theme: 'dark', fontSize: 14 } as const)` — T inferred as `{ readonly theme: 'dark'; readonly fontSize: 14 }`. 2) Or use a `const` type parameter: `function createStore<const T>(initial: T)` — T infers literal types without `as const` at the call site. Option 2 is the modern answer.",
+        "likes": 345
+      },
+      {
+        "author": "closure_king",
+        "content": "TypeScript widens literal types by default in mutable positions. `'dark'` becomes `string` because TS assumes you might reassign it. The `const` assertion or parameter says \"no, I want the narrow type.\" Widening is a feature, not a bug — but you need to know how to opt out.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-097",
+    "track": "jsts",
+    "type": "mentalModel",
+    "author": "event_looper",
+    "time": "1d",
+    "content": "MENTAL MODEL: Node.js streams are assembly lines.\n\nReadable stream = the supply belt delivering raw materials (data chunks).\nTransform stream = a worker station that modifies each piece as it passes.\nWritable stream = the output bin where finished products go.\n\n`.pipe()` connects the stations. Data flows through automatically. If the output bin is full (backpressure), the assembly line slows down — it doesn't pile up on the floor.\n\nThe beauty: each station only holds ONE piece at a time. You can process a 10GB file in 64KB of memory because you're never holding the whole thing. That's the assembly line advantage over \"dump everything on a table and sort through it.\"",
+    "code": null,
+    "link": {
+      "url": "/jsts/lessons/11-node-deep-dive/",
+      "label": "streams explained in Lesson 11 →"
+    },
+    "poll": null,
+    "likes": 834,
+    "reposts": 198,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "Backpressure is the most important concept nobody explains. When the writable stream is busy (slow disk, slow network), it signals the readable to PAUSE. No buffering in memory, no out-of-memory crashes. The stream automatically handles what you'd have to code manually with callbacks.",
+        "likes": 345
+      },
+      {
+        "author": "closure_king",
+        "content": "The modern API: `pipeline(readable, transform, writable, callback)` or the promise version. It handles error propagation and cleanup automatically. `.pipe()` doesn't clean up on error — `pipeline()` does. Always use `pipeline()` in production.",
+        "likes": 267
+      }
+    ]
+  },
+  {
+    "id": "jsts-098",
+    "track": "jsts",
+    "type": "poll",
+    "author": "closure_king",
+    "time": "3h",
+    "content": "You need to share state between components without prop drilling. What do you reach for?",
+    "code": null,
+    "link": null,
+    "poll": {
+      "options": [
+        {
+          "text": "React Context",
+          "pct": 31
+        },
+        {
+          "text": "Zustand / Jotai / Valtio",
+          "pct": 37
+        },
+        {
+          "text": "Redux (yes, still)",
+          "pct": 18
+        },
+        {
+          "text": "Module-level variables + closures",
+          "pct": 14
+        }
+      ],
+      "totalVotes": 2345
+    },
+    "likes": 534,
+    "reposts": 98,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "Context re-renders EVERY consumer when ANY value changes. It's fine for infrequent updates (theme, auth, locale). For frequently changing state (form input, animation), it's a performance disaster. Zustand/Jotai use subscriptions — only the components that READ the changed value re-render.",
+        "likes": 389
+      },
+      {
+        "author": "type_narrow",
+        "content": "14% using module-level closures: you've rediscovered singletons and I'm not mad about it. A module-level `let state` with exported getter/setter functions is the simplest state management possible. Zero dependencies. Works with any framework.",
+        "likes": 267
+      },
+      {
+        "author": "async_await",
+        "content": "The 18% on Redux: no judgment. Redux Toolkit is actually good now. The boilerplate complaint died with createSlice. It's still overkill for most apps, but for complex state with time-travel debugging, it's unmatched.",
+        "likes": 234
+      }
+    ]
+  },
+  {
+    "id": "jsts-099",
+    "track": "jsts",
+    "type": "commitMsg",
+    "author": "closure_king",
+    "time": "1d",
+    "content": "git log --oneline:\n\nb1c2d3e fix: moved from CJS to ESM. the migration took 3 days, 47 file renames, and my remaining will to live\n5f6a7b8 refactor: replaced moment.js with Temporal API. it's 2026, we don't need a 300KB date library anymore\nc9d0e1f feat: added import map for bare specifiers. no more bundler for dev, just the browser\n3a4b5c6 fix: dynamic import() for the admin panel. main bundle dropped from 2.1MB to 600KB\n7d8e9f0 chore: removed 14 unused dependencies. `npx depcheck` is the Marie Kondo of node_modules",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1456,
+    "reposts": 389,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "\"npx depcheck is the Marie Kondo of node_modules\" — does this dependency spark joy? No? `npm uninstall`. Your bundle size thanks you. Your CI pipeline thanks you. Your supply chain security thanks you.",
+        "likes": 567
+      },
+      {
+        "author": "type_narrow",
+        "content": "CJS to ESM migration in 3 days is actually fast. The `.cjs` to `.mjs` extension dance, the `__dirname` replacement, the `require.resolve` rewrite, the jest config changes, the `type: \"module\"` in package.json... it's not a rename, it's an archaeological excavation.",
+        "likes": 445
+      }
+    ]
+  },
+  {
+    "id": "jsts-100",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "async_await",
+    "time": "2d",
+    "content": "hot take: the best JavaScript code reads like a story, not a puzzle.\n\nif a senior developer can't understand your function in 10 seconds, it's too clever. if a junior developer needs to look up 3 language features to read one line, you optimized for the wrong thing.\n\nclever code is a liability. clear code is an asset. you're not writing code for the compiler — the compiler doesn't care. you're writing code for the person who debugs it at 2am six months from now.\n\nand that person might be you.",
+    "code": null,
+    "link": null,
+    "poll": null,
+    "likes": 1890,
+    "reposts": 512,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "The best code I've ever written is code I deleted. The second best is code that's so obvious it doesn't need comments. If you need a comment to explain WHAT the code does (not WHY), the code needs a rewrite, not a comment.",
+        "likes": 567
+      },
+      {
+        "author": "type_narrow",
+        "content": "TypeScript helps here. A well-typed function signature IS the documentation. `function processOrder(order: ValidatedOrder): Result<Receipt, PaymentError>` — I know the input, the output, and the failure mode without reading a single line of implementation.",
+        "likes": 456
+      },
+      {
+        "author": "proto_chain",
+        "content": "Corollary: naming is the hardest part of programming because naming IS the clarity. `data`, `result`, `temp`, `x` — these names actively harm understanding. `unpaidInvoices`, `retryCount`, `connectionTimeout` — these names ARE the documentation.",
+        "likes": 389
+      }
+    ]
+  }
+]

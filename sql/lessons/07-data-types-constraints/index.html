@@ -4,52 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lesson 07 - Data Types & Constraints</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #3b82f6; }</style>
   <link rel="icon" type="image/svg+xml" href="/sql/assets/favicon.svg">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
-    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-    .header a { color: #3b82f6; text-decoration: none; font-size: 0.85rem; }
-    .header h1 { font-size: 1.2rem; }
-    .header h1 span { color: #3b82f6; }
-    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    h2 { color: #3b82f6; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
-    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
-    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
-    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
-    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #3b82f6; }
-    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
-    pre code { background: none; padding: 0; color: #e5e5e5; }
-    .comment { color: #6b7280; }
-    .keyword { color: #3b82f6; }
-    .string { color: #4ade80; }
-    .number { color: #f472b6; }
-    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .demo h4 { color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
-    .quiz { background: #0a0a1a; border: 1px solid #3b82f644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .quiz h4 { color: #3b82f6; margin-bottom: 1rem; }
-    .quiz .question { margin-bottom: 1.25rem; }
-    .quiz .question p { color: #e5e5e5; font-weight: 500; }
-    .quiz button { background: #3b82f6; color: #fff; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
-    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
-    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
-    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
-    .nav-footer a { color: #3b82f6; text-decoration: none; }
-    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
-    .callout p { color: #a5b4fc; }
-    .aha { background: #0a0a1a; border-left: 3px solid #3b82f6; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
-    .aha p { color: #93c5fd; }
-    .aha strong { color: #3b82f6; }
-    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
-    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
-    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
-    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    th { text-align: left; color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
-    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
-    td code { font-size: 0.8rem; }
-  </style>
 </head>
 <body>
   <div class="header">
@@ -59,7 +17,7 @@
 
   <div class="content">
 
-    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #3b82f6;">In Prisma, you pick <code>String</code>, <code>Int</code>, <code>Boolean</code> and call it a day.</strong> In raw SQL, you have a richer set of data types and constraints that give you finer control over what goes into your database. This lesson is about designing schemas that reject bad data before it ever becomes a problem.</p>
+    <p class="lesson-intro"><strong>In Prisma, you pick <code>String</code>, <code>Int</code>, <code>Boolean</code> and call it a day.</strong> In raw SQL, you have a richer set of data types and constraints that give you finer control over what goes into your database. This lesson is about designing schemas that reject bad data before it ever becomes a problem.</p>
 
     <!-- ============================================ -->
     <!-- MENTAL MODEL                                 -->
@@ -229,11 +187,11 @@ SELECT * FROM articles WHERE published = true;</code></pre>
 
     <pre><code>-- Articles published in the last 7 days
 SELECT * FROM articles
-WHERE published_at > NOW() - INTERVAL '7 days';
+WHERE published_at &gt; NOW() - INTERVAL '7 days';
 
 -- Articles published this year
 SELECT * FROM articles
-WHERE published_at >= DATE_TRUNC('year', NOW());
+WHERE published_at &gt;= DATE_TRUNC('year', NOW());
 
 -- How many days old is each article?
 SELECT title,
@@ -316,11 +274,11 @@ INSERT INTO articles (title, metadata) VALUES (
 
 -- Query JSONB fields
 SELECT title,
-  metadata->>'word_count' AS word_count,       -- ->> returns text
-  metadata->'tags' AS tags,                     -- -> returns JSON
-  (metadata->>'featured')::BOOLEAN AS featured  -- cast to boolean
+  metadata-&gt;&gt;'word_count' AS word_count,       -- -&gt;&gt; returns text
+  metadata-&gt;'tags' AS tags,                     -- -&gt; returns JSON
+  (metadata-&gt;&gt;'featured')::BOOLEAN AS featured  -- cast to boolean
 FROM articles
-WHERE metadata->>'featured' = 'true';</code></pre>
+WHERE metadata-&gt;&gt;'featured' = 'true';</code></pre>
 
     <p>The key operators for JSONB:</p>
 
@@ -365,11 +323,11 @@ await prisma.article.findMany({
 
 -- Same query in raw SQL
 SELECT * FROM articles
-WHERE metadata @> '{"featured": true}';
+WHERE metadata @&gt; '{"featured": true}';
 
--- Or using the ->> operator
+-- Or using the -&gt;&gt; operator
 SELECT * FROM articles
-WHERE metadata->>'featured' = 'true';</code></pre>
+WHERE metadata-&gt;&gt;'featured' = 'true';</code></pre>
       </div>
     </div>
 
@@ -483,8 +441,8 @@ INSERT INTO users (email, slug) VALUES ('sarah@news.com', 'sarah-c');
     <pre><code>CREATE TABLE articles (
   id         SERIAL PRIMARY KEY,
   title      VARCHAR(255) NOT NULL,
-  word_count INTEGER CHECK (word_count > 0),
-  rating     NUMERIC(2,1) CHECK (rating >= 0 AND rating <= 5),
+  word_count INTEGER CHECK (word_count &gt; 0),
+  rating     NUMERIC(2,1) CHECK (rating &gt;= 0 AND rating &lt;= 5),
   status     VARCHAR(20) CHECK (status IN ('draft', 'review', 'published', 'archived'))
 );
 
@@ -494,10 +452,10 @@ VALUES ('Good Story', 500, 4.5, 'draft');
 
 -- These all fail:
 INSERT INTO articles (title, word_count) VALUES ('Bad', -10);
--- ERROR: violates check constraint (word_count > 0)
+-- ERROR: violates check constraint (word_count &gt; 0)
 
 INSERT INTO articles (title, rating) VALUES ('Bad', 6.0);
--- ERROR: violates check constraint (rating >= 0 AND rating <= 5)
+-- ERROR: violates check constraint (rating &gt;= 0 AND rating &lt;= 5)
 
 INSERT INTO articles (title, status) VALUES ('Bad', 'deleted');
 -- ERROR: violates check constraint (status IN (...))</code></pre>
@@ -523,11 +481,11 @@ INSERT INTO articles (title, status) VALUES ('Bad', 'deleted');
         <h5>CHECK constraints (DB layer)</h5>
         <pre><code>CREATE TABLE articles (
   title VARCHAR(255) NOT NULL
-    CHECK (LENGTH(title) > 0),
+    CHECK (LENGTH(title) &gt; 0),
   word_count INTEGER
-    CHECK (word_count > 0),
+    CHECK (word_count &gt; 0),
   rating NUMERIC(2,1)
-    CHECK (rating >= 0 AND rating <= 5),
+    CHECK (rating &gt;= 0 AND rating &lt;= 5),
   status VARCHAR(20)
     CHECK (status IN ('draft', 'review',
       'published', 'archived'))
@@ -727,7 +685,7 @@ CREATE TABLE sections (
 -- Articles
 CREATE TABLE articles (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title          VARCHAR(255) NOT NULL CHECK (LENGTH(title) > 0),
+  title          VARCHAR(255) NOT NULL CHECK (LENGTH(title) &gt; 0),
   slug           VARCHAR(255) NOT NULL UNIQUE,
   body           TEXT NOT NULL,
   excerpt        VARCHAR(500),
@@ -735,8 +693,8 @@ CREATE TABLE articles (
   section_id     INTEGER NOT NULL REFERENCES sections(id) ON DELETE RESTRICT,
   status         VARCHAR(20) NOT NULL DEFAULT 'draft'
                  CHECK (status IN ('draft', 'review', 'published', 'archived')),
-  word_count     INTEGER CHECK (word_count >= 0),
-  views          INTEGER NOT NULL DEFAULT 0 CHECK (views >= 0),
+  word_count     INTEGER CHECK (word_count &gt;= 0),
+  views          INTEGER NOT NULL DEFAULT 0 CHECK (views &gt;= 0),
   featured       BOOLEAN NOT NULL DEFAULT false,
   metadata       JSONB DEFAULT '{}',
   published_at   TIMESTAMPTZ,
@@ -761,7 +719,7 @@ CREATE TABLE article_tags (
 -- Comments
 CREATE TABLE comments (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  body       TEXT NOT NULL CHECK (LENGTH(body) > 0),
+  body       TEXT NOT NULL CHECK (LENGTH(body) &gt; 0),
   article_id UUID NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
   author_id  UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -844,7 +802,7 @@ CREATE TABLE comments (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   title         VARCHAR(255) NOT NULL,
   body          TEXT NOT NULL,
-  word_count    INTEGER CHECK (word_count > 0),
+  word_count    INTEGER CHECK (word_count &gt; 0),
   status        VARCHAR(20) NOT NULL DEFAULT 'draft',
   journalist_id UUID NOT NULL
                 REFERENCES journalists(id) ON DELETE RESTRICT,
@@ -936,9 +894,9 @@ ON UPDATE CASCADE                -- update FK when parent PK changes
 DEFAULT gen_random_uuid()        -- PostgreSQL 13+
 
 -- JSONB operators
-column->'key'                    -- get JSON element
-column->>'key'                   -- get as text
-column @> '{"key": "val"}'      -- contains check
+column-&gt;'key'                    -- get JSON element
+column-&gt;&gt;'key'                   -- get as text
+column @&gt; '{"key": "val"}'      -- contains check
 column ? 'key'                   -- key exists</code></pre>
 
     <!-- ============================================ -->

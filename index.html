@@ -4,113 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Learn Coding — Trevor Brown</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/shell.css">
   <style>
-    :root {
-      --bg: #060608;
-      --surface: #0e0e12;
-      --surface-2: #16161d;
-      --border: #1e1e28;
-      --border-hover: #2a2a38;
-      --text: #e8e6f0;
-      --text-dim: #8886a0;
-      --text-muted: #55536a;
-      --accent-d3: #f97316;
-      --accent-django: #22c55e;
-      --accent-sql: #3b82f6;
-      --accent-jsts: #eab308;
-      --accent-react: #06b6d4;
-      --accent-css: #a855f7;
-      --accent-ai: #f472b6;
-      --serif: 'Instrument Serif', Georgia, serif;
-      --mono: 'JetBrains Mono', 'SF Mono', monospace;
-      --sans: 'DM Sans', -apple-system, sans-serif;
-      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: var(--sans);
-      background: var(--bg);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-    }
-
-    /* ─── Noise overlay ─── */
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 9999;
-      opacity: 0.5;
-    }
-
-    /* ─── HEADER ─── */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(6, 6, 8, 0.85);
-      backdrop-filter: blur(20px) saturate(1.4);
-      -webkit-backdrop-filter: blur(20px) saturate(1.4);
-      border-bottom: 1px solid var(--border);
-    }
-    .header-inner {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 2rem;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .logo {
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    .logo .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent-d3), var(--accent-css));
-      animation: pulse-dot 3s ease-in-out infinite;
-    }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.85); }
-    }
-    nav {
-      display: flex;
-      gap: 0.25rem;
-      align-items: center;
-    }
-    nav a {
-      font-family: var(--mono);
-      font-size: 0.7rem;
-      letter-spacing: 0.04em;
-      color: var(--text-dim);
-      text-decoration: none;
-      padding: 0.4rem 0.75rem;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-    nav a:hover { color: var(--text); background: var(--surface-2); }
-    nav .sep { color: var(--border); margin: 0 0.25rem; font-size: 0.7rem; }
-
     /* ─── HERO ─── */
     .hero {
       position: relative;
@@ -127,8 +23,7 @@
       height: 900px;
       background: radial-gradient(ellipse at center,
         rgba(249, 115, 22, 0.06) 0%,
-        rgba(129, 140, 248, 0.04) 30%,
-        rgba(74, 222, 128, 0.03) 50%,
+        rgba(74, 222, 128, 0.03) 40%,
         transparent 70%
       );
       pointer-events: none;
@@ -158,10 +53,7 @@
     }
     .hero h1 em {
       font-style: italic;
-      background: linear-gradient(135deg, var(--accent-d3), var(--accent-css), var(--accent-django));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--accent-d3);
     }
     .hero-body {
       display: grid;
@@ -183,7 +75,7 @@
       grid-template-columns: 1fr 1fr;
       gap: 1px;
       background: var(--border);
-      border-radius: 12px;
+      border-radius: 8px;
       overflow: hidden;
       align-self: start;
     }
@@ -206,49 +98,13 @@
       color: var(--text-muted);
     }
 
-    @keyframes reveal {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ─── SECTIONS ─── */
-    section {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 2rem;
-    }
-    .section-header {
-      display: flex;
-      align-items: baseline;
-      gap: 1rem;
-      margin-bottom: 2rem;
-      padding-top: 4rem;
-    }
-    .section-header h2 {
-      font-family: var(--serif);
-      font-size: 2rem;
-      font-weight: 400;
-    }
-    .section-header .count {
-      font-family: var(--mono);
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
-    }
-    .section-header::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
     /* ─── TRACK CARDS ─── */
     .tracks {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 1px;
       background: var(--border);
-      border-radius: 16px;
+      border-radius: 8px;
       overflow: hidden;
       margin-bottom: 3rem;
     }
@@ -273,11 +129,11 @@
 
     .track .track-icon {
       font-family: var(--mono);
-      font-weight: 700;
+      font-weight: 600;
       font-size: 1.1rem;
       width: 44px;
       height: 44px;
-      border-radius: 10px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -343,7 +199,7 @@
       grid-template-columns: repeat(4, 1fr);
       gap: 1px;
       background: var(--border);
-      border-radius: 12px;
+      border-radius: 8px;
       overflow: hidden;
       margin-bottom: 4rem;
     }
@@ -356,7 +212,7 @@
     .planned-track:hover { opacity: 0.85; }
     .planned-track .plan-icon {
       font-family: var(--mono);
-      font-weight: 700;
+      font-weight: 600;
       font-size: 0.9rem;
       width: 36px;
       height: 36px;
@@ -385,10 +241,10 @@
     /* ─── FEATURES ─── */
     .features {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 1px;
       background: var(--border);
-      border-radius: 16px;
+      border-radius: 8px;
       overflow: hidden;
       margin-bottom: 4rem;
     }
@@ -442,59 +298,6 @@
       letter-spacing: 0.04em;
     }
 
-    /* ─── FOOTER ─── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 3rem 2rem;
-    }
-    .footer-inner {
-      max-width: 1280px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-    }
-    .footer-left p {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      line-height: 1.8;
-    }
-    .footer-left p strong {
-      color: var(--text-dim);
-      font-weight: 500;
-    }
-    .footer-right {
-      text-align: right;
-    }
-    .footer-right .cmd {
-      font-family: var(--mono);
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      display: inline-block;
-      margin-bottom: 0.5rem;
-    }
-    .footer-right p {
-      font-family: var(--mono);
-      font-size: 0.65rem;
-      color: var(--text-muted);
-      letter-spacing: 0.04em;
-    }
-
-    /* ─── SCROLL REVEALS ─── */
-    .reveal-on-scroll {
-      opacity: 0;
-      transform: translateY(24px);
-      transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo);
-    }
-    .reveal-on-scroll.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
     /* ─── RESPONSIVE ─── */
     @media (max-width: 1024px) {
       .tracks { grid-template-columns: 1fr; }
@@ -505,13 +308,8 @@
       .hero { padding: 5rem 1.5rem 3rem; }
       .hero-body { grid-template-columns: 1fr; gap: 2rem; }
       .hero-stats { grid-template-columns: repeat(4, 1fr); }
-      .header-inner { padding: 0 1.5rem; }
-      nav { display: none; }
-      section { padding: 0 1.5rem; }
       .planned { grid-template-columns: 1fr; }
       .features { grid-template-columns: repeat(2, 1fr); }
-      .footer-inner { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
-      .footer-right { text-align: left; }
     }
     @media (max-width: 480px) {
       .hero-stats { grid-template-columns: repeat(2, 1fr); }
@@ -529,24 +327,40 @@
         Learn Coding
       </a>
       <nav>
-        <a href="/d3/">D3.js</a>
-        <span class="sep">/</span>
-        <a href="/django/">Django</a>
-        <span class="sep">/</span>
-        <a href="/sql/">SQL</a>
+        <a href="/courses/">Courses</a>
         <span class="sep">&middot;</span>
-        <a href="/feed/" style="color: var(--accent-d3);">The Scroll</a>
+        <a href="/feed/">The Scroll</a>
+        <span class="sep">/</span>
+        <a href="/pod/">The Pod</a>
         <span class="sep">&middot;</span>
         <a href="/about/">About</a>
       </nav>
+      <div class="header-actions">
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <button class="hamburger" aria-label="Menu">
+          <svg class="icon-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg>
+          <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
     </div>
   </header>
+
+  <!-- ─── MOBILE NAV ─── -->
+  <div class="mobile-nav" id="mobile-nav">
+    <a href="/courses/">Courses</a>
+    <a href="/feed/">The Scroll</a>
+    <a href="/pod/">The Pod</a>
+    <a href="/about/">About</a>
+  </div>
 
   <!-- ─── HERO ─── -->
   <div class="hero">
     <div class="hero-inner">
       <div class="hero-kicker">Personal learning ecosystem &mdash; 2026</div>
-      <h1>I don't take courses.<br>I <em>build</em> the course.</h1>
+      <h1>I don't just take courses.<br>I <em>build</em> them.</h1>
       <div class="hero-body">
         <div>
           <p>
@@ -565,14 +379,14 @@
           <div class="stat"><div class="num">36</div><div class="label">Lessons</div></div>
           <div class="stat"><div class="num">7</div><div class="label">Tracks</div></div>
           <div class="stat"><div class="num">10</div><div class="label">Games</div></div>
-          <div class="stat"><div class="num">7</div><div class="label">AI Skills</div></div>
+          <div class="stat"><div class="num">6</div><div class="label">AI Skills</div></div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- ─── ACTIVE TRACKS ─── -->
-  <section>
+  <section id="tracks">
     <div class="section-header reveal-on-scroll">
       <h2>Active Tracks</h2>
       <span class="count">3 platforms running</span>
@@ -627,33 +441,33 @@
       </a>
     </div>
 
-    <!-- ─── PLANNED ─── -->
+    <!-- ─── MORE COURSES ─── -->
     <div class="section-header reveal-on-scroll">
-      <h2>On Deck</h2>
-      <span class="count">4 planned</span>
+      <h2>More Courses</h2>
+      <span class="count">4 more</span>
     </div>
 
     <div class="planned reveal-on-scroll">
-      <div class="planned-track" data-color="jsts">
+      <a href="/jsts/" class="planned-track" data-color="jsts" style="text-decoration:none;color:inherit;cursor:pointer;">
         <div class="plan-icon">JS</div>
         <h3>JavaScript + TypeScript</h3>
         <p>Advanced ES2024+, TypeScript generics, Node.js internals, testing strategies.</p>
-      </div>
-      <div class="planned-track" data-color="react">
+      </a>
+      <a href="/react/" class="planned-track" data-color="react" style="text-decoration:none;color:inherit;cursor:pointer;">
         <div class="plan-icon">Rx</div>
         <h3>React + Frameworks</h3>
         <p>React 19, Next.js 15 App Router, Vite internals, Svelte comparison.</p>
-      </div>
-      <div class="planned-track" data-color="css">
+      </a>
+      <a href="/css-design/" class="planned-track" data-color="css" style="text-decoration:none;color:inherit;cursor:pointer;">
         <div class="plan-icon">CSS</div>
         <h3>CSS + Design Systems</h3>
         <p>Container queries, Tailwind v4, design tokens, broadcast TV graphics.</p>
-      </div>
-      <div class="planned-track" data-color="ai">
+      </a>
+      <a href="/ai-llm/" class="planned-track" data-color="ai" style="text-decoration:none;color:inherit;cursor:pointer;">
         <div class="plan-icon">AI</div>
         <h3>AI + LLMs</h3>
         <p>Claude API, prompt engineering, RAG, embeddings, ethical AI in journalism.</p>
-      </div>
+      </a>
     </div>
   </section>
 
@@ -689,11 +503,6 @@
         <p>Listen to lessons passively. Section-by-section playback with speed controls for second-screen learning.</p>
       </div>
       <div class="feature">
-        <div class="feat-icon">&#x2191;</div>
-        <h3>XP Tracker</h3>
-        <p>Gamified progress. Earn XP for lessons, quizzes, and tutor sessions. Level up from Intern to Fellow.</p>
-      </div>
-      <div class="feature">
         <div class="feat-icon">&#x25CE;</div>
         <h3>Skill Test</h3>
         <p>AI-generated adaptive assessment. 10 questions, difficulty scaling, score history. Beat your best.</p>
@@ -702,6 +511,11 @@
         <div class="feat-icon">&#x21F5;</div>
         <h3>The Scroll</h3>
         <p>Replace doomscrolling with learning. Interview Qs, hot takes, tips, and bugs from the dev timeline. Comment and the AI claps back.</p>
+      </a>
+      <a href="/pod/" class="feature" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="feat-icon">&#x266A;</div>
+        <h3>The Pod</h3>
+        <p>AI-generated podcast episodes that break down each lesson into conversational audio. Learn on the go, one topic at a time.</p>
       </a>
     </div>
   </section>
@@ -720,8 +534,9 @@
     </div>
   </footer>
 
-  <!-- ─── SCROLL REVEAL ─── -->
+  <!-- ─── SCRIPTS ─── -->
   <script>
+    // Scroll reveal
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
@@ -731,6 +546,37 @@
       });
     }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
     document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+
+    // Theme toggle
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+
+    // Hamburger menu
+    const hamburger = document.querySelector('.hamburger');
+    const mobileNav = document.getElementById('mobile-nav');
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('active');
+      mobileNav.classList.toggle('open');
+      document.body.style.overflow = mobileNav.classList.contains('open') ? 'hidden' : '';
+    });
+    mobileNav.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        hamburger.classList.remove('active');
+        mobileNav.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    });
   </script>
 
 </body>

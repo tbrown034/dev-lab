@@ -5,47 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lesson 03 - Python Functions & Modules</title>
   <link rel="icon" type="image/svg+xml" href="/django/assets/favicon.svg">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
-    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-    .header a { color: #22c55e; text-decoration: none; font-size: 0.85rem; }
-    .header h1 { font-size: 1.2rem; }
-    .header h1 span { color: #22c55e; }
-    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    h2 { color: #22c55e; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
-    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
-    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
-    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
-    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #22c55e; }
-    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
-    pre code { background: none; padding: 0; color: #e5e5e5; }
-    .comment { color: #6b7280; }
-    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
-    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
-    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
-    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
-    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
-    .callout p { color: #a5b4fc; }
-    .aha { background: #001a0a; border-left: 3px solid #22c55e; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
-    .aha p { color: #86efac; }
-    .aha strong { color: #22c55e; }
-    .warning { background: #1a1500; border-left: 3px solid #eab308; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
-    .warning p { color: #fde68a; }
-    .warning strong { color: #eab308; }
-    .quiz { background: #001a0a; border: 1px solid #22c55e44; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .quiz h4 { color: #22c55e; margin-bottom: 1rem; }
-    .quiz .question { margin-bottom: 1.25rem; }
-    .quiz .question p { color: #e5e5e5; font-weight: 500; }
-    .quiz button { background: #22c55e; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
-    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
-    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
-    .nav-footer a { color: #22c55e; text-decoration: none; }
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    th { text-align: left; color: #22c55e; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
-    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
-    td code { font-size: 0.8rem; }
-  </style>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #22c55e; }</style>
 </head>
 <body>
   <div class="header">
@@ -74,12 +36,12 @@ function greet(name) {
 }
 
 <span class="comment">// Arrow function (not hoisted)</span>
-const greet = (name) => {
+const greet = (name) =&gt; {
   return `Hello, ${name}!`;
 };
 
 <span class="comment">// Arrow one-liner (implicit return)</span>
-const double = (n) => n * 2;
+const double = (n) =&gt; n * 2;
 
 <span class="comment">// No return = returns undefined</span>
 function log(msg) {
@@ -208,7 +170,7 @@ add_item("b")  <span class="comment"># ["b"] — correct!</span></code></pre>
         <h5>JavaScript</h5>
         <pre><code><span class="comment">// ...rest collects remaining args</span>
 function sum(...numbers) {
-  return numbers.reduce((a, b) => a + b, 0);
+  return numbers.reduce((a, b) =&gt; a + b, 0);
 }
 
 sum(1, 2, 3);      <span class="comment">// 6</span>
@@ -303,17 +265,17 @@ func("a", "b", "c", "d", x=1, y=2)
       <div>
         <h5>JavaScript</h5>
         <pre><code><span class="comment">// Arrow functions — unlimited</span>
-const double = (n) => n * 2;
-const add = (a, b) => a + b;
-const greet = (name) => `Hi, ${name}`;
+const double = (n) =&gt; n * 2;
+const add = (a, b) =&gt; a + b;
+const greet = (name) =&gt; `Hi, ${name}`;
 
 <span class="comment">// Used inline constantly</span>
-const evens = nums.filter(n => n % 2 === 0);
-const names = users.map(u => u.name);
-users.sort((a, b) => a.age - b.age);
+const evens = nums.filter(n =&gt; n % 2 === 0);
+const names = users.map(u =&gt; u.name);
+users.sort((a, b) =&gt; a.age - b.age);
 
 <span class="comment">// Multi-line arrow (full function body)</span>
-const process = (data) => {
+const process = (data) =&gt; {
   const cleaned = data.trim();
   return cleaned.toUpperCase();
 };</code></pre>
@@ -432,7 +394,7 @@ age: int = 38
 active: bool = True
 
 <span class="comment"># Function types</span>
-def greet(name: str) -> str:
+def greet(name: str) -&gt; str:
     return f"Hello, {name}!"
 
 <span class="comment"># Lists</span>
@@ -464,7 +426,7 @@ id: str | int = "abc"  <span class="comment"># Python 3.10+</span></code></pre>
 function find(id: number): User | null { }
 
 <span class="comment">// Callback type</span>
-function apply(fn: (x: number) => number) { }
+function apply(fn: (x: number) =&gt; number) { }
 
 <span class="comment">// Generic</span>
 function first&lt;T&gt;(arr: T[]): T { }
@@ -475,14 +437,14 @@ let pair: [string, number] = ["age", 38];</code></pre>
       <div>
         <h5>Python</h5>
         <pre><code><span class="comment"># Optional (nullable)</span>
-def find(id: int) -> User | None: ...
+def find(id: int) -&gt; User | None: ...
 
 <span class="comment"># Callable type</span>
 from typing import Callable
 def apply(fn: Callable[[int], int]): ...
 
 <span class="comment"># Generic</span>
-def first[T](arr: list[T]) -> T: ... <span class="comment"># 3.12+</span>
+def first[T](arr: list[T]) -&gt; T: ... <span class="comment"># 3.12+</span>
 
 <span class="comment"># Tuple</span>
 pair: tuple[str, int] = ("age", 38)</code></pre>
@@ -659,7 +621,7 @@ source venv/bin/activate          <span class="comment"># macOS/Linux</span>
 pip install django requests
 
 <span class="comment"># 4. Save your dependencies</span>
-pip freeze > requirements.txt
+pip freeze &gt; requirements.txt
 
 <span class="comment"># 5. Deactivate when done</span>
 deactivate
@@ -741,7 +703,7 @@ apply(Math.sqrt, 16);  <span class="comment">// 4</span>
 
 <span class="comment">// Returning functions (closures)</span>
 function multiplier(factor) {
-  return (n) => n * factor;
+  return (n) =&gt; n * factor;
 }
 
 const triple = multiplier(3);
@@ -749,7 +711,7 @@ triple(5);  <span class="comment">// 15</span>
 
 <span class="comment">// Functions in arrays</span>
 const ops = [Math.sqrt, Math.floor];
-ops.forEach(fn => console.log(fn(4.7)));</code></pre>
+ops.forEach(fn =&gt; console.log(fn(4.7)));</code></pre>
       </div>
       <div>
         <h5>Python</h5>
@@ -800,7 +762,7 @@ function withLogging(fn) {
   };
 }
 
-const add = withLogging((a, b) => a + b);
+const add = withLogging((a, b) =&gt; a + b);
 add(2, 3);
 <span class="comment">// Calling anonymous</span>
 <span class="comment">// Result: 5</span></code></pre>

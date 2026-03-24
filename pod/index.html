@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Pod — Learn Coding</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/shell.css">
+  <style>
+    /* ─── Page-specific tokens ─── */
+    :root {
+      --accent: #f97316;
+      --accent-green: #22c55e;
+      --accent-blue: #3b82f6;
+      --accent-react: #06b6d4;
+      --accent-ai: #f472b6;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      padding: 6rem 2rem 4rem;
+      max-width: 780px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .hero-kicker {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.4rem, 6vw, 3.8rem);
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+    .hero-intro {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--text-dim);
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* ─── EPISODE LIST ─── */
+    .content {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 2rem 5rem;
+    }
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 0 0 2rem;
+    }
+    .section-divider h2 {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .episodes {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 3rem;
+    }
+    .episode {
+      background: var(--surface);
+      padding: 1.5rem 1.75rem;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 1.25rem;
+      align-items: center;
+      transition: background 0.2s;
+      cursor: pointer;
+    }
+    .episode:hover { background: var(--surface-2); }
+    .episode-num {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      width: 2rem;
+      text-align: center;
+    }
+    .episode-info h3 {
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+    .episode-info p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+    .episode-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.25rem;
+    }
+    .episode-track {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+    }
+    .episode-track.d3 { background: rgba(249,115,22,0.1); color: var(--accent); }
+    .episode-track.django { background: rgba(34,197,94,0.1); color: var(--accent-green); }
+    .episode-track.sql { background: rgba(59,130,246,0.1); color: var(--accent-blue); }
+    .episode-track.react { background: rgba(6,182,212,0.1); color: var(--accent-react); }
+    .episode-track.ai { background: rgba(244,114,182,0.1); color: var(--accent-ai); }
+
+    a.episode {
+      text-decoration: none;
+      color: inherit;
+    }
+    .episode-duration {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    /* ─── HOW IT WORKS ─── */
+    .how-it-works {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 3rem;
+    }
+    .how-step {
+      background: var(--surface);
+      padding: 1.75rem;
+    }
+    .how-step .step-num {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+    .how-step h3 {
+      font-family: var(--sans);
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+    .how-step p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 2rem;
+      text-align: center;
+    }
+    footer p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .hero { padding: 4rem 1.5rem 3rem; }
+      .content { padding: 0 1.5rem 3rem; }
+      .episode { grid-template-columns: auto 1fr; gap: 1rem; }
+      .episode-meta { flex-direction: row; align-items: center; grid-column: 2; }
+      .how-it-works { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">The Pod</a>
+      <div class="header-right">
+        <a href="/" class="back-link">&larr; Home</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-kicker">AI-Generated Podcast &mdash; Learn on the go</div>
+    <h1>Every lesson, as a <em>conversation</em>.</h1>
+    <p class="hero-intro">
+      Each lesson from every track gets broken down into a conversational podcast episode.
+      Two AI hosts discuss the concepts, debate the edge cases, and make the ideas stick &mdash;
+      so you can learn while you walk, drive, or zone out.
+    </p>
+  </div>
+
+  <div class="content">
+
+    <div class="section-divider"><h2>How it works</h2></div>
+    <div class="how-it-works">
+      <div class="how-step">
+        <div class="step-num">Step 01</div>
+        <h3>Lesson goes in</h3>
+        <p>Each written lesson from D3, Django, or SQL gets fed into NotebookLM as source material.</p>
+      </div>
+      <div class="how-step">
+        <div class="step-num">Step 02</div>
+        <h3>Podcast comes out</h3>
+        <p>Two AI hosts have a natural conversation about the topic, explaining concepts through back-and-forth dialogue.</p>
+      </div>
+      <div class="how-step">
+        <div class="step-num">Step 03</div>
+        <h3>Listen anywhere</h3>
+        <p>Play episodes directly in the browser, or download them. Each one is 8&ndash;15 minutes of focused learning.</p>
+      </div>
+    </div>
+
+    <div class="section-divider"><h2>D3.js Episodes</h2></div>
+    <div class="episodes">
+      <a href="/pod/d3/01-svg-fundamentals/" class="episode">
+        <span class="episode-num">01</span>
+        <div class="episode-info">
+          <h3>SVG Fundamentals</h3>
+          <p>The coordinate system, basic shapes, and why SVG is D3's canvas.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track d3">D3</span>
+          <span class="episode-duration">~12 min</span>
+        </div>
+      </a>
+      <a href="/pod/d3/02-selections-data-binding/" class="episode">
+        <span class="episode-num">02</span>
+        <div class="episode-info">
+          <h3>Selections &amp; Data Binding</h3>
+          <p>How D3 connects data to DOM elements &mdash; the wedding seating chart mental model.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track d3">D3</span>
+          <span class="episode-duration">~14 min</span>
+        </div>
+      </a>
+      <a href="/pod/d3/03-scales-axes/" class="episode">
+        <span class="episode-num">03</span>
+        <div class="episode-info">
+          <h3>Scales &amp; Axes</h3>
+          <p>Translating data values into visual positions. Linear, band, time, and color scales.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track d3">D3</span>
+          <span class="episode-duration">~11 min</span>
+        </div>
+      </a>
+      <a href="/pod/d3/04-shapes-data-joins/" class="episode">
+        <span class="episode-num">04</span>
+        <div class="episode-info">
+          <h3>Shapes &amp; Data Joins</h3>
+          <p>Enter, update, exit &mdash; the core pattern for dynamic data-driven graphics.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track d3">D3</span>
+          <span class="episode-duration">~13 min</span>
+        </div>
+      </a>
+      <a href="/pod/d3/05-maps-geography/" class="episode">
+        <span class="episode-num">05</span>
+        <div class="episode-info">
+          <h3>Maps &amp; Geography</h3>
+          <p>Projections, GeoJSON, TopoJSON, and building choropleth maps for broadcast.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track d3">D3</span>
+          <span class="episode-duration">~15 min</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-divider"><h2>React Episodes</h2></div>
+    <div class="episodes">
+      <a href="/pod/react/01-react-mental-model/" class="episode">
+        <span class="episode-num">01</span>
+        <div class="episode-info">
+          <h3>The React Mental Model</h3>
+          <p>Components, state, and the declarative paradigm &mdash; thinking in React from scratch.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track react">React</span>
+          <span class="episode-duration">~13 min</span>
+        </div>
+      </a>
+      <a href="/pod/react/02-hooks-state/" class="episode">
+        <span class="episode-num">02</span>
+        <div class="episode-info">
+          <h3>Hooks &amp; State</h3>
+          <p>useState, useEffect, and the rules of hooks. Why order matters.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track react">React</span>
+          <span class="episode-duration">~14 min</span>
+        </div>
+      </a>
+      <a href="/pod/react/03-component-patterns/" class="episode">
+        <span class="episode-num">03</span>
+        <div class="episode-info">
+          <h3>Component Patterns</h3>
+          <p>Composition, render props, and building reusable UI pieces.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track react">React</span>
+          <span class="episode-duration">~12 min</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-divider"><h2>AI &amp; LLM Episodes</h2></div>
+    <div class="episodes">
+      <a href="/pod/ai/01-how-llms-work/" class="episode">
+        <span class="episode-num">01</span>
+        <div class="episode-info">
+          <h3>How LLMs Work</h3>
+          <p>Tokens, attention, and the transformer architecture &mdash; demystified for builders.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track ai">AI</span>
+          <span class="episode-duration">~14 min</span>
+        </div>
+      </a>
+      <a href="/pod/ai/02-prompt-engineering/" class="episode">
+        <span class="episode-num">02</span>
+        <div class="episode-info">
+          <h3>Prompt Engineering</h3>
+          <p>System prompts, few-shot examples, and chain-of-thought reasoning.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track ai">AI</span>
+          <span class="episode-duration">~11 min</span>
+        </div>
+      </a>
+      <a href="/pod/ai/03-rag-and-embeddings/" class="episode">
+        <span class="episode-num">03</span>
+        <div class="episode-info">
+          <h3>RAG &amp; Embeddings</h3>
+          <p>Retrieval-augmented generation, vector databases, and semantic search.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track ai">AI</span>
+          <span class="episode-duration">~13 min</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-divider"><h2>Django Episodes</h2></div>
+    <div class="episodes">
+      <a href="/pod/django/01-python-fundamentals/" class="episode">
+        <span class="episode-num">01</span>
+        <div class="episode-info">
+          <h3>Python Fundamentals</h3>
+          <p>Variables, types, and control flow &mdash; explained through JavaScript analogies.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track django">Django</span>
+          <span class="episode-duration">~10 min</span>
+        </div>
+      </a>
+      <a href="/pod/django/02-python-collections/" class="episode">
+        <span class="episode-num">02</span>
+        <div class="episode-info">
+          <h3>Python Collections</h3>
+          <p>Lists, dicts, sets, and tuples. How they map to JS arrays and objects.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track django">Django</span>
+          <span class="episode-duration">~12 min</span>
+        </div>
+      </a>
+      <a href="/pod/django/03-python-functions/" class="episode">
+        <span class="episode-num">03</span>
+        <div class="episode-info">
+          <h3>Python Functions</h3>
+          <p>Decorators, generators, comprehensions &mdash; Python's power tools.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track django">Django</span>
+          <span class="episode-duration">~11 min</span>
+        </div>
+      </a>
+    </div>
+
+    <div class="section-divider"><h2>SQL Episodes</h2></div>
+    <div class="episodes">
+      <a href="/pod/sql/01-sql-fundamentals/" class="episode">
+        <span class="episode-num">01</span>
+        <div class="episode-info">
+          <h3>SQL Fundamentals</h3>
+          <p>Tables, rows, columns, and the relational model. Why SQL still runs the world.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track sql">SQL</span>
+          <span class="episode-duration">~10 min</span>
+        </div>
+      </a>
+      <a href="/pod/sql/02-select-filtering/" class="episode">
+        <span class="episode-num">02</span>
+        <div class="episode-info">
+          <h3>SELECT &amp; Filtering</h3>
+          <p>WHERE, LIKE, IN, BETWEEN &mdash; the query fundamentals that do 80% of the work.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track sql">SQL</span>
+          <span class="episode-duration">~9 min</span>
+        </div>
+      </a>
+      <a href="/pod/sql/03-joins/" class="episode">
+        <span class="episode-num">03</span>
+        <div class="episode-info">
+          <h3>Joins</h3>
+          <p>INNER, LEFT, RIGHT, FULL &mdash; connecting tables like connecting stories.</p>
+        </div>
+        <div class="episode-meta">
+          <span class="episode-track sql">SQL</span>
+          <span class="episode-duration">~13 min</span>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>The Pod &mdash; part of <a href="/">Learn Coding</a> by Trevor Brown</p>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  </script>
+
+</body>
+</html>

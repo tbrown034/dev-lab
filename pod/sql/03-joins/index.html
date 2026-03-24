@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Joins — The Pod</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/shell.css">
+  <link rel="stylesheet" href="/pod/episode.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">The Pod</a>
+      <div class="header-right">
+        <a href="/pod/" class="back-link">&larr; All Episodes</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="episode-page" data-accent="var(--accent-sql)">
+
+    <div class="episode-header">
+      <span class="episode-track-badge sql">SQL &mdash; Episode 03</span>
+      <h1>Joins</h1>
+      <p class="episode-subtitle">INNER, LEFT, RIGHT, FULL &mdash; connecting tables like connecting stories.</p>
+      <span class="episode-duration-badge">~13 min</span>
+    </div>
+
+    <div class="player-container">
+      <audio id="episode-audio" preload="metadata">
+        <source src="/audio/sql/03-joins.mp3" type="audio/mpeg">
+      </audio>
+
+      <div class="player">
+        <div class="player-controls">
+          <button class="player-btn skip-btn" id="skip-back" aria-label="Skip back 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+          <button class="player-btn play-btn" id="play-pause" aria-label="Play">
+            <svg class="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg class="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <button class="player-btn skip-btn" id="skip-forward" aria-label="Skip forward 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+        </div>
+
+        <div class="player-progress">
+          <span class="player-time" id="current-time">0:00</span>
+          <div class="progress-bar-container" id="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <input type="range" class="progress-scrubber" id="scrubber" min="0" max="1000" value="0" step="1">
+          </div>
+          <span class="player-time" id="duration">0:00</span>
+        </div>
+
+        <div class="player-extras">
+          <div class="speed-control">
+            <button class="speed-btn" id="speed-btn">1x</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="transcript-container">
+      <div class="transcript-header">
+        <h2>Transcript</h2>
+        <button class="auto-scroll-toggle active" id="auto-scroll-toggle" aria-label="Toggle auto-scroll">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          Auto-scroll
+        </button>
+      </div>
+      <div class="transcript" id="transcript"></div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>The Pod &mdash; part of <a href="/">Learn Coding</a> by Trevor Brown</p>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+
+    const TRANSCRIPT = [
+      { time: 0, text: "Welcome back to The Pod. I'm Alex, and today we're tackling the topic that separates SQL beginners from SQL practitioners: joins. Joins are how you connect data across multiple tables, and they're the whole reason relational databases exist." },
+      { time: 18, text: "I'm Sam, and I remember joins being the concept that made SQL click for me. Once you understand joins, you start seeing relationships in data everywhere. It's like learning to read." },
+      { time: 30, text: "Let's set the scene. You have a users table and an orders table. Each order has a user_id that tells you which user placed it. A join lets you combine these tables, giving you each order alongside the user's name, email, whatever you need." },
+      { time: 48, text: "The syntax is SELECT columns FROM table1 JOIN table2 ON table1.column = table2.column. The ON clause is the condition that connects the tables. It's usually matching a foreign key to a primary key." },
+      { time: 66, text: "Let's start with INNER JOIN, which is the default. When you just write JOIN, it's an inner join. It returns only rows where there's a match in both tables. If a user has no orders, they don't appear. If an order somehow has no matching user, it doesn't appear either." },
+      { time: 86, text: "Think of it like a Venn diagram. Inner join returns only the overlapping middle section. Both sides must have a match." },
+      { time: 96, text: "So SELECT users.name, orders.total FROM users JOIN orders ON users.id = orders.user_id gives you every user-order combination where the user exists and the order exists. Users without orders are invisible." },
+      { time: 116, text: "Now, LEFT JOIN. This is probably the most commonly used join after inner join. A left join returns all rows from the left table, whether or not there's a match in the right table. If there's no match, the right side columns are NULL." },
+      { time: 136, text: "So if you want all users, including those who've never ordered, you'd use LEFT JOIN. SELECT users.name, orders.total FROM users LEFT JOIN orders ON users.id = orders.user_id. Users without orders show up with NULL for the order total." },
+      { time: 156, text: "That's incredibly useful. You can even find users without orders by adding WHERE orders.id IS NULL. The left join keeps them, and the WHERE clause filters to only the ones with no match." },
+      { time: 172, text: "RIGHT JOIN is the mirror image. It keeps all rows from the right table and fills in NULLs for unmatched rows from the left. Honestly, you can always rewrite a right join as a left join by swapping the table order, so most people just use left joins." },
+      { time: 192, text: "Is there a reason to ever use RIGHT JOIN then?" },
+      { time: 198, text: "Readability, sometimes. If you're building a complex query and the 'main' table ends up on the right side, a right join reads more naturally than reordering everything. But in practice, I'd say 95% of developers just use left join and adjust the table order." },
+      { time: 218, text: "FULL OUTER JOIN is the most inclusive. It returns all rows from both tables. Rows with matches are combined. Rows from the left with no right match have NULLs on the right. Rows from the right with no left match have NULLs on the left." },
+      { time: 238, text: "Full outer joins are rare but useful for finding discrepancies. Like comparing two data sources to find records that exist in one but not the other. It shows you the complete picture." },
+      { time: 254, text: "There's also CROSS JOIN, which is the Cartesian product. Every row from the left table paired with every row from the right. If you have 100 users and 50 products, a cross join gives you 5,000 rows. Every possible combination." },
+      { time: 274, text: "That sounds like it could get out of control fast." },
+      { time: 278, text: "It can! Cross joins are rarely what you want. But they have use cases, like generating a grid of all possible date-product combinations for a sales report where some combinations might have zero sales." },
+      { time: 296, text: "Let's talk about self joins. That's when you join a table to itself. It sounds weird, but it's useful. Imagine an employees table where each employee has a manager_id that references another employee. A self join lets you get each employee with their manager's name." },
+      { time: 316, text: "SELECT e.name AS employee, m.name AS manager FROM employees e JOIN employees m ON e.manager_id = m.id. You use aliases, e and m, to treat the same table as two different tables. It's elegant once you see it." },
+      { time: 338, text: "Joining more than two tables is common too. You just chain joins. FROM users JOIN orders ON users.id = orders.user_id JOIN order_items ON orders.id = order_items.order_id JOIN products ON order_items.product_id = products.id. Four tables, three joins." },
+      { time: 360, text: "Each JOIN connects to a table that's already in the query. It's like building a chain link by link. Users to orders, orders to order items, order items to products." },
+      { time: 376, text: "Let's talk about performance briefly. Joins on properly indexed columns are fast, even on millions of rows. The key is making sure the columns in your ON clause have indexes. Foreign keys usually get indexes automatically, but it's worth checking." },
+      { time: 396, text: "And when you're joining multiple tables, the order can matter for performance. The database's query optimizer usually figures out the best order, but for complex queries, you might need to use EXPLAIN to see the execution plan." },
+      { time: 414, text: "One common gotcha: joining without an ON clause or with the wrong condition. If you accidentally do a cross join when you meant an inner join, you'll get millions of rows and probably crash your query. Always double-check your join conditions." },
+      { time: 432, text: "Also watch out for duplicate rows. If a user has three orders and you join users to orders, that user appears three times. That's correct behavior, not a bug, but it can surprise you if you're counting or summing." },
+      { time: 450, text: "To summarize: INNER JOIN for matching rows only, LEFT JOIN for all rows from the left table, RIGHT JOIN for all rows from the right, FULL OUTER for everything, and CROSS for all combinations. Self joins connect a table to itself, and you can chain as many joins as you need." },
+      { time: 472, text: "Joins are what make relational databases relational. They let you ask complex questions that span multiple entities. That wraps up the SQL track for now. Thanks for listening, everyone!" }
+    ];
+  </script>
+  <script src="/pod/player.js"></script>
+
+</body>
+</html>

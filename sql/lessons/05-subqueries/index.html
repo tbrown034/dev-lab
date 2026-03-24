@@ -4,52 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lesson 05 - Subqueries & CTEs</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #3b82f6; }</style>
   <link rel="icon" type="image/svg+xml" href="/sql/assets/favicon.svg">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
-    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-    .header a { color: #3b82f6; text-decoration: none; font-size: 0.85rem; }
-    .header h1 { font-size: 1.2rem; }
-    .header h1 span { color: #3b82f6; }
-    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    h2 { color: #3b82f6; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
-    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
-    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
-    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
-    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #3b82f6; }
-    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
-    pre code { background: none; padding: 0; color: #e5e5e5; }
-    .comment { color: #6b7280; }
-    .keyword { color: #3b82f6; }
-    .string { color: #4ade80; }
-    .number { color: #f472b6; }
-    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .demo h4 { color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
-    .quiz { background: #0a0a1a; border: 1px solid #3b82f644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .quiz h4 { color: #3b82f6; margin-bottom: 1rem; }
-    .quiz .question { margin-bottom: 1.25rem; }
-    .quiz .question p { color: #e5e5e5; font-weight: 500; }
-    .quiz button { background: #3b82f6; color: #fff; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
-    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
-    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
-    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
-    .nav-footer a { color: #3b82f6; text-decoration: none; }
-    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
-    .callout p { color: #a5b4fc; }
-    .aha { background: #0a0a1a; border-left: 3px solid #3b82f6; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
-    .aha p { color: #93c5fd; }
-    .aha strong { color: #3b82f6; }
-    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
-    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
-    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
-    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    th { text-align: left; color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
-    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
-    td code { font-size: 0.8rem; }
-  </style>
 </head>
 <body>
   <div class="header">
@@ -59,7 +17,7 @@
 
   <div class="content">
 
-    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #3b82f6;">Sometimes one query isn't enough.</strong> You need the answer from one query to feed into another. That's what subqueries and CTEs do &mdash; they let you build complex analysis step by step, like chaining <code>.then()</code> in a Promise chain.</p>
+    <p class="lesson-intro"><strong>Sometimes one query isn't enough.</strong> You need the answer from one query to feed into another. That's what subqueries and CTEs do &mdash; they let you build complex analysis step by step, like chaining <code>.then()</code> in a Promise chain.</p>
 
     <!-- ============================================ -->
     <!-- THE MENTAL MODEL                             -->
@@ -77,7 +35,7 @@ const avg = getAverage(articles.views);
 
 // Step 2: filter using that average
 const aboveAvg = articles.filter(
-  a => a.views > avg
+  a =&gt; a.views &gt; avg
 );</code></pre>
       </div>
       <div>
@@ -85,7 +43,7 @@ const aboveAvg = articles.filter(
         <pre><code>-- Steps 1 and 2 in one query
 SELECT *
 FROM articles
-WHERE views > (
+WHERE views &gt; (
   SELECT AVG(views) FROM articles
 );</code></pre>
       </div>
@@ -115,7 +73,7 @@ WHERE views > (
     <pre><code>-- Articles with above-average views
 SELECT title, views
 FROM articles
-WHERE views > (SELECT AVG(views) FROM articles);</code></pre>
+WHERE views &gt; (SELECT AVG(views) FROM articles);</code></pre>
 
     <p>The subquery <code>(SELECT AVG(views) FROM articles)</code> returns a single number, say <code>3214</code>. The outer query becomes effectively <code>WHERE views > 3214</code>.</p>
 
@@ -220,7 +178,7 @@ WHERE NOT EXISTS (
     <pre><code>-- Uncorrelated: inner query runs ONCE
 SELECT title, views
 FROM articles
-WHERE views > (SELECT AVG(views) FROM articles);
+WHERE views &gt; (SELECT AVG(views) FROM articles);
 -- The AVG is computed once, then reused for every row</code></pre>
 
     <h3>Correlated &mdash; Inner Query References Outer Query</h3>
@@ -232,10 +190,10 @@ WHERE views > (SELECT AVG(views) FROM articles);
         <h5>JavaScript (closure analogy)</h5>
         <pre><code>// For each author, find their
 // article with the most views
-authors.map(author => {
+authors.map(author =&gt; {
   const topArticle = articles
-    .filter(a => a.author_id === author.id)
-    .sort((a, b) => b.views - a.views)
+    .filter(a =&gt; a.author_id === author.id)
+    .sort((a, b) =&gt; b.views - a.views)
     [0];
   return { author, topArticle };
 });</code></pre>
@@ -260,7 +218,7 @@ WHERE views = (
 -- Articles with views above their category's average
 SELECT title, category, views
 FROM articles a
-WHERE views > (
+WHERE views &gt; (
   SELECT AVG(views)
   FROM articles a2
   WHERE a2.category = a.category
@@ -282,16 +240,16 @@ WHERE views > (
       <div>
         <h5>JavaScript</h5>
         <pre><code>// Step 1: compute author stats
-const authorStats = authors.map(au => ({
+const authorStats = authors.map(au =&gt; ({
   name: au.name,
   articleCount: articles.filter(
-    a => a.author_id === au.id
+    a =&gt; a.author_id === au.id
   ).length,
 }));
 
 // Step 2: filter the computed stats
 const prolific = authorStats
-  .filter(s => s.articleCount > 3);</code></pre>
+  .filter(s =&gt; s.articleCount &gt; 3);</code></pre>
       </div>
       <div>
         <h5>SQL (derived table)</h5>
@@ -307,7 +265,7 @@ FROM (
     ON au.id = a.author_id
   GROUP BY au.id, au.name
 ) AS author_stats
-WHERE article_count > 3;</code></pre>
+WHERE article_count &gt; 3;</code></pre>
       </div>
     </div>
 
@@ -324,7 +282,7 @@ FROM (
   WHERE published = true
   GROUP BY category
 ) AS category_stats
-WHERE article_count >= 2
+WHERE article_count &gt;= 2
 ORDER BY avg_views DESC
 LIMIT 1;</code></pre>
 
@@ -387,12 +345,12 @@ const authorStats = getAuthorStats();
 
 // Step 2: define another result
 const avgCount = average(
-  authorStats.map(a => a.count)
+  authorStats.map(a =&gt; a.count)
 );
 
 // Step 3: use both
 const aboveAvg = authorStats
-  .filter(a => a.count > avgCount);</code></pre>
+  .filter(a =&gt; a.count &gt; avgCount);</code></pre>
       </div>
       <div>
         <h5>SQL (CTE with WITH)</h5>
@@ -411,7 +369,7 @@ avg_count AS (
 SELECT au.name, s.cnt
 FROM author_stats s
 JOIN authors au ON s.author_id = au.id
-WHERE s.cnt > (SELECT val FROM avg_count);</code></pre>
+WHERE s.cnt &gt; (SELECT val FROM avg_count);</code></pre>
       </div>
     </div>
 
@@ -479,7 +437,7 @@ WITH RECURSIVE org_tree AS (
 
   -- Recursive step: find each person's reports
   SELECT e.id, e.name, e.manager_id, t.depth + 1,
-         t.chain || ' > ' || e.name
+         t.chain || ' &gt; ' || e.name
   FROM employees e
   INNER JOIN org_tree t ON e.manager_id = t.id
 )
@@ -492,10 +450,10 @@ ORDER BY chain;</code></pre>
     <pre><code>| name           | depth | chain                                    |
 |----------------|-------|------------------------------------------|
 | Diana (CEO)    |     0 | Diana (CEO)                              |
-| Sarah (Editor) |     1 | Diana (CEO) > Sarah (Editor)             |
-| Marcus (Writer)|     2 | Diana (CEO) > Sarah (Editor) > Marcus    |
-| James (Intern) |     3 | Diana (CEO) > Sarah (Editor) > Marcus > James |
-| Priya (Writer) |     2 | Diana (CEO) > Sarah (Editor) > Priya     |</code></pre>
+| Sarah (Editor) |     1 | Diana (CEO) &gt; Sarah (Editor)             |
+| Marcus (Writer)|     2 | Diana (CEO) &gt; Sarah (Editor) &gt; Marcus    |
+| James (Intern) |     3 | Diana (CEO) &gt; Sarah (Editor) &gt; Marcus &gt; James |
+| Priya (Writer) |     2 | Diana (CEO) &gt; Sarah (Editor) &gt; Priya     |</code></pre>
 
     <p>The pattern: a <strong>base case</strong> (the top of the tree), <code>UNION ALL</code>, and a <strong>recursive step</strong> that joins back to the CTE itself. SQL runs the base case first, then repeats the recursive step until no new rows are found.</p>
 
@@ -530,7 +488,7 @@ const result = await prisma.$queryRaw`
     s.avg_views
   FROM author_stats s
   JOIN authors au ON s.author_id = au.id
-  WHERE s.article_count > ${minCount}
+  WHERE s.article_count &gt; ${minCount}
 `;</code></pre>
       </div>
       <div>
@@ -538,7 +496,7 @@ const result = await prisma.$queryRaw`
         <pre><code>// Use raw SQL when Prisma can't:
 //
 // 1. Subqueries
-//    WHERE col > (SELECT AVG...)
+//    WHERE col &gt; (SELECT AVG...)
 //
 // 2. CTEs (WITH ... AS)
 //    Complex multi-step analysis
@@ -582,7 +540,7 @@ INNER JOIN (
   WHERE published = true
   GROUP BY author_id
 ) sub ON au.id = sub.author_id
-WHERE sub.article_count > (
+WHERE sub.article_count &gt; (
   SELECT AVG(author_count)
   FROM (
     SELECT COUNT(*) AS author_count
@@ -623,7 +581,7 @@ SELECT
 FROM author_stats s
 JOIN authors au ON s.author_id = au.id
 CROSS JOIN avg_article_count a
-WHERE s.article_count > a.avg_count
+WHERE s.article_count &gt; a.avg_count
 ORDER BY s.total_views DESC;</code></pre>
 
     <p>Same result, but you can read it top-to-bottom like a story. Each CTE has a clear name and purpose.</p>
@@ -706,7 +664,7 @@ ORDER BY total_views DESC;</code></pre>
         <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
         <div class="answer"><pre><code>SELECT title, views
 FROM articles
-WHERE views > (SELECT AVG(views) FROM articles);</code></pre></div>
+WHERE views &gt; (SELECT AVG(views) FROM articles);</code></pre></div>
       </div>
 
       <div class="question">
@@ -732,7 +690,7 @@ WHERE EXISTS (
 SELECT au.name, ac.cnt
 FROM author_counts ac
 JOIN authors au ON ac.author_id = au.id
-WHERE ac.cnt > (SELECT AVG(cnt) FROM author_counts);</code></pre></div>
+WHERE ac.cnt &gt; (SELECT AVG(cnt) FROM author_counts);</code></pre></div>
       </div>
 
       <div class="question">
@@ -772,7 +730,7 @@ WHERE a.category = (SELECT category FROM top_category);</code></pre></div>
 
     <pre><code>-- Scalar subquery in WHERE (returns one value)
 SELECT * FROM articles
-WHERE views > (SELECT AVG(views) FROM articles);
+WHERE views &gt; (SELECT AVG(views) FROM articles);
 
 -- IN subquery (returns a list)
 SELECT * FROM articles
@@ -789,7 +747,7 @@ WHERE NOT EXISTS (SELECT 1 FROM articles WHERE author_id = au.id);
 SELECT * FROM (
   SELECT category, COUNT(*) AS cnt
   FROM articles GROUP BY category
-) AS stats WHERE cnt > 3;
+) AS stats WHERE cnt &gt; 3;
 
 -- Subquery in SELECT (computed column)
 SELECT title, (SELECT AVG(views) FROM articles) AS avg
@@ -816,7 +774,7 @@ WITH RECURSIVE tree AS (
 SELECT * FROM tree;
 
 -- Prisma raw SQL
-await prisma.$queryRaw`SELECT ... WHERE col > ${value}`;</code></pre>
+await prisma.$queryRaw`SELECT ... WHERE col &gt; ${value}`;</code></pre>
 
     <!-- ============================================ -->
     <!-- NAV FOOTER                                   -->

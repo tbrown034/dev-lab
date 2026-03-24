@@ -4,52 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lesson 12 - Real-World Patterns</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #3b82f6; }</style>
   <link rel="icon" type="image/svg+xml" href="/sql/assets/favicon.svg">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
-    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-    .header a { color: #3b82f6; text-decoration: none; font-size: 0.85rem; }
-    .header h1 { font-size: 1.2rem; }
-    .header h1 span { color: #3b82f6; }
-    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    h2 { color: #3b82f6; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
-    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
-    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
-    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
-    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #3b82f6; }
-    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
-    pre code { background: none; padding: 0; color: #e5e5e5; }
-    .comment { color: #6b7280; }
-    .keyword { color: #3b82f6; }
-    .string { color: #4ade80; }
-    .number { color: #f472b6; }
-    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .demo h4 { color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
-    .quiz { background: #0a0a1a; border: 1px solid #3b82f644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .quiz h4 { color: #3b82f6; margin-bottom: 1rem; }
-    .quiz .question { margin-bottom: 1.25rem; }
-    .quiz .question p { color: #e5e5e5; font-weight: 500; }
-    .quiz button { background: #3b82f6; color: #fff; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
-    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
-    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
-    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
-    .nav-footer a { color: #3b82f6; text-decoration: none; }
-    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
-    .callout p { color: #a5b4fc; }
-    .aha { background: #0a0a1a; border-left: 3px solid #3b82f6; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
-    .aha p { color: #93c5fd; }
-    .aha strong { color: #3b82f6; }
-    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
-    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
-    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
-    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    th { text-align: left; color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
-    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
-    td code { font-size: 0.8rem; }
-  </style>
 </head>
 <body>
   <div class="header">
@@ -59,7 +17,7 @@
 
   <div class="content">
 
-    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #3b82f6;">This is where all 11 lessons come together.</strong> You know the syntax. Now let's look at the patterns that production databases actually use &mdash; pagination, search, JSON columns, soft deletes, audit trails, and migrations. These are the things you'll build in your Next.js apps.</p>
+    <p class="lesson-intro"><strong>This is where all 11 lessons come together.</strong> You know the syntax. Now let's look at the patterns that production databases actually use &mdash; pagination, search, JSON columns, soft deletes, audit trails, and migrations. These are the things you'll build in your Next.js apps.</p>
 
     <!-- ============================================ -->
     <!-- PAGINATION                                  -->
@@ -289,9 +247,9 @@ ORDER BY rank DESC
 LIMIT 20;
 
 -- websearch_to_tsquery handles:
--- "election fraud" -> phrase search
--- election OR primary -> OR logic
--- -spam -> exclude word</code></pre>
+-- "election fraud" -&gt; phrase search
+-- election OR primary -&gt; OR logic
+-- -spam -&gt; exclude word</code></pre>
       </div>
     </div>
 
@@ -349,23 +307,23 @@ VALUES ('Story', '{
     <h3>Querying JSONB</h3>
 
     <pre><code>-- Extract a value (returns JSON)
-SELECT metadata->'source' FROM articles;
+SELECT metadata-&gt;'source' FROM articles;
 -- Result: "AP" (with quotes, it's JSON)
 
 -- Extract as text (returns text)
-SELECT metadata->>'source' FROM articles;
+SELECT metadata-&gt;&gt;'source' FROM articles;
 -- Result: AP (no quotes, plain text)
 
 -- Nested access
-SELECT metadata->'stats'->>'readTime' FROM articles;
+SELECT metadata-&gt;'stats'-&gt;&gt;'readTime' FROM articles;
 
 -- Filter by JSONB value
 SELECT * FROM articles
-WHERE metadata->>'source' = 'AP';
+WHERE metadata-&gt;&gt;'source' = 'AP';
 
 -- Check if JSONB contains a key-value pair
 SELECT * FROM articles
-WHERE metadata @> '{"source": "AP"}';
+WHERE metadata @&gt; '{"source": "AP"}';
 
 -- Check if a key exists
 SELECT * FROM articles
@@ -373,7 +331,7 @@ WHERE metadata ? 'source';
 
 -- Query into arrays
 SELECT * FROM articles
-WHERE metadata->'tags' ? 'politics';
+WHERE metadata-&gt;'tags' ? 'politics';
 -- Finds articles where tags array contains 'politics'</code></pre>
 
     <h3>JSONB Operators Quick Reference</h3>
@@ -394,13 +352,13 @@ WHERE metadata->'tags' ? 'politics';
 
     <h3>Indexing JSONB</h3>
 
-    <pre><code>-- GIN index for @>, ?, ?|, ?& operators
+    <pre><code>-- GIN index for @&gt;, ?, ?|, ?& operators
 CREATE INDEX articles_metadata_idx
 ON articles USING GIN(metadata);
 
 -- B-tree index on a specific key (for = and range queries)
 CREATE INDEX articles_source_idx
-ON articles ((metadata->>'source'));</code></pre>
+ON articles ((metadata-&gt;&gt;'source'));</code></pre>
 
     <div class="callout">
       <p><strong>When to use JSONB vs columns:</strong> Use columns for data you filter, sort, or join on frequently (author_id, published, created_at). Use JSONB for variable/optional metadata that differs between rows (SEO settings, API response data, user preferences). If you're querying a JSONB field in every request, it should probably be a column instead.</p>
@@ -476,7 +434,7 @@ WHERE id = 42;</code></pre>
       <div>
         <h5>Prisma middleware approach</h5>
         <pre><code>// Prisma middleware to auto-filter
-prisma.$use(async (params, next) => {
+prisma.$use(async (params, next) =&gt; {
   if (params.model === 'Article') {
     if (params.action === 'findMany') {
       params.args.where = {
@@ -576,8 +534,8 @@ FOR EACH ROW EXECUTE FUNCTION audit_trigger_fn();</code></pre>
 
 -- Who edited article #42?
 SELECT action, changed_by, changed_at,
-  old_data->>'title' AS old_title,
-  new_data->>'title' AS new_title
+  old_data-&gt;&gt;'title' AS old_title,
+  new_data-&gt;&gt;'title' AS new_title
 FROM audit_log
 WHERE table_name = 'articles' AND row_id = 42
 ORDER BY changed_at DESC;
@@ -759,8 +717,8 @@ WHERE published = true AND id &lt; 500
 ORDER BY id DESC LIMIT 20;
 
 -- 3. JSONB metadata query
-SELECT title, metadata->>'source' AS source FROM active_articles
-WHERE metadata @> '{"tags": ["breaking"]}' AND published = true;
+SELECT title, metadata-&gt;&gt;'source' AS source FROM active_articles
+WHERE metadata @&gt; '{"tags": ["breaking"]}' AND published = true;
 
 -- 4. Soft-delete (audit trail captured by trigger)
 UPDATE articles SET deleted_at = NOW() WHERE id = 42;
@@ -826,9 +784,9 @@ WHERE id = 1;</code></pre></div>
       <div class="question">
         <p><strong>B:</strong> Find all articles tagged with "breaking" in their metadata, showing title and source.</p>
         <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
-        <div class="answer"><pre><code>SELECT title, metadata->>'source' AS source
+        <div class="answer"><pre><code>SELECT title, metadata-&gt;&gt;'source' AS source
 FROM active_articles
-WHERE metadata->'tags' ? 'breaking';</code></pre></div>
+WHERE metadata-&gt;'tags' ? 'breaking';</code></pre></div>
       </div>
 
       <div class="question">
@@ -888,9 +846,9 @@ FROM t, websearch_to_tsquery('english', 'search terms') AS q
 WHERE search_vector @@ q ORDER BY rank DESC;
 
 -- JSONB
-col->'key'          -- get JSON element
-col->>'key'         -- get as text
-col @> '{"k":"v"}'  -- contains
+col-&gt;'key'          -- get JSON element
+col-&gt;&gt;'key'         -- get as text
+col @&gt; '{"k":"v"}'  -- contains
 col ? 'key'         -- key exists
 CREATE INDEX ON t USING GIN(col);
 

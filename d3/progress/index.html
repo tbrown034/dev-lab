@@ -5,14 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Progress Tracker - Learn D3</title>
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: #0a0a0a;
-      color: #e5e5e5;
-      min-height: 100vh;
-    }
     .header {
       padding: 1.5rem 3rem;
       border-bottom: 1px solid #222;
@@ -46,7 +40,7 @@
     }
     .stat-value {
       font-size: 1.5rem;
-      font-weight: 700;
+      font-weight: 600;
     }
     .stat-value.orange { color: #f97316; }
     .stat-value.purple { color: #818cf8; }
@@ -147,7 +141,7 @@
       display: none;
       color: #000;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 600;
     }
     .completed .check-mark {
       display: block;
@@ -458,7 +452,7 @@
         const div = document.createElement("div");
         div.className = "game-item";
         div.innerHTML = `
-          <div class="game-icon" style="color: #f97316; font-weight: 700;">${game.icon}</div>
+          <div class="game-icon" style="color: #f97316; font-weight: 600;">${game.icon}</div>
           <div class="game-info">
             <div class="game-title">${game.title}</div>
             <div class="game-score">High score: ${score != null ? score : "Not played yet"}</div>

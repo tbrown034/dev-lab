@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-World SQL Use Cases - Learn SQL</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <style>
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #3b82f6; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+    .header .meta a { color: #3b82f6; text-decoration: none; }
+
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover, .nav a.active {
+      background: #3b82f6;
+      color: #fff;
+      border-color: #3b82f6;
+    }
+
+    .page-title {
+      padding: 2rem 3rem 0.5rem;
+    }
+    .page-title h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+    }
+    .page-title h2 span { color: #3b82f6; }
+    .page-title p {
+      color: #888;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+      max-width: 700px;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 1.25rem;
+      padding: 1.5rem 3rem 3rem;
+      max-width: 1600px;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      border-color: #444;
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      padding: 1.25rem 1.25rem 0.75rem;
+    }
+    .card-header .card-num {
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.35rem;
+    }
+    .card-header h3 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .card-header .who {
+      font-size: 0.78rem;
+      color: #888;
+      font-style: italic;
+    }
+
+    .card-body {
+      padding: 0.75rem 1.25rem 1rem;
+    }
+    .card-body p {
+      font-size: 0.82rem;
+      color: #999;
+      line-height: 1.6;
+      margin-bottom: 0.75rem;
+    }
+    .card-body ul {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 0.75rem;
+    }
+    .card-body ul li {
+      font-size: 0.78rem;
+      color: #999;
+      line-height: 1.6;
+      padding-left: 0.85rem;
+      position: relative;
+    }
+    .card-body ul li::before {
+      content: "\2022";
+      position: absolute;
+      left: 0;
+      color: #555;
+    }
+
+    .card-code {
+      margin: 0.5rem 1.25rem;
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      overflow: hidden;
+      padding: 1rem;
+    }
+    .card-code pre {
+      font-family: 'JetBrains Mono', 'SF Mono', monospace;
+      font-size: 0.75rem;
+      line-height: 1.6;
+      color: #ccc;
+      overflow-x: auto;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .tag {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .tag-blue   { background: #3b82f622; color: #3b82f6; }
+    .tag-green  { background: #22c55e22; color: #22c55e; }
+    .tag-purple { background: #818cf822; color: #818cf8; }
+    .tag-pink   { background: #f472b622; color: #f472b6; }
+    .tag-orange { background: #f9731622; color: #f97316; }
+
+    .accent-blue   { color: #3b82f6; }
+    .accent-green  { color: #22c55e; }
+    .accent-purple { color: #818cf8; }
+    .accent-pink   { color: #f472b6; }
+    .accent-orange { color: #f97316; }
+
+    @media (max-width: 768px) {
+      .header, .nav, .page-title, .grid { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Learn <span>SQL</span></h1>
+    <div class="meta"><a href="/sql/">Home</a> &middot; Real-World Use Cases</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/sql/">Home</a>
+    <a href="/sql/references/use-cases/" class="active">Use Cases</a>
+    <a href="/sql/games/">Games</a>
+    <a href="/sql/projects/">Projects</a>
+  </nav>
+
+  <div class="page-title">
+    <h2>15 Production <span>Use Cases</span></h2>
+    <p>Real-world SQL patterns used in production databases at scale. Each card includes a working query example and key implementation details for PostgreSQL.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- Card 1: Analytics Dashboard Queries -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-blue">01 / ANALYTICS</div>
+        <h3>Analytics Dashboard Queries</h3>
+        <div class="who">Product teams, data analysts</div>
+      </div>
+      <div class="card-code">
+        <pre>SELECT
+  DATE_TRUNC('month', created_at) AS month,
+  COUNT(*) AS signups,
+  COUNT(*) FILTER (WHERE plan = 'pro') AS pro_signups,
+  ROUND(
+    COUNT(*) FILTER (WHERE plan = 'pro') * 100.0 / COUNT(*), 1
+  ) AS pro_pct
+FROM users
+WHERE created_at >= NOW() - INTERVAL '12 months'
+GROUP BY 1
+ORDER BY 1;</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>DATE_TRUNC for time-based grouping (month, week, day)</li>
+          <li>FILTER clause for conditional aggregation without CASE</li>
+          <li>Rolling windows with generate_series for filling date gaps</li>
+          <li>Materialized views for pre-computed dashboard data</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">DATE_TRUNC</span>
+          <span class="tag tag-green">FILTER</span>
+          <span class="tag tag-purple">Aggregation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Reporting Pipelines -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">02 / REPORTING</div>
+        <h3>Reporting Pipelines</h3>
+        <div class="who">Business intelligence, finance</div>
+      </div>
+      <div class="card-code">
+        <pre>WITH monthly_revenue AS (
+  SELECT
+    DATE_TRUNC('month', order_date) AS month,
+    SUM(total) AS revenue
+  FROM orders
+  WHERE status = 'completed'
+  GROUP BY 1
+),
+with_growth AS (
+  SELECT
+    month,
+    revenue,
+    LAG(revenue) OVER (ORDER BY month) AS prev_month,
+    ROUND(
+      (revenue - LAG(revenue) OVER (ORDER BY month))
+      / LAG(revenue) OVER (ORDER BY month) * 100, 1
+    ) AS growth_pct
+  FROM monthly_revenue
+)
+SELECT * FROM with_growth ORDER BY month DESC;</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>CTEs (WITH clauses) for readable multi-step computations</li>
+          <li>LAG window function for period-over-period comparisons</li>
+          <li>Revenue, churn, MRR, and cohort retention calculations</li>
+          <li>Scheduled reports via pg_cron or application-level scheduling</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">CTE</span>
+          <span class="tag tag-green">LAG</span>
+          <span class="tag tag-orange">Window Functions</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Full-Text Search -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">03 / SEARCH</div>
+        <h3>Full-Text Search</h3>
+        <div class="who">Content platforms, documentation sites</div>
+      </div>
+      <div class="card-code">
+        <pre>-- Create a search index
+ALTER TABLE articles ADD COLUMN search_vector tsvector
+  GENERATED ALWAYS AS (
+    setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+    setweight(to_tsvector('english', coalesce(body, '')), 'B')
+  ) STORED;
+
+CREATE INDEX idx_articles_search ON articles USING GIN(search_vector);
+
+-- Search with ranking
+SELECT title, ts_rank(search_vector, query) AS rank
+FROM articles, to_tsquery('english', 'election & results') AS query
+WHERE search_vector @@ query
+ORDER BY rank DESC
+LIMIT 20;</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Generated tsvector column with weighted fields (title=A, body=B)</li>
+          <li>GIN index for fast full-text search on millions of rows</li>
+          <li>ts_rank for relevance scoring with customizable weights</li>
+          <li>ts_headline for highlighted search result snippets</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">tsvector</span>
+          <span class="tag tag-green">GIN Index</span>
+          <span class="tag tag-purple">ts_rank</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4: Time Series Analysis -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">04 / TIME SERIES</div>
+        <h3>Time Series Analysis</h3>
+        <div class="who">IoT, monitoring, financial data</div>
+      </div>
+      <div class="card-code">
+        <pre>-- Fill date gaps with generate_series
+SELECT
+  d.date,
+  COALESCE(m.count, 0) AS pageviews,
+  AVG(COALESCE(m.count, 0)) OVER (
+    ORDER BY d.date
+    ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+  ) AS rolling_7day_avg
+FROM generate_series(
+  '2024-01-01'::date,
+  CURRENT_DATE,
+  '1 day'::interval
+) AS d(date)
+LEFT JOIN daily_metrics m ON m.date = d.date
+ORDER BY d.date;</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>generate_series fills gaps in time series data</li>
+          <li>Rolling averages with ROWS BETWEEN window frames</li>
+          <li>BRIN indexes for time-ordered append-only tables</li>
+          <li>Table partitioning by month/year for large time series</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">generate_series</span>
+          <span class="tag tag-green">Window Frames</span>
+          <span class="tag tag-pink">BRIN Index</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5: Recursive Hierarchies -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">05 / RECURSIVE</div>
+        <h3>Recursive Hierarchies</h3>
+        <div class="who">Org charts, comment threads, categories</div>
+      </div>
+      <div class="card-code">
+        <pre>-- Find all nested comments for an article
+WITH RECURSIVE comment_tree AS (
+  -- Base case: top-level comments
+  SELECT id, parent_id, body, author, 1 AS depth,
+         ARRAY[id] AS path
+  FROM comments
+  WHERE article_id = 42 AND parent_id IS NULL
+
+  UNION ALL
+
+  -- Recursive case: replies
+  SELECT c.id, c.parent_id, c.body, c.author, ct.depth + 1,
+         ct.path || c.id
+  FROM comments c
+  JOIN comment_tree ct ON c.parent_id = ct.id
+)
+SELECT * FROM comment_tree ORDER BY path;</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Recursive CTEs for tree traversal (comments, org charts, categories)</li>
+          <li>Path array for maintaining sort order across nested levels</li>
+          <li>Depth column for indentation in UI rendering</li>
+          <li>Cycle detection with CYCLE clause (PostgreSQL 14+)</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">Recursive CTE</span>
+          <span class="tag tag-orange">Tree Traversal</span>
+          <span class="tag tag-green">ARRAY path</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 6: Pivot Tables -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-blue">06 / PIVOT</div>
+        <h3>Pivot Tables &amp; Crosstabs</h3>
+        <div class="who">Reporting, spreadsheet-style views</div>
+      </div>
+      <div class="card-code">
+        <pre>-- Pivot monthly sales by product category
+SELECT
+  product_category,
+  SUM(amount) FILTER (WHERE month = 1) AS jan,
+  SUM(amount) FILTER (WHERE month = 2) AS feb,
+  SUM(amount) FILTER (WHERE month = 3) AS mar,
+  SUM(amount) FILTER (WHERE month = 4) AS apr,
+  SUM(amount) FILTER (WHERE month = 5) AS may,
+  SUM(amount) FILTER (WHERE month = 6) AS jun
+FROM (
+  SELECT category AS product_category,
+         EXTRACT(MONTH FROM sale_date) AS month,
+         total AS amount
+  FROM sales
+  WHERE sale_date >= '2024-01-01'
+) sub
+GROUP BY product_category
+ORDER BY product_category;</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>FILTER clause turns rows into columns (manual pivot)</li>
+          <li>crosstab() from tablefunc extension for dynamic pivots</li>
+          <li>Useful for monthly breakdowns, category comparisons, heat maps</li>
+          <li>Alternative: JSON aggregation for flexible column output</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">FILTER</span>
+          <span class="tag tag-green">Pivot</span>
+          <span class="tag tag-purple">crosstab</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 7: Data Migration Scripts -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">07 / MIGRATION</div>
+        <h3>Data Migration Scripts</h3>
+        <div class="who">Schema evolution, data ops</div>
+      </div>
+      <div class="card-code">
+        <pre>-- Safe column rename with zero downtime
+BEGIN;
+  -- 1. Add new column
+  ALTER TABLE articles ADD COLUMN published_at TIMESTAMPTZ;
+
+  -- 2. Backfill from old column
+  UPDATE articles SET published_at = pub_date;
+
+  -- 3. Add NOT NULL constraint after backfill
+  ALTER TABLE articles ALTER COLUMN published_at SET NOT NULL;
+
+  -- 4. Create index concurrently (outside transaction in practice)
+  -- CREATE INDEX CONCURRENTLY idx_articles_published ON articles(published_at);
+
+  -- 5. Drop old column (after app code is updated)
+  -- ALTER TABLE articles DROP COLUMN pub_date;
+COMMIT;</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Transactional DDL for safe schema changes</li>
+          <li>CREATE INDEX CONCURRENTLY to avoid locking production tables</li>
+          <li>Backfill patterns for large tables (batch updates)</li>
+          <li>Blue-green deployment: new column first, then update code, then drop old</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">DDL</span>
+          <span class="tag tag-green">CONCURRENTLY</span>
+          <span class="tag tag-orange">Zero Downtime</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 8: Audit Logging -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">08 / AUDIT</div>
+        <h3>Audit Logging with Triggers</h3>
+        <div class="who">Compliance, healthcare, finance</div>
+      </div>
+      <div class="card-code">
+        <pre>-- Generic audit trigger function
+CREATE OR REPLACE FUNCTION audit_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_log (
+    table_name, row_id, action,
+    old_data, new_data, changed_by, changed_at
+  ) VALUES (
+    TG_TABLE_NAME,
+    COALESCE(NEW.id, OLD.id),
+    TG_OP,
+    CASE WHEN TG_OP IN ('UPDATE','DELETE') THEN row_to_json(OLD) END,
+    CASE WHEN TG_OP IN ('INSERT','UPDATE') THEN row_to_json(NEW) END,
+    current_setting('app.current_user', true),
+    NOW()
+  );
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER articles_audit
+AFTER INSERT OR UPDATE OR DELETE ON articles
+FOR EACH ROW EXECUTE FUNCTION audit_trigger();</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Generic trigger function works on any table without modification</li>
+          <li>JSONB storage for old/new row data preserves schema changes</li>
+          <li>current_setting for passing application-level user context</li>
+          <li>Append-only audit table with partitioning for retention policies</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">Triggers</span>
+          <span class="tag tag-purple">row_to_json</span>
+          <span class="tag tag-green">plpgsql</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 9: Multi-Tenant Row Security -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">09 / SECURITY</div>
+        <h3>Multi-Tenant Row-Level Security</h3>
+        <div class="who">SaaS platforms, enterprise apps</div>
+      </div>
+      <div class="card-code">
+        <pre>-- Enable RLS on the articles table
+ALTER TABLE articles ENABLE ROW LEVEL SECURITY;
+
+-- Tenants can only see their own data
+CREATE POLICY tenant_isolation ON articles
+  USING (tenant_id = current_setting('app.tenant_id')::int);
+
+-- Admins can see all data
+CREATE POLICY admin_access ON articles
+  USING (current_setting('app.role') = 'admin');
+
+-- Set tenant context per request
+SET app.tenant_id = '42';
+SET app.role = 'user';
+
+-- This query automatically filters by tenant_id = 42
+SELECT * FROM articles;  -- Only sees tenant 42's data</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Row-Level Security (RLS) enforces data isolation at the database level</li>
+          <li>Policies are invisible to application code (automatic filtering)</li>
+          <li>Session variables (SET) pass tenant context from the application</li>
+          <li>Multiple policies for different roles (tenant, admin, support)</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">RLS</span>
+          <span class="tag tag-pink">Policies</span>
+          <span class="tag tag-green">Multi-tenant</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 10: Geospatial Queries -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">10 / GEO</div>
+        <h3>Geospatial Queries with PostGIS</h3>
+        <div class="who">Mapping, delivery, real estate</div>
+      </div>
+      <div class="card-code">
+        <pre>-- Find all restaurants within 2 miles of a location
+SELECT name, address,
+  ST_Distance(
+    location::geography,
+    ST_MakePoint(-73.9857, 40.7484)::geography
+  ) / 1609.34 AS miles
+FROM restaurants
+WHERE ST_DWithin(
+  location::geography,
+  ST_MakePoint(-73.9857, 40.7484)::geography,
+  3218.69  -- 2 miles in meters
+)
+ORDER BY miles
+LIMIT 20;</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>PostGIS extension for geographic data types and spatial functions</li>
+          <li>ST_DWithin for efficient proximity searches with spatial indexes</li>
+          <li>GiST indexes on geometry/geography columns for fast spatial queries</li>
+          <li>Polygon containment, route optimization, and boundary analysis</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">PostGIS</span>
+          <span class="tag tag-orange">ST_DWithin</span>
+          <span class="tag tag-green">GiST Index</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 11: JSON Document Queries -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-blue">11 / JSON</div>
+        <h3>JSON Document Queries</h3>
+        <div class="who">Flexible schemas, API responses</div>
+      </div>
+      <div class="card-code">
+        <pre>-- Query into JSONB data
+SELECT
+  metadata->>'title' AS title,
+  metadata->'author'->>'name' AS author,
+  (metadata->>'view_count')::int AS views
+FROM articles
+WHERE metadata @> '{"status": "published"}'
+  AND metadata->'tags' ? 'breaking'
+ORDER BY (metadata->>'view_count')::int DESC;
+
+-- GIN index for fast JSONB containment queries
+CREATE INDEX idx_articles_metadata ON articles
+  USING GIN(metadata jsonb_path_ops);</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>JSONB operators: -> (object), ->> (text), @> (containment), ? (key exists)</li>
+          <li>GIN indexes with jsonb_path_ops for 3x faster containment queries</li>
+          <li>jsonb_agg and jsonb_object_agg for building JSON from relational data</li>
+          <li>Hybrid approach: relational columns for indexed fields, JSONB for flexible data</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">JSONB</span>
+          <span class="tag tag-green">GIN Index</span>
+          <span class="tag tag-purple">jsonb_path_ops</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 12: Materialized Views -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-green">12 / VIEWS</div>
+        <h3>Materialized Views</h3>
+        <div class="who">Dashboards, reporting, caching</div>
+      </div>
+      <div class="card-code">
+        <pre>-- Create a materialized view for dashboard stats
+CREATE MATERIALIZED VIEW dashboard_stats AS
+SELECT
+  DATE_TRUNC('day', created_at) AS day,
+  COUNT(*) AS total_articles,
+  COUNT(DISTINCT author_id) AS active_authors,
+  AVG(word_count) AS avg_word_count,
+  SUM(view_count) AS total_views
+FROM articles
+WHERE created_at >= NOW() - INTERVAL '90 days'
+GROUP BY 1
+WITH DATA;
+
+-- Unique index for concurrent refresh
+CREATE UNIQUE INDEX ON dashboard_stats(day);
+
+-- Refresh without locking reads
+REFRESH MATERIALIZED VIEW CONCURRENTLY dashboard_stats;</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>Pre-computed query results stored as a table for fast reads</li>
+          <li>CONCURRENTLY refresh avoids locking during updates</li>
+          <li>Unique index required for concurrent refresh</li>
+          <li>Schedule refreshes with pg_cron for automatic updates</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">Materialized View</span>
+          <span class="tag tag-green">CONCURRENTLY</span>
+          <span class="tag tag-orange">pg_cron</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 13: ETL Patterns -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-purple">13 / ETL</div>
+        <h3>ETL Patterns</h3>
+        <div class="who">Data warehousing, data engineering</div>
+      </div>
+      <div class="card-code">
+        <pre>-- Upsert pattern for incremental loads
+INSERT INTO dim_users (id, name, email, updated_at)
+SELECT id, name, email, NOW()
+FROM staging_users
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  email = EXCLUDED.email,
+  updated_at = NOW()
+WHERE dim_users.name != EXCLUDED.name
+   OR dim_users.email != EXCLUDED.email;
+
+-- Track what changed (SCD Type 2)
+INSERT INTO dim_users_history (user_id, name, email, valid_from, valid_to)
+SELECT id, name, email, updated_at, NULL
+FROM staging_users s
+WHERE NOT EXISTS (
+  SELECT 1 FROM dim_users d
+  WHERE d.id = s.id AND d.name = s.name AND d.email = s.email
+);</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>ON CONFLICT (upsert) for idempotent incremental loads</li>
+          <li>EXCLUDED pseudo-table references the incoming row in conflict resolution</li>
+          <li>Slowly Changing Dimensions (SCD Type 2) for historical tracking</li>
+          <li>COPY command for bulk loading CSV/TSV data at 100K+ rows/second</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">Upsert</span>
+          <span class="tag tag-purple">SCD</span>
+          <span class="tag tag-green">COPY</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 14: Connection Pooling -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-pink">14 / INFRA</div>
+        <h3>Connection Pooling</h3>
+        <div class="who">High-traffic applications</div>
+      </div>
+      <div class="card-code">
+        <pre>-- PgBouncer configuration (pgbouncer.ini)
+-- [databases]
+-- mydb = host=localhost port=5432 dbname=mydb
+--
+-- [pgbouncer]
+-- pool_mode = transaction
+-- max_client_conn = 1000
+-- default_pool_size = 25
+-- min_pool_size = 5
+
+-- Monitor active connections
+SELECT
+  datname,
+  count(*) AS total,
+  count(*) FILTER (WHERE state = 'active') AS active,
+  count(*) FILTER (WHERE state = 'idle') AS idle,
+  count(*) FILTER (WHERE wait_event IS NOT NULL) AS waiting
+FROM pg_stat_activity
+WHERE datname = 'mydb'
+GROUP BY datname;</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>PgBouncer reduces connection overhead (fork cost: ~10ms per connection)</li>
+          <li>Transaction pooling mode for serverless/high-concurrency workloads</li>
+          <li>pg_stat_activity for monitoring connection states and finding leaks</li>
+          <li>Idle connection timeout to prevent connection exhaustion</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">PgBouncer</span>
+          <span class="tag tag-pink">Pooling</span>
+          <span class="tag tag-green">pg_stat_activity</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 15: Performance Profiling -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-num accent-orange">15 / PERF</div>
+        <h3>Performance Profiling</h3>
+        <div class="who">DBAs, backend engineers</div>
+      </div>
+      <div class="card-code">
+        <pre>-- Find the slowest queries
+SELECT
+  calls,
+  ROUND(total_exec_time::numeric, 2) AS total_ms,
+  ROUND(mean_exec_time::numeric, 2) AS avg_ms,
+  ROUND(stddev_exec_time::numeric, 2) AS stddev_ms,
+  rows,
+  LEFT(query, 80) AS query_preview
+FROM pg_stat_statements
+ORDER BY total_exec_time DESC
+LIMIT 20;
+
+-- Analyze a specific query
+EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
+SELECT a.title, u.name
+FROM articles a
+JOIN users u ON a.author_id = u.id
+WHERE a.status = 'published'
+  AND a.pub_date > '2024-01-01'
+ORDER BY a.pub_date DESC
+LIMIT 50;</pre>
+      </div>
+      <div class="card-body">
+        <ul>
+          <li>pg_stat_statements tracks cumulative query performance</li>
+          <li>EXPLAIN (ANALYZE, BUFFERS) shows actual plan with I/O details</li>
+          <li>Look for Seq Scan on large tables, Nested Loop on unindexed JOINs</li>
+          <li>auto_explain logs slow query plans automatically for debugging</li>
+        </ul>
+        <div class="tags">
+          <span class="tag tag-blue">pg_stat_statements</span>
+          <span class="tag tag-orange">EXPLAIN ANALYZE</span>
+          <span class="tag tag-green">BUFFERS</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

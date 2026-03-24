@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The React Mental Model — The Pod</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/shell.css">
+  <link rel="stylesheet" href="/pod/episode.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">The Pod</a>
+      <div class="header-right">
+        <a href="/pod/" class="back-link">&larr; All Episodes</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="episode-page" data-accent="var(--accent-react)">
+
+    <!-- Episode Header -->
+    <div class="episode-header">
+      <span class="episode-track-badge react">React &mdash; Episode 01</span>
+      <h1>The React Mental Model</h1>
+      <p class="episode-subtitle">Components, state, and the declarative paradigm &mdash; thinking in React from scratch.</p>
+      <span class="episode-duration-badge">~13 min</span>
+    </div>
+
+    <!-- Audio Player -->
+    <div class="player-container">
+      <audio id="episode-audio" preload="metadata">
+        <source src="/audio/react/01-react-mental-model.mp3" type="audio/mpeg">
+      </audio>
+
+      <div class="player">
+        <div class="player-controls">
+          <button class="player-btn skip-btn" id="skip-back" aria-label="Skip back 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+          <button class="player-btn play-btn" id="play-pause" aria-label="Play">
+            <svg class="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg class="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <button class="player-btn skip-btn" id="skip-forward" aria-label="Skip forward 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+        </div>
+
+        <div class="player-progress">
+          <span class="player-time" id="current-time">0:00</span>
+          <div class="progress-bar-container" id="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <input type="range" class="progress-scrubber" id="scrubber" min="0" max="1000" value="0" step="1">
+          </div>
+          <span class="player-time" id="duration">0:00</span>
+        </div>
+
+        <div class="player-extras">
+          <div class="speed-control">
+            <button class="speed-btn" id="speed-btn">1x</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transcript -->
+    <div class="transcript-container">
+      <div class="transcript-header">
+        <h2>Transcript</h2>
+        <button class="auto-scroll-toggle active" id="auto-scroll-toggle" aria-label="Toggle auto-scroll">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          Auto-scroll
+        </button>
+      </div>
+      <div class="transcript" id="transcript"></div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>The Pod &mdash; part of <a href="/">Learn Coding</a> by Trevor Brown</p>
+  </footer>
+
+  <script>
+    // ─── Theme Toggle ───
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+
+    // ─── Transcript Data ───
+    const TRANSCRIPT = [
+      { time: 0, text: "Welcome to The Pod. I'm Alex, and this is the first episode of our React track. Sam, you've been writing React for what, three years now? What's the single most important thing you wish you'd understood from day one?" },
+      { time: 14, text: "Honestly? That React is a mental model, not just a library. When people start learning React, they focus on the syntax. JSX, useState, useEffect. But the real unlock is understanding how React thinks about UIs." },
+      { time: 28, text: "So let's break that down. What do you mean by 'how React thinks about UIs?'" },
+      { time: 33, text: "Okay. Traditional web development, like vanilla JavaScript or jQuery, is imperative. You tell the browser every step. Find this element, change its text, add this class, remove that child node. You're micromanaging the DOM." },
+      { time: 48, text: "React flips that completely. React is declarative. Instead of saying 'do this, then do that,' you say 'here's what the UI should look like given this data.' And React figures out the DOM changes needed to make it happen." },
+      { time: 63, text: "I love the analogy of a restaurant. Imperative is like going into the kitchen and cooking the meal yourself, step by step. Declarative is like ordering from the menu. You describe what you want, and the kitchen handles the how." },
+      { time: 78, text: "That's a perfect analogy. And this leads us to the core building block of React: the component. A component is a function that takes some input, called props, and returns a description of what should appear on screen." },
+      { time: 92, text: "Wait, let's pause there because that's really important. A React component is just a function. Not a class, not some magical object, a plain JavaScript function that returns JSX. That JSX describes what the UI should look like." },
+      { time: 108, text: "Right. And here's the key insight. Components are like LEGO bricks. A button is a component. A card is a component that might contain buttons. A page is a component that contains cards. You build complex UIs by composing small, focused pieces." },
+      { time: 124, text: "Let's talk about what makes these components dynamic. That's where state comes in. State is data that belongs to a component and can change over time. When state changes, React re-renders that component." },
+      { time: 139, text: "Think of it like a spreadsheet. When you change a cell's value, every formula that depends on that cell automatically recalculates. In React, when state changes, every part of the UI that depends on that state automatically re-renders." },
+      { time: 155, text: "So the formula is: UI equals a function of state. The UI you see on screen is always a direct reflection of the current state. There's no stale UI, no out-of-sync data. The state is the single source of truth." },
+      { time: 170, text: "Now, props versus state. This confuses a lot of beginners. Props are like function arguments. They come from the parent component and the child can't change them. They flow down, always down." },
+      { time: 185, text: "State is local. It's owned by the component. The component can read it and update it. When you call setState, or more accurately when you call the setter from useState, React schedules a re-render." },
+      { time: 200, text: "And here's where it gets beautiful. When a parent's state changes, it re-renders. When it re-renders, it may pass new props to its children. Those children then re-render with the new props. The whole tree updates like a cascade." },
+      { time: 216, text: "People hear 're-render' and panic. They think React is tearing down and rebuilding the entire DOM. But that's not what happens at all." },
+      { time: 226, text: "Exactly. React has a virtual DOM, which is basically a lightweight JavaScript representation of the real DOM. When state changes, React builds a new virtual DOM tree, diffs it against the previous one, and only touches the real DOM elements that actually changed." },
+      { time: 244, text: "It's like a playwright editing a script. You don't fire all the actors and recast the whole play. You just tell the actors whose lines changed to learn their new lines. Everything else stays the same." },
+      { time: 258, text: "Let's talk about one-way data flow, because this is what makes React apps predictable. Data always flows from parent to child through props. If a child needs to communicate back to its parent, the parent passes down a callback function." },
+      { time: 274, text: "So the parent says, 'Here's a function called onSubmit. Call it when you're done.' The child doesn't reach up and modify the parent's state directly. It calls the callback, and the parent decides how to handle it." },
+      { time: 290, text: "This is the opposite of two-way binding, which frameworks like Angular v1 used. Two-way binding seems convenient at first but becomes a debugging nightmare in large apps because changes can come from anywhere." },
+      { time: 305, text: "With React's one-way flow, you can always trace where data came from. It came from the parent, or it's local state, or it came from context. There's a clear lineage." },
+      { time: 318, text: "Let's touch on JSX briefly, because newcomers are always thrown off by it. JSX looks like HTML inside JavaScript. But it's not HTML. It's syntactic sugar that gets compiled to function calls." },
+      { time: 332, text: "When you write angle-bracket div, React compiles that to React.createElement('div'). It's just function calls all the way down. JSX is a convenience, not a requirement. You could write React without it, it would just be really verbose." },
+      { time: 348, text: "The reason JSX exists is because it lets you co-locate your markup with your logic. In traditional web development, you separate HTML, CSS, and JavaScript into different files. React says, 'That's separating by technology, not by concern.'" },
+      { time: 364, text: "A component IS the concern. The button component has its markup, its styles, and its behavior all in one place. When you need to change how the button works, you go to one file, not three." },
+      { time: 378, text: "So to bring it all together, here's the React mental model in one paragraph: Your UI is made of components. Components are functions that return JSX. They accept props from their parents and can manage their own state." },
+      { time: 394, text: "When state changes, React re-renders the component and its children efficiently using the virtual DOM. Data flows one way, from parent to child. And the UI you see is always a direct function of the current state." },
+      { time: 410, text: "If you internalize that paragraph, you're ahead of like 80% of people who start learning React. The syntax comes quickly once the mental model clicks." },
+      { time: 420, text: "Next episode, we're going to get hands-on with hooks. useState, useEffect, and why the rules of hooks exist. It'll make a lot more sense now that you have this foundation. Thanks for listening, and we'll catch you next time." }
+    ];
+  </script>
+  <script src="/pod/player.js"></script>
+
+</body>
+</html>

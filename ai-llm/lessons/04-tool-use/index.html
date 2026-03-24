@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 04 - Tool Use &amp; Function Calling</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #f472b6; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>04</span> Tool Use &mdash; Giving the Model Hands</h1>
+    <a href="/ai-llm/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">The model can't browse the web, query databases, or send emails.</strong> But you can give it tools that do. This is what turns a chatbot into an application.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>Mental Model: A Phone and a Rolodex</h2>
+
+    <p>Imagine a brilliant researcher locked in a room with no internet. Alone, they can only answer from memory. But if you give them a phone and a list of contacts (a rolodex), they can call experts, look up databases, and verify facts. The researcher decides <em>who to call and what to ask</em>. You handle the actual dialing.</p>
+
+    <p>That's tool use. You define the tools (functions the model can call). The model decides when and how to call them. Your code executes the functions and feeds the results back.</p>
+
+    <div class="aha">
+      <p><strong>Critical distinction:</strong> The model doesn't execute tools itself. It says "I want to call function X with arguments Y." Your code actually runs the function, gets the result, and sends it back to the model. The model then uses that result to continue its response.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE TOOL USE LOOP                            -->
+    <!-- ============================================ -->
+
+    <h2>The Tool Use Loop</h2>
+
+    <pre><code><span class="comment">// The flow:
+// 1. You send a message + tool definitions
+// 2. Model responds with a tool_use block (instead of text)
+// 3. You execute the tool and send the result back
+// 4. Model uses the result to generate its final answer
+// 5. If the model needs more tools, repeat from step 2</span>
+
+User: "What's the weather in Austin, TX?"
+          ↓
+Model: tool_use → get_weather({ city: "Austin, TX" })
+          ↓
+Your code: calls weather API → { temp: 85, condition: "sunny" }
+          ↓
+Model: "It's currently 85°F and sunny in Austin, TX."</code></pre>
+
+    <!-- ============================================ -->
+    <!-- DEFINING TOOLS                               -->
+    <!-- ============================================ -->
+
+    <h2>Defining Tools</h2>
+
+    <p>Tools are defined as JSON schemas in the API call. Each tool has a name, description, and input schema:</p>
+
+    <pre><code>const tools = [
+  {
+    name: "search_articles",
+    description: "Search the newspaper's article archive by keyword, date range, or author. Returns matching article titles and snippets.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Search keywords or phrase"
+        },
+        author: {
+          type: "string",
+          description: "Filter by author name (optional)"
+        },
+        date_from: {
+          type: "string",
+          description: "Start date in YYYY-MM-DD format (optional)"
+        },
+        date_to: {
+          type: "string",
+          description: "End date in YYYY-MM-DD format (optional)"
+        }
+      },
+      required: ["query"]
+    }
+  },
+  {
+    name: "get_article",
+    description: "Retrieve the full text of an article by its ID.",
+    input_schema: {
+      type: "object",
+      properties: {
+        article_id: {
+          type: "string",
+          description: "The unique article identifier"
+        }
+      },
+      required: ["article_id"]
+    }
+  }
+];</code></pre>
+
+    <div class="callout">
+      <p><strong>The description is a prompt.</strong> The model uses the tool description to decide when to use it. Write descriptions like you're explaining the tool to a smart intern: what it does, what it returns, when to use it. Vague descriptions lead to wrong tool choices.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FULL EXAMPLE                                 -->
+    <!-- ============================================ -->
+
+    <h2>Full Example: Article Research Assistant</h2>
+
+    <pre><code>import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic();
+
+<span class="comment">// Your tool implementations</span>
+function searchArticles({ query, author, date_from, date_to }) {
+  <span class="comment">// In production, this queries your database</span>
+  return [
+    { id: "art-001", title: "City Council Approves Budget", date: "2025-01-15", snippet: "The council voted 7-2..." },
+    { id: "art-002", title: "Budget Shortfall Raises Concerns", date: "2025-01-20", snippet: "Critics warn that..." }
+  ];
+}
+
+function getArticle({ article_id }) {
+  return { id: article_id, text: "Full article text here...", author: "Jane Smith", published: "2025-01-15" };
+}
+
+<span class="comment">// Map tool names to functions</span>
+const toolHandlers = {
+  search_articles: searchArticles,
+  get_article: getArticle
+};
+
+<span class="comment">// The conversation loop</span>
+async function chat(userMessage) {
+  let messages = [{ role: "user", content: userMessage }];
+
+  while (true) {
+    const response = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1024,
+      system: "You are a research assistant for investigative journalists. Use the available tools to find and cite specific articles.",
+      tools,
+      messages
+    });
+
+    <span class="comment">// If the model wants to use a tool</span>
+    if (response.stop_reason === "tool_use") {
+      <span class="comment">// Find the tool_use block in the response</span>
+      const toolUse = response.content.find(b =&gt; b.type === "tool_use");
+
+      <span class="comment">// Execute the tool</span>
+      const handler = toolHandlers[toolUse.name];
+      const result = handler(toolUse.input);
+
+      <span class="comment">// Add the model's response + tool result to messages</span>
+      messages.push({ role: "assistant", content: response.content });
+      messages.push({
+        role: "user",
+        content: [{
+          type: "tool_result",
+          tool_use_id: toolUse.id,
+          content: JSON.stringify(result)
+        }]
+      });
+
+      <span class="comment">// Loop back — model will process the result</span>
+      continue;
+    }
+
+    <span class="comment">// Model is done (no more tool calls)</span>
+    const text = response.content.find(b =&gt; b.type === "text");
+    return text?.text;
+  }
+}
+
+const answer = await chat("Find articles about the city budget from January 2025");
+console.log(answer);</code></pre>
+
+    <div class="aha">
+      <p><strong>The loop pattern is everything.</strong> Send message &rarr; check if model wants tools &rarr; execute tools &rarr; send results back &rarr; repeat until the model returns text. This exact pattern powers every AI agent and tool-using application. Master it here; use it everywhere.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MULTI-TOOL CALLS                             -->
+    <!-- ============================================ -->
+
+    <h2>Multiple Tool Calls in One Turn</h2>
+
+    <p>The model can request multiple tools at once. The response content array will have multiple <code>tool_use</code> blocks:</p>
+
+    <pre><code><span class="comment">// Model might respond with:</span>
+response.content = [
+  { type: "text", text: "Let me search for both topics..." },
+  { type: "tool_use", id: "call_1", name: "search_articles", input: { query: "budget" } },
+  { type: "tool_use", id: "call_2", name: "search_articles", input: { query: "zoning" } }
+];
+
+<span class="comment">// You must return a tool_result for EACH tool_use, matching by id</span>
+messages.push({ role: "assistant", content: response.content });
+messages.push({
+  role: "user",
+  content: [
+    { type: "tool_result", tool_use_id: "call_1", content: JSON.stringify(budgetResults) },
+    { type: "tool_result", tool_use_id: "call_2", content: JSON.stringify(zoningResults) }
+  ]
+});</code></pre>
+
+    <!-- ============================================ -->
+    <!-- ERROR HANDLING                               -->
+    <!-- ============================================ -->
+
+    <h2>Error Handling in Tools</h2>
+
+    <pre><code><span class="comment">// If a tool fails, return an error in the tool_result</span>
+messages.push({
+  role: "user",
+  content: [{
+    type: "tool_result",
+    tool_use_id: toolUse.id,
+    content: JSON.stringify({ error: "Article not found" }),
+    is_error: true
+  }]
+});
+
+<span class="comment">// The model will see the error and adapt:
+// "I wasn't able to find that article. Let me try a different search..."</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Always handle errors gracefully.</strong> Don't let your tool throw an unhandled exception. Catch errors and return them as <code>tool_result</code> with <code>is_error: true</code>. The model is surprisingly good at recovering from tool errors and trying alternative approaches.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. Does the model actually execute tool functions?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">No. The model requests a tool call by returning a tool_use block with the function name and arguments. YOUR code executes the function and sends the result back. The model never runs code directly.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What happens after you send a tool result back to the model?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The model processes the result and either (a) makes another tool call if it needs more information, or (b) generates a text response using the tool results. You loop until the model stops requesting tools.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why is the tool description so important?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The model uses the description to decide when and how to use the tool. A vague description leads to wrong tool selection and bad arguments. Write descriptions like you're explaining the tool to a smart colleague.</div>
+      </div>
+
+      <div class="question">
+        <p>4. How do you handle tool errors?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Catch the error in your tool handler, return a tool_result with is_error: true and a description of what went wrong. The model will see the error and adapt its approach.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build a Source Lookup Tool</h4>
+      <p>Create a tool-using script that helps a journalist research a person:</p>
+      <ol>
+        <li>Define a <code>search_person</code> tool that takes a name and returns mock profile data (title, org, recent quotes)</li>
+        <li>Define a <code>search_articles_by_source</code> tool that takes a person's name and returns articles they're quoted in</li>
+        <li>Implement the tool-use loop so the model can chain these together</li>
+        <li>Test with: "What do we know about Mayor Johnson? What articles have we quoted them in?"</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">Use mock data for now. The point is to master the tool-use loop.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/ai-llm/lessons/03-claude-api/">&larr; The Claude API</a>
+      <a href="/ai-llm/lessons/05-embeddings-search/">Lesson 05: Embeddings &amp; Search &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

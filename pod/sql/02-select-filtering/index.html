@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SELECT &amp; Filtering — The Pod</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/shell.css">
+  <link rel="stylesheet" href="/pod/episode.css">
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">The Pod</a>
+      <div class="header-right">
+        <a href="/pod/" class="back-link">&larr; All Episodes</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="episode-page" data-accent="var(--accent-sql)">
+
+    <div class="episode-header">
+      <span class="episode-track-badge sql">SQL &mdash; Episode 02</span>
+      <h1>SELECT &amp; Filtering</h1>
+      <p class="episode-subtitle">WHERE, LIKE, IN, BETWEEN &mdash; the query fundamentals that do 80% of the work.</p>
+      <span class="episode-duration-badge">~9 min</span>
+    </div>
+
+    <div class="player-container">
+      <audio id="episode-audio" preload="metadata">
+        <source src="/audio/sql/02-select-filtering.mp3" type="audio/mpeg">
+      </audio>
+
+      <div class="player">
+        <div class="player-controls">
+          <button class="player-btn skip-btn" id="skip-back" aria-label="Skip back 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+          <button class="player-btn play-btn" id="play-pause" aria-label="Play">
+            <svg class="icon-play" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg class="icon-pause" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <button class="player-btn skip-btn" id="skip-forward" aria-label="Skip forward 15 seconds">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/><text x="12" y="16" text-anchor="middle" fill="currentColor" stroke="none" font-size="8" font-weight="600">15</text></svg>
+          </button>
+        </div>
+
+        <div class="player-progress">
+          <span class="player-time" id="current-time">0:00</span>
+          <div class="progress-bar-container" id="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+            <input type="range" class="progress-scrubber" id="scrubber" min="0" max="1000" value="0" step="1">
+          </div>
+          <span class="player-time" id="duration">0:00</span>
+        </div>
+
+        <div class="player-extras">
+          <div class="speed-control">
+            <button class="speed-btn" id="speed-btn">1x</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="transcript-container">
+      <div class="transcript-header">
+        <h2>Transcript</h2>
+        <button class="auto-scroll-toggle active" id="auto-scroll-toggle" aria-label="Toggle auto-scroll">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          Auto-scroll
+        </button>
+      </div>
+      <div class="transcript" id="transcript"></div>
+    </div>
+
+  </main>
+
+  <footer>
+    <p>The Pod &mdash; part of <a href="/">Learn Coding</a> by Trevor Brown</p>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+
+    const TRANSCRIPT = [
+      { time: 0, text: "Welcome back to The Pod. I'm Alex, and today we're getting hands-on with SQL queries. The SELECT statement is where you'll spend most of your time, so let's really understand it." },
+      { time: 13, text: "I'm Sam, and I love this topic because SELECT is where SQL goes from theory to practice. You're actually asking questions of your data and getting answers back." },
+      { time: 24, text: "The simplest SELECT is SELECT * FROM users. The asterisk means all columns. This gives you every row and every column from the users table. It's great for exploring, but in production you should name specific columns." },
+      { time: 40, text: "Why not use star in production?" },
+      { time: 44, text: "Performance and clarity. SELECT * pulls columns you don't need, which is wasted memory and network bandwidth. It also makes your code fragile. If someone adds a column to the table, your query suddenly returns different data. Always name your columns: SELECT name, email FROM users." },
+      { time: 64, text: "You can also alias columns with AS. SELECT first_name AS name makes the result column called 'name' instead of 'first_name'. Great for making results more readable or matching what your application expects." },
+      { time: 80, text: "Now the WHERE clause. This is how you filter rows. SELECT name FROM users WHERE age > 30 only returns users over 30. The WHERE clause evaluates a condition for each row and only includes rows where it's true." },
+      { time: 98, text: "The comparison operators are what you'd expect: equals (single =, not double), not equals (!=  or <>), greater than, less than, greater than or equal to, less than or equal to. Note that equals is just one = sign, not two like in most programming languages." },
+      { time: 118, text: "You can combine conditions with AND and OR. WHERE age > 30 AND city = 'Denver' returns users who are both over 30 and in Denver. WHERE age > 30 OR city = 'Denver' returns users who match either condition." },
+      { time: 138, text: "Be careful with operator precedence. AND binds tighter than OR, just like multiplication before addition. Use parentheses to be explicit: WHERE (age > 30 OR city = 'Denver') AND active = true. Without parentheses, that query means something different." },
+      { time: 158, text: "Now let's talk about LIKE for pattern matching. WHERE name LIKE 'A%' finds all names starting with A. The percent sign is a wildcard that matches any number of characters. The underscore matches exactly one character." },
+      { time: 176, text: "So LIKE '%son' finds anything ending in 'son'. LIKE '%anna%' finds anything containing 'anna'. LIKE '_o%' finds any string where the second character is 'o'. It's basic pattern matching but it handles a lot of common searches." },
+      { time: 196, text: "IN is one of my favorites. Instead of writing WHERE city = 'Denver' OR city = 'Boulder' OR city = 'Aspen', you write WHERE city IN ('Denver', 'Boulder', 'Aspen'). Much cleaner for checking against a list of values." },
+      { time: 216, text: "BETWEEN is great for ranges. WHERE price BETWEEN 10 AND 50 is the same as WHERE price >= 10 AND price <= 50 but more readable. It works with numbers, dates, and even strings." },
+      { time: 234, text: "For dates specifically, BETWEEN is a lifesaver. WHERE created_at BETWEEN '2024-01-01' AND '2024-12-31' gives you all records from 2024. Clean and obvious." },
+      { time: 248, text: "Let's cover ORDER BY. Results come back in no guaranteed order unless you sort them. ORDER BY name sorts alphabetically. ORDER BY age DESC sorts by age, highest first. You can sort by multiple columns: ORDER BY city, name." },
+      { time: 268, text: "LIMIT restricts how many rows you get back. LIMIT 10 gives you the first 10 results. Combined with ORDER BY, it's how you get 'the top 10' of anything. Top 10 highest-paid employees: ORDER BY salary DESC LIMIT 10." },
+      { time: 286, text: "There's also OFFSET for pagination. LIMIT 10 OFFSET 20 skips the first 20 rows and gives you rows 21 through 30. That's page 3 if you're showing 10 results per page." },
+      { time: 302, text: "DISTINCT removes duplicates from your results. SELECT DISTINCT city FROM users gives you each city only once, even if multiple users live there. It's a quick way to see all unique values in a column." },
+      { time: 318, text: "Let me mention aggregate functions too. COUNT, SUM, AVG, MIN, MAX. SELECT COUNT(*) FROM users tells you how many users there are. SELECT AVG(age) FROM users gives the average age. These work on all rows or on filtered rows with WHERE." },
+      { time: 340, text: "And GROUP BY lets you aggregate per group. SELECT city, COUNT(*) FROM users GROUP BY city shows how many users are in each city. It's like splitting your table into groups and running the aggregate on each group separately." },
+      { time: 358, text: "HAVING is WHERE but for groups. You can't use WHERE on an aggregate. WHERE COUNT(*) > 5 is invalid. Instead you write HAVING COUNT(*) > 5 after GROUP BY. HAVING filters groups like WHERE filters rows." },
+      { time: 376, text: "To recap: SELECT with named columns, WHERE for filtering, LIKE for patterns, IN for lists, BETWEEN for ranges, ORDER BY for sorting, LIMIT for paging, and aggregate functions with GROUP BY for summaries. These tools handle the vast majority of queries you'll ever write." },
+      { time: 398, text: "Next episode, we're connecting tables with JOIN. That's where relational databases really shine. See you there!" }
+    ];
+  </script>
+  <script src="/pod/player.js"></script>
+
+</body>
+</html>

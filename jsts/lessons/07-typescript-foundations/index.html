@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 07 - TypeScript Foundations</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #eab308; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>07</span> TypeScript Foundations &mdash; The Fact-Checker</h1>
+    <a href="/jsts/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">TypeScript is a static analysis tool, not a runtime.</strong> It checks your code before it runs and then disappears. Understanding this boundary &mdash; what types can and cannot do &mdash; is the foundation for everything in lessons 08 and 09.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: The Fact-Checking Desk</h2>
+
+    <p>Every newsroom has a fact-checking desk. Reporters write stories (JavaScript code). The fact-checkers (TypeScript compiler) review every claim before publication. They catch errors like "you said this source is a doctor, but they're actually a dentist" &mdash; or in code terms, "you said this is a <code>string</code>, but it's actually <code>number | undefined</code>."</p>
+
+    <p>But here's the critical thing: <strong>fact-checkers don't change the story</strong>. They flag problems and suggest fixes. The published article (compiled JavaScript) has no trace of the fact-checking process. Types are erased at compile time.</p>
+
+    <div class="aha">
+      <p><strong>Types are erased.</strong> This is the single most important thing to understand about TypeScript. <code>interface User { name: string }</code> does not exist at runtime. You cannot check <code>instanceof User</code>. You cannot log the type. All type information is stripped during compilation. TypeScript is a development-time tool only.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TYPE ANNOTATIONS                             -->
+    <!-- ============================================ -->
+
+    <h2>Type Annotations</h2>
+
+    <pre><code><span class="comment">// Primitives</span>
+const name: string = "Trevor";
+const age: number = 30;
+const active: boolean = true;
+
+<span class="comment">// Arrays</span>
+const tags: string[] = ["JS", "TS"];
+const scores: Array&lt;number&gt; = [98, 87, 92];  <span class="comment">// generic syntax</span>
+
+<span class="comment">// Objects</span>
+const user: { name: string; age: number } = { name: "Trevor", age: 30 };
+
+<span class="comment">// Functions</span>
+function greet(name: string): string {
+  return `Hello, ${name}`;
+}
+
+<span class="comment">// Arrow functions</span>
+const add = (a: number, b: number): number =&gt; a + b;
+
+<span class="comment">// Optional parameters</span>
+function search(query: string, limit?: number): void {
+  <span class="comment">// limit is number | undefined</span>
+}
+</code></pre>
+
+    <h3>Type Inference: Let TypeScript Work</h3>
+
+    <pre><code><span class="comment">// TypeScript infers the type — no annotation needed</span>
+const name = "Trevor";       <span class="comment">// type: "Trevor" (literal type!)</span>
+let name2 = "Trevor";        <span class="comment">// type: string (wider because let can be reassigned)</span>
+const numbers = [1, 2, 3];   <span class="comment">// type: number[]</span>
+const mixed = [1, "two"];    <span class="comment">// type: (string | number)[]</span>
+
+<span class="comment">// Rule: annotate function parameters and return types.</span>
+<span class="comment">// Let inference handle local variables.</span>
+function getUser(id: number): User {
+  <span class="comment">// TypeScript infers types of variables inside the function</span>
+  const name = fetchName(id);  <span class="comment">// inferred from fetchName's return type</span>
+  return { id, name };
+}
+</code></pre>
+
+    <div class="callout">
+      <p><strong>const vs let inference:</strong> <code>const x = "hello"</code> gives type <code>"hello"</code> (literal). <code>let x = "hello"</code> gives type <code>string</code> (wide). This is because <code>const</code> can never be reassigned, so TypeScript narrows to the exact value. This distinction matters when passing values to functions that expect specific literals.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- INTERFACE VS TYPE                            -->
+    <!-- ============================================ -->
+
+    <h2>interface vs type</h2>
+
+    <p>The most common TypeScript question. Here are the real differences:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>interface</h5>
+        <pre><code>interface User {
+  name: string;
+  age: number;
+}
+
+<span class="comment">// Extends via extends</span>
+interface Admin extends User {
+  role: "admin";
+}
+
+<span class="comment">// Declaration merging (UNIQUE)</span>
+interface User {
+  email: string;
+}
+<span class="comment">// User now has name, age, email</span>
+
+<span class="comment">// Only for object shapes</span></code></pre>
+      </div>
+      <div>
+        <h5>type</h5>
+        <pre><code>type User = {
+  name: string;
+  age: number;
+};
+
+<span class="comment">// Extends via intersection</span>
+type Admin = User & {
+  role: "admin";
+};
+
+<span class="comment">// NO declaration merging</span>
+<span class="comment">// type User = { email: string }</span>
+<span class="comment">// Error: Duplicate identifier</span>
+
+<span class="comment">// Can represent ANY type</span>
+type ID = string | number;
+type Fn = () =&gt; void;</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The practical rule:</strong> Use <code>interface</code> for object shapes that might be extended (API responses, component props). Use <code>type</code> for unions, intersections, mapped types, or anything that isn't purely an object shape. In a React/Next.js codebase, <code>interface</code> for props, <code>type</code> for everything else works well.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- UNIONS AND INTERSECTIONS                     -->
+    <!-- ============================================ -->
+
+    <h2>Unions and Intersections</h2>
+
+    <h3>Union Types (OR)</h3>
+
+    <pre><code>type Status = "draft" | "published" | "archived";
+type ID = string | number;
+
+function printId(id: string | number) {
+  <span class="comment">// TypeScript only allows methods common to BOTH types</span>
+  console.log(id.toString());  <span class="comment">// OK (both have toString)</span>
+  console.log(id.toUpperCase());  <span class="comment">// Error! number doesn't have toUpperCase</span>
+}
+</code></pre>
+
+    <h3>Intersection Types (AND)</h3>
+
+    <pre><code>type HasName = { name: string };
+type HasAge = { age: number };
+type Person = HasName & HasAge;
+
+<span class="comment">// Person must have BOTH name AND age</span>
+const trevor: Person = { name: "Trevor", age: 30 };  <span class="comment">// OK</span>
+const bad: Person = { name: "Trevor" };  <span class="comment">// Error: missing age</span>
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- NARROWING                                    -->
+    <!-- ============================================ -->
+
+    <h2>Type Narrowing</h2>
+
+    <p>Narrowing is how you go from a wide type to a specific type. TypeScript understands control flow:</p>
+
+    <pre><code>function process(input: string | number | null) {
+  <span class="comment">// typeof guard</span>
+  if (typeof input === "string") {
+    <span class="comment">// TypeScript KNOWS input is string here</span>
+    return input.toUpperCase();
+  }
+
+  <span class="comment">// Truthiness guard</span>
+  if (!input) {
+    <span class="comment">// TypeScript KNOWS input is null or 0 here</span>
+    return "empty";
+  }
+
+  <span class="comment">// TypeScript KNOWS input is number here (eliminated string and null)</span>
+  return input.toFixed(2);
+}
+</code></pre>
+
+    <h3>Discriminated Unions (The Most Useful Pattern)</h3>
+
+    <pre><code>type Article = {
+  type: "article";
+  title: string;
+  body: string;
+};
+
+type Video = {
+  type: "video";
+  title: string;
+  duration: number;
+};
+
+type Content = Article | Video;
+
+function render(content: Content) {
+  switch (content.type) {
+    case "article":
+      <span class="comment">// TypeScript knows: content is Article</span>
+      return `&lt;p&gt;${content.body}&lt;/p&gt;`;
+    case "video":
+      <span class="comment">// TypeScript knows: content is Video</span>
+      return `&lt;video duration="${content.duration}" /&gt;`;
+  }
+}
+</code></pre>
+
+    <div class="aha">
+      <p><strong>You use this in Next.js already.</strong> Server actions return <code>{ success: true, data: T } | { success: false, error: string }</code>. The <code>success</code> field is the discriminant. Narrowing on it gives you type-safe access to either <code>data</code> or <code>error</code>. Same pattern, different scale.</p>
+    </div>
+
+    <h3>Custom Type Guards</h3>
+
+    <pre><code><span class="comment">// The `is` keyword tells TypeScript what a boolean check means for types</span>
+function isArticle(content: Content): content is Article {
+  return content.type === "article";
+}
+
+function process(content: Content) {
+  if (isArticle(content)) {
+    <span class="comment">// TypeScript knows: content is Article</span>
+    console.log(content.body);
+  }
+}
+</code></pre>
+
+    <!-- ============================================ -->
+    <!-- UTILITY TYPES                                -->
+    <!-- ============================================ -->
+
+    <h2>Essential Utility Types</h2>
+
+    <pre><code>interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: "admin" | "user";
+}
+
+<span class="comment">// Partial — all properties optional</span>
+type UpdateUser = Partial&lt;User&gt;;
+<span class="comment">// { id?: number; name?: string; email?: string; role?: "admin" | "user" }</span>
+
+<span class="comment">// Required — all properties required</span>
+type FullUser = Required&lt;User&gt;;
+
+<span class="comment">// Pick — select specific properties</span>
+type UserPreview = Pick&lt;User, "id" | "name"&gt;;
+<span class="comment">// { id: number; name: string }</span>
+
+<span class="comment">// Omit — exclude specific properties</span>
+type CreateUser = Omit&lt;User, "id"&gt;;
+<span class="comment">// { name: string; email: string; role: "admin" | "user" }</span>
+
+<span class="comment">// Record — object with specific key and value types</span>
+type UserMap = Record&lt;string, User&gt;;
+
+<span class="comment">// ReturnType — extract a function's return type</span>
+type ApiResponse = ReturnType&lt;typeof fetchUser&gt;;
+
+<span class="comment">// Parameters — extract function parameter types as a tuple</span>
+type FetchParams = Parameters&lt;typeof fetch&gt;;
+</code></pre>
+
+    <div class="callout">
+      <p><strong>Next.js pattern:</strong> <code>Omit&lt;ComponentProps, 'className'&gt;</code> is how you create wrapper components that forward all props except the ones you override. <code>Partial&lt;FormData&gt;</code> is how you type form state that fills in incrementally.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STRICT MODE                                  -->
+    <!-- ============================================ -->
+
+    <h2>Strict Mode: The Non-Negotiable</h2>
+
+    <pre><code><span class="comment">// tsconfig.json — always enable strict</span>
+{
+  "compilerOptions": {
+    "strict": true
+    <span class="comment">// This enables ALL of these:</span>
+    <span class="comment">// strictNullChecks — null/undefined are not assignable to other types</span>
+    <span class="comment">// noImplicitAny — error on implicit `any` types</span>
+    <span class="comment">// strictFunctionTypes — stricter function type checking</span>
+    <span class="comment">// strictBindCallApply — strict bind/call/apply typing</span>
+    <span class="comment">// noImplicitThis — error when `this` has an implicit `any` type</span>
+    <span class="comment">// alwaysStrict — emit "use strict" in JS output</span>
+  }
+}
+</code></pre>
+
+    <div class="warning">
+      <p><strong>Never disable <code>strict</code>.</strong> Non-strict TypeScript is barely better than JavaScript. The null checks alone prevent entire categories of runtime errors. If you inherit a non-strict codebase, migrating to strict mode is worth the effort.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Knowledge Check</h4>
+
+      <div class="question">
+        <p>1. Why does <code>const x = "hello"</code> have type <code>"hello"</code> but <code>let x = "hello"</code> has type <code>string</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer"><code>const</code> can never be reassigned, so TypeScript narrows to the literal type <code>"hello"</code>. <code>let</code> can be reassigned to any string, so TypeScript widens to <code>string</code>. This is called "literal widening."</div>
+      </div>
+
+      <div class="question">
+        <p>2. When would you use <code>interface</code> over <code>type</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer">Use <code>interface</code> when: (1) defining object shapes that might be extended by other interfaces, (2) you need declaration merging (rare, but used when augmenting third-party types), (3) defining component props in React. Use <code>type</code> for unions, intersections, mapped types, and non-object types.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What happens to TypeScript types at runtime?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
+        <div class="answer">They are completely erased. All type annotations, interfaces, and type aliases are removed during compilation. The output is plain JavaScript with no type information. This means you cannot use <code>instanceof</code> with interfaces, and you cannot inspect types at runtime. This is called "type erasure."</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Type a REST API Layer</h4>
+      <p>Create types for a blog API. The goal is to make invalid states unrepresentable:</p>
+      <pre><code><span class="comment">// 1. Define a discriminated union for API responses</span>
+type ApiResponse&lt;T&gt; =
+  | { status: "success"; data: T; }
+  | { status: "error"; error: string; code: number; };
+
+<span class="comment">// 2. Define the data models</span>
+interface Article { id: number; title: string; body: string; status: "draft" | "published"; }
+interface Author  { id: number; name: string; articles: Article[]; }
+
+<span class="comment">// 3. Type these functions so TypeScript catches all errors:</span>
+async function fetchArticle(id: number): Promise&lt;ApiResponse&lt;Article&gt;&gt; { ... }
+async function updateArticle(id: number, data: Partial&lt;Omit&lt;Article, "id"&gt;&gt;): Promise&lt;ApiResponse&lt;Article&gt;&gt; { ... }
+
+<span class="comment">// 4. Write a consumer that narrows the response correctly</span>
+const result = await fetchArticle(1);
+if (result.status === "success") {
+  console.log(result.data.title);  <span class="comment">// TypeScript knows data exists</span>
+} else {
+  console.error(result.error);     <span class="comment">// TypeScript knows error exists</span>
+}</code></pre>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/jsts/lessons/06-iterators-generators/">&larr; Iterators &amp; Generators</a>
+      <a href="/jsts/lessons/08-ts-generics/">TypeScript Generics &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

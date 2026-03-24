@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 00 - The Syllabus</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #f97316; }</style>
+  <style>
+    strong { color: var(--text); }
+    em { color: var(--track-color); font-style: normal; font-weight: 400; }
+
+    td:first-child { color: var(--track-color); font-family: var(--mono); font-size: 0.8rem; font-weight: 600; width: 3rem; }
+    td:nth-child(2) { color: var(--text); font-weight: 400; }
+
+    .week-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      padding: 1.25rem 0.5rem 0.35rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .goals {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .goal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+    .goal h4 {
+      font-size: 0.85rem;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+    }
+    .goal p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>00</span> The Syllabus</h1>
+    <a href="/d3/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p>This is not a course you watch. It's a learning environment you <strong>build inside of</strong>. Every lesson, game, sandbox, and AI tutor here was designed around one question: how does my brain actually learn?</p>
+
+    <div class="aha">
+      <p><strong>The rule:</strong> mental models first, syntax second. You won't memorize API signatures here. You'll learn the <em>why</em> behind every function so you can derive the <em>how</em> on the fly.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHAT YOU'LL BE ABLE TO DO                    -->
+    <!-- ============================================ -->
+
+    <h2>What You'll Be Able to Do</h2>
+
+    <p>After 12 lessons, you should be able to:</p>
+
+    <div class="goals">
+      <div class="goal">
+        <h4>Read any D3 code like English</h4>
+        <p>See a block of D3 and immediately understand what it draws, how data flows through it, and why each line exists.</p>
+      </div>
+      <div class="goal">
+        <h4>Build standard charts from memory</h4>
+        <p>Bar, line, scatter, area, pie, donut, map &mdash; without looking anything up.</p>
+      </div>
+      <div class="goal">
+        <h4>Build broadcast-ready dashboards</h4>
+        <p>Election maps, weather overlays, census visualizations &mdash; the kind of thing that goes on TV.</p>
+      </div>
+      <div class="goal">
+        <h4>Integrate D3 into React</h4>
+        <p>Know when D3 should own the DOM, when React should, and how to make them coexist.</p>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HOW LESSONS WORK                             -->
+    <!-- ============================================ -->
+
+    <h2>How Lessons Work</h2>
+
+    <p>Each lesson follows the same structure:</p>
+
+    <ol>
+      <li><strong>Mental model first.</strong> An analogy or concept that makes the new idea click before you see any code.</li>
+      <li><strong>Core concepts.</strong> The 2&ndash;3 things you need to understand deeply. Explained through comparisons to what you already know (React, JS, journalism).</li>
+      <li><strong>Code examples.</strong> Short, focused blocks with inline explanations. Every code block has an "Explain This" button.</li>
+      <li><strong>Live demos.</strong> Interactive SVG right in the lesson &mdash; see the output, tweak the values.</li>
+      <li><strong>Quiz.</strong> Quick checks: "Can you explain this back?" Click to reveal answers.</li>
+      <li><strong>Exercise.</strong> Something to build. Small enough to finish in one sitting, meaty enough to prove understanding.</li>
+    </ol>
+
+    <div class="callout">
+      <p>Every page also has an <strong>AI Tutor</strong> in the corner. It knows which lesson you're on, what concepts you've covered, and can explain things differently if you're stuck.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODELS                            -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Models</h2>
+
+    <p>D3 is hard to learn because the API is huge and the docs assume you already understand the concepts. These analogies are the shortcut:</p>
+
+    <ul>
+      <li><strong>SVG</strong> is a <em>coordinate system</em> &mdash; y goes down, not up. Everything is placed by (x, y).</li>
+      <li><strong>Selections</strong> are <em>jQuery for SVG</em> &mdash; grab elements, chain methods, modify attributes.</li>
+      <li><strong>Data binding</strong> is a <em>wedding seating chart</em> &mdash; match each data point to a seat (DOM element). New guests get added, departed guests get removed.</li>
+      <li><strong>Scales</strong> are <em>translators</em> &mdash; they convert data values (0&ndash;100) into visual values (0px&ndash;500px).</li>
+      <li><strong>Axes</strong> are <em>labels for scales</em> &mdash; they show the human-readable ticks along the edge.</li>
+      <li><strong>Projections</strong> are ways of <em>flattening a globe onto a table</em> &mdash; every method distorts something.</li>
+      <li><strong>Transitions</strong> are <em>CSS animations for SVG attributes</em> &mdash; same idea, different syntax.</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- THE ROADMAP                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Roadmap</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Lesson</th>
+          <th>Core Concept</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="3" class="week-label">Week 1 &mdash; The Foundation</td></tr>
+        <tr>
+          <td>01</td>
+          <td>Pure SVG</td>
+          <td>The coordinate system and basic shapes. No JS.</td>
+        </tr>
+        <tr>
+          <td>02</td>
+          <td>Selections &amp; Data Binding</td>
+          <td>select, selectAll, .data().join() &mdash; D3's core pattern.</td>
+        </tr>
+        <tr>
+          <td>03</td>
+          <td>Scales &amp; Axes</td>
+          <td>Mapping data domains to visual ranges.</td>
+        </tr>
+        <tr>
+          <td>04</td>
+          <td>Shapes &amp; Data Joins</td>
+          <td>Enter/update/exit. The wedding seating chart.</td>
+        </tr>
+        <tr>
+          <td>05</td>
+          <td>Maps &amp; Geography</td>
+          <td>Projections, GeoJSON, TopoJSON.</td>
+        </tr>
+        <tr>
+          <td>06</td>
+          <td>Transitions &amp; Interactivity</td>
+          <td>Animation, easing, tooltips, hover states.</td>
+        </tr>
+        <tr><td colspan="3" class="week-label">Week 2 &mdash; Building Real Things</td></tr>
+        <tr>
+          <td>07</td>
+          <td>Lines &amp; Areas</td>
+          <td>Path generators, time series, curves.</td>
+        </tr>
+        <tr>
+          <td>08</td>
+          <td>Arcs &amp; Pies</td>
+          <td>Donut charts, pie layouts, radial data.</td>
+        </tr>
+        <tr>
+          <td>09</td>
+          <td>Maps Deep Dive</td>
+          <td>Choropleth, TopoJSON merging, broadcast cartography.</td>
+        </tr>
+        <tr>
+          <td>10</td>
+          <td>Advanced Interactivity</td>
+          <td>Brushing, zooming, linked views.</td>
+        </tr>
+        <tr>
+          <td>11</td>
+          <td>D3 + React</td>
+          <td>useRef, useEffect, who owns the DOM.</td>
+        </tr>
+        <tr>
+          <td>12</td>
+          <td>Capstone Dashboard</td>
+          <td>Map + charts + filters. Interview-ready.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- WHAT ELSE IS HERE                            -->
+    <!-- ============================================ -->
+
+    <h2>What Else Is Here</h2>
+
+    <p>Lessons are the core, but the track has more:</p>
+
+    <ul>
+      <li><strong>10 Games</strong> &mdash; shape quiz, code reader, scale calculator, memory match, speed round. Play on your phone while you eat lunch.</li>
+      <li><strong>15 Use Cases</strong> &mdash; live mini-demos of real-world D3 patterns. Election maps, Sankey diagrams, force-directed graphs.</li>
+      <li><strong>28 Code Snippets</strong> &mdash; copy-paste-ready patterns for every common D3 task. Searchable and categorized.</li>
+      <li><strong>9 Sandbox Templates</strong> &mdash; starter files with a visual debugger. Experiment without setup.</li>
+      <li><strong>4 Portfolio Projects</strong> &mdash; interview-ready visualizations with real data: campaign finance, census maps, weather trends, election night.</li>
+      <li><strong>Workstation</strong> &mdash; real data journalism investigations. SAVE America Act, Mail Voting in America.</li>
+      <li><strong>The Pod</strong> &mdash; every lesson as a conversational podcast episode. Learn on the go.</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- PREREQUISITES                                -->
+    <!-- ============================================ -->
+
+    <h2>Prerequisites</h2>
+
+    <p>You should be comfortable with:</p>
+
+    <ul>
+      <li><strong>HTML &amp; CSS</strong> &mdash; you know what a <code>&lt;div&gt;</code> is, how classes work, basic layout.</li>
+      <li><strong>JavaScript fundamentals</strong> &mdash; variables, functions, arrays, objects, arrow functions, <code>.map()</code>, <code>.filter()</code>.</li>
+      <li><strong>The browser dev tools</strong> &mdash; you can inspect elements and read the console.</li>
+    </ul>
+
+    <p>You do <strong>not</strong> need prior experience with D3, SVG, or data visualization. That's what we're here for.</p>
+
+    <div class="aha">
+      <p><strong>Ready?</strong> Start with Lesson 01. No setup required &mdash; the first lesson is pure HTML.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/d3/">&larr; Track Home</a>
+      <a href="/d3/lessons/01-fundamentals/">Lesson 01: Pure SVG &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

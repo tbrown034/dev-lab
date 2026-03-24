@@ -1,0 +1,438 @@
+/* ─── episode.css — Podcast episode page + player + transcript ─── */
+
+/* ─── EPISODE PAGE LAYOUT ─── */
+.episode-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 2rem 5rem;
+}
+
+/* ─── EPISODE HEADER ─── */
+.episode-header {
+  padding: 4rem 0 2.5rem;
+  text-align: center;
+}
+.episode-track-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1.25rem;
+}
+.episode-track-badge.d3 {
+  background: rgba(249,115,22,0.12);
+  color: var(--accent-d3);
+}
+.episode-track-badge.react {
+  background: rgba(6,182,212,0.12);
+  color: var(--accent-react);
+}
+.episode-track-badge.ai {
+  background: rgba(244,114,182,0.12);
+  color: var(--accent-ai);
+}
+.episode-track-badge.django {
+  background: rgba(34,197,94,0.12);
+  color: var(--accent-django);
+}
+.episode-track-badge.sql {
+  background: rgba(59,130,246,0.12);
+  color: var(--accent-sql);
+}
+
+.episode-header h1 {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+.episode-subtitle {
+  font-size: 1rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+  max-width: 500px;
+  margin: 0 auto 1rem;
+}
+.episode-duration-badge {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+/* ─── PLAYER CONTAINER ─── */
+.player-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.player {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ─── PLAYBACK CONTROLS ─── */
+.player-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.player-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, transform 0.1s;
+  padding: 0;
+}
+.player-btn:hover {
+  color: var(--text);
+}
+.player-btn:active {
+  transform: scale(0.92);
+}
+
+.play-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--text) !important;
+  color: var(--bg) !important;
+  transition: transform 0.15s, opacity 0.15s;
+}
+.play-btn:hover {
+  opacity: 0.85;
+  color: var(--bg) !important;
+}
+
+.skip-btn {
+  width: 40px;
+  height: 40px;
+}
+
+/* ─── PROGRESS BAR ─── */
+.player-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.player-time {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 3rem;
+  user-select: none;
+}
+.player-time:last-child {
+  text-align: right;
+}
+
+.progress-bar-container {
+  flex: 1;
+  position: relative;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.1s linear;
+}
+
+/* Track-accent coloring via data-accent on .episode-page */
+.episode-page[data-accent="var(--accent-d3)"] .progress-bar-fill,
+.episode-page[data-accent="var(--accent-d3)"] .transcript-line.active {
+  --player-accent: var(--accent-d3);
+}
+.episode-page[data-accent="var(--accent-react)"] .progress-bar-fill,
+.episode-page[data-accent="var(--accent-react)"] .transcript-line.active {
+  --player-accent: var(--accent-react);
+}
+.episode-page[data-accent="var(--accent-ai)"] .progress-bar-fill,
+.episode-page[data-accent="var(--accent-ai)"] .transcript-line.active {
+  --player-accent: var(--accent-ai);
+}
+.episode-page[data-accent="var(--accent-django)"] .progress-bar-fill,
+.episode-page[data-accent="var(--accent-django)"] .transcript-line.active {
+  --player-accent: var(--accent-django);
+}
+.episode-page[data-accent="var(--accent-sql)"] .progress-bar-fill,
+.episode-page[data-accent="var(--accent-sql)"] .transcript-line.active {
+  --player-accent: var(--accent-sql);
+}
+
+.progress-bar-fill {
+  background: var(--player-accent, var(--accent-d3));
+}
+
+.progress-scrubber {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* Show thumb on hover */
+.progress-bar-container:hover .progress-bar-bg {
+  height: 6px;
+}
+.progress-bar-container:hover .progress-scrubber {
+  opacity: 0;
+}
+
+/* ─── SPEED CONTROL ─── */
+.player-extras {
+  display: flex;
+  justify-content: center;
+}
+
+.speed-btn {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.02em;
+}
+.speed-btn:hover {
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+
+/* ─── TRANSCRIPT ─── */
+.transcript-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.transcript-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.transcript-header h2 {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.auto-scroll-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.auto-scroll-toggle:hover {
+  color: var(--text-dim);
+  border-color: var(--border-hover);
+}
+.auto-scroll-toggle.active {
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+.auto-scroll-toggle.active svg {
+  color: var(--player-accent, var(--accent-d3));
+}
+
+.transcript {
+  max-height: 60vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  padding: 1rem 0;
+
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.transcript::-webkit-scrollbar {
+  width: 6px;
+}
+.transcript::-webkit-scrollbar-track {
+  background: transparent;
+}
+.transcript::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.transcript-line {
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  gap: 1rem;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.3s;
+  border-radius: 0;
+  position: relative;
+}
+.transcript-line:hover {
+  background: var(--surface-2);
+}
+
+.transcript-line .timestamp {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  min-width: 3rem;
+  padding-top: 0.15rem;
+  flex-shrink: 0;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+}
+.transcript-line .text {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--text-muted);
+  transition: color 0.3s;
+}
+
+/* ─── ACTIVE + DIMMED STATES (Apple Music lyrics style) ─── */
+.transcript-line.active .text {
+  color: var(--text);
+  font-weight: 600;
+}
+.transcript-line.active .timestamp {
+  color: var(--player-accent, var(--accent-d3));
+}
+.transcript-line.active {
+  background: var(--surface-2);
+}
+
+/* Dim lines when playing (but not active) */
+.transcript.playing .transcript-line:not(.active) .text {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+.transcript.playing .transcript-line:not(.active):hover .text {
+  opacity: 0.8;
+}
+
+/* ─── FOOTER ─── */
+.episode-page ~ footer {
+  border-top: 1px solid var(--border);
+  padding: 2.5rem 2rem;
+  text-align: center;
+}
+.episode-page ~ footer p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.episode-page ~ footer a {
+  color: var(--accent-d3);
+  text-decoration: none;
+}
+
+/* ─── NO AUDIO FALLBACK ─── */
+.player-container.no-audio {
+  text-align: center;
+  padding: 2rem;
+}
+.player-container.no-audio .player {
+  display: none;
+}
+.no-audio-msg {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+  .episode-page {
+    padding: 0 1.25rem 3rem;
+  }
+  .episode-header {
+    padding: 3rem 0 2rem;
+  }
+  .player-container {
+    padding: 1.25rem 1rem;
+  }
+  .player-controls {
+    gap: 0.75rem;
+  }
+  .play-btn {
+    width: 48px;
+    height: 48px;
+  }
+  .transcript-line {
+    padding: 0.6rem 1rem;
+    gap: 0.75rem;
+  }
+  .transcript-line .text {
+    font-size: 0.85rem;
+  }
+  .transcript {
+    max-height: 50vh;
+  }
+  .transcript-header {
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .player-progress {
+    gap: 0.5rem;
+  }
+  .player-time {
+    font-size: 0.65rem;
+    min-width: 2.5rem;
+  }
+  .transcript-line .timestamp {
+    display: none;
+  }
+}

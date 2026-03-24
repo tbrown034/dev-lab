@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 01 - How LLMs Work</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #f472b6; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>01</span> How LLMs Work &mdash; The Mental Model</h1>
+    <a href="/ai-llm/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">No code in this lesson.</strong> Just concepts. You need to understand what's happening inside the box before you start building on top of it.</p>
+
+    <!-- ============================================ -->
+    <!-- THE AUTOCOMPLETE MENTAL MODEL                -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: Superhuman Autocomplete</h2>
+
+    <p>Every LLM does exactly one thing: <strong>predict the next token</strong>. That's it. When you type "The capital of France is" and Claude responds "Paris," it's not "knowing" geography. It's predicting that "Paris" is the most likely next token based on the patterns it learned during training.</p>
+
+    <div class="aha">
+      <p><strong>This is the single most important concept in this entire course.</strong> Every behavior you see from an LLM &mdash; creative writing, code generation, reasoning, mistakes, hallucinations &mdash; emerges from next-token prediction. If you internalize this, everything else makes sense.</p>
+    </div>
+
+    <p>Think of it like this: your phone's keyboard predicts the next word. An LLM does the same thing, but trained on a significant fraction of all human text, with billions of parameters that capture incredibly nuanced patterns. The difference is scale, not kind.</p>
+
+    <!-- ============================================ -->
+    <!-- TOKENS                                       -->
+    <!-- ============================================ -->
+
+    <h2>Tokens: The Atoms of Language</h2>
+
+    <p>LLMs don't read words. They read <strong>tokens</strong> &mdash; chunks of text that are usually 3&ndash;4 characters long. A word like "understanding" might be split into ["under", "stand", "ing"]. A common word like "the" is a single token.</p>
+
+    <p>Why does this matter?</p>
+
+    <ul>
+      <li><strong>Pricing</strong> &mdash; you pay per token (input + output). Knowing token count helps you estimate costs.</li>
+      <li><strong>Context limits</strong> &mdash; models have a maximum token window (Claude: 200K tokens). That's how much text fits in one conversation.</li>
+      <li><strong>Speed</strong> &mdash; output is generated one token at a time. Longer responses = more time.</li>
+    </ul>
+
+    <div class="callout">
+      <p><strong>Rule of thumb:</strong> 1 token is roughly 3/4 of a word. 100 tokens is roughly 75 words. A full page of text is about 300&ndash;400 tokens. Claude's 200K context window fits roughly a 500-page book.</p>
+    </div>
+
+    <h3>Tokenization in practice</h3>
+
+    <pre><code><span class="comment">// What you type:</span>
+"The journalist investigated the corruption scandal."
+
+<span class="comment">// What the model sees (approximately):</span>
+["The", " journalist", " investigated", " the", " corruption", " scandal", "."]
+
+<span class="comment">// Each token maps to a number (the model works with numbers):</span>
+[464, 28782, 28685, 272, 26164, 24090, 13]</code></pre>
+
+    <p>Notice: spaces are included in tokens. Punctuation is often its own token. Rare words get split into multiple tokens. This is why LLMs sometimes struggle with spelling &mdash; they literally don't see individual letters.</p>
+
+    <div class="aha">
+      <p><strong>Journalism parallel:</strong> Tokenization is like how a wire service breaks a story into standard chunks for transmission. The chunks aren't always where you'd expect the breaks to be, but the system needs them to be consistent and predictable.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ATTENTION                                    -->
+    <!-- ============================================ -->
+
+    <h2>Attention: How the Model "Reads"</h2>
+
+    <p>The breakthrough that made modern LLMs possible is called <strong>attention</strong> (from the 2017 paper "Attention Is All You Need"). Here's the mental model:</p>
+
+    <p>When predicting the next token, the model doesn't just look at the previous word. It looks at <strong>every previous token</strong> and decides how much weight to give each one. Some tokens are highly relevant to the prediction; others aren't.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Without attention (old approach)</h5>
+        <pre><code><span class="comment">// Read left to right, one word at a time
+// By the time you reach the end,
+// you've "forgotten" the beginning</span>
+
+"The reporter who covered the
+ city hall beat for 20 years
+ and won three Pulitzers
+ finally ___"
+
+<span class="comment">// Hard to predict: what was
+// the subject again?</span></code></pre>
+      </div>
+      <div>
+        <h5>With attention (transformer approach)</h5>
+        <pre><code><span class="comment">// Look at ALL tokens at once
+// Weight them by relevance</span>
+
+"The REPORTER who covered the
+ city hall beat for 20 years
+ and won three Pulitzers
+ finally ___"
+
+<span class="comment">// "reporter" gets high attention
+// weight — it's the subject.
+// Prediction: "retired" or "quit"</span></code></pre>
+      </div>
+    </div>
+
+    <p>Attention lets the model connect tokens that are far apart in the text. "The reporter ... finally retired" &mdash; the model gives high weight to "reporter" even though it's 15 tokens back, because it's the grammatical subject.</p>
+
+    <div class="callout">
+      <p><strong>Why this matters for you:</strong> Attention is why prompt structure matters. When you put important instructions at the beginning or end of a prompt, the model can attend to them strongly. When you bury key context in the middle of a long document, attention may be weaker. This directly affects your prompting strategy in Lesson 02.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TRANSFORMERS                                  -->
+    <!-- ============================================ -->
+
+    <h2>Transformers: The Architecture</h2>
+
+    <p>A <strong>transformer</strong> is the neural network architecture that uses attention. It's the "T" in GPT (Generative Pre-trained <em>Transformer</em>). Claude is also a transformer. Here's what you need to know:</p>
+
+    <ol>
+      <li><strong>Input:</strong> Your prompt gets tokenized into numbers.</li>
+      <li><strong>Embedding:</strong> Each token number gets converted into a high-dimensional vector (a list of ~4,000 numbers that represent its meaning).</li>
+      <li><strong>Attention layers:</strong> The vectors pass through many layers of attention (Claude has dozens). Each layer refines the model's understanding of how tokens relate to each other.</li>
+      <li><strong>Output:</strong> The final layer produces a probability distribution over all possible next tokens. The model picks one (or samples randomly from the top candidates).</li>
+      <li><strong>Repeat:</strong> The chosen token is appended to the input, and the whole process runs again for the next token.</li>
+    </ol>
+
+    <div class="aha">
+      <p><strong>Key insight:</strong> The model generates text <em>one token at a time</em>. When Claude writes a 500-word response, it runs this entire process ~375 times. Each time, it "sees" everything it's already written plus your original prompt. This is why streaming exists &mdash; you can show each token as it's generated instead of waiting for the full response.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CONTEXT WINDOWS                              -->
+    <!-- ============================================ -->
+
+    <h2>Context Windows: The Model's Working Memory</h2>
+
+    <p>The <strong>context window</strong> is the total amount of text (in tokens) the model can "see" at once. It includes your system prompt, the conversation history, any documents you've pasted in, AND the model's own response so far.</p>
+
+    <pre><code><span class="comment">// Claude's context window: ~200,000 tokens</span>
+
+[System prompt]           ~500 tokens
+[Conversation history]    ~2,000 tokens
+[Document you pasted]     ~50,000 tokens
+[Claude's response so far] ~1,000 tokens
+─────────────────────────────────────────
+Total used:               ~53,500 tokens
+Remaining:                ~146,500 tokens</code></pre>
+
+    <div class="warning">
+      <p><strong>Critical misconception:</strong> The context window is NOT long-term memory. Every API call starts fresh. The model doesn't "remember" previous conversations unless you explicitly include them in the prompt. When you chat with Claude in a web interface, the UI is sending the entire conversation history with every message.</p>
+    </div>
+
+    <p>Think of it like a desk. The context window is how big the desk is. You can spread out papers (tokens) on it. But when you leave the room and come back, the desk is cleared. If you want to continue, you have to put the papers back out.</p>
+
+    <!-- ============================================ -->
+    <!-- TEMPERATURE AND SAMPLING                     -->
+    <!-- ============================================ -->
+
+    <h2>Temperature: Creativity vs. Precision</h2>
+
+    <p>When the model predicts the next token, it doesn't just pick the #1 most likely option. It produces a probability distribution and <em>samples</em> from it. <strong>Temperature</strong> controls how this sampling works:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>temperature: 0 (deterministic)</h5>
+        <pre><code><span class="comment">// Always picks the highest-
+// probability token.
+// Same input = same output.
+// Good for: fact extraction,
+// classification, structured data</span>
+
+"The capital of France is ___"
+→ "Paris" (100% of the time)</code></pre>
+      </div>
+      <div>
+        <h5>temperature: 1 (creative)</h5>
+        <pre><code><span class="comment">// Samples more broadly from
+// the probability distribution.
+// Same input = varied output.
+// Good for: creative writing,
+// brainstorming, diverse suggestions</span>
+
+"Write a headline about ___"
+→ Different every time</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Practical rule:</strong> Use <code>temperature: 0</code> for tasks where you want consistency (data extraction, classification, code generation). Use <code>temperature: 0.7&ndash;1.0</code> for creative tasks (writing, brainstorming). You'll set this in the API calls starting in Lesson 03.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TRAINING                                     -->
+    <!-- ============================================ -->
+
+    <h2>How Models Are Trained (The 30-Second Version)</h2>
+
+    <p>Training happens in phases:</p>
+
+    <ol>
+      <li><strong>Pre-training:</strong> The model reads a massive amount of text (books, websites, code, articles) and learns to predict the next token. This gives it general language understanding and knowledge. Takes months on thousands of GPUs.</li>
+      <li><strong>Fine-tuning (RLHF):</strong> Human raters rank model responses from best to worst. The model is adjusted to produce responses humans prefer. This is what makes Claude helpful and safe rather than just a raw text predictor.</li>
+      <li><strong>The cutoff:</strong> The model's knowledge stops at its training data cutoff. It doesn't know about events after that date unless you tell it in the prompt.</li>
+    </ol>
+
+    <div class="aha">
+      <p><strong>Journalism parallel:</strong> Pre-training is like a reporter reading every newspaper ever published. Fine-tuning is like an editor teaching them the house style, what's publishable, and what's not. The cutoff is why you always need to fact-check &mdash; the model's "knowledge" is frozen at a point in time.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HALLUCINATIONS                               -->
+    <!-- ============================================ -->
+
+    <h2>Hallucinations: Why Models Make Stuff Up</h2>
+
+    <p>LLMs sometimes generate text that sounds authoritative but is factually wrong. This isn't a bug &mdash; it's a fundamental consequence of how they work:</p>
+
+    <ul>
+      <li>The model predicts the <em>most likely</em> next token. Sometimes "most likely" is wrong.</li>
+      <li>It has no internal fact-checker. It doesn't "know" things the way a database does.</li>
+      <li>It fills in gaps with plausible-sounding text, just like a student writing an essay about a book they skimmed.</li>
+    </ul>
+
+    <p>This is why lessons 05&ndash;06 (embeddings and RAG) exist. The solution to hallucination is to <strong>give the model the actual source material</strong> instead of relying on what it "remembers" from training.</p>
+
+    <div class="warning">
+      <p><strong>For journalists, this is critical.</strong> Never publish AI-generated facts without verification. Use AI to draft, summarize, and surface leads &mdash; but always verify against primary sources. Lesson 11 covers the full ethical framework.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MODELS LANDSCAPE                             -->
+    <!-- ============================================ -->
+
+    <h2>The Model Landscape (2025)</h2>
+
+    <table>
+      <tr><th>Model</th><th>Provider</th><th>Key Strength</th></tr>
+      <tr><td>Claude</td><td>Anthropic</td><td>Long context (200K), tool use, safety, coding</td></tr>
+      <tr><td>GPT-4o</td><td>OpenAI</td><td>Multimodal, fast, broad capabilities</td></tr>
+      <tr><td>Gemini</td><td>Google</td><td>Very long context (1M+), multimodal</td></tr>
+      <tr><td>Llama</td><td>Meta</td><td>Open weights, self-hostable, fine-tunable</td></tr>
+      <tr><td>Mistral</td><td>Mistral AI</td><td>Efficient, open models, EU-based</td></tr>
+    </table>
+
+    <p>This course uses the <strong>Anthropic/Claude API</strong> for all code examples. The concepts (prompting, tool use, RAG, agents) transfer to any provider.</p>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What does an LLM actually do, at the most fundamental level?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It predicts the next token based on all the tokens before it. Everything else (conversation, reasoning, code generation) emerges from this one operation repeated millions of times.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What's the approximate relationship between tokens and words?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">1 token is roughly 3/4 of a word, or about 3-4 characters. 100 tokens is about 75 words.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why does attention matter for prompt engineering?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Attention determines how much weight the model gives to different parts of your prompt. Important instructions should be positioned where they get strong attention (beginning or end). Context buried in the middle of long documents may get weaker attention.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Does Claude "remember" your previous conversations?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">No. Each API call starts with an empty context window. The chat interface creates the illusion of memory by sending the full conversation history with every message. The model has no persistent memory between calls.</div>
+      </div>
+
+      <div class="question">
+        <p>5. When should you use temperature 0 vs. temperature 1?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Temperature 0 for deterministic tasks (data extraction, classification, factual Q&A). Temperature 0.7-1.0 for creative tasks (writing, brainstorming). Higher temperature = more randomness in token selection.</div>
+      </div>
+
+      <div class="question">
+        <p>6. Why do LLMs hallucinate?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because they predict the most likely next token, not the most truthful one. They have no internal fact-checker. They fill in gaps with plausible-sounding text. The solution is RAG: giving the model actual source material to reference.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Token Estimation</h4>
+      <p>Before you touch the API, practice thinking in tokens:</p>
+      <ol>
+        <li>Take one of your published articles (or any 1,000-word article).</li>
+        <li>Estimate how many tokens it contains using the 3/4 rule.</li>
+        <li>If you sent this article as context + a 200-word prompt + received a 500-word response, estimate the total tokens consumed.</li>
+        <li>At $3 per million input tokens and $15 per million output tokens (Claude Sonnet pricing), estimate the cost of that single API call.</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">This exercise grounds the abstract concepts in real numbers you'll work with every day.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/ai-llm/lessons/00-syllabus/">&larr; The Syllabus</a>
+      <a href="/ai-llm/lessons/02-prompt-engineering/">Lesson 02: Prompt Engineering &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

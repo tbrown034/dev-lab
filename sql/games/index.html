@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SQL Games & Quizzes - Learn SQL</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.25rem; font-weight: 600; }
+    .header h1 span { color: #3b82f6; }
+    .header .meta { color: #888; font-size: 0.8rem; }
+    .header .meta a { color: #3b82f6; text-decoration: none; }
+
+    /* ── Tab Bar ── */
+    .tab-bar {
+      display: flex;
+      gap: 0.35rem;
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-bottom: 1px solid #222;
+      scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      flex-shrink: 0;
+      padding: 0.55rem 0.85rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #aaa;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+    .tab-btn:hover { border-color: #555; color: #ddd; }
+    .tab-btn.active {
+      background: #3b82f6;
+      color: #000;
+      border-color: #3b82f6;
+      font-weight: 600;
+    }
+
+    /* ── Game Panels ── */
+    .game-panel {
+      display: none;
+      padding: 1.25rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .game-panel.active { display: block; }
+
+    .game-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    .game-subtitle {
+      color: #888;
+      font-size: 0.82rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Score Bar ── */
+    .score-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .score-item {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 6px;
+      padding: 0.5rem 0.85rem;
+      font-size: 0.82rem;
+    }
+    .score-item .label { color: #888; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .score-item .value { color: #3b82f6; font-weight: 600; font-size: 1.1rem; }
+    .score-item .value.green { color: #4ade80; }
+    .score-item .value.purple { color: #818cf8; }
+    .score-item .value.pink { color: #f472b6; }
+
+    /* ── Question Card ── */
+    .question-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .question-card pre {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 6px;
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #ddd;
+      font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+      margin: 0.75rem 0;
+    }
+    .question-card .prompt {
+      font-size: 0.9rem;
+      color: #ccc;
+      margin-bottom: 0.75rem;
+      line-height: 1.5;
+    }
+
+    /* ── Table Display ── */
+    .table-display {
+      margin: 0.75rem 0;
+      overflow-x: auto;
+    }
+    .table-display table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .table-display th {
+      background: #1a1a1a;
+      color: #3b82f6;
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      border: 1px solid #222;
+      font-weight: 600;
+    }
+    .table-display td {
+      padding: 0.4rem 0.75rem;
+      border: 1px solid #222;
+      color: #ccc;
+    }
+    .table-display tr:nth-child(even) td { background: #111; }
+
+    /* ── Choice Buttons ── */
+    .choices {
+      display: grid;
+      gap: 0.6rem;
+    }
+    .choices.two-col {
+      grid-template-columns: 1fr 1fr;
+    }
+    .choice-btn {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      color: #ddd;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+      min-height: 48px;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+    }
+    .choice-btn:hover { border-color: #555; background: #222; }
+    .choice-btn:active { transform: scale(0.98); }
+    .choice-btn.correct {
+      border-color: #4ade80;
+      background: #4ade8015;
+      color: #4ade80;
+    }
+    .choice-btn.wrong {
+      border-color: #ef4444;
+      background: #ef444415;
+      color: #ef4444;
+    }
+    .choice-btn:disabled { cursor: default; opacity: 0.85; }
+    .choice-btn code {
+      font-family: 'JetBrains Mono', 'SF Mono', monospace;
+      font-size: 0.8rem;
+    }
+
+    /* ── Explanation Box ── */
+    .explanation {
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 0.75rem;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      color: #ccc;
+      display: none;
+    }
+    .explanation.show { display: block; }
+    .explanation strong { color: #4ade80; }
+
+    /* ── Next Button ── */
+    .next-btn {
+      display: none;
+      width: 100%;
+      padding: 0.85rem;
+      background: #3b82f6;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 0.75rem;
+      min-height: 48px;
+      transition: background 0.15s;
+    }
+    .next-btn:hover { background: #60a5fa; }
+    .next-btn.show { display: block; }
+
+    /* ── Build Order ── */
+    .build-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .build-step {
+      background: #1a1a1a;
+      border: 2px solid #333;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+    }
+    .build-step:hover { border-color: #555; }
+    .build-step.selected {
+      border-color: #3b82f6;
+      background: #3b82f610;
+      color: #3b82f6;
+    }
+    .build-step.correct-order {
+      border-color: #4ade80;
+      background: #4ade8010;
+      color: #4ade80;
+      cursor: default;
+    }
+    .build-step.wrong-order {
+      border-color: #ef4444;
+      background: #ef444410;
+      color: #ef4444;
+    }
+    .step-number {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #333;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-right: 0.75rem;
+      flex-shrink: 0;
+    }
+    .build-step.correct-order .step-number {
+      background: #4ade80;
+      color: #000;
+    }
+
+    /* ── Speed Round ── */
+    .speed-timer {
+      font-size: 2rem;
+      font-weight: 600;
+      text-align: center;
+      color: #3b82f6;
+      margin: 0.5rem 0;
+    }
+    .speed-timer.danger { color: #ef4444; }
+    .tf-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+    .tf-btn {
+      padding: 1.25rem;
+      border-radius: 8px;
+      border: 2px solid;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 60px;
+      transition: all 0.1s;
+    }
+    .tf-btn.true-btn {
+      background: #4ade8015;
+      border-color: #4ade80;
+      color: #4ade80;
+    }
+    .tf-btn.false-btn {
+      background: #ef444415;
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+    .tf-btn:active { transform: scale(0.96); }
+
+    /* ── Start / Reset ── */
+    .start-btn {
+      width: 100%;
+      padding: 1rem;
+      background: #3b82f6;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 48px;
+      margin: 1rem 0;
+    }
+    .start-btn:hover { background: #60a5fa; }
+
+    /* ── Progress bar ── */
+    .progress-bar {
+      height: 4px;
+      background: #222;
+      border-radius: 2px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: #3b82f6;
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .header { padding: 0.75rem 1rem; }
+      .game-panel { padding: 1rem; }
+      .question-card pre { font-size: 0.72rem; padding: 0.75rem; }
+      .choices.two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>SQL <span>Games</span></h1>
+    <div class="meta"><a href="/sql/">Home</a></div>
+  </div>
+
+  <div class="tab-bar" id="tabBar"></div>
+
+  <!-- All 10 game panels -->
+  <div class="game-panel" id="panel-query">
+    <div class="game-title">Query Builder</div>
+    <div class="game-subtitle">Pick the correct SQL query for the description</div>
+    <div class="score-bar" id="query-score"></div>
+    <div class="progress-bar"><div class="fill" id="query-progress"></div></div>
+    <div class="question-card" id="query-question"></div>
+    <div class="choices" id="query-choices"></div>
+    <div class="explanation" id="query-explanation"></div>
+    <button class="next-btn" id="query-next">Next Query</button>
+  </div>
+
+  <div class="game-panel" id="panel-joins">
+    <div class="game-title">JOIN Visualizer Quiz</div>
+    <div class="game-subtitle">Which JOIN type produces this result?</div>
+    <div class="score-bar" id="joins-score"></div>
+    <div class="progress-bar"><div class="fill" id="joins-progress"></div></div>
+    <div class="question-card" id="joins-question"></div>
+    <div class="choices" id="joins-choices"></div>
+    <div class="explanation" id="joins-explanation"></div>
+    <button class="next-btn" id="joins-next">Next JOIN</button>
+  </div>
+
+  <div class="game-panel" id="panel-agg">
+    <div class="game-title">Aggregate Function Match</div>
+    <div class="game-subtitle">Which aggregate function returns this result?</div>
+    <div class="score-bar" id="agg-score"></div>
+    <div class="progress-bar"><div class="fill" id="agg-progress"></div></div>
+    <div class="question-card" id="agg-question"></div>
+    <div class="choices" id="agg-choices"></div>
+    <div class="explanation" id="agg-explanation"></div>
+    <button class="next-btn" id="agg-next">Next Function</button>
+  </div>
+
+  <div class="game-panel" id="panel-where">
+    <div class="game-title">WHERE Clause Challenge</div>
+    <div class="game-subtitle">What rows does this WHERE clause select?</div>
+    <div class="score-bar" id="where-score"></div>
+    <div class="progress-bar"><div class="fill" id="where-progress"></div></div>
+    <div class="question-card" id="where-question"></div>
+    <div class="choices" id="where-choices"></div>
+    <div class="explanation" id="where-explanation"></div>
+    <button class="next-btn" id="where-next">Next Clause</button>
+  </div>
+
+  <div class="game-panel" id="panel-normal">
+    <div class="game-title">Normalization Detective</div>
+    <div class="game-subtitle">What normalization form violation does this table have?</div>
+    <div class="score-bar" id="normal-score"></div>
+    <div class="progress-bar"><div class="fill" id="normal-progress"></div></div>
+    <div class="question-card" id="normal-question"></div>
+    <div class="choices" id="normal-choices"></div>
+    <div class="explanation" id="normal-explanation"></div>
+    <button class="next-btn" id="normal-next">Next Table</button>
+  </div>
+
+  <div class="game-panel" id="panel-index">
+    <div class="game-title">Index Strategy Quiz</div>
+    <div class="game-subtitle">When should you add an index?</div>
+    <div class="score-bar" id="index-score"></div>
+    <div class="progress-bar"><div class="fill" id="index-progress"></div></div>
+    <div class="question-card" id="index-question"></div>
+    <div class="choices" id="index-choices"></div>
+    <div class="explanation" id="index-explanation"></div>
+    <button class="next-btn" id="index-next">Next Scenario</button>
+  </div>
+
+  <div class="game-panel" id="panel-window">
+    <div class="game-title">Window Function Builder</div>
+    <div class="game-subtitle">Pick the right window function for the task</div>
+    <div class="score-bar" id="window-score"></div>
+    <div class="progress-bar"><div class="fill" id="window-progress"></div></div>
+    <div class="question-card" id="window-question"></div>
+    <div class="choices" id="window-choices"></div>
+    <div class="explanation" id="window-explanation"></div>
+    <button class="next-btn" id="window-next">Next Function</button>
+  </div>
+
+  <div class="game-panel" id="panel-prisma">
+    <div class="game-title">SQL vs Prisma Translator</div>
+    <div class="game-subtitle">Translate between raw SQL and Prisma ORM</div>
+    <div class="score-bar" id="prisma-score"></div>
+    <div class="progress-bar"><div class="fill" id="prisma-progress"></div></div>
+    <div class="question-card" id="prisma-question"></div>
+    <div class="choices" id="prisma-choices"></div>
+    <div class="explanation" id="prisma-explanation"></div>
+    <button class="next-btn" id="prisma-next">Next Translation</button>
+  </div>
+
+  <div class="game-panel" id="panel-schema">
+    <div class="game-title">Schema Design Challenge</div>
+    <div class="game-subtitle">Design the right schema for the requirement</div>
+    <div class="score-bar" id="schema-score"></div>
+    <div class="progress-bar"><div class="fill" id="schema-progress"></div></div>
+    <div class="question-card" id="schema-question"></div>
+    <div class="choices" id="schema-choices"></div>
+    <div class="explanation" id="schema-explanation"></div>
+    <button class="next-btn" id="schema-next">Next Design</button>
+  </div>
+
+  <div class="game-panel" id="panel-optimize">
+    <div class="game-title">Query Optimizer</div>
+    <div class="game-subtitle">Put query optimization steps in the correct order</div>
+    <div class="score-bar" id="optimize-score"></div>
+    <div class="question-card" id="optimize-question"></div>
+    <div class="build-steps" id="optimize-steps"></div>
+    <div class="explanation" id="optimize-explanation"></div>
+    <button class="next-btn" id="optimize-next">Next Scenario</button>
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+  <script>
+    // ═══════════════════════════════════════
+    //  TAB SYSTEM
+    // ═══════════════════════════════════════
+    const tabs = [
+      { id: 'query', label: 'Query Builder' },
+      { id: 'joins', label: 'JOINs' },
+      { id: 'agg', label: 'Aggregates' },
+      { id: 'where', label: 'WHERE' },
+      { id: 'normal', label: 'Normalize' },
+      { id: 'index', label: 'Indexes' },
+      { id: 'window', label: 'Window Fn' },
+      { id: 'prisma', label: 'SQL vs Prisma' },
+      { id: 'schema', label: 'Schema' },
+      { id: 'optimize', label: 'Optimizer' },
+    ];
+
+    const tabBar = document.getElementById('tabBar');
+    let activeTab = localStorage.getItem('sql-games-tab') || 'query';
+
+    tabs.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'tab-btn' + (t.id === activeTab ? ' active' : '');
+      btn.textContent = t.label;
+      btn.dataset.tab = t.id;
+      btn.addEventListener('click', () => switchTab(t.id));
+      tabBar.appendChild(btn);
+    });
+
+    function switchTab(id) {
+      activeTab = id;
+      localStorage.setItem('sql-games-tab', id);
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+      document.querySelectorAll('.game-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
+      if (id === 'query' && !queryStarted) initQuery();
+      if (id === 'joins' && !joinsStarted) initJoins();
+      if (id === 'agg' && !aggStarted) initAgg();
+      if (id === 'where' && !whereStarted) initWhere();
+      if (id === 'normal' && !normalStarted) initNormal();
+      if (id === 'index' && !indexStarted) initIndex();
+      if (id === 'window' && !windowStarted) initWindow();
+      if (id === 'prisma' && !prismaStarted) initPrisma();
+      if (id === 'schema' && !schemaStarted) initSchema();
+      if (id === 'optimize' && !optimizeStarted) initOptimize();
+    }
+
+    // ── Helpers ──
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+    function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+    function renderScore(containerId, items) {
+      const c = document.getElementById(containerId);
+      c.innerHTML = items.map(it =>
+        `<div class="score-item"><div class="label">${it.label}</div><div class="value ${it.cls || ''}">${it.value}</div></div>`
+      ).join('');
+    }
+    function saveHigh(key, val) {
+      const prev = parseInt(localStorage.getItem(key) || '0');
+      if (val > prev) localStorage.setItem(key, val);
+      return Math.max(prev, val);
+    }
+    function getHigh(key) { return parseInt(localStorage.getItem(key) || '0'); }
+    function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function makeQuiz(gameId, questions) {
+      let started = false;
+      let idx = 0, correct = 0, streak = 0, best = getHigh(`sql-${gameId}-best`);
+
+      function init() {
+        started = true;
+        idx = 0;
+        correct = 0;
+        streak = 0;
+        showQuestion();
+      }
+
+      function showQuestion() {
+        const q = questions[idx];
+        const questionEl = document.getElementById(`${gameId}-question`);
+        let html = '';
+        if (q.prompt) html += `<div class="prompt">${q.prompt}</div>`;
+        if (q.code) html += `<pre>${escHtml(q.code)}</pre>`;
+        if (q.table) html += q.table;
+        questionEl.innerHTML = html;
+
+        const options = shuffle([q.answer, ...q.wrong]);
+        const choicesEl = document.getElementById(`${gameId}-choices`);
+        choicesEl.innerHTML = '';
+        document.getElementById(`${gameId}-explanation`).classList.remove('show');
+        document.getElementById(`${gameId}-next`).classList.remove('show');
+
+        const progressEl = document.getElementById(`${gameId}-progress`);
+        if (progressEl) progressEl.style.width = `${((idx) / questions.length) * 100}%`;
+
+        options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'choice-btn';
+          btn.innerHTML = opt.includes('`') ? opt.replace(/`([^`]+)`/g, '<code>$1</code>') : opt;
+          btn.addEventListener('click', () => handleAnswer(opt, q, choicesEl));
+          choicesEl.appendChild(btn);
+        });
+
+        renderScore(`${gameId}-score`, [
+          { label: 'Score', value: `${correct}/${questions.length}` },
+          { label: 'Streak', value: streak, cls: 'green' },
+          { label: 'Best', value: best, cls: 'purple' },
+        ]);
+      }
+
+      function handleAnswer(picked, q, container) {
+        const btns = container.querySelectorAll('.choice-btn');
+        btns.forEach(b => {
+          b.disabled = true;
+          const text = b.textContent;
+          if (text === q.answer || b.innerHTML.replace(/<[^>]+>/g, '').trim() === q.answer.replace(/`/g, '').trim()) b.classList.add('correct');
+        });
+        if (picked === q.answer) {
+          correct++;
+          streak++;
+          best = saveHigh(`sql-${gameId}-best`, streak);
+        } else {
+          streak = 0;
+          btns.forEach(b => {
+            const text = b.textContent;
+            if (text === picked || b.innerHTML.replace(/<[^>]+>/g, '').trim() === picked.replace(/`/g, '').trim()) {
+              b.classList.add('wrong');
+            }
+          });
+        }
+        const exp = document.getElementById(`${gameId}-explanation`);
+        exp.innerHTML = `<strong>${escHtml(q.answer)}</strong> &mdash; ${q.explain}`;
+        exp.classList.add('show');
+        document.getElementById(`${gameId}-next`).classList.add('show');
+
+        const progressEl = document.getElementById(`${gameId}-progress`);
+        if (progressEl) progressEl.style.width = `${((idx + 1) / questions.length) * 100}%`;
+
+        renderScore(`${gameId}-score`, [
+          { label: 'Score', value: `${correct}/${questions.length}` },
+          { label: 'Streak', value: streak, cls: 'green' },
+          { label: 'Best', value: best, cls: 'purple' },
+        ]);
+      }
+
+      document.getElementById(`${gameId}-next`).addEventListener('click', () => {
+        idx++;
+        if (idx >= questions.length) { idx = 0; correct = 0; streak = 0; }
+        showQuestion();
+      });
+
+      return { init, isStarted: () => started };
+    }
+
+
+    // ═══════════════════════════════════════
+    //  1. QUERY BUILDER
+    // ═══════════════════════════════════════
+    let queryStarted = false;
+    const queryQuestions = [
+      {
+        prompt: 'Select all articles published after January 1, 2024:',
+        answer: "SELECT * FROM articles WHERE pub_date > '2024-01-01'",
+        wrong: [
+          "SELECT * FROM articles WHERE pub_date AFTER '2024-01-01'",
+          "SELECT * FROM articles HAVING pub_date > '2024-01-01'",
+          "GET ALL FROM articles WHERE date > '2024-01-01'",
+        ],
+        explain: 'WHERE filters rows before grouping. Use > for "after" date comparisons. HAVING is for filtering groups after GROUP BY.'
+      },
+      {
+        prompt: 'Count articles by category, showing only categories with more than 5 articles:',
+        answer: 'SELECT category, COUNT(*) AS cnt FROM articles GROUP BY category HAVING cnt > 5',
+        wrong: [
+          'SELECT category, COUNT(*) FROM articles WHERE COUNT(*) > 5 GROUP BY category',
+          'SELECT category, COUNT(*) FROM articles GROUP BY category WHERE count > 5',
+          'SELECT category, SUM(1) FROM articles GROUP BY category FILTER count > 5',
+        ],
+        explain: 'HAVING filters after GROUP BY. WHERE cannot use aggregate functions. The alias cnt makes the HAVING clause readable.'
+      },
+      {
+        prompt: 'Get the top 10 most-viewed articles:',
+        answer: 'SELECT title, view_count FROM articles ORDER BY view_count DESC LIMIT 10',
+        wrong: [
+          'SELECT TOP 10 title, view_count FROM articles ORDER BY view_count',
+          'SELECT title, view_count FROM articles ORDER BY view_count LIMIT 10',
+          'SELECT title, view_count FROM articles LIMIT 10 ORDER BY view_count DESC',
+        ],
+        explain: 'ORDER BY DESC sorts highest first. LIMIT restricts output rows. LIMIT must come after ORDER BY. TOP is SQL Server syntax.'
+      },
+      {
+        prompt: 'Find articles that have no comments:',
+        answer: 'SELECT a.title FROM articles a LEFT JOIN comments c ON a.id = c.article_id WHERE c.id IS NULL',
+        wrong: [
+          'SELECT title FROM articles WHERE comments = 0',
+          'SELECT title FROM articles WHERE comments IS EMPTY',
+          'SELECT title FROM articles HAVING COUNT(comments) = 0',
+        ],
+        explain: 'LEFT JOIN keeps all articles; IS NULL finds those with no matching comment. This is the "anti-join" pattern.'
+      },
+      {
+        prompt: 'Insert a new article into the database:',
+        answer: "INSERT INTO articles (title, author_id, status) VALUES ('Breaking News', 1, 'draft')",
+        wrong: [
+          "ADD TO articles (title, author_id, status) VALUES ('Breaking News', 1, 'draft')",
+          "INSERT articles SET title='Breaking News', author_id=1, status='draft'",
+          "CREATE ROW articles (title='Breaking News', author_id=1, status='draft')",
+        ],
+        explain: 'INSERT INTO ... VALUES is the standard SQL syntax. Column list is optional but recommended for clarity.'
+      },
+      {
+        prompt: 'Update the status of all draft articles to published:',
+        answer: "UPDATE articles SET status = 'published' WHERE status = 'draft'",
+        wrong: [
+          "MODIFY articles SET status = 'published' WHERE status = 'draft'",
+          "UPDATE articles WHERE status = 'draft' SET status = 'published'",
+          "SET articles.status = 'published' WHERE status = 'draft'",
+        ],
+        explain: 'UPDATE ... SET ... WHERE is the standard syntax. SET comes before WHERE. Without WHERE, all rows would be updated.'
+      },
+      {
+        prompt: 'Get distinct author names from the articles table:',
+        answer: 'SELECT DISTINCT author_name FROM articles',
+        wrong: [
+          'SELECT UNIQUE author_name FROM articles',
+          'SELECT author_name FROM articles GROUP BY 1 DISTINCT',
+          'SELECT author_name FROM articles REMOVE DUPLICATES',
+        ],
+        explain: 'DISTINCT eliminates duplicate values. UNIQUE is a constraint keyword, not a SELECT modifier.'
+      },
+      {
+        prompt: 'Find articles where the title contains "election":',
+        answer: "SELECT * FROM articles WHERE title LIKE '%election%'",
+        wrong: [
+          "SELECT * FROM articles WHERE title CONTAINS 'election'",
+          "SELECT * FROM articles WHERE title = '*election*'",
+          "SELECT * FROM articles WHERE SEARCH(title, 'election')",
+        ],
+        explain: "LIKE with % wildcards performs pattern matching. %election% matches 'election' anywhere in the string."
+      },
+      {
+        prompt: 'Delete all articles older than one year:',
+        answer: "DELETE FROM articles WHERE pub_date < NOW() - INTERVAL '1 year'",
+        wrong: [
+          "REMOVE FROM articles WHERE pub_date < LAST_YEAR()",
+          "DELETE articles WHERE age(pub_date) > 1",
+          "DROP FROM articles WHERE pub_date < YEAR_AGO()",
+        ],
+        explain: "DELETE FROM with WHERE selectively removes rows. INTERVAL arithmetic is standard SQL for date math."
+      },
+      {
+        prompt: 'Create a table with a foreign key relationship:',
+        answer: 'CREATE TABLE comments (id SERIAL PRIMARY KEY, article_id INT REFERENCES articles(id), body TEXT)',
+        wrong: [
+          'CREATE TABLE comments (id SERIAL PRIMARY KEY, article_id INT FOREIGN KEY articles, body TEXT)',
+          'CREATE TABLE comments (id SERIAL, article_id INT LINK articles(id), body TEXT)',
+          'NEW TABLE comments (id AUTO_INCREMENT, article_id INT -> articles(id), body TEXT)',
+        ],
+        explain: 'REFERENCES creates a foreign key constraint inline. SERIAL auto-generates sequential IDs. PRIMARY KEY ensures uniqueness.'
+      },
+    ];
+
+    const queryGame = makeQuiz('query', queryQuestions);
+    function initQuery() { queryStarted = true; queryGame.init(); }
+
+
+    // ═══════════════════════════════════════
+    //  2. JOIN VISUALIZER QUIZ
+    // ═══════════════════════════════════════
+    let joinsStarted = false;
+    const joinsQuestions = [
+      {
+        prompt: 'You have two tables. The query returns only rows that have matches in BOTH tables.',
+        table: '<div class="table-display"><table><tr><th>authors (3 rows)</th><th>articles (5 rows)</th><th>Result (4 rows)</th></tr><tr><td>Alice</td><td>Alice\'s Post 1</td><td>Alice - Post 1</td></tr><tr><td>Bob</td><td>Alice\'s Post 2</td><td>Alice - Post 2</td></tr><tr><td>Charlie</td><td>Bob\'s Post 1</td><td>Bob - Post 1</td></tr><tr><td></td><td>Bob\'s Post 2</td><td>Bob - Post 2</td></tr><tr><td></td><td>Bob\'s Post 3</td><td></td></tr></table></div><p style="color:#888;font-size:0.78rem;margin-top:0.5rem;">Note: Charlie has no articles. One of Bob\'s articles references a deleted author.</p>',
+        answer: 'INNER JOIN',
+        wrong: ['LEFT JOIN', 'RIGHT JOIN', 'FULL OUTER JOIN'],
+        explain: 'INNER JOIN returns only matching rows from both tables. Charlie (no articles) and the orphaned article are excluded.'
+      },
+      {
+        prompt: 'The query returns ALL rows from the LEFT table, with NULLs for unmatched right-side columns.',
+        table: '<div class="table-display"><table><tr><th>authors</th><th>article_title</th></tr><tr><td>Alice</td><td>Post 1</td></tr><tr><td>Alice</td><td>Post 2</td></tr><tr><td>Bob</td><td>Post 1</td></tr><tr><td>Charlie</td><td>NULL</td></tr></table></div>',
+        answer: 'LEFT JOIN',
+        wrong: ['INNER JOIN', 'RIGHT JOIN', 'CROSS JOIN'],
+        explain: 'LEFT JOIN keeps all rows from the left table (authors). Charlie appears with NULL because he has no articles.'
+      },
+      {
+        prompt: 'The query returns ALL rows from BOTH tables, with NULLs where there is no match on either side.',
+        answer: 'FULL OUTER JOIN',
+        wrong: ['LEFT JOIN', 'INNER JOIN', 'CROSS JOIN'],
+        explain: 'FULL OUTER JOIN combines LEFT and RIGHT joins. Every row from both tables appears, with NULLs filling in the gaps.'
+      },
+      {
+        prompt: 'The query produces every possible combination of rows from both tables (cartesian product).',
+        table: '<div class="table-display"><table><tr><th>sizes (3)</th><th>colors (3)</th><th>Result (9 rows)</th></tr><tr><td>S</td><td>Red</td><td>S-Red, S-Blue, S-Green</td></tr><tr><td>M</td><td>Blue</td><td>M-Red, M-Blue, M-Green</td></tr><tr><td>L</td><td>Green</td><td>L-Red, L-Blue, L-Green</td></tr></table></div>',
+        answer: 'CROSS JOIN',
+        wrong: ['INNER JOIN', 'FULL OUTER JOIN', 'NATURAL JOIN'],
+        explain: 'CROSS JOIN produces the cartesian product: every row from table A paired with every row from table B. 3 x 3 = 9 rows.'
+      },
+      {
+        prompt: 'The query joins a table to ITSELF to find related rows within the same table.',
+        code: "SELECT e.name AS employee, m.name AS manager\nFROM employees e\nJOIN employees m ON e.manager_id = m.id",
+        answer: 'Self JOIN',
+        wrong: ['INNER JOIN on two different tables', 'RECURSIVE JOIN', 'NESTED JOIN'],
+        explain: 'A self-join uses aliases to treat one table as two. Common for hierarchical data (employees/managers, categories/subcategories).'
+      },
+      {
+        prompt: 'Which JOIN finds rows in table A that have NO match in table B?',
+        code: "SELECT a.title\nFROM articles a\nLEFT JOIN comments c ON a.id = c.article_id\nWHERE c.id IS NULL",
+        answer: 'LEFT JOIN with IS NULL (anti-join)',
+        wrong: ['INNER JOIN with NOT EXISTS', 'EXCEPT JOIN', 'OUTER EXCLUDE JOIN'],
+        explain: 'LEFT JOIN + WHERE IS NULL is the anti-join pattern. It finds rows in the left table with no matching rows in the right table.'
+      },
+      {
+        prompt: 'The query automatically joins on columns with the SAME NAME in both tables.',
+        code: "SELECT *\nFROM articles\nNATURAL JOIN authors",
+        answer: 'NATURAL JOIN',
+        wrong: ['INNER JOIN', 'AUTO JOIN', 'IMPLICIT JOIN'],
+        explain: 'NATURAL JOIN automatically matches on all columns with identical names. Risky in practice because schema changes can silently break it.'
+      },
+      {
+        prompt: 'You need to join 3 tables: articles, authors, and categories.',
+        code: "SELECT a.title, au.name, c.name\nFROM articles a\n??? authors au ON a.author_id = au.id\n??? categories c ON a.category_id = c.id",
+        answer: 'Chain INNER JOINs: JOIN authors ... JOIN categories ...',
+        wrong: [
+          'Use a single JOIN with multiple ON clauses',
+          'Use TRIPLE JOIN syntax',
+          'Nest JOINs inside parentheses',
+        ],
+        explain: 'Multiple JOINs are chained sequentially. Each JOIN adds another table to the result set. The order can affect performance.'
+      },
+      {
+        prompt: 'Which approach is generally more efficient for checking existence?',
+        code: "-- Option A:\nSELECT * FROM articles a\nWHERE EXISTS (SELECT 1 FROM comments c WHERE c.article_id = a.id)\n\n-- Option B:\nSELECT DISTINCT a.*\nFROM articles a\nINNER JOIN comments c ON a.id = c.article_id",
+        answer: 'EXISTS (Option A) - it stops at the first match',
+        wrong: [
+          'INNER JOIN (Option B) - JOINs are always faster',
+          'Both are identical in performance',
+          'Neither - use COUNT(*) > 0 instead',
+        ],
+        explain: 'EXISTS short-circuits after finding the first match. JOIN may produce duplicate rows requiring DISTINCT, which adds overhead.'
+      },
+      {
+        prompt: 'What does LATERAL JOIN allow that regular JOINs cannot?',
+        answer: 'The subquery can reference columns from preceding tables in the FROM clause',
+        wrong: [
+          'It joins tables from different databases',
+          'It automatically indexes the join columns',
+          'It parallelizes the join across CPU cores',
+        ],
+        explain: 'LATERAL lets the right side of a JOIN reference the left side, like a correlated subquery but as a join. Useful for "top-N per group" queries.'
+      },
+    ];
+
+    const joinsGame = makeQuiz('joins', joinsQuestions);
+    function initJoins() { joinsStarted = true; joinsGame.init(); }
+
+
+    // ═══════════════════════════════════════
+    //  3. AGGREGATE FUNCTION MATCH
+    // ═══════════════════════════════════════
+    let aggStarted = false;
+    const aggQuestions = [
+      {
+        prompt: 'Given values [10, 20, 30, 40, 50], which function returns 150?',
+        answer: 'SUM()',
+        wrong: ['COUNT()', 'AVG()', 'MAX()'],
+        explain: 'SUM() adds all values: 10+20+30+40+50 = 150.'
+      },
+      {
+        prompt: 'Given values [10, 20, 30, 40, 50], which function returns 30?',
+        answer: 'AVG()',
+        wrong: ['MEDIAN()', 'MID()', 'MEAN()'],
+        explain: 'AVG() returns the arithmetic mean: 150/5 = 30. Note: SQL has no built-in MEDIAN() in standard SQL.'
+      },
+      {
+        prompt: 'Given values [10, 20, NULL, 40, 50], what does COUNT(*) return?',
+        answer: '5 (counts all rows including NULLs)',
+        wrong: ['4 (skips NULLs)', '3 (counts non-null only)', 'Error (NULLs not allowed)'],
+        explain: 'COUNT(*) counts all rows regardless of NULL values. COUNT(column_name) would skip NULLs and return 4.'
+      },
+      {
+        prompt: 'Which function finds the concatenation of all values in a group?',
+        code: "SELECT department, ??? (name, ', ')\nFROM employees\nGROUP BY department",
+        answer: "STRING_AGG() or GROUP_CONCAT()",
+        wrong: ['CONCAT_ALL()', 'MERGE()', 'COLLECT()'],
+        explain: 'STRING_AGG (PostgreSQL/SQL Server) or GROUP_CONCAT (MySQL) concatenates values within a group with a separator.'
+      },
+      {
+        prompt: 'Which function returns the number of distinct categories?',
+        answer: 'COUNT(DISTINCT category)',
+        wrong: ['DISTINCT(COUNT(category))', 'COUNT_UNIQUE(category)', 'UNIQUE_COUNT(category)'],
+        explain: 'DISTINCT goes inside the aggregate function. COUNT(DISTINCT x) counts unique values. There is no COUNT_UNIQUE.'
+      },
+      {
+        prompt: 'Given [10, 20, 30], which returns an array of all values?',
+        answer: 'ARRAY_AGG()',
+        wrong: ['COLLECT()', 'TO_ARRAY()', 'LIST()'],
+        explain: 'ARRAY_AGG() (PostgreSQL) collects values into an array. MySQL uses JSON_ARRAYAGG(). Standard SQL has LISTAGG().'
+      },
+      {
+        prompt: 'Which function returns true if ANY row in the group meets a condition?',
+        answer: 'BOOL_OR() or ANY()',
+        wrong: ['SOME_TRUE()', 'HAS_TRUE()', 'IF_ANY()'],
+        explain: 'BOOL_OR() (PostgreSQL) returns true if at least one value is true. BOOL_AND() requires all to be true.'
+      },
+      {
+        prompt: 'Which clause is required when using aggregate functions with non-aggregated columns?',
+        code: "SELECT category, COUNT(*)\nFROM articles\n???",
+        answer: 'GROUP BY category',
+        wrong: ['ORDER BY category', 'PARTITION BY category', 'CLUSTER BY category'],
+        explain: 'GROUP BY is required when mixing aggregate functions with regular columns. PARTITION BY is for window functions, not aggregates.'
+      },
+      {
+        prompt: 'What does COALESCE(NULL, NULL, 42, 99) return?',
+        answer: '42 (the first non-NULL value)',
+        wrong: ['NULL', '99 (the last value)', 'Error'],
+        explain: 'COALESCE returns the first non-NULL argument. It is not an aggregate but is commonly used with them for handling NULLs.'
+      },
+      {
+        prompt: 'Which function returns a JSON object from grouped key-value pairs?',
+        code: "SELECT JSON_OBJECT_AGG(key, value) FROM settings",
+        answer: 'JSON_OBJECT_AGG()',
+        wrong: ['JSON_BUILD()', 'OBJECT_COLLECT()', 'TO_JSON_MAP()'],
+        explain: 'JSON_OBJECT_AGG() (PostgreSQL) builds a JSON object from key-value pairs across grouped rows.'
+      },
+    ];
+
+    const aggGame = makeQuiz('agg', aggQuestions);
+    function initAgg() { aggStarted = true; aggGame.init(); }
+
+
+    // ═══════════════════════════════════════
+    //  4. WHERE CLAUSE CHALLENGE
+    // ═══════════════════════════════════════
+    let whereStarted = false;
+    const whereQuestions = [
+      {
+        prompt: 'How many rows does this return from a table with values [1, 2, 3, NULL, 5]?',
+        code: "SELECT * FROM numbers WHERE value > 2",
+        answer: '2 rows (3 and 5 -- NULL is not > 2)',
+        wrong: ['3 rows (3, NULL, 5)', '2 rows (3, 5) because NULL = 0', '0 rows (ambiguous comparison)'],
+        explain: 'NULL comparisons always return NULL (unknown), not true or false. So NULL > 2 is not true, and the NULL row is excluded.'
+      },
+      {
+        prompt: 'What does this WHERE clause select?',
+        code: "WHERE status IN ('draft', 'review', 'pending')",
+        answer: 'Rows where status is any of the three listed values',
+        wrong: [
+          'Rows where status contains all three values',
+          'Rows where status starts with any of the values',
+          'Rows where status is not any of the listed values',
+        ],
+        explain: 'IN checks if a value matches any item in the list. It is equivalent to status = "draft" OR status = "review" OR status = "pending".'
+      },
+      {
+        prompt: 'What does BETWEEN include?',
+        code: "WHERE pub_date BETWEEN '2024-01-01' AND '2024-12-31'",
+        answer: 'Both endpoints are included (inclusive range)',
+        wrong: [
+          'Only the start is included, end is excluded',
+          'Both endpoints are excluded',
+          'It depends on the database vendor',
+        ],
+        explain: 'BETWEEN is always inclusive on both ends in standard SQL. Equivalent to >= start AND <= end.'
+      },
+      {
+        prompt: 'What does this pattern match?',
+        code: "WHERE email LIKE '%@%.gov'",
+        answer: 'Email addresses ending in .gov (any domain)',
+        wrong: [
+          'Only emails at exactly the domain .gov',
+          'Emails containing the literal text @%.gov',
+          'All government-related email addresses',
+        ],
+        explain: '% matches any sequence of characters. So %@%.gov matches anything, then @, then anything, then .gov at the end.'
+      },
+      {
+        prompt: 'What is the correct way to check for NULL?',
+        code: "-- Which is correct?\n-- A: WHERE bio = NULL\n-- B: WHERE bio IS NULL\n-- C: WHERE bio == NULL",
+        answer: 'B: WHERE bio IS NULL',
+        wrong: [
+          'A: WHERE bio = NULL',
+          'C: WHERE bio == NULL',
+          'All three are equivalent',
+        ],
+        explain: 'NULL cannot be compared with =. It requires IS NULL or IS NOT NULL. bio = NULL always evaluates to NULL (unknown).'
+      },
+      {
+        prompt: 'What does this return?',
+        code: "WHERE NOT (status = 'draft' OR status = 'archived')",
+        answer: 'Rows where status is neither draft nor archived',
+        wrong: [
+          'Rows where status is draft but not archived',
+          'All rows (NOT cancels the filter)',
+          'Rows where status is draft or archived',
+        ],
+        explain: 'NOT inverts the entire condition. By De Morgan\'s law, this equals status != "draft" AND status != "archived".'
+      },
+      {
+        prompt: 'What does the _ wildcard match in LIKE?',
+        code: "WHERE code LIKE 'A_B'",
+        answer: 'Exactly one character (matches A1B, AXB, but not AB or AXXB)',
+        wrong: [
+          'Zero or more characters (same as %)',
+          'Only underscore character literally',
+          'Any digit character',
+        ],
+        explain: '_ matches exactly one character. % matches zero or more. To match a literal underscore, use ESCAPE: LIKE "A\\_B" ESCAPE "\\".'
+      },
+      {
+        prompt: 'What does EXISTS do in a WHERE clause?',
+        code: "WHERE EXISTS (\n  SELECT 1 FROM comments c\n  WHERE c.article_id = articles.id\n)",
+        answer: 'Returns true if the subquery returns at least one row',
+        wrong: [
+          'Returns the count of matching rows',
+          'Returns the first matching row',
+          'Checks if the table exists in the database',
+        ],
+        explain: 'EXISTS returns a boolean: true if the subquery produces any rows, false otherwise. It does not care about the actual values selected.'
+      },
+      {
+        prompt: 'What does this regex filter match in PostgreSQL?',
+        code: "WHERE title ~ '^[A-Z][a-z]+ \\d{4}$'",
+        answer: 'Titles starting with a capital letter + word, space, then a 4-digit number (e.g., "Report 2024")',
+        wrong: [
+          'Any title containing a capital letter',
+          'Titles that are exactly 4 characters long',
+          'Titles ending with any number',
+        ],
+        explain: '~ is PostgreSQL regex match. ^ anchors start, [A-Z] matches capital, [a-z]+ matches lowercase, \\d{4}$ matches 4 digits at end.'
+      },
+      {
+        prompt: 'What happens when you use OR with different columns?',
+        code: "WHERE author_id = 1 OR category = 'news'",
+        answer: 'Rows matching EITHER condition (may prevent index use on both columns)',
+        wrong: [
+          'Rows matching BOTH conditions',
+          'Error: OR cannot mix different columns',
+          'Rows matching the first condition only',
+        ],
+        explain: 'OR returns rows matching either condition. Databases often cannot use a single index for OR across different columns; consider UNION instead.'
+      },
+    ];
+
+    const whereGame = makeQuiz('where', whereQuestions);
+    function initWhere() { whereStarted = true; whereGame.init(); }
+
+
+    // ═══════════════════════════════════════
+    //  5. NORMALIZATION DETECTIVE
+    // ═══════════════════════════════════════
+    let normalStarted = false;
+    const normalQuestions = [
+      {
+        prompt: 'What normalization issue does this table have?',
+        table: '<div class="table-display"><table><tr><th>order_id</th><th>product</th><th>customer_name</th><th>customer_email</th></tr><tr><td>1</td><td>Widget</td><td>Alice</td><td>alice@example.com</td></tr><tr><td>2</td><td>Gadget</td><td>Alice</td><td>alice@example.com</td></tr><tr><td>3</td><td>Widget</td><td>Bob</td><td>bob@example.com</td></tr></table></div>',
+        answer: 'Customer data is duplicated; needs a separate customers table (2NF violation)',
+        wrong: [
+          'The table is properly normalized',
+          'Too many columns (violates 1NF)',
+          'Missing primary key (violates 0NF)',
+        ],
+        explain: 'Customer name and email are repeated for every order. These should be in a separate customers table with a foreign key in orders.'
+      },
+      {
+        prompt: 'What is the problem with this column?',
+        table: '<div class="table-display"><table><tr><th>id</th><th>name</th><th>phone_numbers</th></tr><tr><td>1</td><td>Alice</td><td>555-0101, 555-0102</td></tr><tr><td>2</td><td>Bob</td><td>555-0201</td></tr></table></div>',
+        answer: 'Repeating group in one column violates 1NF (First Normal Form)',
+        wrong: [
+          'The table needs more columns',
+          'This is a 3NF violation',
+          'This table is properly normalized',
+        ],
+        explain: '1NF requires atomic values: each cell should contain a single value. Multiple phone numbers in one column violate 1NF. Use a separate phone_numbers table.'
+      },
+      {
+        prompt: 'What 3NF violation does this table have?',
+        table: '<div class="table-display"><table><tr><th>emp_id</th><th>dept_id</th><th>dept_name</th><th>dept_location</th></tr><tr><td>1</td><td>10</td><td>Engineering</td><td>Building A</td></tr><tr><td>2</td><td>10</td><td>Engineering</td><td>Building A</td></tr><tr><td>3</td><td>20</td><td>Marketing</td><td>Building B</td></tr></table></div>',
+        answer: 'Transitive dependency: dept_name and dept_location depend on dept_id, not emp_id (3NF violation)',
+        wrong: [
+          'This table is in 3NF',
+          'emp_id should be a composite key',
+          'The table has too many columns for 2NF',
+        ],
+        explain: 'dept_name and dept_location depend on dept_id (non-key column), not the primary key emp_id. Move them to a departments table.'
+      },
+      {
+        prompt: 'How should this many-to-many relationship be normalized?',
+        table: '<div class="table-display"><table><tr><th>article_id</th><th>tags</th></tr><tr><td>1</td><td>politics, breaking</td></tr><tr><td>2</td><td>sports, local</td></tr><tr><td>3</td><td>politics, local</td></tr></table></div>',
+        answer: 'Create an article_tags junction table with article_id and tag_id columns',
+        wrong: [
+          'Add separate boolean columns for each tag',
+          'Store tags as a JSON array column',
+          'Use a comma-separated string (current approach is fine)',
+        ],
+        explain: 'A junction table (article_tags) properly normalizes many-to-many relationships. Each row represents one article-tag pair.'
+      },
+      {
+        prompt: 'What is the normalization issue here?',
+        table: '<div class="table-display"><table><tr><th>id</th><th>title</th><th>author</th><th>author_bio</th><th>total_views</th></tr><tr><td>1</td><td>Post A</td><td>Alice</td><td>Journalist at NYT</td><td>1500</td></tr><tr><td>2</td><td>Post B</td><td>Alice</td><td>Journalist at NYT</td><td>2300</td></tr></table></div>',
+        answer: 'author_bio is a transitive dependency on author, not on the primary key',
+        wrong: [
+          'total_views should be in a separate analytics table',
+          'The table needs a composite primary key',
+          'This table is properly normalized',
+        ],
+        explain: 'author_bio depends on author (name), which is not the primary key. If Alice updates her bio, you must update every row.'
+      },
+      {
+        prompt: 'Is this table in BCNF?',
+        table: '<div class="table-display"><table><tr><th>student</th><th>course</th><th>professor</th></tr><tr><td>Alice</td><td>DB101</td><td>Dr. Smith</td></tr><tr><td>Bob</td><td>DB101</td><td>Dr. Smith</td></tr><tr><td>Alice</td><td>ML201</td><td>Dr. Jones</td></tr></table></div><p style="color:#888;font-size:0.78rem;margin-top:0.5rem;">Rule: Each course is taught by exactly one professor, but a professor can teach multiple courses.</p>',
+        answer: 'No: professor determines course, but professor is not a superkey (BCNF violation)',
+        wrong: [
+          'Yes, it is in BCNF',
+          'No, it violates 1NF because of the composite key',
+          'No, it has a transitive dependency (3NF violation only)',
+        ],
+        explain: 'In BCNF, every determinant must be a superkey. Professor determines course, but professor is not a superkey. Split into student-professor and professor-course tables.'
+      },
+      {
+        prompt: 'When is denormalization actually appropriate?',
+        answer: 'Read-heavy analytics/reporting where JOIN performance is critical',
+        wrong: [
+          'Never; normalization should always be maintained',
+          'When the database is small (under 1000 rows)',
+          'When using a NoSQL database',
+        ],
+        explain: 'Denormalization trades write complexity for read performance. Data warehouses and read-heavy dashboards often benefit from denormalized tables.'
+      },
+      {
+        prompt: 'What is the issue with storing derived data?',
+        table: '<div class="table-display"><table><tr><th>id</th><th>price</th><th>quantity</th><th>total</th></tr><tr><td>1</td><td>10.00</td><td>3</td><td>30.00</td></tr><tr><td>2</td><td>25.00</td><td>2</td><td>50.00</td></tr></table></div>',
+        answer: 'The total column can be computed from price * quantity; storing it risks inconsistency',
+        wrong: [
+          'There is no issue; this improves query performance',
+          'The total column should use a FLOAT type',
+          'The table needs a date column',
+        ],
+        explain: 'Derived/computed columns risk getting out of sync. Use a generated/computed column (price * quantity) or calculate in queries instead.'
+      },
+      {
+        prompt: 'What is the EAV anti-pattern?',
+        table: '<div class="table-display"><table><tr><th>entity_id</th><th>attribute</th><th>value</th></tr><tr><td>1</td><td>name</td><td>Alice</td></tr><tr><td>1</td><td>email</td><td>alice@ex.com</td></tr><tr><td>1</td><td>role</td><td>editor</td></tr></table></div>',
+        answer: 'Entity-Attribute-Value stores all data as key-value rows, losing type safety and making queries complex',
+        wrong: [
+          'A highly normalized and recommended design pattern',
+          'A standard way to store user preferences',
+          'A pattern only used in NoSQL databases',
+        ],
+        explain: 'EAV makes simple queries complex (need pivoting), loses column types (everything is text), and prevents foreign key constraints.'
+      },
+      {
+        prompt: 'What normal form does this table satisfy?',
+        table: '<div class="table-display"><table><tr><th>student_id (PK)</th><th>student_name</th><th>course_id (PK)</th><th>grade</th></tr><tr><td>1</td><td>Alice</td><td>101</td><td>A</td></tr><tr><td>1</td><td>Alice</td><td>102</td><td>B</td></tr><tr><td>2</td><td>Bob</td><td>101</td><td>B+</td></tr></table></div>',
+        answer: '1NF but not 2NF: student_name depends only on student_id, not the full composite key',
+        wrong: [
+          'Fully normalized (3NF)',
+          'Not even 1NF',
+          '2NF but not 3NF',
+        ],
+        explain: 'With composite key (student_id, course_id), student_name depends only on student_id (partial dependency). This violates 2NF.'
+      },
+    ];
+
+    const normalGame = makeQuiz('normal', normalQuestions);
+    function initNormal() { normalStarted = true; normalGame.init(); }
+
+
+    // ═══════════════════════════════════════
+    //  6. INDEX STRATEGY QUIZ
+    // ═══════════════════════════════════════
+    let indexStarted = false;
+    const indexQuestions = [
+      {
+        prompt: 'Should you add an index on the status column?',
+        code: "-- Table: articles (10 million rows)\n-- status has 3 values: 'draft', 'review', 'published'\n-- 95% of rows are 'published'",
+        answer: 'A partial index on draft/review only, since indexing 95% published rows wastes space',
+        wrong: [
+          'Yes, always index columns used in WHERE clauses',
+          'No, indexes are only useful on unique columns',
+          'Yes, a full B-tree index on status',
+        ],
+        explain: 'Low-cardinality columns with skewed distribution benefit from partial indexes: CREATE INDEX ON articles(status) WHERE status != \'published\'.'
+      },
+      {
+        prompt: 'Which index type is best for full-text search?',
+        answer: 'GIN (Generalized Inverted Index)',
+        wrong: ['B-tree', 'Hash', 'BRIN'],
+        explain: 'GIN indexes are optimized for full-text search, array containment, and JSONB queries. B-tree is for equality/range, Hash for equality only.'
+      },
+      {
+        prompt: 'When does a composite index on (a, b, c) help?',
+        answer: 'Queries filtering on a, or (a, b), or (a, b, c) -- leftmost prefix rule',
+        wrong: [
+          'Any query using a, b, or c in any combination',
+          'Only queries filtering on all three columns',
+          'Queries filtering on b and c (without a)',
+        ],
+        explain: 'Composite indexes follow the leftmost prefix rule. (a, b, c) helps WHERE a=1, WHERE a=1 AND b=2, but NOT WHERE b=2 AND c=3.'
+      },
+      {
+        prompt: 'What is a covering index?',
+        answer: 'An index that contains all columns needed by the query, avoiding table lookups',
+        wrong: [
+          'An index that covers all tables in a JOIN',
+          'An index on every column of a table',
+          'A backup index for disaster recovery',
+        ],
+        explain: 'When an index includes all columns in SELECT, WHERE, and ORDER BY, the database can answer the query from the index alone (index-only scan).'
+      },
+      {
+        prompt: 'Why might adding more indexes slow down writes?',
+        answer: 'Each INSERT/UPDATE must update every index on the table',
+        wrong: [
+          'Indexes lock the table during reads',
+          'Indexes use more CPU for SELECT queries',
+          'Indexes prevent concurrent writes',
+        ],
+        explain: 'Every index is a separate data structure that must be maintained. More indexes = more work on every write operation.'
+      },
+      {
+        prompt: 'Which index type is best for time-series data scanned by range?',
+        answer: 'BRIN (Block Range Index) - small index for naturally ordered data',
+        wrong: ['B-tree', 'Hash', 'GiST'],
+        explain: 'BRIN indexes are tiny and efficient when data is physically ordered (like timestamps in append-only tables). They store min/max per block range.'
+      },
+      {
+        prompt: 'What does EXPLAIN ANALYZE tell you about indexes?',
+        answer: 'Shows actual execution plan with timings, revealing if indexes are used or ignored',
+        wrong: [
+          'Lists all indexes on a table',
+          'Suggests which indexes to create',
+          'Automatically creates missing indexes',
+        ],
+        explain: 'EXPLAIN ANALYZE runs the query and shows the actual plan with timing. Look for "Index Scan" vs "Seq Scan" to verify index usage.'
+      },
+      {
+        prompt: 'Should you index a boolean column (is_active) on a 100M row table?',
+        answer: 'Only if one value is rare; a partial index WHERE is_active = false is better',
+        wrong: [
+          'Yes, always index boolean columns',
+          'No, boolean columns cannot be indexed',
+          'Yes, use a Hash index on boolean columns',
+        ],
+        explain: 'If 99% of rows are is_active=true, indexing helps only for finding inactive rows. A partial index is much smaller and more efficient.'
+      },
+      {
+        prompt: 'What is the primary tradeoff of index maintenance?',
+        answer: 'Disk space + slower writes in exchange for faster reads',
+        wrong: [
+          'Faster writes in exchange for slower reads',
+          'More memory usage in exchange for less disk usage',
+          'Better consistency in exchange for availability',
+        ],
+        explain: 'Indexes trade storage space and write performance for read performance. Over-indexing can make writes significantly slower.'
+      },
+      {
+        prompt: 'When should you use a unique index?',
+        answer: 'To enforce uniqueness constraints (emails, slugs, API keys)',
+        wrong: [
+          'Whenever you want faster queries',
+          'Only on primary key columns',
+          'When the column has many distinct values',
+        ],
+        explain: 'Unique indexes serve dual purposes: they enforce data integrity AND speed up lookups. CREATE UNIQUE INDEX or add UNIQUE to the column definition.'
+      },
+    ];
+
+    const indexGame = makeQuiz('index', indexQuestions);
+    function initIndex() { indexStarted = true; indexGame.init(); }
+
+
+    // ═══════════════════════════════════════
+    //  7. WINDOW FUNCTION BUILDER
+    // ═══════════════════════════════════════
+    let windowStarted = false;
+    const windowQuestions = [
+      {
+        prompt: 'Assign a rank to each article by view_count within its category:',
+        answer: 'ROW_NUMBER() OVER (PARTITION BY category ORDER BY view_count DESC)',
+        wrong: [
+          'RANK() GROUP BY category ORDER BY view_count DESC',
+          'COUNT(*) OVER (ORDER BY view_count DESC)',
+          'ROW_NUMBER() OVER (ORDER BY view_count DESC GROUP BY category)',
+        ],
+        explain: 'PARTITION BY divides rows into groups. ROW_NUMBER assigns sequential numbers within each partition. GROUP BY is for aggregates, not window functions.'
+      },
+      {
+        prompt: 'Show each sale alongside the running total:',
+        code: "SELECT date, amount,\n  ??? AS running_total\nFROM sales\nORDER BY date",
+        answer: 'SUM(amount) OVER (ORDER BY date)',
+        wrong: [
+          'SUM(amount) GROUP BY date',
+          'RUNNING_SUM(amount)',
+          'TOTAL(amount) OVER ()',
+        ],
+        explain: 'SUM() with OVER (ORDER BY date) creates a running/cumulative sum. Without PARTITION BY, it runs across all rows.'
+      },
+      {
+        prompt: 'Get the previous row\'s value (yesterday\'s price):',
+        answer: 'LAG(price, 1) OVER (ORDER BY date)',
+        wrong: [
+          'PREV(price) OVER (ORDER BY date)',
+          'price[-1] OVER (ORDER BY date)',
+          'LEAD(price, -1) OVER (ORDER BY date)',
+        ],
+        explain: 'LAG(column, offset) looks backward. LEAD looks forward. The second argument is the offset (default 1). An optional third argument sets the default for NULLs.'
+      },
+      {
+        prompt: 'Calculate each article\'s percentage of total views:',
+        answer: 'view_count * 100.0 / SUM(view_count) OVER ()',
+        wrong: [
+          'view_count / TOTAL(view_count) * 100',
+          'PERCENT(view_count) OVER ()',
+          'view_count / COUNT(*) OVER () * 100',
+        ],
+        explain: 'SUM() OVER () without PARTITION BY computes the grand total. Dividing each row by the total gives the percentage. 100.0 forces float division.'
+      },
+      {
+        prompt: 'What is the difference between RANK() and DENSE_RANK()?',
+        code: "-- Values: 100, 90, 90, 80\n-- RANK():       1, 2, 2, 4\n-- DENSE_RANK(): 1, 2, 2, ?",
+        answer: 'DENSE_RANK gives 3 (no gaps), RANK would give 4 (gaps after ties)',
+        wrong: [
+          'DENSE_RANK gives 4 (same as RANK)',
+          'DENSE_RANK gives 2 (groups ties differently)',
+          'DENSE_RANK gives 1 (resets after ties)',
+        ],
+        explain: 'RANK leaves gaps after ties (1,2,2,4). DENSE_RANK is consecutive (1,2,2,3). ROW_NUMBER never ties (1,2,3,4).'
+      },
+      {
+        prompt: 'Calculate a 7-day moving average of daily sales:',
+        answer: 'AVG(amount) OVER (ORDER BY date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)',
+        wrong: [
+          'AVG(amount) OVER (ORDER BY date LIMIT 7)',
+          'MOVING_AVG(amount, 7) OVER (ORDER BY date)',
+          'AVG(amount) OVER (PARTITION BY WEEK(date))',
+        ],
+        explain: 'ROWS BETWEEN defines the window frame. 6 PRECEDING + CURRENT ROW = 7 rows. This creates a trailing 7-day moving average.'
+      },
+      {
+        prompt: 'Find the first value in each group (first article per category):',
+        answer: 'FIRST_VALUE(title) OVER (PARTITION BY category ORDER BY pub_date)',
+        wrong: [
+          'FIRST(title) OVER (PARTITION BY category)',
+          'MIN(title) OVER (PARTITION BY category ORDER BY pub_date)',
+          'title[0] OVER (PARTITION BY category)',
+        ],
+        explain: 'FIRST_VALUE returns the first row in the window frame. LAST_VALUE returns the last, and NTH_VALUE returns the Nth.'
+      },
+      {
+        prompt: 'Divide rows into 4 equal groups (quartiles):',
+        answer: 'NTILE(4) OVER (ORDER BY score)',
+        wrong: [
+          'QUARTILE(score) OVER ()',
+          'PERCENTILE(4) OVER (ORDER BY score)',
+          'BUCKET(score, 4) OVER ()',
+        ],
+        explain: 'NTILE(n) distributes rows into n roughly equal groups, numbered 1 through n. NTILE(4) creates quartiles.'
+      },
+      {
+        prompt: 'Get the next row\'s value (tomorrow\'s forecast):',
+        answer: 'LEAD(forecast, 1) OVER (ORDER BY date)',
+        wrong: [
+          'NEXT(forecast) OVER (ORDER BY date)',
+          'LAG(forecast, -1) OVER (ORDER BY date)',
+          'forecast[+1] OVER (ORDER BY date)',
+        ],
+        explain: 'LEAD looks forward by the specified offset. LAG looks backward. Both return NULL by default when there is no corresponding row.'
+      },
+      {
+        prompt: 'What does ROWS vs RANGE mean in a frame clause?',
+        answer: 'ROWS counts physical rows; RANGE groups rows with the same ORDER BY value together',
+        wrong: [
+          'They are interchangeable synonyms',
+          'ROWS is for numbers, RANGE is for dates',
+          'ROWS is inclusive, RANGE is exclusive',
+        ],
+        explain: 'With RANGE, ties in the ORDER BY column are treated as a group. ROWS is positional. GROUPS (SQL:2011) counts distinct ORDER BY values.'
+      },
+    ];
+
+    const windowGame = makeQuiz('window', windowQuestions);
+    function initWindow() { windowStarted = true; windowGame.init(); }
+
+
+    // ═══════════════════════════════════════
+    //  8. SQL vs PRISMA TRANSLATOR
+    // ═══════════════════════════════════════
+    let prismaStarted = false;
+    const prismaQuestions = [
+      {
+        prompt: 'Translate this SQL to Prisma:',
+        code: "SELECT * FROM articles\nWHERE status = 'published'\nORDER BY pub_date DESC\nLIMIT 10",
+        answer: 'await prisma.article.findMany({ where: { status: "published" }, orderBy: { pubDate: "desc" }, take: 10 })',
+        wrong: [
+          'await prisma.article.find({ status: "published", limit: 10, sort: "-pubDate" })',
+          'await prisma.articles.select({ where: "published", order: "desc", count: 10 })',
+          'await prisma.article.query("SELECT * FROM articles WHERE status = \'published\'")',
+        ],
+        explain: 'Prisma uses findMany for multiple results. where filters, orderBy sorts, take limits. Field names are camelCase in Prisma.'
+      },
+      {
+        prompt: 'Translate this Prisma to SQL:',
+        code: "await prisma.user.findUnique({\n  where: { email: 'alice@example.com' },\n  include: { articles: true }\n})",
+        answer: "SELECT u.*, a.* FROM users u LEFT JOIN articles a ON u.id = a.author_id WHERE u.email = 'alice@example.com'",
+        wrong: [
+          "SELECT * FROM users WHERE email = 'alice@example.com' AND articles = true",
+          "SELECT * FROM users, articles WHERE email = 'alice@example.com'",
+          "SELECT UNIQUE * FROM users JOIN articles WHERE email = 'alice@example.com'",
+        ],
+        explain: 'findUnique selects one row. include: { articles: true } eager-loads the relation, equivalent to a LEFT JOIN in SQL.'
+      },
+      {
+        prompt: 'Translate this SQL to Prisma:',
+        code: "INSERT INTO articles (title, author_id, status)\nVALUES ('Breaking News', 1, 'draft')",
+        answer: "await prisma.article.create({ data: { title: 'Breaking News', authorId: 1, status: 'draft' } })",
+        wrong: [
+          "await prisma.article.insert({ title: 'Breaking News', authorId: 1, status: 'draft' })",
+          "await prisma.article.add({ data: { title: 'Breaking News' } })",
+          "await prisma.article.new({ title: 'Breaking News', authorId: 1 })",
+        ],
+        explain: 'Prisma uses create() with a data object. The method returns the created record. There is no insert() method.'
+      },
+      {
+        prompt: 'Translate this SQL to Prisma:',
+        code: "UPDATE articles SET status = 'published'\nWHERE id = 42",
+        answer: "await prisma.article.update({ where: { id: 42 }, data: { status: 'published' } })",
+        wrong: [
+          "await prisma.article.set({ id: 42, status: 'published' })",
+          "await prisma.article.modify(42, { status: 'published' })",
+          "await prisma.article.save({ id: 42, data: { status: 'published' } })",
+        ],
+        explain: 'update() takes where (to identify the record) and data (the fields to change). It returns the updated record.'
+      },
+      {
+        prompt: 'Translate this SQL aggregation to Prisma:',
+        code: "SELECT category, COUNT(*) as count\nFROM articles\nGROUP BY category",
+        answer: "await prisma.article.groupBy({ by: ['category'], _count: { _all: true } })",
+        wrong: [
+          "await prisma.article.aggregate({ groupBy: 'category', count: true })",
+          "await prisma.article.count({ group: 'category' })",
+          "await prisma.article.findMany({ group: 'category', select: { count: true } })",
+        ],
+        explain: 'Prisma groupBy() with _count aggregation is equivalent to SQL GROUP BY with COUNT. Results are returned as an array of objects.'
+      },
+      {
+        prompt: 'Translate this SQL to Prisma:',
+        code: "DELETE FROM articles WHERE status = 'draft'",
+        answer: "await prisma.article.deleteMany({ where: { status: 'draft' } })",
+        wrong: [
+          "await prisma.article.delete({ status: 'draft' })",
+          "await prisma.article.remove({ where: { status: 'draft' } })",
+          "await prisma.article.destroy({ filter: { status: 'draft' } })",
+        ],
+        explain: 'deleteMany() removes multiple records matching the where clause. delete() removes exactly one record (requires a unique identifier).'
+      },
+      {
+        prompt: 'Translate this Prisma to SQL:',
+        code: "await prisma.article.findMany({\n  where: {\n    title: { contains: 'election', mode: 'insensitive' }\n  }\n})",
+        answer: "SELECT * FROM articles WHERE title ILIKE '%election%'",
+        wrong: [
+          "SELECT * FROM articles WHERE title LIKE '%election%'",
+          "SELECT * FROM articles WHERE LOWER(title) = 'election'",
+          "SELECT * FROM articles WHERE title CONTAINS 'election'",
+        ],
+        explain: 'Prisma contains with mode: "insensitive" translates to PostgreSQL ILIKE (case-insensitive LIKE). Standard LIKE is case-sensitive.'
+      },
+      {
+        prompt: 'How does Prisma handle transactions?',
+        code: "// Transfer credits between users",
+        answer: "await prisma.$transaction([prisma.user.update({...debit}), prisma.user.update({...credit})])",
+        wrong: [
+          "await prisma.beginTransaction(); ... await prisma.commit()",
+          "await prisma.atomic([debitQuery, creditQuery])",
+          "await prisma.transaction.start(); ... await prisma.transaction.end()",
+        ],
+        explain: 'Prisma $transaction takes an array of operations or an interactive callback function. All operations succeed or fail together.'
+      },
+      {
+        prompt: 'Translate this SQL upsert to Prisma:',
+        code: "INSERT INTO users (email, name) VALUES ('a@b.com', 'Alice')\nON CONFLICT (email) DO UPDATE SET name = 'Alice'",
+        answer: "await prisma.user.upsert({ where: { email: 'a@b.com' }, update: { name: 'Alice' }, create: { email: 'a@b.com', name: 'Alice' } })",
+        wrong: [
+          "await prisma.user.createOrUpdate({ email: 'a@b.com', name: 'Alice' })",
+          "await prisma.user.insertOrReplace({ data: { email: 'a@b.com', name: 'Alice' } })",
+          "await prisma.user.save({ email: 'a@b.com', name: 'Alice' })",
+        ],
+        explain: 'Prisma upsert() creates if the record does not exist, updates if it does. Requires where (unique field), create, and update.'
+      },
+      {
+        prompt: 'Translate this SQL subquery to Prisma:',
+        code: "SELECT * FROM articles\nWHERE author_id IN (\n  SELECT id FROM users WHERE role = 'editor'\n)",
+        answer: "await prisma.article.findMany({ where: { author: { role: 'editor' } } })",
+        wrong: [
+          "await prisma.article.findMany({ where: { authorId: { in: prisma.user.findMany({ where: { role: 'editor' } }) } } })",
+          "await prisma.article.findMany({ include: { author: { where: { role: 'editor' } } } })",
+          "await prisma.article.query('SELECT * FROM articles WHERE author_id IN ...')",
+        ],
+        explain: 'Prisma replaces subqueries with relation filters. Filtering on a relation field (author: { role: "editor" }) generates the subquery automatically.'
+      },
+    ];
+
+    const prismaGame = makeQuiz('prisma', prismaQuestions);
+    function initPrisma() { prismaStarted = true; prismaGame.init(); }
+
+
+    // ═══════════════════════════════════════
+    //  9. SCHEMA DESIGN CHALLENGE
+    // ═══════════════════════════════════════
+    let schemaStarted = false;
+    const schemaQuestions = [
+      {
+        prompt: 'A blog where articles can have multiple tags and tags can belong to multiple articles.',
+        answer: 'Three tables: articles, tags, and article_tags (junction table with article_id + tag_id)',
+        wrong: [
+          'Two tables: articles (with tags JSON array) and tags',
+          'One table: articles with a comma-separated tags column',
+          'Two tables: articles and tags with a FK from tags to articles',
+        ],
+        explain: 'Many-to-many relationships require a junction (pivot) table. This allows efficient querying in both directions and proper indexing.'
+      },
+      {
+        prompt: 'A comment system that supports threaded/nested replies.',
+        answer: 'A comments table with a self-referencing parent_id FK (adjacency list pattern)',
+        wrong: [
+          'Separate tables for each nesting level (comments, replies, sub_replies)',
+          'A single comments column with HTML-formatted threads',
+          'Two tables: comments and threads with no relationship',
+        ],
+        explain: 'Self-referencing FK (parent_id) creates a tree structure. For better query performance, consider the materialized path or nested set patterns.'
+      },
+      {
+        prompt: 'An audit log that tracks who changed what and when.',
+        answer: 'An audit_log table with user_id, table_name, row_id, action, old_values (JSONB), new_values (JSONB), timestamp',
+        wrong: [
+          'Add updated_by and updated_at columns to every table',
+          'A single text column on each table logging all changes',
+          'A separate log table for each entity (article_log, user_log, etc.)',
+        ],
+        explain: 'A generic audit table with JSONB for old/new values captures changes across all tables without schema changes. Triggers can populate it automatically.'
+      },
+      {
+        prompt: 'A product catalog where products have different attributes (shirts have size/color, electronics have voltage/weight).',
+        answer: 'A products table with common fields + a JSONB attributes column for type-specific fields',
+        wrong: [
+          'One huge table with every possible attribute as a nullable column',
+          'EAV pattern: entity_id, attribute_name, attribute_value rows',
+          'Separate tables for each product type with no shared schema',
+        ],
+        explain: 'JSONB provides schema flexibility for varying attributes while keeping common fields (name, price, category) as proper columns for indexing.'
+      },
+      {
+        prompt: 'A social media app where users can follow other users.',
+        answer: 'A follows table with follower_id and following_id (both FK to users), plus a composite unique constraint',
+        wrong: [
+          'An array column on users listing followed user IDs',
+          'A boolean matrix table of all user pairs',
+          'A JSON column on each user with their follower list',
+        ],
+        explain: 'A junction table for self-referencing many-to-many. Composite unique constraint prevents duplicate follows. Indexes on both columns for bidirectional queries.'
+      },
+      {
+        prompt: 'A CMS where content blocks can be arranged in any order on a page.',
+        answer: 'A page_blocks table with page_id, block_id, and a position (integer) column for ordering',
+        wrong: [
+          'A JSON array of block IDs on the page table',
+          'Linked list: each block has a next_block_id FK',
+          'A text column with serialized block order',
+        ],
+        explain: 'An integer position column allows reordering with simple UPDATE. Gaps in numbering (10, 20, 30) make inserting between blocks easy.'
+      },
+      {
+        prompt: 'A multi-language content system (articles in English, Spanish, French).',
+        answer: 'Separate article_translations table with article_id, language_code, title, body',
+        wrong: [
+          'Add title_en, title_es, title_fr columns to the articles table',
+          'Separate tables for each language (articles_en, articles_es)',
+          'A JSON column with all translations',
+        ],
+        explain: 'A translations table scales to any number of languages without schema changes. Querying is simple: JOIN WHERE language_code = "es".'
+      },
+      {
+        prompt: 'A calendar app with recurring events (every Monday, monthly, etc.).',
+        answer: 'An events table with recurrence_rule (RRULE string) and an expanded event_occurrences table',
+        wrong: [
+          'Insert a separate row for every occurrence for the next 10 years',
+          'A cron expression column and generate events on the fly',
+          'Store only start and end dates with a repeat boolean',
+        ],
+        explain: 'RRULE (RFC 5545) defines recurrence patterns. Expand into occurrences for the display range. This balances storage with query simplicity.'
+      },
+      {
+        prompt: 'A permissions system with roles that inherit from other roles.',
+        answer: 'Three tables: permissions, roles, role_permissions (junction), plus a role_parents self-reference for inheritance',
+        wrong: [
+          'A single permissions table with a bitmask column',
+          'Hardcode roles in application code, not the database',
+          'One table with role, permission, and granted boolean columns',
+        ],
+        explain: 'Role inheritance uses a self-referencing FK. Resolving effective permissions requires traversing the role hierarchy (recursive CTE or application logic).'
+      },
+      {
+        prompt: 'A news site that tracks which articles a user has read.',
+        answer: 'A user_reads table with user_id, article_id, read_at timestamp, and composite primary key',
+        wrong: [
+          'A read_articles JSON array on the users table',
+          'A boolean is_read column on the articles table',
+          'A comma-separated list of article IDs on the users table',
+        ],
+        explain: 'A junction table scales independently and supports queries in both directions (what did this user read? who read this article?).'
+      },
+    ];
+
+    const schemaGame = makeQuiz('schema', schemaQuestions);
+    function initSchema() { schemaStarted = true; schemaGame.init(); }
+
+
+    // ═══════════════════════════════════════
+    //  10. QUERY OPTIMIZER (BUILD ORDER)
+    // ═══════════════════════════════════════
+    let optimizeStarted = false;
+    let optIdx = 0, optCorrect = 0, optBest = getHigh('sql-opt-best');
+
+    const optimizeScenarios = [
+      {
+        title: 'Optimizing a slow report query',
+        steps: [
+          'Run EXPLAIN ANALYZE to see the current execution plan',
+          'Identify sequential scans on large tables',
+          'Add indexes on columns used in WHERE and JOIN conditions',
+          'Rewrite subqueries as JOINs where possible',
+          'Re-run EXPLAIN ANALYZE to verify improvement',
+        ]
+      },
+      {
+        title: 'Fixing N+1 query problem in an API endpoint',
+        steps: [
+          'Enable query logging to count total queries per request',
+          'Identify the loop that executes one query per item',
+          'Replace the loop with a single JOIN or IN query',
+          'Use batch loading (WHERE id IN (...)) for related data',
+          'Verify the fix by checking query count dropped to 2-3 total',
+        ]
+      },
+      {
+        title: 'Migrating a query from full table scan to index scan',
+        steps: [
+          'Run EXPLAIN to confirm sequential scan (Seq Scan)',
+          'Check the WHERE clause columns for missing indexes',
+          'Create the appropriate index (B-tree, GIN, or BRIN)',
+          'Run ANALYZE to update table statistics',
+          'Run EXPLAIN again to confirm Index Scan is used',
+        ]
+      },
+      {
+        title: 'Optimizing a GROUP BY aggregation on 50M rows',
+        steps: [
+          'Profile the current query with EXPLAIN ANALYZE',
+          'Add an index covering the GROUP BY columns',
+          'Consider a materialized view for pre-computed aggregates',
+          'Set up a refresh schedule for the materialized view',
+          'Point the application queries to the materialized view',
+        ]
+      },
+      {
+        title: 'Troubleshooting a query that suddenly got slow',
+        steps: [
+          'Check pg_stat_activity for locks or long-running queries',
+          'Run EXPLAIN ANALYZE to compare plan with previous fast runs',
+          'Check if table statistics are stale (run ANALYZE)',
+          'Check for table bloat and consider VACUUM FULL if needed',
+          'Review recent schema or data volume changes',
+        ]
+      },
+      {
+        title: 'Setting up database monitoring for a production app',
+        steps: [
+          'Enable pg_stat_statements extension to track query patterns',
+          'Identify the top 10 slowest queries by total time',
+          'Add indexes and optimize the worst offenders first',
+          'Set up alerts for queries exceeding 1 second',
+          'Create a dashboard tracking query performance trends over time',
+        ]
+      },
+    ];
+
+    function initOptimize() {
+      optimizeStarted = true;
+      optIdx = 0;
+      optCorrect = 0;
+      nextOptimize();
+    }
+
+    function nextOptimize() {
+      const scenario = optimizeScenarios[optIdx % optimizeScenarios.length];
+      const questionEl = document.getElementById('optimize-question');
+      questionEl.innerHTML = `<div class="prompt"><strong>Scenario:</strong> ${scenario.title}</div><p style="color:#888;font-size:0.82rem;margin-top:0.5rem;">Tap the steps in the correct order (1 through ${scenario.steps.length}).</p>`;
+
+      const stepsEl = document.getElementById('optimize-steps');
+      const shuffled = shuffle(scenario.steps.map((s, i) => ({ text: s, correctOrder: i })));
+      stepsEl.innerHTML = '';
+
+      let currentStep = 0;
+      document.getElementById('optimize-explanation').classList.remove('show');
+      document.getElementById('optimize-next').classList.remove('show');
+
+      shuffled.forEach((step) => {
+        const div = document.createElement('div');
+        div.className = 'build-step';
+        div.innerHTML = `<span class="step-number">?</span><span>${step.text}</span>`;
+        div.addEventListener('click', () => {
+          if (div.classList.contains('correct-order') || div.classList.contains('wrong-order')) return;
+          if (step.correctOrder === currentStep) {
+            div.classList.add('correct-order');
+            div.querySelector('.step-number').textContent = currentStep + 1;
+            currentStep++;
+            if (currentStep === scenario.steps.length) {
+              optCorrect++;
+              optBest = saveHigh('sql-opt-best', optCorrect);
+              const exp = document.getElementById('optimize-explanation');
+              exp.innerHTML = `<strong>Correct!</strong> All ${scenario.steps.length} optimization steps in the right order.`;
+              exp.classList.add('show');
+              document.getElementById('optimize-next').classList.add('show');
+              renderScore('optimize-score', [
+                { label: 'Correct', value: optCorrect },
+                { label: 'Round', value: optIdx + 1, cls: 'green' },
+                { label: 'Best', value: optBest, cls: 'purple' },
+              ]);
+            }
+          } else {
+            div.classList.add('wrong-order');
+            div.querySelector('.step-number').textContent = 'X';
+            setTimeout(() => {
+              div.classList.remove('wrong-order');
+              div.querySelector('.step-number').textContent = '?';
+            }, 600);
+          }
+        });
+        stepsEl.appendChild(div);
+      });
+
+      renderScore('optimize-score', [
+        { label: 'Correct', value: optCorrect },
+        { label: 'Round', value: optIdx + 1, cls: 'green' },
+        { label: 'Best', value: optBest, cls: 'purple' },
+      ]);
+    }
+
+    document.getElementById('optimize-next').addEventListener('click', () => {
+      optIdx++;
+      nextOptimize();
+    });
+
+
+    // ── Initialize active tab ──
+    switchTab(activeTab);
+  </script>
+</body>
+</html>

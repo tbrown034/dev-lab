@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Projects - Learn JS + TS</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <style>
+    body {
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    .header {
+      padding: 2rem 3rem;
+      border-bottom: 1px solid #222;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 1.5rem; font-weight: 600; }
+    .header h1 span { color: #eab308; }
+    .header .meta { color: #888; font-size: 0.85rem; }
+
+    /* ── Nav ── */
+    .nav {
+      display: flex;
+      gap: 0.5rem;
+      padding: 1.5rem 3rem;
+      flex-wrap: wrap;
+    }
+    .nav a {
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      color: #ccc;
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .nav a:hover {
+      background: #eab308;
+      color: #000;
+      border-color: #eab308;
+    }
+    .nav a.active {
+      background: #f472b6;
+      color: #000;
+      border-color: #f472b6;
+    }
+
+    /* ── Page Title ── */
+    .page-hero {
+      padding: 3rem 3rem 1rem;
+      max-width: 1200px;
+    }
+    .page-hero h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+    .page-hero h2 .accent { color: #f472b6; }
+    .page-hero .subtitle {
+      color: #888;
+      font-size: 1.05rem;
+      max-width: 720px;
+      line-height: 1.7;
+    }
+    .page-hero .subtitle strong { color: #ccc; font-weight: 600; }
+    .page-hero .badge-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.75rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      color: #aaa;
+    }
+    .badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* ── Project Cards ── */
+    .projects {
+      padding: 1rem 3rem 4rem;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    .project-card {
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .project-card:hover { border-color: #444; }
+
+    .project-header {
+      padding: 2rem 2rem 1rem;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .project-num {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .project-header h3 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .project-header p {
+      color: #999;
+      font-size: 0.9rem;
+      max-width: 650px;
+    }
+    .project-tags {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .project-tags span {
+      padding: 0.2rem 0.6rem;
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: #888;
+    }
+
+    /* ── Architecture Diagram Area ── */
+    .arch-container {
+      padding: 1.5rem 2rem;
+      min-height: 180px;
+      position: relative;
+    }
+    .arch-diagram {
+      background: #0d0d0d;
+      border: 1px solid #1a1a1a;
+      border-radius: 8px;
+      padding: 1.5rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: #888;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+    .arch-diagram .layer {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .arch-diagram .box {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .box-yellow { background: #eab30820; color: #eab308; border: 1px solid #eab30844; }
+    .box-purple { background: #818cf820; color: #818cf8; border: 1px solid #818cf844; }
+    .box-green  { background: #4ade8020; color: #4ade80; border: 1px solid #4ade8044; }
+    .box-pink   { background: #f472b620; color: #f472b6; border: 1px solid #f472b644; }
+    .box-cyan   { background: #06b6d420; color: #06b6d4; border: 1px solid #06b6d444; }
+    .arch-diagram .arrow {
+      color: #444;
+      font-size: 0.8rem;
+    }
+    .arch-diagram .label {
+      color: #555;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.25rem;
+    }
+
+    .how-built {
+      padding: 1.5rem 2rem 2rem;
+      border-top: 1px solid #1e1e1e;
+      background: #111;
+    }
+    .how-built h4 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #eab308;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.75rem;
+    }
+    .how-built ul {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 0.5rem;
+    }
+    .how-built li {
+      color: #888;
+      font-size: 0.82rem;
+      padding-left: 1.2rem;
+      position: relative;
+      line-height: 1.5;
+    }
+    .how-built li::before {
+      content: '>';
+      position: absolute;
+      left: 0;
+      color: #eab308;
+      font-weight: 600;
+      font-family: monospace;
+    }
+    .how-built code {
+      background: #1a1a1a;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-size: 0.78rem;
+      color: #eab308;
+    }
+
+    /* ── Demonstrates Section ── */
+    .demonstrates {
+      padding: 1rem 2rem 1.5rem;
+      border-top: 1px solid #1a1a1a;
+    }
+    .demonstrates h4 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #818cf8;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+    }
+    .demonstrates .demo-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .demonstrates .demo-tag {
+      padding: 0.25rem 0.6rem;
+      background: #818cf815;
+      border: 1px solid #818cf830;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: #818cf8;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      .header, .nav, .page-hero, .projects { padding-left: 1.25rem; padding-right: 1.25rem; }
+      .page-hero h2 { font-size: 1.6rem; }
+      .project-header, .arch-container, .how-built, .demonstrates { padding-left: 1.25rem; padding-right: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>Learn <span>JS/TS</span></h1>
+    <div class="meta">Trevor Brown &middot; Portfolio Projects</div>
+  </div>
+
+  <nav class="nav">
+    <a href="/jsts/">Home</a>
+    <a href="/jsts/references/use-cases/">Use Cases</a>
+    <a href="/jsts/games/">Games</a>
+    <a href="/jsts/projects/" class="active">Projects</a>
+  </nav>
+
+  <div class="page-hero">
+    <h2>Portfolio <span class="accent">Projects</span></h2>
+    <p class="subtitle">
+      Four production-quality TypeScript projects demonstrating <strong>systems-level thinking</strong>,
+      <strong>API design</strong>, and <strong>testability</strong>. Each is built from scratch
+      with zero-dependency core logic and full type coverage.
+    </p>
+    <div class="badge-row">
+      <span class="badge"><span class="dot" style="background: #eab308;"></span>TypeScript 5</span>
+      <span class="badge"><span class="dot" style="background: #818cf8;"></span>Zero Dependencies</span>
+      <span class="badge"><span class="dot" style="background: #4ade80;"></span>100% Type Coverage</span>
+      <span class="badge"><span class="dot" style="background: #f472b6;"></span>Full Test Suites</span>
+    </div>
+  </div>
+
+  <div class="projects">
+
+    <!-- ======================================================
+         PROJECT 1: Type-safe CLI Framework
+         ====================================================== -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #eab308;">Project 01</div>
+        <h3>Type-safe CLI Framework</h3>
+        <p>A Commander-inspired CLI framework where command definitions, arguments, and flags are fully type-inferred. No runtime type checking needed -- TypeScript catches invalid flag combinations at compile time.</p>
+        <div class="project-tags">
+          <span>Template Literal Types</span>
+          <span>Conditional Types</span>
+          <span>Process.argv Parsing</span>
+          <span>Plugin System</span>
+          <span>Vitest</span>
+        </div>
+      </div>
+      <div class="arch-container">
+        <div class="arch-diagram">
+          <div class="label">Architecture</div>
+          <div class="layer">
+            <span class="box box-yellow">process.argv</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-purple">Tokenizer</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-green">Parser</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-pink">Validator</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-cyan">Handler</span>
+          </div>
+          <div class="layer" style="margin-top: 0.75rem;">
+            <span class="box box-yellow">CLI Definition (DSL)</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-purple">Inferred Types</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-green">Type-safe Handlers</span>
+          </div>
+        </div>
+      </div>
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Template literal types parse flag strings like <code>"--port &lt;number&gt;"</code> into typed option records at compile time</li>
+          <li>Conditional types infer argument types from the definition DSL -- no manual type annotations needed</li>
+          <li>Plugin system lets users add custom commands, middleware, and output formatters via a <code>Plugin</code> interface</li>
+          <li>Tokenizer handles quoted strings, escaped characters, and double-dash separators correctly</li>
+          <li>Help text is auto-generated from the type definitions, including descriptions and default values</li>
+          <li>Full test suite with Vitest covering edge cases: missing args, unknown flags, conflicting options</li>
+        </ul>
+      </div>
+      <div class="demonstrates">
+        <h4>What This Demonstrates</h4>
+        <div class="demo-tags">
+          <span class="demo-tag">Advanced Generics</span>
+          <span class="demo-tag">Template Literal Types</span>
+          <span class="demo-tag">Type Inference</span>
+          <span class="demo-tag">Plugin Architecture</span>
+          <span class="demo-tag">Process Management</span>
+          <span class="demo-tag">Testing Strategy</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         PROJECT 2: Real-time Data Pipeline
+         ====================================================== -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #818cf8;">Project 02</div>
+        <h3>Real-time Data Pipeline</h3>
+        <p>An event-driven data processing pipeline that ingests, transforms, and routes streaming data. Uses async generators for backpressure, typed channels for message passing, and a circuit breaker for fault tolerance.</p>
+        <div class="project-tags">
+          <span>AsyncGenerator</span>
+          <span>Backpressure</span>
+          <span>Circuit Breaker</span>
+          <span>Typed Channels</span>
+          <span>Worker Threads</span>
+        </div>
+      </div>
+      <div class="arch-container">
+        <div class="arch-diagram">
+          <div class="label">Data Flow</div>
+          <div class="layer">
+            <span class="box box-yellow">Sources</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-purple">Ingest Queue</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-green">Transform Pipeline</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-green">Transform Pipeline</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-pink">Router</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-cyan">Sinks (DB / API / File)</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-yellow">Monitor</span>
+            <span class="arrow">&larr;</span>
+            <span class="box box-purple">Metrics Collector</span>
+            <span class="arrow">&larr;</span>
+            <span class="box box-green">Health Checks</span>
+          </div>
+        </div>
+      </div>
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Async generators provide natural backpressure -- downstream consumers pull data at their own pace</li>
+          <li>Typed channels use discriminated unions so each message type has a known shape at compile time</li>
+          <li>Circuit breaker wraps external service calls, opening after N failures and retrying after a cooldown</li>
+          <li>Worker threads handle CPU-intensive transforms (JSON parsing, schema validation) off the main thread</li>
+          <li>Router uses a <code>Map&lt;MessageType, Sink[]&gt;</code> to fan-out messages to multiple typed destinations</li>
+          <li>Metrics collector tracks throughput, latency, and error rates per pipeline stage</li>
+        </ul>
+      </div>
+      <div class="demonstrates">
+        <h4>What This Demonstrates</h4>
+        <div class="demo-tags">
+          <span class="demo-tag">Async Generators</span>
+          <span class="demo-tag">Backpressure</span>
+          <span class="demo-tag">Error Recovery</span>
+          <span class="demo-tag">Worker Threads</span>
+          <span class="demo-tag">Observability</span>
+          <span class="demo-tag">Stream Processing</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         PROJECT 3: Testing Library
+         ====================================================== -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #4ade80;">Project 03</div>
+        <h3>Testing Library from Scratch</h3>
+        <p>A minimal but complete testing framework with describe/it blocks, assertion matchers, async support, mocking, and parallel test execution. Proves deep understanding of how tools like Jest and Vitest actually work.</p>
+        <div class="project-tags">
+          <span>Test Runner</span>
+          <span>Assertion Library</span>
+          <span>Mock System</span>
+          <span>Async Support</span>
+          <span>Parallel Execution</span>
+        </div>
+      </div>
+      <div class="arch-container">
+        <div class="arch-diagram">
+          <div class="label">Test Runner Architecture</div>
+          <div class="layer">
+            <span class="box box-yellow">Test Files</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-purple">File Discovery</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-green">Parser (describe/it)</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-green">Test Suite Tree</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-pink">Runner (Serial/Parallel)</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-cyan">Reporter</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-yellow">expect()</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-purple">Matchers</span>
+            <span class="box box-green" style="margin-left: 1rem;">mock()</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-pink">Spy Tracking</span>
+          </div>
+        </div>
+      </div>
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>describe/it blocks build a tree structure at registration time, then the runner traverses it with proper beforeEach/afterEach lifecycle hooks</li>
+          <li>expect() returns a proxy-based matcher chain: <code>expect(x).toBe(y)</code>, <code>.toThrow()</code>, <code>.toHaveBeenCalledWith()</code></li>
+          <li>Mock system uses Proxy to record calls, arguments, and return values with full TypeScript inference</li>
+          <li>Parallel execution uses worker_threads, distributing test files across CPU cores for fast feedback</li>
+          <li>Reporter interface supports multiple output formats: dot, spec (verbose), and JSON for CI integration</li>
+          <li>Async tests have configurable timeouts with proper cleanup and unhandled rejection detection</li>
+        </ul>
+      </div>
+      <div class="demonstrates">
+        <h4>What This Demonstrates</h4>
+        <div class="demo-tags">
+          <span class="demo-tag">Proxy</span>
+          <span class="demo-tag">Tree Data Structures</span>
+          <span class="demo-tag">Worker Threads</span>
+          <span class="demo-tag">Error Handling</span>
+          <span class="demo-tag">API Design</span>
+          <span class="demo-tag">Metaprogramming</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================
+         PROJECT 4: Browser Extension with TypeScript
+         ====================================================== -->
+    <div class="project-card">
+      <div class="project-header">
+        <div class="project-num" style="color: #f472b6;">Project 04</div>
+        <h3>Browser Extension with TypeScript</h3>
+        <p>A productivity browser extension that tracks reading time, highlights and saves article excerpts, and syncs across devices via Chrome Storage API. Built with Manifest V3, service workers, and content scripts -- all fully typed.</p>
+        <div class="project-tags">
+          <span>Manifest V3</span>
+          <span>Service Workers</span>
+          <span>Content Scripts</span>
+          <span>Chrome Storage API</span>
+          <span>Message Passing</span>
+        </div>
+      </div>
+      <div class="arch-container">
+        <div class="arch-diagram">
+          <div class="label">Extension Architecture</div>
+          <div class="layer">
+            <span class="box box-yellow">Content Script</span>
+            <span class="arrow">&harr;</span>
+            <span class="box box-purple">Service Worker (Background)</span>
+            <span class="arrow">&harr;</span>
+            <span class="box box-green">Popup UI</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-pink">DOM Observer</span>
+            <span class="box box-cyan" style="margin-left: 1rem;">Chrome Storage</span>
+            <span class="box box-yellow" style="margin-left: 1rem;">Alarms API</span>
+          </div>
+          <div class="layer" style="margin-top: 0.5rem;">
+            <span class="box box-green">Typed Messages</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-purple">Discriminated Union Router</span>
+            <span class="arrow">&rarr;</span>
+            <span class="box box-pink">Handlers</span>
+          </div>
+        </div>
+      </div>
+      <div class="how-built">
+        <h4>How I Built This</h4>
+        <ul>
+          <li>Message passing between content script, service worker, and popup uses discriminated unions for type-safe routing</li>
+          <li>Content script uses MutationObserver to detect article content and calculate reading time from word count</li>
+          <li>Highlight system injects CSS classes and stores selection ranges in Chrome Storage for persistence</li>
+          <li>Service worker handles background sync, periodic cleanup via Alarms API, and cross-tab coordination</li>
+          <li>Popup UI is vanilla TypeScript with a custom reactive state system (no framework dependency)</li>
+          <li>Build pipeline uses esbuild for fast bundling, with separate entry points for each extension context</li>
+        </ul>
+      </div>
+      <div class="demonstrates">
+        <h4>What This Demonstrates</h4>
+        <div class="demo-tags">
+          <span class="demo-tag">Browser APIs</span>
+          <span class="demo-tag">Service Workers</span>
+          <span class="demo-tag">Message Passing</span>
+          <span class="demo-tag">DOM Manipulation</span>
+          <span class="demo-tag">State Management</span>
+          <span class="demo-tag">Build Tooling</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

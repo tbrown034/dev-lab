@@ -5,51 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lesson 08 - Views &amp; URLs Deep Dive</title>
   <link rel="icon" type="image/svg+xml" href="/django/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
-    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-    .header a { color: #22c55e; text-decoration: none; font-size: 0.85rem; }
-    .header h1 { font-size: 1.2rem; }
-    .header h1 span { color: #22c55e; }
-    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    h2 { color: #22c55e; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
-    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
-    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
-    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
-    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #22c55e; }
-    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
-    pre code { background: none; padding: 0; color: #e5e5e5; }
-    .comment { color: #6b7280; }
-    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
-    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
-    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
-    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
-    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
-    .callout p { color: #a5b4fc; }
-    .aha { background: #001a0a; border-left: 3px solid #22c55e; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
-    .aha p { color: #86efac; }
-    .aha strong { color: #22c55e; }
-    .warning { background: #1a1500; border-left: 3px solid #eab308; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
-    .warning p { color: #fde68a; }
-    .warning strong { color: #eab308; }
-    .quiz { background: #001a0a; border: 1px solid #22c55e44; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .quiz h4 { color: #22c55e; margin-bottom: 1rem; }
-    .quiz .question { margin-bottom: 1.25rem; }
-    .quiz .question p { color: #e5e5e5; font-weight: 500; }
-    .quiz button { background: #22c55e; color: #000; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
-    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
-    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
-    .nav-footer a { color: #22c55e; text-decoration: none; }
-    .file-tree { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; margin: 1rem 0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.8; }
-    .file-tree .folder { color: #818cf8; }
-    .file-tree .file { color: #bbb; }
-    .file-tree .highlight { color: #22c55e; font-weight: 600; }
-    .file-tree .muted { color: #555; }
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    th { text-align: left; color: #22c55e; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
-    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
-    td code { font-size: 0.8rem; }
+    :root { --track-color: #22c55e; }
+    .file-tree { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; margin: 1rem 0; font-family: var(--mono); font-size: 0.85rem; line-height: 1.8; }
+    .file-tree .folder { color: var(--info); }
+    .file-tree .file { color: var(--text-dim); }
+    .file-tree .highlight { color: var(--track-color); font-weight: 600; }
+    .file-tree .muted { color: var(--text-muted); }
   </style>
 </head>
 <body>

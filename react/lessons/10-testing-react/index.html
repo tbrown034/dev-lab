@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 10 - Testing React</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #06b6d4; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>10</span> Testing React &mdash; Test Behavior, Not Implementation</h1>
+    <a href="/react/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Most test suites are brittle because they test the wrong things.</strong> They test that a component has a certain CSS class, not that a user can complete a task. This lesson teaches the Testing Library philosophy and practical patterns for testing real applications.</p>
+
+    <!-- ============================================ -->
+    <!-- THE TESTING PHILOSOPHY                       -->
+    <!-- ============================================ -->
+
+    <h2>The Testing Philosophy: User-Centric Tests</h2>
+
+    <p>Kent C. Dodds' principle: "The more your tests resemble the way your software is used, the more confidence they can give you."</p>
+
+    <p>This means:</p>
+
+    <ul>
+      <li><strong>Don't test</strong> that a component rendered a <code>div</code> with className <code>article-card</code></li>
+      <li><strong>Do test</strong> that an article's title and author are visible on the page</li>
+      <li><strong>Don't test</strong> that <code>useState</code> was called with the right initial value</li>
+      <li><strong>Do test</strong> that clicking "Add to cart" shows the item in the cart</li>
+    </ul>
+
+    <div class="aha">
+      <p><strong>The journalist test:</strong> If you refactor a component's internals (change div to section, rename a state variable, restructure the JSX) and the user experience doesn't change, your tests should still pass. If they break, they're testing implementation details &mdash; like fact-checking your notes instead of your published story. The reader doesn't care about your notes. They care about the story.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TESTING LIBRARY BASICS                       -->
+    <!-- ============================================ -->
+
+    <h2>Testing Library: Queries and Interactions</h2>
+
+    <h3>Priority of queries (most to least accessible)</h3>
+
+    <table>
+      <tr><th>Priority</th><th>Query</th><th>When to Use</th></tr>
+      <tr><td>1st</td><td><code>getByRole</code></td><td>Buttons, links, headings, inputs (accessible to everyone)</td></tr>
+      <tr><td>2nd</td><td><code>getByLabelText</code></td><td>Form fields (how users find inputs)</td></tr>
+      <tr><td>3rd</td><td><code>getByPlaceholderText</code></td><td>When no label exists</td></tr>
+      <tr><td>4th</td><td><code>getByText</code></td><td>Non-interactive elements with visible text</td></tr>
+      <tr><td>5th</td><td><code>getByDisplayValue</code></td><td>Filled-in form fields</td></tr>
+      <tr><td>Last</td><td><code>getByTestId</code></td><td>Escape hatch when nothing else works</td></tr>
+    </table>
+
+    <pre><code><span class="comment">// Testing a search component</span>
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { ArticleSearch } from './ArticleSearch';
+
+describe('ArticleSearch', () =&gt; {
+  it('filters articles as the user types', async () =&gt; {
+    const user = userEvent.setup();
+    render(&lt;ArticleSearch articles={mockArticles} /&gt;);
+
+    <span class="comment">// Query by role — how a screen reader sees it</span>
+    const searchInput = screen.getByRole('searchbox', { name: /search/i });
+
+    <span class="comment">// Simulate real user typing (not fireEvent.change!)</span>
+    await user.type(searchInput, 'climate');
+
+    <span class="comment">// Assert on what the user sees</span>
+    expect(screen.getByText('Climate Report: 2026 Update')).toBeInTheDocument();
+    expect(screen.queryByText('Budget Bill Passes Senate')).not.toBeInTheDocument();
+  });
+
+  it('shows empty state when no results match', async () =&gt; {
+    const user = userEvent.setup();
+    render(&lt;ArticleSearch articles={mockArticles} /&gt;);
+
+    const searchInput = screen.getByRole('searchbox', { name: /search/i });
+    await user.type(searchInput, 'xyznonexistent');
+
+    expect(screen.getByText(/no articles found/i)).toBeInTheDocument();
+  });
+});</code></pre>
+
+    <div class="callout">
+      <p><strong>userEvent vs fireEvent:</strong> Always prefer <code>userEvent</code>. It simulates real user interactions: <code>user.type()</code> fires focus, keyDown, keyPress, input, keyUp events for each character &mdash; just like a real keyboard. <code>fireEvent.change()</code> only fires the change event, skipping everything else. Tests with userEvent catch more bugs because they exercise the full event lifecycle.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- COMPONENT TESTING PATTERNS                   -->
+    <!-- ============================================ -->
+
+    <h2>Component Testing Patterns</h2>
+
+    <h3>Testing with providers</h3>
+
+    <pre><code><span class="comment">// test/utils.tsx — custom render with providers</span>
+import { render, RenderOptions } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from '@/contexts/theme';
+
+function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },  <span class="comment">// Don't retry in tests</span>
+    },
+  });
+}
+
+function AllProviders({ children }: { children: React.ReactNode }) {
+  const queryClient = createTestQueryClient();
+  return (
+    &lt;QueryClientProvider client={queryClient}&gt;
+      &lt;ThemeProvider&gt;
+        {children}
+      &lt;/ThemeProvider&gt;
+    &lt;/QueryClientProvider&gt;
+  );
+}
+
+const customRender = (ui: React.ReactElement, options?: RenderOptions) =&gt;
+  render(ui, { wrapper: AllProviders, ...options });
+
+export { customRender as render, screen } from '@testing-library/react';</code></pre>
+
+    <h3>Testing async components</h3>
+
+    <pre><code><span class="comment">// Testing a component that fetches data</span>
+import { render, screen, waitFor } from '@/test/utils';
+
+describe('ArticleList', () =&gt; {
+  it('shows loading state, then articles', async () =&gt; {
+    render(&lt;ArticleList /&gt;);
+
+    <span class="comment">// Initially shows loading</span>
+    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+
+    <span class="comment">// Wait for data to appear</span>
+    await waitFor(() =&gt; {
+      expect(screen.getByText('Climate Report')).toBeInTheDocument();
+    });
+
+    <span class="comment">// Loading state is gone</span>
+    expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+  });
+
+  it('shows error state when fetch fails', async () =&gt; {
+    <span class="comment">// MSW will return an error for this test (see next section)</span>
+    server.use(
+      http.get('/api/articles', () =&gt; HttpResponse.error())
+    );
+
+    render(&lt;ArticleList /&gt;);
+
+    await waitFor(() =&gt; {
+      expect(screen.getByText(/failed to load/i)).toBeInTheDocument();
+    });
+
+    <span class="comment">// Test the retry button</span>
+    const retryButton = screen.getByRole('button', { name: /try again/i });
+    expect(retryButton).toBeInTheDocument();
+  });
+});</code></pre>
+
+    <!-- ============================================ -->
+    <!-- MSW                                          -->
+    <!-- ============================================ -->
+
+    <h2>MSW: Mock Service Worker for API Testing</h2>
+
+    <p>MSW intercepts network requests at the service worker level. Your components make real fetch calls &mdash; MSW intercepts them and returns mock data. The component doesn't know it's being mocked.</p>
+
+    <pre><code><span class="comment">// mocks/handlers.ts</span>
+import { http, HttpResponse } from 'msw';
+
+export const handlers = [
+  <span class="comment">// GET /api/articles</span>
+  http.get('/api/articles', ({ request }) =&gt; {
+    const url = new URL(request.url);
+    const category = url.searchParams.get('category');
+
+    const articles = mockArticles.filter(
+      a =&gt; !category || a.category === category
+    );
+
+    return HttpResponse.json({ articles });
+  }),
+
+  <span class="comment">// POST /api/articles/:id/like</span>
+  http.post('/api/articles/:id/like', ({ params }) =&gt; {
+    return HttpResponse.json({ liked: true, id: params.id });
+  }),
+
+  <span class="comment">// Simulate slow response</span>
+  http.get('/api/slow-data', async () =&gt; {
+    await new Promise(resolve =&gt; setTimeout(resolve, 2000));
+    return HttpResponse.json({ data: 'slow' });
+  }),
+];
+
+<span class="comment">// mocks/server.ts — for tests</span>
+import { setupServer } from 'msw/node';
+import { handlers } from './handlers';
+
+export const server = setupServer(...handlers);
+
+<span class="comment">// vitest.setup.ts</span>
+beforeAll(() =&gt; server.listen());
+afterEach(() =&gt; server.resetHandlers());
+afterAll(() =&gt; server.close());</code></pre>
+
+    <div class="aha">
+      <p><strong>Why MSW beats manual mocking:</strong> When you mock <code>fetch</code> directly or mock a data hook, you're testing your mock, not your code. The actual fetch logic, error handling, and request formatting are skipped. MSW lets your real code run end-to-end. If your component builds a URL wrong or doesn't handle a 404 response, MSW-based tests catch it. Manual mocks don't.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TESTING FORMS                                -->
+    <!-- ============================================ -->
+
+    <h2>Testing Forms</h2>
+
+    <pre><code><span class="comment">// Testing a form with validation</span>
+describe('ArticleForm', () =&gt; {
+  it('shows validation errors for empty required fields', async () =&gt; {
+    const user = userEvent.setup();
+    render(&lt;ArticleForm /&gt;);
+
+    <span class="comment">// Submit without filling anything</span>
+    const submitButton = screen.getByRole('button', { name: /publish/i });
+    await user.click(submitButton);
+
+    <span class="comment">// Check for validation errors</span>
+    expect(screen.getByText(/title is required/i)).toBeInTheDocument();
+    expect(screen.getByText(/article body is required/i)).toBeInTheDocument();
+  });
+
+  it('submits successfully with valid data', async () =&gt; {
+    const user = userEvent.setup();
+    render(&lt;ArticleForm /&gt;);
+
+    <span class="comment">// Fill in the form</span>
+    await user.type(
+      screen.getByLabelText(/title/i),
+      'New Climate Report Released'
+    );
+    await user.type(
+      screen.getByLabelText(/body/i),
+      'A comprehensive new climate report was released today showing...'
+    );
+    await user.selectOptions(
+      screen.getByLabelText(/category/i),
+      'politics'
+    );
+
+    <span class="comment">// Submit</span>
+    await user.click(screen.getByRole('button', { name: /publish/i }));
+
+    <span class="comment">// Verify success (MSW handles the API call)</span>
+    await waitFor(() =&gt; {
+      expect(screen.getByText(/published successfully/i)).toBeInTheDocument();
+    });
+  });
+});</code></pre>
+
+    <!-- ============================================ -->
+    <!-- PLAYWRIGHT E2E                               -->
+    <!-- ============================================ -->
+
+    <h2>Playwright: End-to-End Testing</h2>
+
+    <p>Playwright tests run in a real browser against your running application. They test the full stack: frontend, API, database (or MSW).</p>
+
+    <pre><code><span class="comment">// e2e/article-workflow.spec.ts</span>
+import { test, expect } from '@playwright/test';
+
+test.describe('Article publishing workflow', () =&gt; {
+  test('user can create, edit, and delete an article', async ({ page }) =&gt; {
+    <span class="comment">// Navigate to article creation</span>
+    await page.goto('/articles/new');
+
+    <span class="comment">// Fill in the form</span>
+    await page.getByLabel('Title').fill('Test Article for E2E');
+    await page.getByLabel('Body').fill('This is a test article body...');
+    await page.getByLabel('Category').selectOption('tech');
+
+    <span class="comment">// Submit</span>
+    await page.getByRole('button', { name: 'Publish' }).click();
+
+    <span class="comment">// Verify redirect to article page</span>
+    await expect(page).toHaveURL(/\/articles\/test-article-for-e2e/);
+    await expect(page.getByRole('heading', { level: 1 }))
+      .toHaveText('Test Article for E2E');
+
+    <span class="comment">// Edit the article</span>
+    await page.getByRole('link', { name: 'Edit' }).click();
+    await page.getByLabel('Title').fill('Updated E2E Article');
+    await page.getByRole('button', { name: 'Save' }).click();
+
+    <span class="comment">// Verify update</span>
+    await expect(page.getByRole('heading', { level: 1 }))
+      .toHaveText('Updated E2E Article');
+
+    <span class="comment">// Delete</span>
+    await page.getByRole('button', { name: 'Delete' }).click();
+    await page.getByRole('button', { name: 'Confirm' }).click();
+
+    <span class="comment">// Verify redirect to articles list</span>
+    await expect(page).toHaveURL('/articles');
+  });
+});</code></pre>
+
+    <!-- ============================================ -->
+    <!-- WHAT TO TEST                                 -->
+    <!-- ============================================ -->
+
+    <h2>The Testing Decision Framework</h2>
+
+    <table>
+      <tr><th>Test Type</th><th>What to Test</th><th>Tool</th><th>Speed</th></tr>
+      <tr><td><strong>Unit</strong></td><td>Utility functions, hooks, schemas</td><td>Vitest</td><td>~ms</td></tr>
+      <tr><td><strong>Component</strong></td><td>UI behavior, user interactions</td><td>Testing Library + Vitest</td><td>~100ms</td></tr>
+      <tr><td><strong>Integration</strong></td><td>Component + API interaction</td><td>Testing Library + MSW</td><td>~200ms</td></tr>
+      <tr><td><strong>E2E</strong></td><td>Critical user workflows</td><td>Playwright</td><td>~seconds</td></tr>
+    </table>
+
+    <h3>What NOT to test</h3>
+
+    <ul>
+      <li>Third-party library behavior (Tailwind classes, React Query internals)</li>
+      <li>Implementation details (state variable names, internal component structure)</li>
+      <li>Snapshot tests of large components (brittle, low signal, high maintenance)</li>
+      <li>Every possible input combination (test boundaries and edge cases, not every variation)</li>
+    </ul>
+
+    <div class="callout">
+      <p><strong>The testing pyramid, pragmatically:</strong> Write many unit tests for business logic (fast, stable). Write component tests for key user interactions (medium). Write a few E2E tests for critical paths (sign up, purchase, publish). If you only have time for one kind, write integration tests with MSW &mdash; they give the most confidence per test.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. Why should you prefer <code>getByRole</code> over <code>getByTestId</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>getByRole</code> queries the way assistive technology (screen readers) sees your UI. If you can find an element by role, it means your UI is accessible. <code>getByTestId</code> requires adding test-specific attributes that real users and assistive tech don't use. Role queries simultaneously test functionality and accessibility.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why use MSW instead of mocking fetch directly?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">MSW intercepts at the network level, so your real fetch/axios code runs completely. It tests your URL construction, headers, error handling, and response parsing. Mocking fetch skips all of that code, testing only what happens after you get data. MSW also shares handlers between dev, tests, and Storybook.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What's wrong with snapshot tests for component output?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">They're brittle and low-signal. Any change to the HTML structure (adding a div, changing a class name, reordering attributes) fails the snapshot, even if the user experience is identical. Developers update snapshots reflexively without reviewing them, which defeats the purpose. Test specific behavior instead.</div>
+      </div>
+
+      <div class="question">
+        <p>4. You refactored a component from using useState to useReducer. Should your tests break?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">No! If the user experience didn't change, tests shouldn't break. That's the whole point of testing behavior over implementation. If your tests broke because they were checking internal state names or hook calls, they were testing implementation details.</div>
+      </div>
+    </div>
+
+    <div class="exercise">
+      <h4>Exercise: Build a Test Suite</h4>
+      <ol>
+        <li>Write MSW handlers for a mock articles API (CRUD operations)</li>
+        <li>Write component tests for ArticleSearch: test typing, filtering, empty state, error state</li>
+        <li>Write form tests for ArticleForm: validation errors, successful submission, server errors</li>
+        <li>Write one E2E test with Playwright: the full create-edit-delete workflow</li>
+        <li>Run coverage. Identify what's untested. Is it worth testing?</li>
+      </ol>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/react/lessons/09-forms-validation/">&larr; Lesson 09: Forms</a>
+      <a href="/react/lessons/11-framework-comparison/">Lesson 11: Framework Comparison &rarr;</a>
+    </div>
+  </div>
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

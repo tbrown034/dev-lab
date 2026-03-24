@@ -4,52 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lesson 01 - SQL Fundamentals</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #3b82f6; }</style>
   <link rel="icon" type="image/svg+xml" href="/sql/assets/favicon.svg">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
-    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-    .header a { color: #3b82f6; text-decoration: none; font-size: 0.85rem; }
-    .header h1 { font-size: 1.2rem; }
-    .header h1 span { color: #3b82f6; }
-    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    h2 { color: #3b82f6; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
-    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
-    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
-    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
-    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #3b82f6; }
-    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
-    pre code { background: none; padding: 0; color: #e5e5e5; }
-    .comment { color: #6b7280; }
-    .keyword { color: #3b82f6; }
-    .string { color: #4ade80; }
-    .number { color: #f472b6; }
-    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .demo h4 { color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
-    .quiz { background: #0a0a1a; border: 1px solid #3b82f644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .quiz h4 { color: #3b82f6; margin-bottom: 1rem; }
-    .quiz .question { margin-bottom: 1.25rem; }
-    .quiz .question p { color: #e5e5e5; font-weight: 500; }
-    .quiz button { background: #3b82f6; color: #fff; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
-    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
-    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
-    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
-    .nav-footer a { color: #3b82f6; text-decoration: none; }
-    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
-    .callout p { color: #a5b4fc; }
-    .aha { background: #0a0a1a; border-left: 3px solid #3b82f6; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
-    .aha p { color: #93c5fd; }
-    .aha strong { color: #3b82f6; }
-    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
-    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
-    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
-    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    th { text-align: left; color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
-    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
-    td code { font-size: 0.8rem; }
-  </style>
 </head>
 <body>
   <div class="header">
@@ -59,7 +17,7 @@
 
   <div class="content">
 
-    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #3b82f6;">You already know this stuff.</strong> You've been writing Prisma queries for months. Now you're going to see the SQL that Prisma generates under the hood. It reads like English.</p>
+    <p class="lesson-intro"><strong>You already know this stuff.</strong> You've been writing Prisma queries for months. Now you're going to see the SQL that Prisma generates under the hood. It reads like English.</p>
 
     <!-- ============================================ -->
     <!-- WHAT IS SQL                                  -->
@@ -333,10 +291,10 @@ WHERE id = 5;</code></pre>
       <div>
         <h5>JavaScript</h5>
         <pre><code>// Array.filter()
-articles.filter(a => a.published === true);
-articles.filter(a => a.views > 1000);
-articles.filter(a =>
-  a.published && a.views > 1000
+articles.filter(a =&gt; a.published === true);
+articles.filter(a =&gt; a.views &gt; 1000);
+articles.filter(a =&gt;
+  a.published && a.views &gt; 1000
 );</code></pre>
       </div>
       <div>
@@ -344,10 +302,10 @@ articles.filter(a =>
         <pre><code>SELECT * FROM articles
 WHERE published = true;
 
-SELECT * FROM articles WHERE views > 1000;
+SELECT * FROM articles WHERE views &gt; 1000;
 
 SELECT * FROM articles
-WHERE published = true AND views > 1000;</code></pre>
+WHERE published = true AND views &gt; 1000;</code></pre>
       </div>
     </div>
 
@@ -432,7 +390,7 @@ WHERE email LIKE '%@gmail.com'</code></pre>
       <div>
         <h5>JavaScript</h5>
         <pre><code>// AND (both must be true)
-if (published && views > 1000)
+if (published && views &gt; 1000)
 
 // OR (either can be true)
 if (status === 'draft' || status === 'review')</code></pre>
@@ -440,7 +398,7 @@ if (status === 'draft' || status === 'review')</code></pre>
       <div>
         <h5>SQL</h5>
         <pre><code>-- AND (both must be true)
-WHERE published = true AND views > 1000
+WHERE published = true AND views &gt; 1000
 
 -- OR (either can be true)
 WHERE status = 'draft' OR status = 'review'</code></pre>
@@ -609,7 +567,7 @@ WHERE published = false;</code></pre>
     <pre><code>SELECT title, published, views
 FROM articles
 WHERE published = true
-  AND views > 1000
+  AND views &gt; 1000
 ORDER BY views DESC
 LIMIT 5;</code></pre>
 
@@ -621,10 +579,10 @@ LIMIT 5;</code></pre>
       <div>
         <h5>JavaScript (imperative)</h5>
         <pre><code>const result = articles
-  .filter(a => a.published && a.views > 1000)
-  .sort((a, b) => b.views - a.views)
+  .filter(a =&gt; a.published && a.views &gt; 1000)
+  .sort((a, b) =&gt; b.views - a.views)
   .slice(0, 5)
-  .map(a => ({
+  .map(a =&gt; ({
     title: a.title,
     published: a.published,
     views: a.views,
@@ -635,7 +593,7 @@ LIMIT 5;</code></pre>
         <pre><code>SELECT title, published, views
 FROM articles
 WHERE published = true
-  AND views > 1000
+  AND views &gt; 1000
 ORDER BY views DESC
 LIMIT 5;</code></pre>
       </div>
@@ -708,7 +666,7 @@ OFFSET n;             -- Skip results (for pagination)</code></pre>
         <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
         <div class="answer"><pre><code>SELECT name, outlet
 FROM sources
-WHERE trust_level >= 8;</code></pre></div>
+WHERE trust_level &gt;= 8;</code></pre></div>
       </div>
 
       <div class="question">

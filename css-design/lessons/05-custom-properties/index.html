@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 05 - Custom Properties &amp; Theming</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #a855f7; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>05</span> Custom Properties &mdash; CSS's Runtime API</h1>
+    <a href="/css-design/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>CSS custom properties are not Sass variables.</strong> They're a runtime API that cascades, scopes, and can be changed dynamically with JavaScript. Understanding this difference is the key to modern theming.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: Variables That Participate in the Cascade</h2>
+
+    <p>Sass variables (<code>$color-primary</code>) are replaced at build time. The browser never sees them. They're constants.</p>
+
+    <p>CSS custom properties (<code>--color-primary</code>) exist at runtime in the browser. They cascade. They inherit. They can change based on context. They're reactive.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Sass variables (compile time)</h5>
+        <pre><code><span class="comment">/* Before build: */</span>
+$primary: #a855f7;
+.btn { color: $primary; }
+
+<span class="comment">/* After build (what the browser sees): */</span>
+.btn { color: #a855f7; }
+
+<span class="comment">/* The variable is GONE.
+   You can't change it at runtime.
+   You can't scope it to a component.
+   It's a static find-and-replace. */</span></code></pre>
+      </div>
+      <div>
+        <h5>CSS custom properties (runtime)</h5>
+        <pre><code><span class="comment">/* What the browser sees: */</span>
+:root { --primary: #a855f7; }
+.btn { color: var(--primary); }
+
+<span class="comment">/* The variable LIVES in the browser.
+   Change it with JS:
+   el.style.setProperty('--primary', '#22c55e')
+
+   Scope it to a component:
+   .dark-card { --primary: #e9d5ff; }
+
+   It cascades just like any CSS property. */</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Custom properties cascade.</strong> This means a <code>--color-primary</code> set on a parent is available to all descendants. Set it on <code>:root</code> for global scope. Set it on <code>.dark-mode</code> to override for a section. Set it on a specific component to localize. The cascade is the scoping mechanism.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SYNTAX AND FALLBACKS                         -->
+    <!-- ============================================ -->
+
+    <h2>Syntax, Fallbacks, and Gotchas</h2>
+
+    <pre><code><span class="comment">/* Defining custom properties */</span>
+:root {
+  --color-primary: #a855f7;
+  --spacing-md: 1rem;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+<span class="comment">/* Using them with var() */</span>
+.card {
+  color: var(--color-primary);
+  padding: var(--spacing-md);
+  font-family: var(--font-sans);
+  box-shadow: var(--shadow-card);
+}
+
+<span class="comment">/* Fallback values (used if the property doesn't exist) */</span>
+.card {
+  color: var(--color-primary, #a855f7);
+  <span class="comment">/* If --color-primary isn't defined, use #a855f7 */</span>
+}
+
+<span class="comment">/* Nested fallbacks */</span>
+.card {
+  color: var(--color-brand, var(--color-primary, purple));
+  <span class="comment">/* Try --color-brand → try --color-primary → use purple */</span>
+}</code></pre>
+
+    <div class="warning">
+      <p><strong>The invalid value gotcha.</strong> If a custom property resolves to an invalid value for the property using it, CSS doesn't use the fallback &mdash; it uses <code>unset</code>. Example: <code>--size: red; width: var(--size);</code> doesn't fail gracefully. The width becomes <code>unset</code> (auto for width), not the fallback. The variable IS defined &mdash; its value just doesn't make sense for <code>width</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SCOPING AND THEMING                          -->
+    <!-- ============================================ -->
+
+    <h2>Scoping: The Power Move</h2>
+
+    <p>Custom properties cascade, which means you can override them at any level of the DOM tree:</p>
+
+    <pre><code><span class="comment">/* Global defaults */</span>
+:root {
+  --bg: #060608;
+  --text: #e8e6f0;
+  --accent: #a855f7;
+}
+
+<span class="comment">/* Override for light mode */</span>
+[data-theme="light"] {
+  --bg: #f5f4f1;
+  --text: #1a1918;
+  --accent: #7c3aed;
+}
+
+<span class="comment">/* Override for a specific component */</span>
+.card-danger {
+  --accent: #ef4444;  <span class="comment">/* only affects this card and its children */</span>
+}
+
+<span class="comment">/* All components use the SAME variables */</span>
+.card {
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--accent);
+}
+.btn {
+  background: var(--accent);
+}
+
+<span class="comment">/* The .card and .btn inside .card-danger automatically get
+   the red accent — no new classes needed */</span></code></pre>
+
+    <div class="aha">
+      <p><strong>This is how this platform's dark/light theme works.</strong> Look at the source: <code>[data-theme="light"]</code> overrides the same variables that <code>:root</code> defines. Every component uses <code>var(--bg)</code>, <code>var(--text)</code>, etc. Toggle the theme and every element updates &mdash; because they all reference the same variables, and the variables changed.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DESIGN TOKENS WITH CUSTOM PROPS              -->
+    <!-- ============================================ -->
+
+    <h2>Design Tokens with Custom Properties</h2>
+
+    <p>A token system typically has three layers:</p>
+
+    <pre><code><span class="comment">/* Layer 1: Primitives — raw values with no semantic meaning */</span>
+:root {
+  --purple-50: #faf5ff;
+  --purple-500: #a855f7;
+  --purple-900: #581c87;
+  --gray-50: #f9fafb;
+  --gray-900: #111827;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-4: 1rem;
+  --space-8: 2rem;
+}
+
+<span class="comment">/* Layer 2: Semantic — meaning-based aliases */</span>
+:root {
+  --color-bg: var(--gray-900);
+  --color-text: var(--gray-50);
+  --color-accent: var(--purple-500);
+  --color-accent-subtle: var(--purple-50);
+  --spacing-section: var(--space-8);
+  --spacing-element: var(--space-4);
+}
+
+<span class="comment">/* Layer 3: Component — scoped to specific components */</span>
+.card {
+  --card-padding: var(--spacing-element);
+  --card-bg: var(--color-bg);
+  --card-border: var(--color-accent);
+  padding: var(--card-padding);
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+}
+
+<span class="comment">/* Theme override only changes Layer 2 */</span>
+[data-theme="light"] {
+  --color-bg: var(--gray-50);
+  --color-text: var(--gray-900);
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>Tailwind v4 connection.</strong> Tailwind v4's <code>@theme</code> directive works exactly like this. You define tokens in <code>@theme { }</code> and Tailwind generates utilities from them. The underlying mechanism is CSS custom properties. Understanding this system means you understand Tailwind v4's architecture (Lesson 08).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- JAVASCRIPT INTEGRATION                       -->
+    <!-- ============================================ -->
+
+    <h2>Dynamic Theming with JavaScript</h2>
+
+    <pre><code><span class="comment">/* Read a custom property from JS */</span>
+const value = getComputedStyle(document.documentElement)
+  .getPropertyValue('--accent');
+<span class="comment">// "#a855f7"</span>
+
+<span class="comment">/* Set a custom property from JS */</span>
+document.documentElement.style.setProperty('--accent', '#22c55e');
+<span class="comment">/* Every element using var(--accent) updates instantly */</span>
+
+<span class="comment">/* Scope it to a specific element */</span>
+card.style.setProperty('--accent', '#ef4444');
+<span class="comment">/* Only this card (and its children) see the red accent */</span>
+
+<span class="comment">/* Use it for scroll-driven values */</span>
+window.addEventListener('scroll', () =&gt; {
+  const pct = window.scrollY / document.body.scrollHeight;
+  document.documentElement.style.setProperty('--scroll-pct', pct);
+});
+<span class="comment">/* Now CSS can use var(--scroll-pct) for scroll-based effects */</span></code></pre>
+
+    <div class="aha">
+      <p><strong>Custom properties are the bridge between CSS and JavaScript.</strong> Instead of JavaScript directly manipulating styles, it sets a custom property, and CSS responds. This keeps the styling in CSS and the logic in JavaScript. Clean separation of concerns.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ADVANCED PATTERNS                            -->
+    <!-- ============================================ -->
+
+    <h2>Advanced Patterns</h2>
+
+    <h3>Pattern 1: Component variants with custom properties</h3>
+
+    <pre><code>.btn {
+  --btn-bg: var(--accent);
+  --btn-text: white;
+  --btn-padding: 0.5rem 1rem;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  padding: var(--btn-padding);
+}
+.btn-outline {
+  --btn-bg: transparent;
+  --btn-text: var(--accent);
+  border: 1px solid var(--accent);
+}
+.btn-lg {
+  --btn-padding: 0.75rem 1.5rem;
+}
+<span class="comment">/* Variants only change the variables, not the base styles */</span></code></pre>
+
+    <h3>Pattern 2: Responsive tokens without media queries</h3>
+
+    <pre><code>:root {
+  --container-padding: 1rem;
+}
+@media (min-width: 768px) {
+  :root { --container-padding: 2rem; }
+}
+@media (min-width: 1280px) {
+  :root { --container-padding: 3rem; }
+}
+<span class="comment">/* Every element using var(--container-padding)
+   automatically responds to the viewport */</span></code></pre>
+
+    <h3>Pattern 3: Calculated values</h3>
+
+    <pre><code>:root {
+  --base-size: 1rem;
+  --scale: 1.25;
+}
+h1 { font-size: calc(var(--base-size) * var(--scale) * var(--scale) * var(--scale)); }
+h2 { font-size: calc(var(--base-size) * var(--scale) * var(--scale)); }
+h3 { font-size: calc(var(--base-size) * var(--scale)); }
+<span class="comment">/* Change --scale and the entire type hierarchy adjusts */</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What's the fundamental difference between Sass variables and CSS custom properties?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Sass variables are resolved at build time and disappear from the output. CSS custom properties live in the browser at runtime, cascade through the DOM, and can be changed dynamically with JavaScript.</div>
+      </div>
+
+      <div class="question">
+        <p>2. How do you scope a custom property to only affect one component and its children?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Set it on that component's selector instead of <code>:root</code>. For example, <code>.card-danger { --accent: #ef4444; }</code> makes <code>--accent</code> red only for elements inside <code>.card-danger</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What happens if <code>var(--size, 16px)</code> is used but <code>--size</code> is set to <code>banana</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The fallback <code>16px</code> is NOT used. Because <code>--size</code> IS defined (just with an invalid value for the context), the property becomes <code>unset</code>. The fallback only applies when the variable doesn't exist at all.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Name the three layers of a design token system.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Primitive (raw values like <code>--purple-500</code>), Semantic (meaning-based like <code>--color-accent</code>), and Component (scoped like <code>--card-bg</code>). Theme changes happen at the semantic layer.</div>
+      </div>
+
+      <div class="question">
+        <p>5. How do you read a custom property's value from JavaScript?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>getComputedStyle(element).getPropertyValue('--property-name')</code>. Note: it reads the computed value for that specific element, respecting cascade and inheritance.</div>
+      </div>
+    </div>
+
+    <div class="exercise">
+      <h4>Exercise: Build a Theme Switcher</h4>
+      <ol>
+        <li>Define a set of custom properties on <code>:root</code> for a dark theme (background, text, accent, surface)</li>
+        <li>Create a <code>[data-theme="light"]</code> override set</li>
+        <li>Build a card component that uses only these variables</li>
+        <li>Add a JavaScript button that toggles the <code>data-theme</code> attribute</li>
+        <li>Bonus: Add a third theme (e.g., "sepia") by defining a new <code>[data-theme="sepia"]</code> set</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Custom properties are runtime</strong> &mdash; they cascade, inherit, and can be changed dynamically</li>
+      <li><strong>Sass variables are compile-time</strong> &mdash; they disappear after build</li>
+      <li><strong>Scoping = setting on a selector</strong> &mdash; :root for global, .component for local</li>
+      <li><strong>Three token layers</strong> &mdash; primitive, semantic, component</li>
+      <li><strong>Theme switching</strong> overrides the semantic layer; components don't change</li>
+      <li><strong>JavaScript integration</strong> via <code>setProperty()</code> and <code>getPropertyValue()</code></li>
+      <li><strong>Fallbacks only work when the property is undefined</strong>, not when the value is invalid</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/css-design/lessons/04-grid-mastery/">&larr; Lesson 04: Grid</a>
+      <a href="/css-design/lessons/06-modern-css/">Lesson 06: Modern CSS &rarr;</a>
+    </div>
+  </div>
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

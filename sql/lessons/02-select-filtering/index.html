@@ -4,49 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lesson 02 - SELECT & Filtering Deep Dive</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #3b82f6; }</style>
   <link rel="icon" type="image/svg+xml" href="/sql/assets/favicon.svg">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
-    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-    .header a { color: #3b82f6; text-decoration: none; font-size: 0.85rem; }
-    .header h1 { font-size: 1.2rem; }
-    .header h1 span { color: #3b82f6; }
-    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    h2 { color: #3b82f6; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
-    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
-    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
-    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
-    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #3b82f6; }
-    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
-    pre code { background: none; padding: 0; color: #e5e5e5; }
-    .comment { color: #6b7280; }
-    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .demo h4 { color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
-    .quiz { background: #0a0a1a; border: 1px solid #3b82f644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .quiz h4 { color: #3b82f6; margin-bottom: 1rem; }
-    .quiz .question { margin-bottom: 1.25rem; }
-    .quiz .question p { color: #e5e5e5; font-weight: 500; }
-    .quiz button { background: #3b82f6; color: #fff; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
-    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
-    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
-    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
-    .nav-footer a { color: #3b82f6; text-decoration: none; }
-    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
-    .callout p { color: #a5b4fc; }
-    .aha { background: #0a0a1a; border-left: 3px solid #3b82f6; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
-    .aha p { color: #93c5fd; }
-    .aha strong { color: #3b82f6; }
-    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
-    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
-    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
-    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    th { text-align: left; color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
-    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
-    td code { font-size: 0.8rem; }
-  </style>
 </head>
 <body>
   <div class="header">
@@ -56,7 +17,7 @@
 
   <div class="content">
 
-    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #3b82f6;">Lesson 01 gave you the vocabulary.</strong> Now we're going to get fluent. SELECT is the query you'll write 100 times a day. Let's master every option it gives you.</p>
+    <p class="lesson-intro"><strong>Lesson 01 gave you the vocabulary.</strong> Now we're going to get fluent. SELECT is the query you'll write 100 times a day. Let's master every option it gives you.</p>
 
     <!-- ============================================ -->
     <!-- SELECT EXPRESSIONS & ALIASES                 -->
@@ -82,7 +43,7 @@ FROM employees;</code></pre>
     <div class="side-by-side">
       <div>
         <h5>JavaScript equivalent</h5>
-        <pre><code>employees.map(emp => ({
+        <pre><code>employees.map(emp =&gt; ({
   first: emp.first_name,
   last: emp.last_name,
   monthly_salary: emp.salary / 12,
@@ -360,12 +321,12 @@ SELECT votes_for / NULLIF(total_votes, 0) AS percentage FROM results;</code></pr
     <p><code>AND</code> binds tighter than <code>OR</code> (just like <code>&amp;&amp;</code> binds tighter than <code>||</code> in JS). Use parentheses to be explicit:</p>
 
     <pre><code>-- DANGEROUS: AND binds first, so this means:
--- "politics AND trust_level > 7" OR "beat = 'crime'"
+-- "politics AND trust_level &gt; 7" OR "beat = 'crime'"
 -- (Returns ALL crime beat sources regardless of trust!)
-WHERE beat = 'politics' AND trust_level > 7 OR beat = 'crime'
+WHERE beat = 'politics' AND trust_level &gt; 7 OR beat = 'crime'
 
 -- SAFE: use parentheses to be explicit
-WHERE (beat = 'politics' OR beat = 'crime') AND trust_level > 7</code></pre>
+WHERE (beat = 'politics' OR beat = 'crime') AND trust_level &gt; 7</code></pre>
 
     <div class="aha">
       <p><strong>Rule of thumb:</strong> If you have both AND and OR in a WHERE clause, always use parentheses. Don't rely on precedence rules. Make your intent crystal clear.</p>
@@ -394,7 +355,7 @@ WHERE phone IS NOT NULL</code></pre>
         <pre><code>// Unique departments
 const departments = [
   ...new Set(
-    employees.map(e => e.department)
+    employees.map(e =&gt; e.department)
   )
 ];</code></pre>
       </div>
@@ -431,15 +392,15 @@ FROM employees;
       <div>
         <h5>JavaScript ternary / switch</h5>
         <pre><code>// Ternary
-const label = salary > 100000
+const label = salary &gt; 100000
   ? 'Senior' : 'Standard';
 
 // Switch-like
-const tier = salary > 150000
+const tier = salary &gt; 150000
   ? 'Executive'
-  : salary > 100000
+  : salary &gt; 100000
     ? 'Senior'
-    : salary > 60000
+    : salary &gt; 60000
       ? 'Mid'
       : 'Entry';</code></pre>
       </div>
@@ -447,16 +408,16 @@ const tier = salary > 150000
         <h5>SQL CASE</h5>
         <pre><code>-- Simple CASE (like ternary)
 SELECT name,
-  CASE WHEN salary > 100000
+  CASE WHEN salary &gt; 100000
     THEN 'Senior' ELSE 'Standard'
   END AS label;
 
 -- Multi-condition CASE (like switch)
 SELECT name,
   CASE
-    WHEN salary > 150000 THEN 'Executive'
-    WHEN salary > 100000 THEN 'Senior'
-    WHEN salary > 60000  THEN 'Mid'
+    WHEN salary &gt; 150000 THEN 'Executive'
+    WHEN salary &gt; 100000 THEN 'Senior'
+    WHEN salary &gt; 60000  THEN 'Mid'
     ELSE 'Entry'
   END AS tier
 FROM employees;</code></pre>
@@ -488,7 +449,7 @@ ORDER BY
   COUNT(*) AS total_articles,
   COUNT(CASE WHEN published = true THEN 1 END) AS published_count,
   COUNT(CASE WHEN published = false THEN 1 END) AS draft_count,
-  COUNT(CASE WHEN views > 1000 THEN 1 END) AS viral_count
+  COUNT(CASE WHEN views &gt; 1000 THEN 1 END) AS viral_count
 FROM articles;</code></pre>
 
     <div class="aha">
@@ -561,15 +522,15 @@ parseFloat('3.14')  // 3.14</code></pre>
   UPPER(donor_state) AS state,
   amount,
   CASE
-    WHEN amount >= 10000 THEN 'Major Donor'
-    WHEN amount >= 1000  THEN 'Mid-Level'
+    WHEN amount &gt;= 10000 THEN 'Major Donor'
+    WHEN amount &gt;= 1000  THEN 'Mid-Level'
     ELSE 'Small Donor'
   END AS donor_tier,
   COALESCE(employer, 'Not disclosed') AS employer_display,
   donation_date::TEXT AS date_string
 FROM donations
 WHERE donor_state IN ('NY', 'CA', 'TX', 'FL')
-  AND amount > 500
+  AND amount &gt; 500
   AND donor_name ILIKE '%smith%'
   AND donation_date BETWEEN '2024-01-01' AND '2024-06-30'
 ORDER BY amount DESC
@@ -628,7 +589,7 @@ LIMIT 50;</code></pre>
         <button onclick="this.nextElementSibling.style.display='block'">Show answer</button>
         <div class="answer"><pre><code>SELECT donor_name, amount, candidate
 FROM campaign_donations
-WHERE amount > 5000
+WHERE amount &gt; 5000
 ORDER BY amount DESC;</code></pre></div>
       </div>
 
@@ -649,8 +610,8 @@ WHERE donor_name ILIKE '%johnson%'
   amount,
   COALESCE(employer, 'Self-funded') AS employer_display,
   CASE
-    WHEN amount > 10000 THEN 'Large'
-    WHEN amount > 1000  THEN 'Medium'
+    WHEN amount &gt; 10000 THEN 'Large'
+    WHEN amount &gt; 1000  THEN 'Medium'
     ELSE 'Small'
   END AS size_label
 FROM campaign_donations;</code></pre></div>

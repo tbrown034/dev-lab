@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 01 - Cascade &amp; Specificity</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #a855f7; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>01</span> Cascade &amp; Specificity &mdash; How CSS Actually Decides</h1>
+    <a href="/css-design/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>Every CSS bug you've ever had was a cascade bug.</strong> The cascade is the algorithm CSS uses to decide which styles win when multiple rules target the same element. Master it, and CSS stops feeling random.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: CSS Is a Courtroom</h2>
+
+    <p>Think of CSS like a courtroom where every property declaration is a lawyer arguing for their value. When two lawyers both argue that <code>color</code> should be different values, the judge (the cascade algorithm) uses a strict hierarchy to decide who wins:</p>
+
+    <ol>
+      <li><strong>Origin &amp; Importance</strong> &mdash; Where did the rule come from? (User agent, author, user? Does it have <code>!important</code>?)</li>
+      <li><strong>Inline styles</strong> &mdash; Styles in the <code>style=""</code> attribute beat external stylesheets</li>
+      <li><strong>Layers</strong> &mdash; <code>@layer</code> rules have explicit ordering (new in modern CSS)</li>
+      <li><strong>Specificity</strong> &mdash; More specific selectors win over less specific ones</li>
+      <li><strong>Source order</strong> &mdash; When everything else is equal, the last rule wins</li>
+    </ol>
+
+    <div class="aha">
+      <p><strong>The cascade is a tiebreaker chain.</strong> It only moves to the next step when the current step is a tie. Most of your daily CSS decisions are resolved at steps 4 and 5 &mdash; specificity and source order. But understanding the full chain prevents entire categories of bugs.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SPECIFICITY                                  -->
+    <!-- ============================================ -->
+
+    <h2>Specificity: The Scoring System</h2>
+
+    <p>Specificity isn't magic. It's a three-number score: <code>(A, B, C)</code>.</p>
+
+    <table>
+      <tr><th>Category</th><th>Score Slot</th><th>Examples</th></tr>
+      <tr><td>IDs</td><td><code>A</code> (leftmost, heaviest)</td><td><code>#header</code>, <code>#main</code></td></tr>
+      <tr><td>Classes, attributes, pseudo-classes</td><td><code>B</code> (middle)</td><td><code>.nav</code>, <code>[type="text"]</code>, <code>:hover</code></td></tr>
+      <tr><td>Elements, pseudo-elements</td><td><code>C</code> (rightmost, lightest)</td><td><code>div</code>, <code>p</code>, <code>::before</code></td></tr>
+    </table>
+
+    <p>The comparison works like version numbers. <code>(1, 0, 0)</code> beats <code>(0, 99, 99)</code> because the leftmost slot wins first. A single ID outweighs any number of classes.</p>
+
+    <h3>Scoring Examples</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Lower specificity</h5>
+        <pre><code><span class="comment">/* (0, 0, 1) — one element */</span>
+p { color: gray; }
+
+<span class="comment">/* (0, 1, 0) — one class */</span>
+.intro { color: blue; }
+
+<span class="comment">/* (0, 1, 1) — one class + one element */</span>
+p.intro { color: green; }</code></pre>
+      </div>
+      <div>
+        <h5>Higher specificity</h5>
+        <pre><code><span class="comment">/* (0, 2, 0) — two classes */</span>
+.card .title { color: purple; }
+
+<span class="comment">/* (1, 0, 0) — one ID */</span>
+#hero { color: red; }
+
+<span class="comment">/* (1, 1, 1) — ID + class + element */</span>
+#hero .title h2 { color: orange; }</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Tailwind connection.</strong> Tailwind utilities are all single classes, so they all have specificity <code>(0, 1, 0)</code>. That's why Tailwind works &mdash; every utility has the same weight, and the last one in the CSS file wins. No specificity wars. When you write raw CSS with nested selectors like <code>.sidebar .nav .link.active</code>, you're at <code>(0, 3, 0)</code> and now need even more specific selectors to override it. That's the specificity trap Tailwind avoids entirely.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE SPECIFICITY TRAP                         -->
+    <!-- ============================================ -->
+
+    <h2>The Specificity Trap</h2>
+
+    <p>Here's the pattern that ruins codebases:</p>
+
+    <pre><code><span class="comment">/* Developer A writes: */</span>
+.card .title { color: white; }    <span class="comment">/* (0, 2, 0) */</span>
+
+<span class="comment">/* Developer B needs to override: */</span>
+.title { color: gray; }           <span class="comment">/* (0, 1, 0) — LOSES */</span>
+
+<span class="comment">/* Developer B escalates: */</span>
+.card .title.muted { color: gray; }  <span class="comment">/* (0, 3, 0) — wins... for now */</span>
+
+<span class="comment">/* Developer C needs to override B: */</span>
+.card .title.muted.special { ... }   <span class="comment">/* (0, 4, 0) — the arms race begins */</span>
+
+<span class="comment">/* Developer D gives up: */</span>
+.title { color: gray !important; }   <span class="comment">/* nuclear option */</span></code></pre>
+
+    <div class="aha">
+      <p><strong>This is why Tailwind exists.</strong> By keeping every utility at <code>(0, 1, 0)</code> and relying on source order, Tailwind sidesteps the entire specificity arms race. But when you write custom CSS &mdash; which you'll need to for design systems and broadcast graphics &mdash; you need to manage specificity yourself.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- INHERITANCE                                  -->
+    <!-- ============================================ -->
+
+    <h2>Inheritance: The Silent Style Propagator</h2>
+
+    <p>Some CSS properties flow from parent to child automatically. Others don't. The split is intuitive once you see the pattern:</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Inherited (text-related)</h5>
+        <pre><code>color
+font-family
+font-size
+font-weight
+line-height
+letter-spacing
+text-align
+visibility
+cursor
+list-style</code></pre>
+      </div>
+      <div>
+        <h5>NOT inherited (box-related)</h5>
+        <pre><code>background
+border
+margin
+padding
+width / height
+display
+position
+overflow
+opacity
+transform</code></pre>
+      </div>
+    </div>
+
+    <p><strong>The rule of thumb:</strong> If it's about how text looks, it inherits. If it's about the box a thing sits in, it doesn't. You wouldn't want every child <code>&lt;div&gt;</code> to inherit its parent's <code>border</code> or <code>padding</code>.</p>
+
+    <h3>Controlling Inheritance</h3>
+
+    <pre><code><span class="comment">/* Force inheritance */</span>
+.child { color: inherit; }
+
+<span class="comment">/* Reset to initial browser value */</span>
+.child { color: initial; }
+
+<span class="comment">/* Act like the property was never set
+   (inherits if inheritable, initial if not) */</span>
+.child { color: unset; }
+
+<span class="comment">/* Reset ALL properties on an element */</span>
+.clean-slate { all: unset; }</code></pre>
+
+    <div class="callout">
+      <p><strong>The <code>all: unset</code> trick.</strong> When building components for a design system, <code>all: unset</code> strips away all inherited and default styles. It's a clean-room reset. Use it on buttons, links, and interactive elements where browser defaults fight your design.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- @LAYER                                       -->
+    <!-- ============================================ -->
+
+    <h2>@layer: The Modern Solution to Cascade Management</h2>
+
+    <p>CSS Cascade Layers (<code>@layer</code>) let you explicitly control which groups of styles beat other groups, regardless of specificity. This is the modern solution to the specificity trap.</p>
+
+    <pre><code><span class="comment">/* Declare layer order — first declared = lowest priority */</span>
+@layer reset, base, components, utilities;
+
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; }
+}
+
+@layer base {
+  h1 { font-size: 2rem; }
+  a { color: var(--accent); }
+}
+
+@layer components {
+  .card { background: var(--surface); border: 1px solid var(--border); }
+  .card .title { font-weight: 600; }  <span class="comment">/* (0, 2, 0) — but layer order beats specificity */</span>
+}
+
+@layer utilities {
+  .text-muted { color: var(--text-muted); }  <span class="comment">/* (0, 1, 0) — but in highest layer, so wins */</span>
+}</code></pre>
+
+    <div class="aha">
+      <p><strong>Layers beat specificity.</strong> A utility with specificity <code>(0, 1, 0)</code> in the <code>utilities</code> layer beats a component rule with specificity <code>(0, 5, 0)</code> in the <code>components</code> layer. This is exactly how Tailwind v4 works internally &mdash; it puts its utilities in the highest layer so they always win.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE CASCADE DECISION TREE                    -->
+    <!-- ============================================ -->
+
+    <h2>The Complete Decision Tree</h2>
+
+    <p>When the browser encounters conflicting declarations, it walks this tree top to bottom. The first step that produces a winner is the answer:</p>
+
+    <pre><code>1. Is one !important and the other isn't?
+   → !important wins (but !important has its own reversed layer order)
+
+2. Are they in different layers?
+   → Higher-priority layer wins
+
+3. Is one an inline style (style="") and the other isn't?
+   → Inline wins
+
+4. Do they have different specificity?
+   → Higher specificity wins
+
+5. Everything else is equal?
+   → Last one in source order wins</code></pre>
+
+    <div class="callout">
+      <p><strong>In practice, 90% of CSS conflicts are resolved by specificity or source order.</strong> But when your styles "don't work" and you can't figure out why, walk through this tree step by step. The answer is always in here.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PRACTICAL PATTERNS                           -->
+    <!-- ============================================ -->
+
+    <h2>Practical Patterns for Clean Specificity</h2>
+
+    <h3>Pattern 1: Keep specificity flat</h3>
+
+    <pre><code><span class="comment">/* BAD — specificity escalation */</span>
+.sidebar .nav .link { color: gray; }
+.sidebar .nav .link.active { color: white; }
+.sidebar .nav .link.active:hover { color: purple; }
+
+<span class="comment">/* GOOD — flat specificity */</span>
+.nav-link { color: gray; }
+.nav-link--active { color: white; }
+.nav-link--active:hover { color: purple; }</code></pre>
+
+    <h3>Pattern 2: Use :where() to zero out specificity</h3>
+
+    <pre><code><span class="comment">/* :where() has 0 specificity — great for defaults */</span>
+:where(h1, h2, h3) { margin-top: 1.5em; }
+
+<span class="comment">/* Any class can override this easily */</span>
+.compact-title { margin-top: 0.5em; }  <span class="comment">/* wins because (0,1,0) &gt; (0,0,0) */</span></code></pre>
+
+    <h3>Pattern 3: Use :is() for grouping (takes highest specificity)</h3>
+
+    <pre><code><span class="comment">/* :is() takes the specificity of its most specific argument */</span>
+:is(.card, #hero) .title { color: white; }
+<span class="comment">/* This has specificity (1, 0, 0) because #hero is in the :is() */</span>
+<span class="comment">/* Use :is() for convenience, but be aware of this gotcha */</span></code></pre>
+
+    <div class="warning">
+      <p><strong>The :is() vs :where() trap.</strong> <code>:is(.foo, #bar)</code> takes the specificity of <code>#bar</code> — <code>(1, 0, 0)</code> — even when matching <code>.foo</code>. Use <code>:where()</code> when you want zero-specificity grouping (like resets and defaults). Use <code>:is()</code> when you want the grouping convenience and are okay with the specificity.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What is the specificity of <code>.card .title:hover</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>(0, 3, 0)</code> — three entries in the B slot: two classes (<code>.card</code>, <code>.title</code>) and one pseudo-class (<code>:hover</code>).</div>
+      </div>
+
+      <div class="question">
+        <p>2. Which wins: <code>#header a</code> or <code>.nav .link.active:hover</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>#header a</code> wins. Its specificity is <code>(1, 0, 1)</code>. The other selector is <code>(0, 3, 0)</code>. The ID in slot A beats any number of classes in slot B.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What is the specificity of <code>:where(.card, #hero) .title</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>(0, 1, 0)</code>. The <code>:where()</code> pseudo-class has zero specificity &mdash; it's as if the contents aren't there. Only <code>.title</code> contributes.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Both rules target the same element with the same specificity. Which color wins?</p>
+        <pre><code>.title { color: red; }
+.heading { color: blue; }</code></pre>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>blue</code> wins. Same specificity = last rule in source order wins. This is step 5 in the cascade.</div>
+      </div>
+
+      <div class="question">
+        <p>5. A style in the <code>components</code> layer has specificity <code>(0, 3, 0)</code>. A style in the <code>utilities</code> layer has specificity <code>(0, 1, 0)</code>. Layers are declared as <code>@layer components, utilities;</code>. Which wins?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The <code>utilities</code> layer wins. Layer order beats specificity. Since <code>utilities</code> is declared after <code>components</code>, it has higher priority regardless of the specificity scores.</div>
+      </div>
+
+      <div class="question">
+        <p>6. Does <code>background-color</code> inherit from parent to child?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">No. Box-related properties like <code>background</code>, <code>border</code>, <code>margin</code>, and <code>padding</code> do not inherit. Only text-related properties (color, font-family, etc.) inherit by default.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Debug the Cascade</h4>
+      <p>Open your browser DevTools on any page of this platform and try this:</p>
+      <ol>
+        <li>Find an element where multiple CSS rules compete for the same property</li>
+        <li>In the Styles panel, look for struck-through declarations &mdash; those are the rules that lost</li>
+        <li>For each losing rule, identify WHY it lost: specificity, source order, or layer?</li>
+        <li>Try adding <code>:where()</code> around a selector in the DevTools to see its specificity drop to zero</li>
+        <li>Try adding <code>!important</code> to a losing rule and watch it jump to the top</li>
+      </ol>
+      <p style="margin-top: 0.75rem;">The goal: build muscle memory for reading the cascade in DevTools. This is how you debug CSS in production.</p>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>The cascade is a tiebreaker chain</strong> &mdash; importance, layers, inline, specificity, source order</li>
+      <li><strong>Specificity is (A, B, C)</strong> &mdash; IDs, classes/pseudo-classes, elements. Left slot beats right.</li>
+      <li><strong>Keep specificity flat</strong> &mdash; use single classes, avoid deep nesting</li>
+      <li><strong>@layer controls cascade order</strong> &mdash; layer order beats specificity</li>
+      <li><strong>:where() zeroes specificity</strong> &mdash; use it for defaults and resets</li>
+      <li><strong>Inheritance flows down</strong> &mdash; text properties inherit, box properties don't</li>
+      <li><strong>!important is a code smell</strong> &mdash; it usually means your specificity architecture is broken</li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/css-design/lessons/00-syllabus/">&larr; Syllabus</a>
+      <a href="/css-design/lessons/02-layout-mental-models/">Lesson 02: Layout Mental Models &rarr;</a>
+    </div>
+  </div>
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

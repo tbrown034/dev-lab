@@ -88,7 +88,7 @@ function buildNavStyles(accentColor) {
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.15s ease;
-    font-family: -apple-system, system-ui, sans-serif;
+    font-family: var(--sans);
   }
 
   #section-nav .section-nav-dot-wrapper:hover .section-nav-tooltip {

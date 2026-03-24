@@ -1,0 +1,280 @@
+/* ─── lesson.css — Lesson content template ─── */
+/* Each lesson page sets :root { --track-color: #hex; } */
+
+/* ─── LESSON HEADER ─── */
+.header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.header a {
+  color: var(--track-color);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.header h1 {
+  font-size: 1.2rem;
+}
+.header h1 span {
+  color: var(--track-color);
+}
+
+/* ─── CONTENT ─── */
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* ─── LESSON INTRO ─── */
+.lesson-intro {
+  color: var(--text-muted);
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+.lesson-intro strong {
+  color: var(--track-color);
+}
+
+/* ─── TYPOGRAPHY ─── */
+h2 {
+  color: var(--track-color);
+  font-size: 1.1rem;
+  margin: 2.5rem 0 1rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+h3 {
+  font-size: 1rem;
+  margin: 1.5rem 0 0.75rem;
+  color: var(--text-dim);
+}
+p, li {
+  color: var(--text-dim);
+  line-height: 1.8;
+  font-size: 0.95rem;
+}
+ul, ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+/* ─── CODE ─── */
+code {
+  background: var(--surface);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: var(--mono);
+  color: var(--track-color);
+}
+pre {
+  background: #141414;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.25rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+pre code {
+  background: none;
+  padding: 0;
+  color: var(--text);
+}
+.comment { color: var(--text-muted); }
+
+[data-theme="light"] pre {
+  background: #f0eeeb;
+}
+
+/* ─── DEMO ─── */
+.demo {
+  background: #141414;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+.demo h4 {
+  color: var(--track-color);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+.demo svg {
+  background: var(--surface);
+  border-radius: 4px;
+  display: block;
+}
+
+[data-theme="light"] .demo {
+  background: #f0eeeb;
+}
+
+/* ─── CALLOUT ─── */
+.callout {
+  background: rgba(129, 140, 248, 0.08);
+  border-left: 3px solid var(--info);
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  border-radius: 0 6px 6px 0;
+}
+.callout p { color: #a5b4fc; }
+
+[data-theme="light"] .callout {
+  background: rgba(129, 140, 248, 0.08);
+}
+[data-theme="light"] .callout p { color: #4f46e5; }
+
+/* ─── AHA ─── */
+.aha {
+  background: rgba(249, 115, 22, 0.06);
+  border-left: 3px solid var(--track-color);
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  border-radius: 0 6px 6px 0;
+}
+.aha p { color: #fdba74; }
+.aha strong { color: var(--track-color); }
+
+[data-theme="light"] .aha p { color: #9a3412; }
+
+/* ─── WARNING ─── */
+.warning {
+  background: rgba(253, 232, 138, 0.06);
+  border-left: 3px solid var(--warning);
+  padding: 1rem 1.25rem;
+  margin: 1.5rem 0;
+  border-radius: 0 6px 6px 0;
+}
+.warning p { color: #fde68a; }
+.warning strong { color: var(--warning); }
+
+[data-theme="light"] .warning p { color: #92400e; }
+
+/* ─── QUIZ ─── */
+.quiz {
+  background: rgba(249, 115, 22, 0.04);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+.quiz h4 {
+  color: var(--track-color);
+  margin-bottom: 1rem;
+}
+.quiz .question { margin-bottom: 1.25rem; }
+.quiz .question p { color: var(--text); font-weight: 600; }
+.quiz button {
+  background: var(--track-color);
+  color: #000;
+  border: none;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+.quiz .answer {
+  display: none;
+  color: var(--success);
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  padding: 0.75rem;
+  background: rgba(74, 222, 128, 0.06);
+  border-radius: 6px;
+}
+
+/* ─── EXERCISE ─── */
+.exercise {
+  background: rgba(74, 222, 128, 0.04);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+.exercise h4 {
+  color: var(--success);
+  margin-bottom: 0.75rem;
+}
+
+/* ─── TRY-IT ─── */
+.try-it {
+  background: rgba(129, 140, 248, 0.04);
+  border: 1px solid rgba(129, 140, 248, 0.25);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+.try-it h4 {
+  color: var(--info);
+  margin-bottom: 0.75rem;
+}
+
+/* ─── SIDE-BY-SIDE ─── */
+.side-by-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.side-by-side > div {
+  background: #141414;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+.side-by-side h5 {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+@media (max-width: 700px) {
+  .side-by-side { grid-template-columns: 1fr; }
+}
+
+[data-theme="light"] .side-by-side > div {
+  background: #f0eeeb;
+}
+
+/* ─── TABLE ─── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+th {
+  text-align: left;
+  color: var(--track-color);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 0.5rem;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  border-bottom: 1px solid var(--surface);
+}
+td code { font-size: 0.8rem; }
+
+/* ─── NAV FOOTER ─── */
+.nav-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 2rem 0;
+  border-top: 1px solid var(--border);
+  margin-top: 3rem;
+}
+.nav-footer a {
+  color: var(--track-color);
+  text-decoration: none;
+}

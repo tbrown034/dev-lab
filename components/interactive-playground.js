@@ -14,7 +14,7 @@ function buildPlaygroundStyles(accentColor) {
     background: #141414;
     border: 1px solid #222;
     border-radius: 8px;
-    font-family: -apple-system, system-ui, sans-serif;
+    font-family: var(--sans);
     overflow: hidden;
   }
 
@@ -60,7 +60,7 @@ function buildPlaygroundStyles(accentColor) {
   .pg-control-label {
     color: #888;
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
@@ -94,11 +94,6 @@ function buildPlaygroundStyles(accentColor) {
     background: ${accentColor};
     cursor: pointer;
     border: none;
-    box-shadow: 0 1px 4px #0004;
-    transition: transform 0.1s;
-  }
-  .pg-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
   }
 
   .pg-slider::-moz-range-thumb {
@@ -108,7 +103,6 @@ function buildPlaygroundStyles(accentColor) {
     background: ${accentColor};
     cursor: pointer;
     border: none;
-    box-shadow: 0 1px 4px #0004;
   }
 
   .pg-slider::-moz-range-track {

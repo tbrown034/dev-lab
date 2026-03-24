@@ -5,15 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>D3 Games & Quizzes - Learn D3</title>
   <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: #0a0a0a;
-      color: #e5e5e5;
-      min-height: 100vh;
       -webkit-tap-highlight-color: transparent;
-      overflow-x: hidden;
     }
 
     /* ── Header ── */
@@ -98,7 +93,7 @@
       font-size: 0.82rem;
     }
     .score-item .label { color: #888; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; }
-    .score-item .value { color: #f97316; font-weight: 700; font-size: 1.1rem; }
+    .score-item .value { color: #f97316; font-weight: 600; font-size: 1.1rem; }
     .score-item .value.green { color: #4ade80; }
     .score-item .value.purple { color: #818cf8; }
     .score-item .value.pink { color: #f472b6; }
@@ -107,7 +102,7 @@
     .question-card {
       background: #141414;
       border: 1px solid #222;
-      border-radius: 10px;
+      border-radius: 8px;
       padding: 1.25rem;
       margin-bottom: 1rem;
     }
@@ -300,7 +295,7 @@
       align-items: center;
       justify-content: center;
       font-size: 0.7rem;
-      font-weight: 700;
+      font-weight: 600;
       margin-right: 0.75rem;
       flex-shrink: 0;
     }
@@ -317,7 +312,7 @@
     .flashcard {
       background: #141414;
       border: 2px solid #333;
-      border-radius: 12px;
+      border-radius: 8px;
       min-height: 200px;
       display: flex;
       align-items: center;
@@ -388,7 +383,7 @@
     /* ── Speed Round ── */
     .speed-timer {
       font-size: 2rem;
-      font-weight: 700;
+      font-weight: 600;
       text-align: center;
       color: #f97316;
       margin: 0.5rem 0;
@@ -402,10 +397,10 @@
     }
     .tf-btn {
       padding: 1.25rem;
-      border-radius: 10px;
+      border-radius: 8px;
       border: 2px solid;
       font-size: 1.1rem;
-      font-weight: 700;
+      font-weight: 600;
       cursor: pointer;
       min-height: 60px;
       transition: all 0.1s;
@@ -1843,7 +1838,7 @@
 
       area.innerHTML = `
         <div style="text-align:center;padding:1rem 0;">
-          <div style="font-size:2rem;font-weight:700;color:#f97316;">${speedCorrect} / ${speedIdx}</div>
+          <div style="font-size:2rem;font-weight:600;color:#f97316;">${speedCorrect} / ${speedIdx}</div>
           <div style="color:#888;margin:0.5rem 0;">Questions answered correctly</div>
           <div style="color:#818cf8;font-size:0.85rem;">Best: ${best}</div>
         </div>

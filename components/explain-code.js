@@ -26,7 +26,7 @@ function buildExplainStyles(accentColor) {
     cursor: pointer;
     z-index: 1;
     transition: border-color 0.2s, color 0.2s;
-    font-family: -apple-system, system-ui, sans-serif;
+    font-family: var(--sans);
     line-height: 1.4;
   }
 

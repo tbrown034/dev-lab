@@ -4,107 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Scroll — Learn Coding</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/shell.css">
   <style>
-    :root {
-      --bg: #060608;
-      --surface: #0e0e12;
-      --surface-2: #16161d;
-      --border: #1e1e28;
-      --border-hover: #2a2a38;
-      --text: #e8e6f0;
-      --text-dim: #8886a0;
-      --text-muted: #55536a;
-      --accent-d3: #f97316;
-      --accent-django: #22c55e;
-      --accent-sql: #3b82f6;
-      --serif: 'Instrument Serif', Georgia, serif;
-      --mono: 'JetBrains Mono', 'SF Mono', monospace;
-      --sans: 'DM Sans', -apple-system, sans-serif;
-      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: var(--sans);
-      background: var(--bg);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
-    }
-
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 9999;
-      opacity: 0.5;
-    }
-
-    /* ─── HEADER ─── */
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(6, 6, 8, 0.85);
-      backdrop-filter: blur(20px) saturate(1.4);
-      -webkit-backdrop-filter: blur(20px) saturate(1.4);
-      border-bottom: 1px solid var(--border);
-    }
-    .header-inner {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 0 1.5rem;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .logo {
-      font-family: var(--mono);
-      font-size: 0.8rem;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-    .logo .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--accent-d3), var(--accent-sql));
-      animation: pulse-dot 3s ease-in-out infinite;
-    }
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.85); }
-    }
-    .header-nav {
-      display: flex;
-      gap: 0.25rem;
-      align-items: center;
-    }
-    .header-nav a {
-      font-family: var(--mono);
-      font-size: 0.7rem;
-      letter-spacing: 0.04em;
-      color: var(--text-dim);
-      text-decoration: none;
-      padding: 0.4rem 0.75rem;
-      border-radius: 6px;
-      transition: all 0.2s;
-    }
-    .header-nav a:hover { color: var(--text); background: var(--surface-2); }
-
     /* ─── FEED HERO ─── */
     .feed-hero {
       max-width: 680px;
@@ -116,10 +18,7 @@
       font-size: 2.8rem;
       font-weight: 400;
       line-height: 1.1;
-      background: linear-gradient(135deg, var(--accent-d3), var(--accent-sql), var(--accent-django));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--text);
       margin-bottom: 0.35rem;
     }
     .feed-hero .subtitle {
@@ -141,7 +40,7 @@
       position: sticky;
       top: 60px;
       z-index: 90;
-      background: rgba(6, 6, 8, 0.9);
+      background: var(--header-bg);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
     }
@@ -150,7 +49,7 @@
       font-size: 0.7rem;
       letter-spacing: 0.05em;
       padding: 0.45rem 1rem;
-      border-radius: 20px;
+      border-radius: 6px;
       border: 1px solid var(--border);
       background: transparent;
       color: var(--text-dim);
@@ -170,6 +69,40 @@
     .filter-tab[data-track="d3"].active { background: var(--accent-d3); border-color: var(--accent-d3); color: #000; }
     .filter-tab[data-track="django"].active { background: var(--accent-django); border-color: var(--accent-django); color: #000; }
     .filter-tab[data-track="sql"].active { background: var(--accent-sql); border-color: var(--accent-sql); color: #fff; }
+    .filter-tab[data-track="jsts"].active { background: var(--accent-jsts); border-color: var(--accent-jsts); color: #000; }
+    .filter-tab[data-track="react"].active { background: var(--accent-react); border-color: var(--accent-react); color: #000; }
+    .filter-tab[data-track="css"].active { background: var(--accent-css); border-color: var(--accent-css); color: #fff; }
+    .filter-tab[data-track="ai"].active { background: var(--accent-ai); border-color: var(--accent-ai); color: #000; }
+
+    .refresh-btn {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.05em;
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    .refresh-btn:hover {
+      border-color: var(--border-hover);
+      color: var(--text);
+    }
+    .refresh-btn svg {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.4s var(--ease-out-expo);
+    }
+    .refresh-btn.spinning svg {
+      transform: rotate(360deg);
+    }
 
     /* ─── FEED COLUMN ─── */
     .feed-column {
@@ -183,7 +116,7 @@
       border-bottom: 1px solid var(--border);
       transition: background 0.2s;
     }
-    .post:hover { background: rgba(14, 14, 18, 0.5); }
+    .post:hover { background: var(--surface-2); }
     .post-track-line {
       position: absolute;
       top: 0;
@@ -230,7 +163,7 @@
       padding: 0.1rem 0.4rem;
       border-radius: 3px;
       color: #000;
-      font-weight: 700;
+      font-weight: 600;
     }
     .post-handle {
       font-size: 0.8rem;
@@ -247,7 +180,7 @@
     .post-type {
       font-family: var(--mono);
       font-size: 0.65rem;
-      font-weight: 700;
+      font-weight: 600;
       letter-spacing: 0.1em;
       margin-bottom: 0.5rem;
     }
@@ -300,7 +233,7 @@
       font-family: var(--mono);
       font-size: 0.7rem;
       cursor: pointer;
-      border-radius: 20px;
+      border-radius: 6px;
       transition: all 0.2s;
     }
     .action-btn:hover { background: var(--surface-2); }
@@ -576,7 +509,7 @@
 
     /* ─── KEYBOARD FOCUS ─── */
     .post-focused {
-      background: rgba(14, 14, 18, 0.6);
+      background: var(--surface);
       box-shadow: inset 3px 0 0 var(--text-dim);
     }
     .post-focused .post-track-line { opacity: 0.8; }
@@ -596,7 +529,7 @@
     .hint-inner {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 1.5rem 2rem;
       min-width: 260px;
     }
@@ -694,21 +627,6 @@
       .filter-tab { font-size: 0.62rem; padding: 0.35rem 0.75rem; }
     }
 
-    /* ─── SCROLL REVEALS ─── */
-    .reveal-on-scroll {
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.6s var(--ease-out-expo), transform 0.6s var(--ease-out-expo);
-    }
-    .reveal-on-scroll.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    @keyframes reveal {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
     .feed-hero h1 { animation: reveal 0.7s var(--ease-out-expo) both; }
     .feed-hero .subtitle { animation: reveal 0.7s var(--ease-out-expo) 0.1s both; }
     .feed-filters { animation: reveal 0.7s var(--ease-out-expo) 0.15s both; }
@@ -723,12 +641,15 @@
         <span class="dot"></span>
         Learn Coding
       </a>
-      <nav class="header-nav">
-        <a href="/d3/">D3.js</a>
-        <a href="/django/">Django</a>
-        <a href="/sql/">SQL</a>
-        <a href="/" style="color:var(--text-muted);margin-left:0.5rem;">Hub</a>
-      </nav>
+      <div class="header-right">
+        <nav class="header-nav">
+          <a href="/">&larr; Home</a>
+        </nav>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -738,12 +659,19 @@
     <p class="subtitle" id="feed-subtitle">your algorithm, but useful</p>
   </div>
 
-  <!-- ─── FILTER TABS ─── -->
+  <!-- ─── FILTER TOGGLES ─── -->
   <div class="feed-filters">
-    <button class="filter-tab active" data-track="all">All</button>
-    <button class="filter-tab" data-track="d3">D3 &middot; The Bindery</button>
-    <button class="filter-tab" data-track="django">Python &middot; The Shell</button>
-    <button class="filter-tab" data-track="sql">SQL &middot; The Table</button>
+    <button class="filter-tab active" data-track="d3">D3</button>
+    <button class="filter-tab active" data-track="django">Python</button>
+    <button class="filter-tab active" data-track="sql">SQL</button>
+    <button class="filter-tab active" data-track="jsts">JS/TS</button>
+    <button class="filter-tab active" data-track="react">React</button>
+    <button class="filter-tab active" data-track="css">CSS</button>
+    <button class="filter-tab active" data-track="ai">AI</button>
+    <button class="refresh-btn" id="refresh-btn" aria-label="Shuffle feed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Shuffle
+    </button>
   </div>
 
   <!-- ─── FEED ─── -->
@@ -757,6 +685,17 @@
     <p style="margin-top:0.5rem;opacity:0.5;">press <kbd style="font-family:var(--mono);background:var(--surface);border:1px solid var(--border);padding:0.1rem 0.35rem;border-radius:3px;font-size:0.6rem;">?</kbd> for keyboard shortcuts</p>
   </div>
 
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+    else if (window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.setAttribute('data-theme', 'light');
+    toggle.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  </script>
   <script type="module" src="./feed.js"></script>
 </body>
 </html>

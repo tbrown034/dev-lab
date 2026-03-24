@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 09 - Design Token Architecture</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #a855f7; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>09</span> Design Tokens &mdash; The Single Source of Truth</h1>
+    <a href="/css-design/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p class="lesson-intro"><strong>A design token is a named value that represents a design decision.</strong> Not a color. Not a number. A decision. "The primary action color is this." "The spacing between cards is this." Tokens are the contract between design and engineering.</p>
+
+    <!-- ============================================ -->
+    <!-- THE MENTAL MODEL                             -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model: Tokens Are Decisions, Not Values</h2>
+
+    <p>When a designer says "use blue for buttons," they're making a decision. When that decision changes to "use purple for buttons," you don't want to find-and-replace <code>#3b82f6</code> across 200 files. You want to change ONE token.</p>
+
+    <pre><code><span class="comment">/* Without tokens: the value IS the decision */</span>
+.btn { background: #3b82f6; }
+.link { color: #3b82f6; }
+.badge { border-color: #3b82f6; }
+<span class="comment">/* Change requires finding every instance of #3b82f6.
+   What if some #3b82f6 values are intentional but unrelated?
+   You're guessing. */</span>
+
+<span class="comment">/* With tokens: the decision is named */</span>
+:root { --color-action: #3b82f6; }
+.btn { background: var(--color-action); }
+.link { color: var(--color-action); }
+.badge { border-color: var(--color-action); }
+<span class="comment">/* Change once. Everything updates. The NAME tells you WHY. */</span></code></pre>
+
+    <div class="aha">
+      <p><strong>The name IS the value.</strong> A well-named token like <code>--color-action-primary</code> tells you the intent. If the brand changes from blue to purple, you change the token's value, not its name. Components don't care about the actual color &mdash; they care about "the primary action color, whatever it happens to be."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE THREE LAYERS                             -->
+    <!-- ============================================ -->
+
+    <h2>The Three-Layer Token Architecture</h2>
+
+    <p>Production design systems organize tokens into three layers. This isn't optional complexity &mdash; it's what makes themes, brands, and dark mode possible without rewriting components.</p>
+
+    <h3>Layer 1: Primitive Tokens (the palette)</h3>
+
+    <pre><code><span class="comment">/* Raw values. No semantic meaning. Like a paint store inventory. */</span>
+:root {
+  <span class="comment">/* Colors — the full palette */</span>
+  --purple-50: #faf5ff;
+  --purple-100: #f3e8ff;
+  --purple-200: #e9d5ff;
+  --purple-300: #d8b4fe;
+  --purple-400: #c084fc;
+  --purple-500: #a855f7;
+  --purple-600: #9333ea;
+  --purple-700: #7e22ce;
+  --purple-800: #6b21a8;
+  --purple-900: #581c87;
+  --purple-950: #3b0764;
+
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-900: #111827;
+  --gray-950: #030712;
+
+  <span class="comment">/* Spacing scale */</span>
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  <span class="comment">/* Font sizes */</span>
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+}
+
+<span class="comment">/* These tokens answer: "what values exist?"
+   They do NOT answer: "what is this value used for?" */</span></code></pre>
+
+    <h3>Layer 2: Semantic Tokens (the decisions)</h3>
+
+    <pre><code><span class="comment">/* Map primitives to purposes. This is where design decisions live. */</span>
+:root {
+  <span class="comment">/* Surfaces */</span>
+  --color-bg: var(--gray-950);
+  --color-surface: var(--gray-900);
+  --color-surface-elevated: var(--gray-800);
+
+  <span class="comment">/* Text */</span>
+  --color-text: var(--gray-50);
+  --color-text-secondary: var(--gray-400);
+  --color-text-muted: var(--gray-500);
+
+  <span class="comment">/* Actions */</span>
+  --color-action: var(--purple-500);
+  --color-action-hover: var(--purple-400);
+  --color-action-text: white;
+
+  <span class="comment">/* Feedback */</span>
+  --color-success: var(--green-500);
+  --color-error: var(--red-500);
+  --color-warning: var(--amber-400);
+
+  <span class="comment">/* Borders */</span>
+  --color-border: var(--gray-800);
+  --color-border-hover: var(--gray-700);
+
+  <span class="comment">/* Spacing decisions */</span>
+  --spacing-page: var(--space-8);
+  --spacing-section: var(--space-12);
+  --spacing-element: var(--space-4);
+  --spacing-tight: var(--space-2);
+}
+
+<span class="comment">/* Theme override — ONLY changes semantic tokens */</span>
+[data-theme="light"] {
+  --color-bg: var(--gray-50);
+  --color-surface: white;
+  --color-text: var(--gray-900);
+  --color-text-secondary: var(--gray-600);
+  --color-border: var(--gray-200);
+  --color-action: var(--purple-600);
+  <span class="comment">/* Notice: primitive palette doesn't change.
+     Only the semantic mapping changes. */</span>
+}</code></pre>
+
+    <h3>Layer 3: Component Tokens (the interface)</h3>
+
+    <pre><code><span class="comment">/* Each component exposes its own token API */</span>
+.card {
+  --card-bg: var(--color-surface);
+  --card-border: var(--color-border);
+  --card-padding: var(--spacing-element);
+  --card-radius: 8px;
+  --card-title-color: var(--color-text);
+  --card-body-color: var(--color-text-secondary);
+
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+}
+
+.card h3 { color: var(--card-title-color); }
+.card p { color: var(--card-body-color); }
+
+<span class="comment">/* Variants override component tokens */</span>
+.card-featured {
+  --card-bg: var(--color-action);
+  --card-title-color: white;
+  --card-body-color: rgba(255, 255, 255, 0.8);
+  --card-border: transparent;
+}
+
+<span class="comment">/* Components don't know about themes.
+   They reference semantic tokens.
+   Semantic tokens change per theme.
+   Components update automatically. */</span></code></pre>
+
+    <div class="aha">
+      <p><strong>The three layers create indirection.</strong> Components reference semantic tokens. Semantic tokens reference primitives. When you add a "dark mode," you only change the semantic layer. When you rebrand, you might change some primitives. Components never need to change. This indirection is what makes a design system maintainable at scale.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MULTI-BRAND SYSTEMS                          -->
+    <!-- ============================================ -->
+
+    <h2>Multi-Brand Token Systems</h2>
+
+    <p>The real power of tokens shows when one codebase serves multiple brands:</p>
+
+    <pre><code><span class="comment">/* Brand A: News Network */</span>
+[data-brand="news"] {
+  --color-action: var(--red-600);
+  --color-action-hover: var(--red-500);
+  --color-bg: var(--gray-950);
+  --color-accent: var(--orange-500);
+}
+
+<span class="comment">/* Brand B: Sports Network */</span>
+[data-brand="sports"] {
+  --color-action: var(--green-600);
+  --color-action-hover: var(--green-500);
+  --color-bg: var(--gray-950);
+  --color-accent: var(--emerald-400);
+}
+
+<span class="comment">/* Brand C: Entertainment */</span>
+[data-brand="entertainment"] {
+  --color-action: var(--purple-600);
+  --color-action-hover: var(--purple-500);
+  --color-bg: var(--gray-950);
+  --color-accent: var(--pink-400);
+}
+
+<span class="comment">/* Every component uses the SAME token names.
+   Switch brands by changing one data attribute on &lt;body&gt;.
+   &lt;body data-brand="news"&gt; → red buttons, orange accents
+   &lt;body data-brand="sports"&gt; → green buttons, emerald accents
+   ZERO component code changes. */</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Broadcast connection.</strong> This is exactly how TV networks handle election night. The same lower-third component displays in the network's brand colors. Switch from the primary channel to the sports channel, and the lower third turns green. Same HTML, same CSS, different tokens. You'll build this in Lesson 11.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- W3C DESIGN TOKENS FORMAT                     -->
+    <!-- ============================================ -->
+
+    <h2>The W3C Design Tokens Format</h2>
+
+    <p>The W3C is standardizing a JSON format for design tokens, enabling tokens to flow from design tools (Figma) to code (CSS, iOS, Android):</p>
+
+    <pre><code><span class="comment">/* tokens.json — W3C Design Tokens Community Group format */</span>
+{
+  "color": {
+    "action": {
+      "$value": "{color.purple.500}",
+      "$type": "color",
+      "$description": "Primary action color for buttons and links"
+    },
+    "bg": {
+      "$value": "{color.gray.950}",
+      "$type": "color"
+    }
+  },
+  "spacing": {
+    "element": {
+      "$value": "1rem",
+      "$type": "dimension"
+    }
+  }
+}
+
+<span class="comment">/* Tools like Style Dictionary or Tokens Studio
+   transform this JSON into:
+   - CSS custom properties
+   - Tailwind @theme values
+   - iOS Swift constants
+   - Android XML resources
+   - Design tool (Figma) variables
+   One source → all platforms */</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- TOKEN NAMING CONVENTIONS                     -->
+    <!-- ============================================ -->
+
+    <h2>Token Naming Conventions</h2>
+
+    <pre><code><span class="comment">/* Common naming pattern: category-property-variant-state */</span>
+
+<span class="comment">/* Category: what kind of token */</span>
+--color-*
+--spacing-*
+--font-*
+--radius-*
+--shadow-*
+
+<span class="comment">/* Property: what role within the category */</span>
+--color-bg-*
+--color-text-*
+--color-border-*
+--color-action-*
+
+<span class="comment">/* Variant: which version */</span>
+--color-bg-primary
+--color-bg-secondary
+--color-bg-elevated
+
+<span class="comment">/* State: interactive state */</span>
+--color-action-hover
+--color-action-active
+--color-action-disabled
+
+<span class="comment">/* Full examples */</span>
+--color-bg-primary
+--color-text-secondary
+--color-action-hover
+--color-border-focus
+--spacing-section-x
+--spacing-element-y
+--font-size-heading-lg
+--radius-card
+--shadow-elevated</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. What's the difference between a primitive token and a semantic token?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Primitive tokens are raw values with no semantic meaning (<code>--purple-500: #a855f7</code>). Semantic tokens map primitives to purposes (<code>--color-action: var(--purple-500)</code>). Semantic tokens answer "what is this for?" while primitives answer "what values exist?"</div>
+      </div>
+
+      <div class="question">
+        <p>2. When you implement dark mode, which token layer changes?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Only the semantic layer. You remap semantic tokens to different primitives. For example, <code>--color-bg</code> might point to <code>--gray-950</code> in dark mode and <code>--gray-50</code> in light mode. Primitives and component tokens stay the same.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What problem do component tokens solve?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Component tokens create an explicit API for each component. They document what can be customized (e.g., <code>--card-bg</code>, <code>--card-padding</code>) and what can't. Variants override component tokens rather than overriding CSS properties directly, making the component's interface predictable.</div>
+      </div>
+
+      <div class="question">
+        <p>4. How does a multi-brand token system work?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Each brand defines its own set of semantic tokens (usually via a data attribute or class on the root element). Components reference the same token names. Switching brands changes which semantic tokens are active, and all components update automatically. Zero component code changes.</div>
+      </div>
+
+      <div class="question">
+        <p>5. Why use three layers instead of just one?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Indirection. With one layer, changing from blue to purple means changing every component. With three layers, you change ONE semantic token and everything updates. Adding dark mode requires only a new semantic layer mapping. Adding a brand requires only new semantic overrides. Components never change.</div>
+      </div>
+    </div>
+
+    <div class="exercise">
+      <h4>Exercise: Build a Multi-Theme Token System</h4>
+      <ol>
+        <li>Define primitive tokens: a full color palette (3 hues, 10 shades each), spacing scale, font sizes</li>
+        <li>Create semantic tokens for dark and light modes</li>
+        <li>Create component tokens for a card, button, and input</li>
+        <li>Build those three components using only token references</li>
+        <li>Add a brand override that changes the accent color and test switching</li>
+        <li>Bonus: Export your tokens as a JSON file following the W3C format</li>
+      </ol>
+    </div>
+
+    <h2>Recap</h2>
+    <ol>
+      <li><strong>Tokens are named decisions</strong>, not just variables with values</li>
+      <li><strong>Three layers: primitive, semantic, component</strong> &mdash; each serves a different purpose</li>
+      <li><strong>Themes change the semantic layer</strong> &mdash; components don't need to change</li>
+      <li><strong>Multi-brand = multiple semantic overrides</strong> sharing the same components</li>
+      <li><strong>Component tokens define the customization API</strong> for each component</li>
+      <li><strong>W3C Design Tokens format</strong> enables token flow from design tools to all platforms</li>
+      <li><strong>Naming convention: category-property-variant-state</strong></li>
+    </ol>
+
+    <div class="nav-footer">
+      <a href="/css-design/lessons/08-tailwind-v4/">&larr; Lesson 08: Tailwind v4</a>
+      <a href="/css-design/lessons/10-component-systems/">Lesson 10: Component Systems &rarr;</a>
+    </div>
+  </div>
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

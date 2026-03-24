@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 10 - Eval &amp; Testing</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #f472b6; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>10</span> Eval &amp; Testing &mdash; Proving It Works</h1>
+    <a href="/ai-llm/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">You can't unit test vibes.</strong> But you can build evaluation systems that tell you whether your AI is getting better or worse with every change you make.</p>
+
+    <!-- ============================================ -->
+    <!-- MENTAL MODEL                                 -->
+    <!-- ============================================ -->
+
+    <h2>Mental Model: Unit Tests for Vibes</h2>
+
+    <p>In traditional software, you write <code>assert(add(2, 3) === 5)</code>. The output is deterministic. With LLMs, the output varies every time. You can't assert exact strings. Instead, you measure <em>qualities</em> across many examples:</p>
+
+    <ul>
+      <li>Does the response answer the question? (relevance)</li>
+      <li>Are the facts correct? (accuracy)</li>
+      <li>Does it follow the format instructions? (compliance)</li>
+      <li>Is it the right length? (conciseness)</li>
+      <li>Did it refuse to answer when it should have? (safety)</li>
+    </ul>
+
+    <div class="aha">
+      <p><strong>The journalism parallel:</strong> You don't evaluate a reporter by whether they wrote the exact sentence you imagined. You evaluate them on accuracy, sourcing, clarity, and adherence to editorial standards. LLM evals work the same way.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EVAL STRUCTURE                               -->
+    <!-- ============================================ -->
+
+    <h2>The Structure of an Eval</h2>
+
+    <pre><code><span class="comment">// An eval has three parts:</span>
+
+<span class="comment">// 1. TEST CASES: input + expected output (or criteria)</span>
+const testCases = [
+  {
+    input: "Summarize: The city council voted 7-2 to approve a $50M budget.",
+    expected: {
+      mentions_vote_count: true,
+      mentions_amount: true,
+      max_words: 30,
+      no_hallucinated_details: true
+    }
+  },
+  {
+    input: "Summarize: [long article about education reform]",
+    expected: {
+      mentions_key_policy: true,
+      mentions_stakeholders: true,
+      max_words: 50
+    }
+  }
+];
+
+<span class="comment">// 2. RUNNER: calls the model for each test case</span>
+async function runEval(testCases, config) {
+  const results = [];
+  for (const tc of testCases) {
+    const response = await client.messages.create({
+      model: config.model,
+      max_tokens: config.maxTokens,
+      system: config.systemPrompt,
+      messages: [{ role: "user", content: tc.input }]
+    });
+    results.push({
+      input: tc.input,
+      output: response.content[0].text,
+      expected: tc.expected,
+      usage: response.usage
+    });
+  }
+  return results;
+}
+
+<span class="comment">// 3. SCORER: grades each result against criteria</span>
+function scoreResults(results) {
+  return results.map(r =&gt; {
+    const text = r.output.toLowerCase();
+    const scores = {};
+
+    if (r.expected.mentions_vote_count) {
+      scores.vote_count = text.includes("7-2") ? 1 : 0;
+    }
+    if (r.expected.mentions_amount) {
+      scores.amount = (text.includes("50") || text.includes("$50m")) ? 1 : 0;
+    }
+    if (r.expected.max_words) {
+      scores.conciseness = r.output.split(/\s+/).length &lt;= r.expected.max_words ? 1 : 0;
+    }
+
+    const total = Object.values(scores);
+    return {
+      ...r,
+      scores,
+      overall: total.reduce((a, b) =&gt; a + b, 0) / total.length
+    };
+  });
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- TYPES OF EVALS                               -->
+    <!-- ============================================ -->
+
+    <h2>Types of Evaluations</h2>
+
+    <h3>1. Exact Match (simplest)</h3>
+    <pre><code><span class="comment">// For classification, extraction, or yes/no questions</span>
+function exactMatch(output, expected) {
+  return output.trim().toLowerCase() === expected.trim().toLowerCase();
+}
+
+<span class="comment">// "Is this claim true or false?"
+// Expected: "false"
+// Score: 1 if output === "false", else 0</span></code></pre>
+
+    <h3>2. Contains Check</h3>
+    <pre><code><span class="comment">// For checking that key facts appear in the response</span>
+function containsAll(output, requiredTerms) {
+  const text = output.toLowerCase();
+  return requiredTerms.every(term =&gt; text.includes(term.toLowerCase()));
+}
+
+<span class="comment">// Summary must mention: "7-2", "budget", "approved"</span></code></pre>
+
+    <h3>3. LLM-as-Judge (most powerful)</h3>
+    <pre><code><span class="comment">// Use a model to evaluate another model's output</span>
+async function llmJudge(question, response, criteria) {
+  const judgment = await client.messages.create({
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 512,
+    system: `You are an evaluation judge. Score the response on a scale of 1-5
+for each criterion. Respond with ONLY valid JSON.`,
+    messages: [{
+      role: "user",
+      content: `Question: ${question}
+Response: ${response}
+
+Score each criterion (1-5):
+${criteria.map(c =&gt; `- ${c}`).join("\n")}
+
+JSON format: { "scores": { "criterion_name": score }, "reasoning": "..." }`
+    }]
+  });
+
+  return JSON.parse(judgment.content[0].text);
+}
+
+<span class="comment">// Usage</span>
+const eval = await llmJudge(
+  "Summarize the budget article",
+  modelResponse,
+  ["accuracy", "conciseness", "completeness", "sourcing"]
+);</code></pre>
+
+    <div class="callout">
+      <p><strong>LLM-as-judge is a metapattern:</strong> You're using AI to evaluate AI. This sounds circular, but it works well in practice because evaluating is easier than generating. A model can reliably score whether a summary is accurate even if it couldn't have written a perfect summary itself. The key is specific, rubric-based criteria.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PROMPT VERSIONING                            -->
+    <!-- ============================================ -->
+
+    <h2>Prompt Versioning</h2>
+
+    <p>Every change to a prompt is a potential regression. Track prompt versions the same way you track code versions:</p>
+
+    <pre><code><span class="comment">// prompts/summarizer.js</span>
+export const VERSIONS = {
+  "v1": {
+    system: "Summarize the article in 2 sentences.",
+    date: "2025-01-15",
+    notes: "Initial version"
+  },
+  "v2": {
+    system: "Summarize the article in 2 sentences. Always mention the primary source. Use AP Style.",
+    date: "2025-01-20",
+    notes: "Added sourcing requirement and style guide"
+  },
+  "v3": {
+    system: `Summarize the article in 2 sentences.
+Rules:
+- Always mention the primary source by name
+- Include the most important number/statistic
+- Use AP Style
+- Past tense`,
+    date: "2025-01-25",
+    notes: "Added statistics and tense requirements"
+  }
+};
+
+<span class="comment">// Run eval across versions to compare</span>
+async function compareVersions(testCases) {
+  const results = {};
+  for (const [version, config] of Object.entries(VERSIONS)) {
+    results[version] = await runEval(testCases, {
+      model: "claude-sonnet-4-20250514",
+      maxTokens: 256,
+      systemPrompt: config.system
+    });
+  }
+
+  <span class="comment">// Print comparison table</span>
+  for (const [version, scores] of Object.entries(results)) {
+    const avg = scores.reduce((sum, s) =&gt; sum + s.overall, 0) / scores.length;
+    console.log(`${version}: ${(avg * 100).toFixed(1)}% average score`);
+  }
+}</code></pre>
+
+    <div class="aha">
+      <p><strong>The workflow:</strong> Change prompt &rarr; run eval &rarr; compare scores to previous version &rarr; keep the change if scores improve, revert if they don't. This is regression testing for AI. Without it, you're guessing whether your changes helped.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- BUILDING A TEST SUITE                        -->
+    <!-- ============================================ -->
+
+    <h2>Building a Test Suite for Journalism AI</h2>
+
+    <table>
+      <tr><th>Feature</th><th>Eval Type</th><th>Key Criteria</th></tr>
+      <tr><td>Summarization</td><td>Contains + LLM judge</td><td>Accuracy, key facts included, no hallucinations</td></tr>
+      <tr><td>Source extraction</td><td>Exact match + schema</td><td>All sources found, correct titles, correct quote types</td></tr>
+      <tr><td>Fact-checking</td><td>LLM judge</td><td>Correct verdicts, reasoning quality, source identification</td></tr>
+      <tr><td>Headline generation</td><td>LLM judge + human</td><td>AP Style, accuracy, click-worthiness, no clickbait</td></tr>
+      <tr><td>RAG Q&A</td><td>Contains + LLM judge</td><td>Answer in sources, citations present, no source leakage</td></tr>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. Why can't you use traditional unit tests for LLM outputs?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">LLM outputs are non-deterministic (even at temperature 0, minor variations occur). You can't assert exact strings. Instead, you evaluate qualities (accuracy, relevance, compliance) across many examples using scoring functions.</div>
+      </div>
+
+      <div class="question">
+        <p>2. How does LLM-as-judge work, and why isn't it circular?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">You use a model to score another model's output against specific criteria. It's not circular because evaluating (scoring) is a simpler task than generating. A model can reliably judge whether a summary is accurate even if it couldn't write a perfect summary itself. The key is specific, rubric-based criteria.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why is prompt versioning important?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Every prompt change is a potential regression. Without versioning and evals, you can't tell if a change improved or degraded quality. Prompt versioning + eval comparison is the equivalent of running tests after a code change.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What's the minimum eval you should have before deploying an AI feature?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">At least 20-30 test cases covering normal inputs, edge cases, and failure modes. Each test case should have clear pass/fail criteria. Run the eval on every prompt change and compare to the baseline. Without this, you're shipping blind.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build an Eval Suite</h4>
+      <ol>
+        <li>Pick one feature from the capstone (e.g., article summarization)</li>
+        <li>Create 20 test cases with input articles and scoring criteria</li>
+        <li>Implement three scorer types: contains check, word count check, LLM-as-judge</li>
+        <li>Create 3 prompt versions (simple, medium, detailed)</li>
+        <li>Run all versions against the test suite and produce a comparison report</li>
+      </ol>
+      <p style="margin-top: 0.75rem;"><strong>Bonus:</strong> Add cost tracking to see cost-per-quality tradeoffs between prompt versions.</p>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/ai-llm/lessons/09-streaming-ux/">&larr; Streaming UX</a>
+      <a href="/ai-llm/lessons/11-ethics-journalism/">Lesson 11: Ethics &amp; Journalism &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

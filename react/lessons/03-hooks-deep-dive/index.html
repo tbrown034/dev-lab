@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 03 - Hooks Deep Dive</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #06b6d4; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>03</span> Hooks Deep Dive &mdash; Not Magic, Just Linked Lists</h1>
+    <a href="/react/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">You use hooks every day.</strong> Now see how they work internally. Once you understand that hooks are stored as a linked list on the fiber node, the "rules of hooks" stop being arbitrary restrictions and become obvious consequences of the implementation.</p>
+
+    <!-- ============================================ -->
+    <!-- HOOKS ARE ARRAY SLOTS                        -->
+    <!-- ============================================ -->
+
+    <h2>The Internal Model: Hooks Are Array Slots</h2>
+
+    <p>When React calls your component function, it has a pointer to the component's fiber node. That fiber has a <code>memoizedState</code> property that points to a linked list of hook states. Each <code>useState</code>, <code>useEffect</code>, <code>useMemo</code> call maps to one node in that list.</p>
+
+    <pre><code><span class="comment">// Your component:</span>
+function ArticleEditor() {
+  const [title, setTitle] = useState('');        <span class="comment">// Hook slot 0</span>
+  const [body, setBody] = useState('');          <span class="comment">// Hook slot 1</span>
+  const [isDirty, setIsDirty] = useState(false); <span class="comment">// Hook slot 2</span>
+  useEffect(() =&gt; { /* autosave */ }, [body]);   <span class="comment">// Hook slot 3</span>
+
+  return /* ... */;
+}
+
+<span class="comment">// What the fiber stores internally:</span>
+fiber.memoizedState = {
+  memoizedState: '',           <span class="comment">// title value</span>
+  queue: { pending: null },    <span class="comment">// state update queue</span>
+  next: {
+    memoizedState: '',         <span class="comment">// body value</span>
+    queue: { pending: null },
+    next: {
+      memoizedState: false,    <span class="comment">// isDirty value</span>
+      queue: { pending: null },
+      next: {
+        memoizedState: {       <span class="comment">// useEffect state</span>
+          create: () =&gt; { /* autosave */ },
+          deps: [''],
+          destroy: undefined,
+        },
+        next: null
+      }
+    }
+  }
+}</code></pre>
+
+    <div class="aha">
+      <p><strong>Now the "rules of hooks" make perfect sense.</strong> React reads hooks by walking this linked list in order. On the first render, it creates the list. On every subsequent render, it reads from the list by position. If you put a hook inside a condition, the list length or order changes between renders, and React reads the wrong state for the wrong hook. It's not a stylistic preference &mdash; it's a data structure constraint.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- RULES OF HOOKS EXPLAINED                     -->
+    <!-- ============================================ -->
+
+    <h2>Rules of Hooks, Explained by Implementation</h2>
+
+    <h3>Rule: Only call hooks at the top level</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Broken: Conditional hook</h5>
+        <pre><code>function Profile({ user }) {
+  const [name, setName] = useState('');
+
+  <span class="comment">// BROKEN: hook count changes</span>
+  if (user.isAdmin) {
+    const [role, setRole] = useState('admin');
+  }
+
+  <span class="comment">// On render where isAdmin=false,</span>
+  <span class="comment">// this reads slot 1 — but slot 1</span>
+  <span class="comment">// is supposed to be "role", which</span>
+  <span class="comment">// doesn't exist. Hooks are shifted.</span>
+  useEffect(() =&gt; { /* ... */ }, []);
+}</code></pre>
+      </div>
+      <div>
+        <h5>Correct: Always call, conditionally use</h5>
+        <pre><code>function Profile({ user }) {
+  const [name, setName] = useState('');
+
+  <span class="comment">// Always called — same slot every render</span>
+  const [role, setRole] = useState('admin');
+
+  <span class="comment">// Conditionally USE the value, not the hook</span>
+  const displayRole = user.isAdmin ? role : null;
+
+  <span class="comment">// Hook order is always: 0, 1, 2</span>
+  useEffect(() =&gt; { /* ... */ }, []);
+}</code></pre>
+      </div>
+    </div>
+
+    <h3>Rule: Only call hooks from React functions</h3>
+
+    <p>Hooks rely on React's internal "current fiber" pointer. When React calls your component, it sets this pointer. Regular JavaScript functions don't have a fiber, so calling <code>useState</code> from a utility function would crash &mdash; there's no fiber to attach the hook to. Custom hooks work because they're called <em>from</em> a component function, inheriting its fiber context.</p>
+
+    <!-- ============================================ -->
+    <!-- useState INTERNALS                           -->
+    <!-- ============================================ -->
+
+    <h2>useState Internals</h2>
+
+    <p>Here's a simplified version of how <code>useState</code> actually works:</p>
+
+    <pre><code><span class="comment">// Simplified useState implementation</span>
+let currentFiber = null;
+let hookIndex = 0;
+
+function useState(initialValue) {
+  const fiber = currentFiber;
+  const oldHook = fiber.alternate?.memoizedState?.[hookIndex];
+
+  const hook = {
+    state: oldHook ? oldHook.state : initialValue,
+    queue: [],
+  };
+
+  <span class="comment">// Process queued updates from previous renders</span>
+  const actions = oldHook ? oldHook.queue : [];
+  actions.forEach(action =&gt; {
+    hook.state = typeof action === 'function'
+      ? action(hook.state)  <span class="comment">// functional update</span>
+      : action;             <span class="comment">// direct value</span>
+  });
+
+  const setState = (action) =&gt; {
+    hook.queue.push(action);
+    <span class="comment">// Schedule a re-render of this component</span>
+    scheduleRerender(fiber);
+  };
+
+  fiber.hooks[hookIndex] = hook;
+  hookIndex++;
+
+  return [hook.state, setState];
+}</code></pre>
+
+    <h3>Why functional updates exist</h3>
+
+    <pre><code><span class="comment">// Direct update — uses the value from THIS render's closure</span>
+setCount(count + 1);
+setCount(count + 1);
+setCount(count + 1);
+<span class="comment">// Result: count + 1 (not count + 3!)</span>
+<span class="comment">// Because all three read the same `count` from this render</span>
+
+<span class="comment">// Functional update — uses the latest state</span>
+setCount(prev =&gt; prev + 1);
+setCount(prev =&gt; prev + 1);
+setCount(prev =&gt; prev + 1);
+<span class="comment">// Result: count + 3 (each reads from the queue)</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Batching:</strong> React batches multiple <code>setState</code> calls into a single re-render. In React 18+, all setState calls are batched automatically, even inside setTimeout, promises, and event handlers. This means React doesn't re-render between those three <code>setCount</code> calls &mdash; it processes all the queued actions, then re-renders once with the final state.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- useEffect INTERNALS                          -->
+    <!-- ============================================ -->
+
+    <h2>useEffect Internals</h2>
+
+    <p>useEffect is not "componentDidMount for function components." It's a synchronization mechanism. The mental model: <strong>useEffect synchronizes your component with an external system.</strong></p>
+
+    <pre><code><span class="comment">// useEffect has three parts:</span>
+useEffect(
+  () =&gt; {
+    <span class="comment">// 1. SETUP: runs after DOM paint</span>
+    const ws = new WebSocket(url);
+    ws.onmessage = handleMessage;
+
+    return () =&gt; {
+      <span class="comment">// 2. CLEANUP: runs before next effect or unmount</span>
+      ws.close();
+    };
+  },
+  [url]  <span class="comment">// 3. DEPENDENCIES: only re-run when these change</span>
+);</code></pre>
+
+    <h3>The dependency comparison</h3>
+
+    <p>React compares dependencies using <code>Object.is()</code> (basically <code>===</code> for most cases). On each render, React compares each dependency value against the previous render's value. If any are different, the effect re-runs.</p>
+
+    <pre><code><span class="comment">// This runs on EVERY render — objects are new references each time</span>
+useEffect(() =&gt; {
+  fetchArticles(filters);
+}, [{ category: 'politics', year: 2026 }]); <span class="comment">// New object every render!</span>
+
+<span class="comment">// Fix: use primitive values, or useMemo the object</span>
+useEffect(() =&gt; {
+  fetchArticles(category, year);
+}, [category, year]); <span class="comment">// Strings/numbers compare by value</span></code></pre>
+
+    <div class="warning">
+      <p><strong>The empty dependency array <code>[]</code> doesn't mean "run once."</strong> It means "this effect has no dependencies, so it never needs to re-synchronize." In development with Strict Mode, React intentionally runs effects twice to help you find bugs in your cleanup logic. If your effect breaks when run twice, your cleanup function has a bug.</p>
+    </div>
+
+    <h3>The timeline of effects</h3>
+
+    <pre><code><span class="comment">// Timeline of a component's life with effects:</span>
+
+<span class="comment">// 1. First render</span>
+Component called → JSX returned → DOM updated → Paint → Setup runs
+
+<span class="comment">// 2. State change (re-render)</span>
+Component called → JSX returned → DOM updated → Paint →
+  Cleanup (prev effect) → Setup (new effect)
+
+<span class="comment">// 3. Unmount</span>
+Cleanup (final) → Component removed from DOM</code></pre>
+
+    <!-- ============================================ -->
+    <!-- useRef                                       -->
+    <!-- ============================================ -->
+
+    <h2>useRef: The Escape Hatch</h2>
+
+    <p><code>useRef</code> is the simplest hook internally. It creates an object with a <code>.current</code> property that persists across renders but <strong>doesn't trigger re-renders</strong> when changed.</p>
+
+    <pre><code><span class="comment">// useRef is literally just this:</span>
+function useRef(initialValue) {
+  const [ref] = useState({ current: initialValue });
+  return ref;
+}
+<span class="comment">// (The actual implementation is even simpler — no useState, just a hook slot)</span></code></pre>
+
+    <p>Two main use cases:</p>
+
+    <pre><code><span class="comment">// 1. DOM element access</span>
+function SearchInput() {
+  const inputRef = useRef&lt;HTMLInputElement&gt;(null);
+
+  useEffect(() =&gt; {
+    inputRef.current?.focus(); <span class="comment">// Access the actual DOM node</span>
+  }, []);
+
+  return &lt;input ref={inputRef} /&gt;;
+}
+
+<span class="comment">// 2. Mutable value that survives re-renders (no re-render on change)</span>
+function StopWatch() {
+  const intervalRef = useRef&lt;number&gt;(0);
+  const [seconds, setSeconds] = useState(0);
+
+  function start() {
+    intervalRef.current = window.setInterval(() =&gt; {
+      setSeconds(s =&gt; s + 1);
+    }, 1000);
+  }
+
+  function stop() {
+    clearInterval(intervalRef.current); <span class="comment">// Access persists across renders</span>
+  }
+
+  return /* ... */;
+}</code></pre>
+
+    <!-- ============================================ -->
+    <!-- CUSTOM HOOKS                                 -->
+    <!-- ============================================ -->
+
+    <h2>Custom Hooks: Composition That Scales</h2>
+
+    <p>Custom hooks are just functions that call other hooks. They don't have special powers &mdash; they're a code organization pattern. But they're the most powerful abstraction in React because they let you extract and reuse <em>stateful logic</em>.</p>
+
+    <pre><code><span class="comment">// Extract reusable logic into a custom hook</span>
+function useDebounce&lt;T&gt;(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() =&gt; {
+    const timer = setTimeout(() =&gt; setDebouncedValue(value), delay);
+    return () =&gt; clearTimeout(timer); <span class="comment">// Cleanup on change</span>
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+<span class="comment">// Use it anywhere:</span>
+function ArticleSearch() {
+  const [query, setQuery] = useState('');
+  const debouncedQuery = useDebounce(query, 300);
+
+  useEffect(() =&gt; {
+    if (debouncedQuery) searchArticles(debouncedQuery);
+  }, [debouncedQuery]);
+
+  return &lt;input value={query} onChange={e =&gt; setQuery(e.target.value)} /&gt;;
+}</code></pre>
+
+    <h3>Real-world custom hook patterns</h3>
+
+    <pre><code><span class="comment">// useLocalStorage — persist state to localStorage</span>
+function useLocalStorage&lt;T&gt;(key: string, initialValue: T) {
+  const [value, setValue] = useState&lt;T&gt;(() =&gt; {
+    try {
+      const stored = localStorage.getItem(key);
+      return stored ? JSON.parse(stored) : initialValue;
+    } catch {
+      return initialValue;
+    }
+  });
+
+  useEffect(() =&gt; {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+
+  return [value, setValue] as const;
+}
+
+<span class="comment">// useMediaQuery — reactive media queries</span>
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() =&gt; {
+    const mql = window.matchMedia(query);
+    setMatches(mql.matches);
+
+    const handler = (e: MediaQueryListEvent) =&gt; setMatches(e.matches);
+    mql.addEventListener('change', handler);
+    return () =&gt; mql.removeEventListener('change', handler);
+  }, [query]);
+
+  return matches;
+}
+
+<span class="comment">// useFetch — data fetching with loading/error states</span>
+function useFetch&lt;T&gt;(url: string) {
+  const [data, setData] = useState&lt;T | null&gt;(null);
+  const [error, setError] = useState&lt;Error | null&gt;(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    const controller = new AbortController();
+    setLoading(true);
+
+    fetch(url, { signal: controller.signal })
+      .then(res =&gt; res.json())
+      .then(setData)
+      .catch(err =&gt; {
+        if (err.name !== 'AbortError') setError(err);
+      })
+      .finally(() =&gt; setLoading(false));
+
+    return () =&gt; controller.abort(); <span class="comment">// Cancel on unmount/url change</span>
+  }, [url]);
+
+  return { data, error, loading };
+}</code></pre>
+
+    <div class="aha">
+      <p><strong>Custom hooks are React's answer to mixins, HOCs, and render props.</strong> They solve the same problem &mdash; sharing stateful logic between components &mdash; but without the wrapper nesting, prop collision, or ceremony. A custom hook is just a function. It returns whatever you want. The only convention is the <code>use</code> prefix, which tells React's linter to check hook rules inside it.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. Where are hook states physically stored?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">On the fiber node, in a linked list starting at <code>fiber.memoizedState</code>. Each hook call corresponds to one node in this list, ordered by call position.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why does <code>setCount(count + 1)</code> called three times only increment by 1?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because <code>count</code> is a closure over the current render's value. All three calls read the same <code>count</code> value and enqueue the same result. Use <code>setCount(prev => prev + 1)</code> for the functional form that chains properly.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Your useEffect runs on every render despite having a dependency array. What's the likely cause?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">One of the dependencies is a new reference every render &mdash; typically an object or array literal, or a function defined inside the component. Objects are compared by reference (===), not by value. Extract the dependency to a useMemo, or use primitive values.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What's the difference between useRef and useState for storing a value?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Changing a ref's <code>.current</code> does NOT trigger a re-render. Changing state does. Use useRef for values you need to persist between renders but don't want to display (timers, previous values, DOM nodes). Use useState for values that affect the rendered output.</div>
+      </div>
+
+      <div class="question">
+        <p>5. Why does React Strict Mode run effects twice in development?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">To verify your cleanup function works correctly. If your effect subscribes to something, the cleanup should unsubscribe. Running setup/cleanup/setup exposes bugs where cleanup doesn't properly undo the setup. It's a correctness check, not a performance feature.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- EXERCISE                                     -->
+    <!-- ============================================ -->
+
+    <div class="exercise">
+      <h4>Exercise: Build These Custom Hooks</h4>
+      <ol>
+        <li><strong>useOnClickOutside(ref, callback):</strong> Detects clicks outside a referenced element. Handle cleanup properly.</li>
+        <li><strong>usePrevious(value):</strong> Returns the previous render's value of any variable. Hint: useRef + useEffect.</li>
+        <li><strong>useToggle(initial):</strong> Returns <code>[value, toggle, setTrue, setFalse]</code>. Simple, but practice the pattern.</li>
+        <li><strong>useAsync(asyncFn, deps):</strong> Wraps an async function with loading/error/data state. Handle race conditions with AbortController.</li>
+      </ol>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/react/lessons/02-fiber-reconciliation/">&larr; Lesson 02: Fiber</a>
+      <a href="/react/lessons/04-state-management/">Lesson 04: State Management &rarr;</a>
+    </div>
+  </div>
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

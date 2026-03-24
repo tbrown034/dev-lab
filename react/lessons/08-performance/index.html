@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 08 - Performance</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #06b6d4; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>08</span> Performance &mdash; Measure First, Optimize Second</h1>
+    <a href="/react/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">The fastest code is code that doesn't run.</strong> But the second-fastest is code you don't optimize prematurely. This lesson teaches you to measure performance, identify actual bottlenecks, and apply the right optimization for each problem.</p>
+
+    <!-- ============================================ -->
+    <!-- THE PERFORMANCE MINDSET                      -->
+    <!-- ============================================ -->
+
+    <h2>The Performance Mindset</h2>
+
+    <p>Most React performance advice is wrong &mdash; not because the techniques don't work, but because they're applied without measurement. Wrapping everything in <code>React.memo</code> is like putting a turbocharger on a bicycle: technically it's an improvement, but the overhead of carrying the turbocharger slows you down more than the boost helps.</p>
+
+    <div class="aha">
+      <p><strong>The journalism parallel:</strong> A good editor doesn't rewrite every sentence. They identify which paragraphs are weak and fix those. Performance optimization works the same way. Profile your app, find the 2-3 components that are actually slow, fix those. Leave everything else alone. The 80/20 rule applies aggressively here.</p>
+    </div>
+
+    <h3>The rendering cost model</h3>
+
+    <p>A React re-render does two things:</p>
+
+    <ol>
+      <li><strong>Calls your component function</strong> &mdash; executes the function body, computes JSX</li>
+      <li><strong>Reconciles the output</strong> &mdash; diffs against previous output to find DOM changes</li>
+    </ol>
+
+    <p>For most components, both steps are trivially fast (&lt; 1ms). A re-render becomes expensive when:</p>
+
+    <ul>
+      <li>The function body does heavy computation (sorting thousands of items, parsing data)</li>
+      <li>The component renders a massive tree of children (thousands of DOM nodes)</li>
+      <li>The re-render triggers expensive effects (network requests, DOM measurements)</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- REACT.MEMO                                   -->
+    <!-- ============================================ -->
+
+    <h2>React.memo: When It Helps (and When It Hurts)</h2>
+
+    <p><code>React.memo</code> wraps a component to skip re-rendering when its props haven't changed. It compares new props against old props using shallow equality (Object.is for each prop).</p>
+
+    <pre><code><span class="comment">// React.memo in action</span>
+const ArticleCard = memo(function ArticleCard({ article }: Props) {
+  return (
+    &lt;div className="card"&gt;
+      &lt;h3&gt;{article.title}&lt;/h3&gt;
+      &lt;p&gt;{article.excerpt}&lt;/p&gt;
+    &lt;/div&gt;
+  );
+});
+
+<span class="comment">// When parent re-renders:</span>
+<span class="comment">// - If `article` is the same reference → memo skips render</span>
+<span class="comment">// - If `article` is a new object (even with same values) → renders anyway</span></code></pre>
+
+    <h3>When memo helps</h3>
+
+    <ul>
+      <li>Component renders a large subtree and props rarely change</li>
+      <li>Component does expensive computation during render</li>
+      <li>Parent re-renders frequently but passes the same props to this child</li>
+    </ul>
+
+    <h3>When memo hurts</h3>
+
+    <ul>
+      <li>Props change on every render (new objects, inline functions) &mdash; memo does the comparison AND the render</li>
+      <li>Component is cheap to render &mdash; the comparison overhead exceeds the render savings</li>
+      <li>You haven't profiled and don't know if this component is a bottleneck</li>
+    </ul>
+
+    <div class="callout">
+      <p><strong>The comparison isn't free.</strong> <code>React.memo</code> performs <code>Object.is()</code> on every prop on every render. For a component with 10 props, that's 10 comparisons. If the component usually re-renders anyway (because props usually change), you're doing 10 comparisons plus the full render. Worse than no memo at all.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- useMemo AND useCallback                      -->
+    <!-- ============================================ -->
+
+    <h2>useMemo and useCallback: Stabilizing References</h2>
+
+    <p><code>useMemo</code> caches a computed value. <code>useCallback</code> caches a function reference. Both are about <strong>referential stability</strong>, not computation speed (usually).</p>
+
+    <pre><code><span class="comment">// useMemo: cache an expensive computation</span>
+function DataTable({ records }: Props) {
+  const [sortField, setSortField] = useState('date');
+
+  <span class="comment">// Without useMemo: sorts 10,000 records on every keystroke</span>
+  <span class="comment">// With useMemo: only re-sorts when records or sortField change</span>
+  const sorted = useMemo(
+    () =&gt; [...records].sort((a, b) =&gt; compare(a[sortField], b[sortField])),
+    [records, sortField]
+  );
+
+  return &lt;Table data={sorted} /&gt;;
+}
+
+<span class="comment">// useCallback: stable function reference for memo'd children</span>
+function ArticleList({ articles }: Props) {
+  <span class="comment">// Without useCallback: new function every render → breaks child memo</span>
+  <span class="comment">// With useCallback: same reference until articles changes</span>
+  const handleDelete = useCallback(
+    (id: string) =&gt; deleteArticle(id),
+    []
+  );
+
+  return articles.map(a =&gt; (
+    &lt;MemoizedCard key={a.id} article={a} onDelete={handleDelete} /&gt;
+  ));
+}</code></pre>
+
+    <div class="side-by-side">
+      <div>
+        <h5>When to useMemo</h5>
+        <pre><code><span class="comment">// YES: Expensive computation</span>
+const filtered = useMemo(() =&gt;
+  data.filter(expensiveFilter),
+  [data]
+);
+
+<span class="comment">// YES: Referential stability for context</span>
+const ctx = useMemo(
+  () =&gt; ({ user, logout }),
+  [user, logout]
+);
+
+<span class="comment">// NO: Simple computation</span>
+const fullName = useMemo(
+  () =&gt; `${first} ${last}`,
+  [first, last]
+); <span class="comment">// String concat is faster than useMemo</span></code></pre>
+      </div>
+      <div>
+        <h5>When to useCallback</h5>
+        <pre><code><span class="comment">// YES: Passed to memo'd child</span>
+const onClick = useCallback(() =&gt; {
+  doSomething(id);
+}, [id]);
+&lt;MemoChild onClick={onClick} /&gt;
+
+<span class="comment">// YES: Used in useEffect deps</span>
+const fetchData = useCallback(() =&gt; {
+  return api.get(url);
+}, [url]);
+
+<span class="comment">// NO: Not passed to memo'd child</span>
+const handleClick = useCallback(() =&gt; {
+  setOpen(!open);
+}, [open]); <span class="comment">// No consumer cares about ref</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The rule of thumb:</strong> useMemo and useCallback are useful when they prevent downstream work &mdash; either skipping a memo'd child's render, or avoiding an effect re-run. If nobody downstream checks the reference, memoizing is pure overhead. The React team has said they may auto-memoize everything in the future (React Compiler / React Forget), which would make manual memoization unnecessary.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE REACT COMPILER                           -->
+    <!-- ============================================ -->
+
+    <h2>React Compiler (React Forget): The Future</h2>
+
+    <p>The React team is building a compiler that automatically inserts useMemo and useCallback where beneficial. It analyzes your component code at build time and adds memoization that a human would struggle to optimize correctly.</p>
+
+    <pre><code><span class="comment">// What you write:</span>
+function ArticleCard({ article, onLike }) {
+  const formatted = formatDate(article.date);
+  const handleClick = () =&gt; onLike(article.id);
+
+  return (
+    &lt;div&gt;
+      &lt;h3&gt;{article.title}&lt;/h3&gt;
+      &lt;time&gt;{formatted}&lt;/time&gt;
+      &lt;button onClick={handleClick}&gt;Like&lt;/button&gt;
+    &lt;/div&gt;
+  );
+}
+
+<span class="comment">// What the compiler generates (conceptual):</span>
+function ArticleCard({ article, onLike }) {
+  const formatted = useMemo(() =&gt; formatDate(article.date), [article.date]);
+  const handleClick = useCallback(() =&gt; onLike(article.id), [onLike, article.id]);
+
+  return useMemo(() =&gt; (
+    &lt;div&gt;
+      &lt;h3&gt;{article.title}&lt;/h3&gt;
+      &lt;time&gt;{formatted}&lt;/time&gt;
+      &lt;button onClick={handleClick}&gt;Like&lt;/button&gt;
+    &lt;/div&gt;
+  ), [article.title, formatted, handleClick]);
+}</code></pre>
+
+    <div class="callout">
+      <p><strong>This doesn't mean "never optimize manually."</strong> The compiler handles memoization, but it can't fix algorithmic problems. If you're rendering 10,000 items without virtualization, or computing a Fibonacci sequence in render, the compiler won't save you. It handles the tedious reference-stability work; you handle the architecture.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CODE SPLITTING                               -->
+    <!-- ============================================ -->
+
+    <h2>Code Splitting: Send Less JavaScript</h2>
+
+    <p>The most impactful performance optimization is usually sending less code to the browser. Code splitting breaks your bundle into chunks loaded on demand.</p>
+
+    <pre><code><span class="comment">// Dynamic import with React.lazy</span>
+const HeavyChart = lazy(() =&gt; import('./HeavyChart'));
+
+function Dashboard() {
+  const [showChart, setShowChart] = useState(false);
+
+  return (
+    &lt;div&gt;
+      &lt;button onClick={() =&gt; setShowChart(true)}&gt;Show Analytics&lt;/button&gt;
+      {showChart &amp;&amp; (
+        &lt;Suspense fallback={&lt;ChartSkeleton /&gt;}&gt;
+          &lt;HeavyChart /&gt;  {/* Loaded only when shown */}
+        &lt;/Suspense&gt;
+      )}
+    &lt;/div&gt;
+  );
+}
+
+<span class="comment">// Next.js dynamic import (with SSR disabled for client-only libs)</span>
+import dynamic from 'next/dynamic';
+
+const D3Map = dynamic(() =&gt; import('@/components/D3Map'), {
+  ssr: false,     <span class="comment">// Don't render on server (D3 needs the DOM)</span>
+  loading: () =&gt; &lt;MapSkeleton /&gt;,
+});</code></pre>
+
+    <h3>Route-based splitting (automatic in Next.js)</h3>
+
+    <p>Next.js automatically code-splits by route. Each page's JavaScript is only loaded when the user navigates to that page. You get this for free &mdash; no configuration needed.</p>
+
+    <!-- ============================================ -->
+    <!-- BUNDLE ANALYSIS                              -->
+    <!-- ============================================ -->
+
+    <h2>Bundle Analysis: Know What You're Shipping</h2>
+
+    <pre><code><span class="comment">// Install and run bundle analyzer</span>
+npm install @next/bundle-analyzer
+
+<span class="comment">// next.config.js</span>
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+
+module.exports = withBundleAnalyzer({ /* your config */ });
+
+<span class="comment">// Run:</span>
+ANALYZE=true npm run build</code></pre>
+
+    <p>The analyzer produces a visual treemap showing every module in your bundles. Look for:</p>
+
+    <ul>
+      <li><strong>Huge libraries</strong> you only use a small part of (moment.js, lodash without tree-shaking)</li>
+      <li><strong>Duplicate packages</strong> (two versions of the same library)</li>
+      <li><strong>Client-side code</strong> that should be server-only</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- THE PROFILER                                  -->
+    <!-- ============================================ -->
+
+    <h2>The React Profiler: Measure Before You Optimize</h2>
+
+    <p>React DevTools Profiler records every render and shows you exactly which components rendered, how long each took, and why.</p>
+
+    <h3>How to use the Profiler</h3>
+
+    <ol>
+      <li>Open React DevTools &rarr; Profiler tab</li>
+      <li>Click Record</li>
+      <li>Interact with your app (type, click, navigate)</li>
+      <li>Click Stop</li>
+      <li>Examine the flame chart &mdash; each bar is a component render</li>
+    </ol>
+
+    <h3>What to look for</h3>
+
+    <ul>
+      <li><strong>Gray bars:</strong> Component did not re-render (already optimized)</li>
+      <li><strong>Green/yellow/red bars:</strong> Render duration (green = fast, red = slow)</li>
+      <li><strong>"Why did this render?"</strong> panel: shows the reason (state change, parent re-rendered, context changed)</li>
+    </ul>
+
+    <pre><code><span class="comment">// Programmatic profiling for production monitoring</span>
+import { Profiler } from 'react';
+
+function onRender(
+  id: string,
+  phase: 'mount' | 'update',
+  actualDuration: number,
+) {
+  if (actualDuration &gt; 16) { <span class="comment">// Slower than one frame (60fps)</span>
+    console.warn(`Slow render: ${id} took ${actualDuration}ms`);
+    <span class="comment">// Send to analytics in production</span>
+  }
+}
+
+&lt;Profiler id="ArticleList" onRender={onRender}&gt;
+  &lt;ArticleList articles={articles} /&gt;
+&lt;/Profiler&gt;</code></pre>
+
+    <!-- ============================================ -->
+    <!-- VIRTUALIZATION                               -->
+    <!-- ============================================ -->
+
+    <h2>Virtualization: Render Only What's Visible</h2>
+
+    <p>If you're rendering 1000+ items in a list, the answer isn't memoization. It's rendering only the 20-30 items visible in the viewport. This is virtualization.</p>
+
+    <pre><code><span class="comment">// Using @tanstack/react-virtual</span>
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+function VirtualArticleList({ articles }: Props) {
+  const parentRef = useRef&lt;HTMLDivElement&gt;(null);
+
+  const virtualizer = useVirtualizer({
+    count: articles.length,
+    getScrollElement: () =&gt; parentRef.current,
+    estimateSize: () =&gt; 80, <span class="comment">// Estimated row height</span>
+  });
+
+  return (
+    &lt;div ref={parentRef} style={{ height: '600px', overflow: 'auto' }}&gt;
+      &lt;div style={{ height: `${virtualizer.getTotalSize()}px`, position: 'relative' }}&gt;
+        {virtualizer.getVirtualItems().map(virtualRow =&gt; (
+          &lt;div
+            key={virtualRow.key}
+            style={{
+              position: 'absolute',
+              top: 0,
+              transform: `translateY(${virtualRow.start}px)`,
+              height: `${virtualRow.size}px`,
+              width: '100%',
+            }}
+          &gt;
+            &lt;ArticleRow article={articles[virtualRow.index]} /&gt;
+          &lt;/div&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+    <div class="aha">
+      <p><strong>Virtualization vs memoization:</strong> Memoizing 10,000 list items means React still maintains 10,000 fiber nodes and does 10,000 prop comparisons. Virtualization means React only knows about ~30 items at a time. It's not just faster renders &mdash; it's fundamentally less work. For any list over a few hundred items, virtualization beats memoization every time.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Check Your Understanding</h4>
+
+      <div class="question">
+        <p>1. When does React.memo cause worse performance than no memo?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">When props change on most renders. Memo adds a shallow comparison of all props on every render. If the comparison usually finds different props and renders anyway, you're doing the comparison AND the render &mdash; more work than just rendering.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What is useCallback actually for?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Referential stability. It returns the same function reference between renders (as long as dependencies don't change). This is only useful if the function is passed as a prop to a memo'd child, used in a useEffect dependency array, or used in a useMemo dependency array. Otherwise, it's pure overhead.</div>
+      </div>
+
+      <div class="question">
+        <p>3. You have a list of 5,000 articles. Users complain it's slow. What should you try first?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Virtualization (render only visible items). Not React.memo on each item, not useMemo on the list, not moving state. With 5,000 items, the problem is too many DOM nodes and fiber nodes. Virtualization reduces this to ~30 regardless of total list size.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What's the first thing you should do when someone reports a performance problem?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Profile. Open React DevTools Profiler, reproduce the slow interaction, and look at the flame chart. Identify which specific components are slow and why. Guessing at optimizations wastes time and often makes things worse.</div>
+      </div>
+    </div>
+
+    <div class="exercise">
+      <h4>Exercise: Profile and Optimize</h4>
+      <ol>
+        <li>Build a list that renders 2,000 items. Profile it. Note the render time.</li>
+        <li>Add React.memo to each list item. Profile again. Compare.</li>
+        <li>Replace memo with virtualization (TanStack Virtual). Profile again. Compare all three.</li>
+        <li>Run <code>ANALYZE=true npm run build</code> on a project. Find the largest modules. Can any be lazy-loaded or replaced?</li>
+      </ol>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/react/lessons/07-data-fetching/">&larr; Lesson 07: Data Fetching</a>
+      <a href="/react/lessons/09-forms-validation/">Lesson 09: Forms &amp; Validation &rarr;</a>
+    </div>
+  </div>
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

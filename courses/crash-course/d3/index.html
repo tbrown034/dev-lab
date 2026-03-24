@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D3.js — What It Is and How to Talk About It</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>
+    :root { --track-color: #f97316; }
+    .crash-tag {
+      display: inline-block; font-family: var(--mono); font-size: 0.6rem;
+      letter-spacing: 0.08em; text-transform: uppercase; padding: 0.2rem 0.55rem;
+      border-radius: 4px; background: rgba(239, 68, 68, 0.15); color: #ef4444;
+      margin-bottom: 0.5rem;
+    }
+    .say-this {
+      background: rgba(74, 222, 128, 0.06);
+      border-left: 3px solid #4ade80;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .say-this p { color: #86efac; }
+    .say-this strong { color: #4ade80; }
+    [data-theme="light"] .say-this p { color: #166534; }
+    [data-theme="light"] .say-this strong { color: #15803d; }
+
+    .dont-say {
+      background: rgba(239, 68, 68, 0.06);
+      border-left: 3px solid #ef4444;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .dont-say p { color: #fca5a5; }
+    .dont-say strong { color: #ef4444; }
+    [data-theme="light"] .dont-say p { color: #991b1b; }
+
+    .vocab {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .vocab h4 {
+      color: var(--track-color);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+    }
+    .vocab dt {
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-top: 0.75rem;
+    }
+    .vocab dt:first-of-type { margin-top: 0; }
+    .vocab dd {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      margin-left: 0;
+      margin-bottom: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>D3</span> What It Is &amp; How to Talk About It</h1>
+    <a href="/courses/crash-course/">&larr; Back to crash course</a>
+  </div>
+
+  <div class="content">
+
+    <div class="crash-tag">Texas Tribune Interview Prep</div>
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">You don't need to write D3 code from memory tomorrow.</strong> You need to understand what D3 does, why it exists, and be able to have an intelligent conversation about it. This page gives you that.</p>
+
+    <!-- ============================================ -->
+    <!-- WHAT IS D3                                   -->
+    <!-- ============================================ -->
+
+    <h2>What is D3?</h2>
+
+    <p>D3 stands for <strong>Data-Driven Documents</strong>. It's a JavaScript library that lets you build custom data visualizations in the browser.</p>
+
+    <p>The key word is <strong>custom</strong>. Tools like Chart.js or Google Charts give you pre-built chart types &mdash; hand it data, pick "bar chart," done. D3 is different. It doesn't have a "bar chart" function. Instead, it gives you the building blocks to create <em>any</em> visualization you can imagine, from a simple bar chart to an interactive election map of every Texas county.</p>
+
+    <div class="aha">
+      <p><strong>The analogy:</strong> Chart.js is like ordering from a menu. You pick a dish (bar chart, pie chart, line chart) and the kitchen makes it. D3 is like having access to the kitchen itself. You can make anything, but you need to know the ingredients and techniques. The tradeoff is freedom vs. effort.</p>
+    </div>
+
+    <div class="say-this">
+      <p><strong>How to say it in an interview:</strong> "D3 gives you low-level control over every element in a visualization. It's not a charting library &mdash; it's a toolkit for binding data to DOM elements. That's what makes it powerful for newsroom work, because every graphic is different. You can't just drop election results into a pre-built chart type and have it tell the right story."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHY THE TRIBUNE USES IT                      -->
+    <!-- ============================================ -->
+
+    <h2>Why Does the Tribune Use D3?</h2>
+
+    <p>The Texas Tribune publishes interactive graphics constantly &mdash; election results maps, budget explorers, school district comparisons, demographic breakdowns. Every one of those is different. They're not standard bar charts you can get from a dashboard tool.</p>
+
+    <p>D3 lets their graphics team:</p>
+    <ul>
+      <li><strong>Build exactly what the story needs</strong> &mdash; not what a charting library offers</li>
+      <li><strong>Make it interactive</strong> &mdash; hover to see county details, click to filter, animate between states</li>
+      <li><strong>Use real geographic data</strong> &mdash; D3 can draw maps directly from GeoJSON boundary files (Texas counties, legislative districts, school zones)</li>
+      <li><strong>Control every pixel</strong> &mdash; match the Tribune's design system, typography, colors exactly</li>
+      <li><strong>Ship as plain HTML</strong> &mdash; no heavy framework needed, loads fast on mobile</li>
+    </ul>
+
+    <div class="say-this">
+      <p><strong>How to say it:</strong> "What I like about D3 for news is that every story has different data needs. An election map isn't the same as a budget line chart, and D3 lets you build exactly the right visualization instead of forcing your data into a pre-built template. That editorial control matters when you're trying to explain something clearly to readers."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HOW D3 ACTUALLY WORKS                        -->
+    <!-- ============================================ -->
+
+    <h2>How D3 Works &mdash; The Mental Model</h2>
+
+    <p>At its core, D3 does one thing: <strong>it connects data to visual elements on the page</strong>.</p>
+
+    <p>Here's the concept in plain English:</p>
+
+    <ol>
+      <li><strong>You have data</strong> &mdash; an array of Texas counties with population numbers</li>
+      <li><strong>You have shapes</strong> &mdash; SVG rectangles, circles, lines, or paths on the page</li>
+      <li><strong>D3 binds them together</strong> &mdash; one rectangle per county, and each rectangle's width is driven by that county's population</li>
+    </ol>
+
+    <p>That's it. Every D3 project is some version of: take data, make shapes, let the data control the shapes.</p>
+
+    <div class="aha">
+      <p><strong>The "aha" moment:</strong> D3 doesn't draw anything itself. It manipulates standard SVG elements &mdash; the same <code>&lt;rect&gt;</code>, <code>&lt;circle&gt;</code>, <code>&lt;path&gt;</code>, and <code>&lt;text&gt;</code> tags that already exist in HTML. D3 just makes it easy to create hundreds of them from data and keep them in sync when the data changes.</p>
+    </div>
+
+    <h3>What's SVG?</h3>
+
+    <p>SVG (Scalable Vector Graphics) is a set of HTML tags for drawing shapes. You know <code>&lt;div&gt;</code> and <code>&lt;p&gt;</code> &mdash; SVG adds things like <code>&lt;rect&gt;</code> (rectangle), <code>&lt;circle&gt;</code>, <code>&lt;line&gt;</code>, and <code>&lt;path&gt;</code> (any shape). Every D3 chart you've ever seen is just a bunch of these SVG tags, styled and positioned by data.</p>
+
+    <p>Why SVG and not just <code>&lt;div&gt;</code>s? Because SVG gives you a <strong>coordinate system</strong> for precise positioning, built-in support for shapes and curves, and it scales cleanly at any screen size (that's the "scalable" part).</p>
+
+    <!-- ============================================ -->
+    <!-- KEY CONCEPTS                                 -->
+    <!-- ============================================ -->
+
+    <h2>The Key Concepts (Vocabulary)</h2>
+
+    <p>If these terms come up in conversation, you want to know what they mean and be able to nod along or ask a smart follow-up question:</p>
+
+    <div class="vocab">
+      <h4>D3 Vocabulary You Should Know</h4>
+      <dl>
+        <dt>Selections</dt>
+        <dd>D3's way of grabbing elements on the page (like <code>document.querySelector</code> but more powerful). You "select" elements, then set their attributes based on data.</dd>
+
+        <dt>Data binding / data join</dt>
+        <dd>The core idea. You give D3 an array of data and a set of elements. D3 matches them up: one data point per element. If there are 254 Texas counties in your data, D3 creates 254 shapes.</dd>
+
+        <dt>Enter / Update / Exit</dt>
+        <dd>What happens when data changes. "Enter" = new data points that need new shapes. "Update" = existing shapes that need new values. "Exit" = shapes whose data was removed. This is how D3 handles live-updating charts (like election night results coming in).</dd>
+
+        <dt>Scales</dt>
+        <dd>Functions that translate data values to visual values. Your data says "population: 4,800,000." The scale converts that to "bar width: 450 pixels" or "color: dark blue." Scales are the bridge between the data world and the pixel world.</dd>
+
+        <dt>Axes</dt>
+        <dd>The labeled lines on the sides of a chart (x-axis, y-axis). D3 generates them automatically from scales. You don't manually place tick marks &mdash; D3 figures that out.</dd>
+
+        <dt>Projections</dt>
+        <dd>How D3 draws maps. A projection converts latitude/longitude coordinates (from GeoJSON geographic data) into pixel positions on screen. Different projections look different &mdash; some are good for the whole US, others are better for a single state like Texas.</dd>
+
+        <dt>Transitions</dt>
+        <dd>Smooth animations between states. Bars grow from zero, colors fade between values, maps zoom in. D3 handles the animation math &mdash; you just say "go from here to here over 500 milliseconds."</dd>
+
+        <dt>GeoJSON / TopoJSON</dt>
+        <dd>Data formats for geographic boundaries. GeoJSON is the standard (easy to understand, verbose). TopoJSON is a compressed version (smaller files, good for maps with lots of boundaries like all 254 Texas counties). The Tribune probably uses these constantly.</dd>
+      </dl>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- D3 VS OTHER TOOLS                            -->
+    <!-- ============================================ -->
+
+    <h2>D3 vs. Other Tools &mdash; Know the Landscape</h2>
+
+    <p>If they ask why D3 instead of something else, here's the lay of the land:</p>
+
+    <table>
+      <tr>
+        <th>Tool</th>
+        <th>What It Is</th>
+        <th>Tradeoff vs. D3</th>
+      </tr>
+      <tr>
+        <td><strong>Chart.js</strong></td>
+        <td>Pre-built chart types (bar, line, pie)</td>
+        <td>Faster to use, but limited. Can't do custom maps or bespoke layouts.</td>
+      </tr>
+      <tr>
+        <td><strong>Tableau / Datawrapper</strong></td>
+        <td>No-code dashboards</td>
+        <td>Great for reporters, but you can't embed them with full editorial control or custom interactivity.</td>
+      </tr>
+      <tr>
+        <td><strong>Observable Plot</strong></td>
+        <td>High-level charting built on D3</td>
+        <td>Made by the D3 creator. Faster for standard charts, falls back to D3 for custom work. Good to know about.</td>
+      </tr>
+      <tr>
+        <td><strong>Mapbox / Leaflet</strong></td>
+        <td>Interactive maps with tiles</td>
+        <td>Better for slippy maps (pan/zoom like Google Maps). D3 is better for static thematic maps (choropleths, cartograms).</td>
+      </tr>
+    </table>
+
+    <div class="say-this">
+      <p><strong>How to say it:</strong> "I see D3 as the right tool when the visualization is the story &mdash; when you need something custom that no off-the-shelf tool can do. For a quick chart in a daily story, Datawrapper is probably faster. But for the big interactive pieces that the Tribune is known for &mdash; election maps, data explorers &mdash; D3 gives you the control you need."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHAT A D3 PROJECT LOOKS LIKE                 -->
+    <!-- ============================================ -->
+
+    <h2>What Building a D3 Chart Looks Like</h2>
+
+    <p>You don't need to memorize code. But it helps to understand the <strong>general steps</strong> so you can talk about the process:</p>
+
+    <ol>
+      <li><strong>Load the data</strong> &mdash; Usually a CSV or JSON file. Could come from a Django API, a Google Sheet, or a static file.</li>
+      <li><strong>Set up the dimensions</strong> &mdash; How wide and tall is the chart? Where do the margins go (to leave room for axis labels)?</li>
+      <li><strong>Create scales</strong> &mdash; "This data range maps to this pixel range." Population 0&ndash;5M maps to 0&ndash;600 pixels wide.</li>
+      <li><strong>Draw the shapes</strong> &mdash; Rectangles for bars, a path for a line, geographic paths for a map. Each shape's position/size/color comes from the data via the scales.</li>
+      <li><strong>Add axes and labels</strong> &mdash; D3 generates these from the scales. You position them and style them.</li>
+      <li><strong>Add interactivity</strong> &mdash; Tooltips on hover, click-to-filter, animated transitions.</li>
+    </ol>
+
+    <p>For a map, the process is similar but step 3 is "create a projection" (lat/lng to pixels) and step 4 is "draw county/district boundaries from GeoJSON."</p>
+
+    <div class="dont-say">
+      <p><strong>Don't say:</strong> "D3 is a charting library" (it's not &mdash; it's a data manipulation and DOM binding library). Don't say "D3 renders to canvas" (it renders to SVG by default). Don't say "D3 is like Tableau" (Tableau is no-code; D3 is code-first).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- D3 IN A NEWSROOM                             -->
+    <!-- ============================================ -->
+
+    <h2>D3 in a Newsroom &mdash; How It Actually Gets Used</h2>
+
+    <p>This is context that shows you understand the <em>workflow</em>, not just the tool:</p>
+
+    <ul>
+      <li><strong>Reporters and editors</strong> find the story in the data. They might use spreadsheets, SQL, or Python to analyze it.</li>
+      <li><strong>A developer/designer</strong> decides how to visualize it. They sketch the graphic, then build it in D3.</li>
+      <li><strong>The D3 code loads data</strong> from a static JSON/CSV file (for one-time pieces) or from an API (for live-updating pieces like election results).</li>
+      <li><strong>The graphic is embedded</strong> in the CMS (often as an iframe or a standalone page). It needs to be responsive (work on phones) and accessible (screen readers, alt text).</li>
+      <li><strong>On election night</strong>, the data updates automatically. The D3 chart re-renders with new numbers. The enter/update/exit pattern handles this gracefully.</li>
+    </ul>
+
+    <div class="say-this">
+      <p><strong>How to say it:</strong> "What appeals to me about this kind of work is the intersection of journalism and engineering. The reporter finds the story, the developer finds the best way to tell it visually. I've been on the reporting side and I understand what makes a graphic actually useful to readers &mdash; clear labels, a focused message, not overwhelming people with data. I want to build those skills on the technical side too."</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- D3 + REACT                                   -->
+    <!-- ============================================ -->
+
+    <h2>D3 + React (If It Comes Up)</h2>
+
+    <p>Many modern newsrooms use React for the page structure and D3 for the chart logic. The question is: who controls the SVG?</p>
+
+    <ul>
+      <li><strong>Approach 1: "D3 for math, React for rendering"</strong> &mdash; Use D3 only for its scale and layout calculations. React renders the actual SVG elements. This is cleaner and plays nicely with React's state management.</li>
+      <li><strong>Approach 2: "D3 owns the chart"</strong> &mdash; Give D3 a DOM reference and let it do everything. Simpler for complex, heavily animated charts. The React component just provides a container.</li>
+    </ul>
+
+    <p>You don't need to have a strong opinion on which is better. Just knowing that this tension exists and that there are two approaches shows you've thought about it.</p>
+
+    <!-- ============================================ -->
+    <!-- SMART QUESTIONS                              -->
+    <!-- ============================================ -->
+
+    <h2>Smart Questions You Could Ask Them</h2>
+
+    <p>Asking good questions shows you've done your homework:</p>
+
+    <ul>
+      <li>"What does your graphics pipeline look like? Do you start with static data files or pull from APIs?"</li>
+      <li>"Do you use D3 directly or have you moved toward Observable Plot or any higher-level abstractions?"</li>
+      <li>"How do you handle responsiveness on your interactives? Do you use SVG viewBox scaling or do you redraw at different breakpoints?"</li>
+      <li>"What's the workflow between reporters and developers on a data piece? How much does editorial shape what the final graphic looks like?"</li>
+      <li>"Do you use D3 with React, or are your interactives mostly standalone?"</li>
+    </ul>
+
+    <div class="nav-footer">
+      <a href="/courses/crash-course/">&larr; Crash course home</a>
+      <a href="/courses/crash-course/django/">Django &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

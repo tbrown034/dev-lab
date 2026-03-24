@@ -3,711 +3,416 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>About — Learn D3</title>
-  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <title>About — Learn Coding</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/shell.css">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: #0a0a0a;
-      color: #e5e5e5;
-      min-height: 100vh;
-    }
-
-    /* Header — matches site */
-    .header {
-      padding: 2rem 3rem;
-      border-bottom: 1px solid #222;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .header h1 { font-size: 1.5rem; font-weight: 600; }
-    .header h1 span { color: #f97316; }
-    .header .meta { color: #888; font-size: 0.85rem; }
-
-    /* Nav — matches site */
-    .nav {
-      display: flex;
-      gap: 0.5rem;
-      padding: 1.5rem 3rem;
-      flex-wrap: wrap;
-    }
-    .nav a {
-      padding: 0.5rem 1rem;
-      background: #1a1a1a;
-      border: 1px solid #333;
-      border-radius: 6px;
-      color: #ccc;
-      text-decoration: none;
-      font-size: 0.85rem;
-      transition: all 0.2s;
-    }
-    .nav a:hover, .nav a.active {
-      background: #f97316;
-      color: #000;
-      border-color: #f97316;
-    }
-
-    /* Hero */
+    /* ─── HERO ─── */
     .hero {
-      padding: 4rem 3rem 3rem;
-      max-width: 900px;
+      padding: 6rem 2rem 4rem;
+      max-width: 780px;
       margin: 0 auto;
-      text-align: center;
     }
-    .hero-label {
-      display: inline-block;
+    .hero-kicker {
+      font-family: var(--mono);
       font-size: 0.7rem;
-      font-weight: 700;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #f97316;
-      background: #f9731615;
-      padding: 0.35rem 1rem;
-      border-radius: 100px;
-      border: 1px solid #f9731633;
+      color: var(--text-muted);
       margin-bottom: 1.5rem;
     }
-    .hero h2 {
-      font-size: 2.6rem;
-      font-weight: 800;
-      line-height: 1.15;
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.4rem, 6vw, 3.5rem);
+      font-weight: 400;
+      line-height: 1.1;
       letter-spacing: -0.02em;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
     }
-    .hero h2 .accent { color: #f97316; }
-    .hero .subtitle {
-      font-size: 1.15rem;
-      color: #888;
-      line-height: 1.7;
-      max-width: 680px;
-      margin: 0 auto;
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
     }
+    .hero-intro {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: var(--text-dim);
+      max-width: 640px;
+    }
+    .hero-intro strong { color: var(--text); font-weight: 600; }
 
-    /* Article body */
+    /* ─── ARTICLE ─── */
     .article {
-      max-width: 820px;
+      max-width: 780px;
       margin: 0 auto;
-      padding: 0 3rem 4rem;
+      padding: 0 2rem 5rem;
     }
 
-    /* Section headings */
+    /* Section dividers */
     .section-divider {
       display: flex;
       align-items: center;
       gap: 1rem;
-      margin: 3.5rem 0 1.75rem;
+      margin: 3.5rem 0 1.5rem;
     }
-    .section-divider h3 {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
+    .section-divider h2 {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 600;
       letter-spacing: 0.1em;
-      color: #f97316;
+      text-transform: uppercase;
+      color: var(--accent);
       white-space: nowrap;
     }
-    .section-divider .line {
+    .section-divider::after {
+      content: '';
       flex: 1;
       height: 1px;
-      background: #222;
+      background: var(--border);
     }
 
     /* Prose */
     .prose {
       font-size: 1rem;
-      line-height: 1.8;
-      color: #bbb;
+      line-height: 1.85;
+      color: var(--text-dim);
     }
     .prose p { margin-bottom: 1rem; }
-    .prose strong { color: #e5e5e5; font-weight: 600; }
-    .prose em { color: #f97316; font-style: normal; font-weight: 500; }
-    .prose a { color: #f97316; text-decoration: underline; text-underline-offset: 2px; }
-    .prose a:hover { color: #fb923c; }
+    .prose strong { color: var(--text); font-weight: 600; }
+    .prose em { color: var(--accent); font-style: italic; }
+    .prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 
     /* Pullquote */
     .pullquote {
-      border-left: 3px solid #f97316;
-      padding: 1.25rem 1.5rem;
+      border-left: 2px solid var(--accent);
+      padding: 1.25rem 0 1.25rem 2rem;
       margin: 2rem 0;
-      background: #f9731608;
-      border-radius: 0 8px 8px 0;
     }
     .pullquote p {
-      font-size: 1.1rem;
+      font-family: var(--serif);
+      font-size: 1.4rem;
       font-style: italic;
-      color: #ccc;
-      line-height: 1.7;
+      line-height: 1.5;
+      color: var(--text-dim);
       margin: 0;
     }
 
-    /* Stats row */
-    .stats-row {
+    /* Stats grid */
+    .stats {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
       margin: 2rem 0;
     }
     .stat {
-      background: #141414;
-      border: 1px solid #222;
-      border-radius: 8px;
-      padding: 1.25rem;
-      text-align: center;
+      background: var(--surface);
+      padding: 1.25rem 1.5rem;
     }
-    .stat .number {
-      font-size: 1.8rem;
-      font-weight: 800;
-      color: #f97316;
+    .stat .num {
+      font-family: var(--serif);
+      font-size: 2rem;
+      font-weight: 400;
       line-height: 1;
+      margin-bottom: 0.25rem;
     }
     .stat .label {
-      font-size: 0.75rem;
-      color: #888;
-      margin-top: 0.35rem;
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    /* Feature grid */
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-    .feature-card {
-      background: #141414;
-      border: 1px solid #222;
-      border-radius: 8px;
-      padding: 1.25rem;
-      transition: border-color 0.2s;
-    }
-    .feature-card:hover { border-color: #333; }
-    .feature-card .feature-icon {
-      font-size: 1.3rem;
-      margin-bottom: 0.5rem;
-    }
-    .feature-card h4 {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #e5e5e5;
-      margin-bottom: 0.35rem;
-    }
-    .feature-card p {
-      font-size: 0.8rem;
-      color: #888;
-      line-height: 1.5;
+      color: var(--text-muted);
     }
 
     /* Platform cards */
-    .platform-grid {
+    .platforms {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-    .platform-card {
-      background: #141414;
-      border: 1px solid #222;
-      border-radius: 10px;
-      padding: 1.5rem;
-      position: relative;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
       overflow: hidden;
-      transition: border-color 0.2s, transform 0.2s;
+      margin: 2rem 0;
     }
-    .platform-card:hover {
-      transform: translateY(-2px);
+    .platform {
+      background: var(--surface);
+      padding: 1.75rem;
+      position: relative;
     }
-    .platform-card::before {
+    .platform::before {
       content: '';
       position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
+      top: 0; left: 0;
+      width: 100%; height: 2px;
     }
-    .platform-card.d3::before { background: #f97316; }
-    .platform-card.d3:hover { border-color: #f97316; }
-    .platform-card.django::before { background: #22c55e; }
-    .platform-card.django:hover { border-color: #22c55e; }
-    .platform-card.sql::before { background: #3b82f6; }
-    .platform-card.sql:hover { border-color: #3b82f6; }
-    .platform-card.planned::before { background: #444; }
-    .platform-card .platform-label {
-      font-size: 0.65rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 0.5rem;
+    .platform.d3::before { background: linear-gradient(90deg, var(--accent), transparent); }
+    .platform.django::before { background: linear-gradient(90deg, var(--accent-green), transparent); }
+    .platform.sql::before { background: linear-gradient(90deg, var(--accent-blue), transparent); }
+    .platform h3 {
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
     }
-    .platform-card.d3 .platform-label { color: #f97316; }
-    .platform-card.django .platform-label { color: #22c55e; }
-    .platform-card.sql .platform-label { color: #3b82f6; }
-    .platform-card.planned .platform-label { color: #555; }
-    .platform-card h4 {
-      font-size: 1rem;
+    .platform p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* Tools grid */
+    .tools {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 2rem 0;
+    }
+    .tool {
+      background: var(--surface);
+      padding: 1.5rem;
+    }
+    .tool h3 {
+      font-family: var(--sans);
+      font-size: 0.88rem;
       font-weight: 600;
       margin-bottom: 0.35rem;
     }
-    .platform-card p {
-      font-size: 0.8rem;
-      color: #888;
-      line-height: 1.5;
-    }
-    .platform-card .port-tag {
-      display: inline-block;
-      margin-top: 0.75rem;
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      font-size: 0.7rem;
-      color: #555;
-      background: #1a1a1a;
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
+    .tool p {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.55;
     }
 
-    /* Tech list */
-    .tech-list {
+    /* Tech tags */
+    .tech-tags {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0.4rem;
       margin: 1.5rem 0;
     }
     .tech-tag {
-      padding: 0.4rem 0.85rem;
-      background: #1a1a1a;
-      border: 1px solid #2a2a2a;
-      border-radius: 6px;
-      font-size: 0.8rem;
-      color: #aaa;
-      font-weight: 500;
-    }
-
-    /* Ethics callout */
-    .ethics-callout {
-      background: linear-gradient(135deg, #141414, #18140e);
-      border: 1px solid #f9731633;
-      border-radius: 10px;
-      padding: 2rem;
-      margin: 1.5rem 0;
-    }
-    .ethics-callout h4 {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #f97316;
-      margin-bottom: 0.75rem;
-    }
-    .ethics-callout ul {
-      list-style: none;
-      padding: 0;
-    }
-    .ethics-callout li {
-      font-size: 0.9rem;
-      color: #bbb;
-      line-height: 1.7;
-      padding-left: 1.25rem;
-      position: relative;
-    }
-    .ethics-callout li::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0.6em;
-      width: 6px;
-      height: 6px;
-      background: #f97316;
-      border-radius: 50%;
-    }
-
-    /* Skills row */
-    .skills-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 0.75rem;
-      margin: 1.5rem 0;
-    }
-    .skill-badge {
-      background: #141414;
-      border: 1px solid #222;
-      border-radius: 8px;
-      padding: 1rem;
-      text-align: center;
-      transition: border-color 0.2s;
-    }
-    .skill-badge:hover { border-color: #333; }
-    .skill-badge .skill-name {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #ccc;
-    }
-    .skill-badge .skill-desc {
-      font-size: 0.7rem;
-      color: #666;
-      margin-top: 0.25rem;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.04em;
+      padding: 0.3rem 0.7rem;
+      border-radius: 5px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
     }
 
     /* Footer */
-    .about-footer {
-      max-width: 820px;
-      margin: 0 auto;
-      padding: 2rem 3rem 3rem;
-      border-top: 1px solid #1a1a1a;
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2.5rem 2rem;
       text-align: center;
     }
-    .about-footer p {
-      font-size: 0.85rem;
-      color: #555;
-      line-height: 1.7;
+    footer p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
     }
-    .about-footer a {
-      color: #f97316;
+    footer a {
+      color: var(--accent);
       text-decoration: none;
     }
-    .about-footer a:hover { text-decoration: underline; }
 
-    /* Responsive */
     @media (max-width: 768px) {
-      .header { padding: 1.5rem 1.5rem; }
-      .nav { padding: 1rem 1.5rem; }
-      .hero { padding: 3rem 1.5rem 2rem; }
-      .hero h2 { font-size: 1.8rem; }
+      .hero { padding: 4rem 1.5rem 3rem; }
       .article { padding: 0 1.5rem 3rem; }
-      .stats-row { grid-template-columns: repeat(2, 1fr); }
-      .feature-grid { grid-template-columns: 1fr; }
-      .platform-grid { grid-template-columns: 1fr; }
-      .skills-row { grid-template-columns: repeat(2, 1fr); }
-      .about-footer { padding: 2rem 1.5rem; }
-    }
-    @media (max-width: 480px) {
-      .hero h2 { font-size: 1.5rem; }
-      .stats-row { grid-template-columns: repeat(2, 1fr); }
-      .stat .number { font-size: 1.4rem; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .platforms { grid-template-columns: 1fr; }
+      .tools { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>Learn <span>D3</span>.js</h1>
-    <div class="meta">Expert fundamentals &middot; 2 weeks</div>
-  </div>
 
-  <nav class="nav">
-    <a href="/">Home</a>
-    <a href="/lessons/01-fundamentals/">01 SVG</a>
-    <a href="/lessons/02-selections-data/">02 Scales</a>
-    <a href="/lessons/03-scales-axes/">03 Selections</a>
-    <a href="/lessons/04-shapes-bindings/">04 Data</a>
-    <a href="/lessons/05-maps-geo/">05 Scales</a>
-    <a href="/lessons/06-transitions-interactivity/">06 Axes</a>
-    <a href="/lessons/07-lines-areas/">07 Updates</a>
-    <a href="/lessons/08-arcs-pies/">08 Lines</a>
-    <a href="/lessons/09-maps-geo/">09 Arcs</a>
-    <a href="/lessons/10-interactivity/">10 Maps</a>
-    <a href="/lessons/11-d3-react/">11 Interactive</a>
-    <a href="/lessons/12-capstone/">12 Capstone</a>
-    <a href="/references/use-cases/" style="color: #818cf8;">Use Cases</a>
-    <a href="/games/" style="color: #4ade80;">Games</a>
-    <a href="/projects/" style="color: #f472b6; font-weight: 600;">Portfolio</a>
-    <a href="/workstation/save-act/" style="color: #f472b6;">Workstation</a>
-    <a href="/about/" class="active">About</a>
-  </nav>
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">Learn Coding</a>
+      <div class="header-right">
+        <a href="/" class="back-link">&larr; Home</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
 
-  <!-- Hero -->
   <div class="hero">
-    <div class="hero-label">About This Platform</div>
-    <h2>How I Learned <span class="accent">D3.js</span> by Building the Thing That Teaches It</h2>
-    <p class="subtitle">
-      This is a custom-built learning ecosystem created by Trevor Brown &mdash; an investigative journalist turned web developer who believes the best way to learn something is to build the platform that teaches it.
+    <div class="hero-kicker">About this platform</div>
+    <h1>I learn by <em>building</em> the thing that teaches me.</h1>
+    <p class="hero-intro">
+      This is a custom learning ecosystem built by <strong>Trevor Brown</strong> &mdash;
+      an investigative journalist turned web developer. Every lesson, tool, game, and AI tutor
+      here was designed and coded from scratch, because the deepest way to learn something
+      is to build the platform that teaches it.
     </p>
   </div>
 
-  <!-- Article -->
   <div class="article">
 
-    <!-- THE STORY -->
-    <div class="section-divider">
-      <h3>The Story</h3>
-      <div class="line"></div>
-    </div>
+    <div class="section-divider"><h2>The Story</h2></div>
     <div class="prose">
       <p>
-        I spent 15+ years as an investigative journalist. Then I taught myself web development &mdash; <strong>React, Next.js, TypeScript, Tailwind</strong> &mdash; and discovered that building things scratched the same itch as breaking a story: find the truth in complex systems and present it clearly.
+        I spent 15+ years as an investigative journalist. Then I taught myself web development &mdash;
+        <strong>React, Next.js, TypeScript, Tailwind</strong> &mdash; and discovered that building things
+        scratched the same itch as breaking a story: find the truth in complex systems and present it clearly.
       </p>
       <p>
-        Now I'm building expert-level skills in <em>D3.js</em>, <em>Python/Django</em>, and <em>SQL</em> for a potential role at <strong>Tenga</strong>, a chain of broadcast TV networks where data visualization meets election dashboards, weather maps, census overlays, and breaking-news graphics.
+        Now I'm going deep on <strong>D3.js</strong>, <strong>Python/Django</strong>, and <strong>SQL</strong>
+        for a potential role at Tenga, a chain of broadcast TV networks. Election dashboards, weather maps,
+        census overlays, breaking-news graphics &mdash; the kind of work where data visualization meets
+        editorial judgment.
       </p>
       <p>
-        This platform is how I learn. I don't watch tutorials. I don't follow along with textbooks. I <strong>build the thing that teaches me</strong>, and in doing so, I learn it more deeply than any course could offer. Every page you see here was designed, written, and coded by me with help from Claude Code.
+        I don't watch tutorials. I don't follow along with textbooks. I <strong>build the thing that teaches me</strong>,
+        and in doing so, I learn it more deeply than any course could offer.
       </p>
     </div>
 
-    <!-- PHILOSOPHY -->
-    <div class="section-divider">
-      <h3>The Philosophy</h3>
-      <div class="line"></div>
-    </div>
+    <div class="section-divider"><h2>The Philosophy</h2></div>
     <div class="prose">
       <p>
-        Every lesson follows a single rule: <strong>mental models first, syntax second.</strong> I don't memorize API signatures. I learn the <em>why</em> behind every function so I can derive the <em>how</em> on the fly.
+        Every lesson follows a single rule: <strong>mental models first, syntax second.</strong>
+        I don't memorize API signatures. I learn the <em>why</em> behind every function so I can
+        derive the <em>how</em> on the fly.
       </p>
       <p>
-        Each concept is taught through analogies to tools I already know. D3 scales are <em>translators</em> between data and pixels. Enter/update/exit is a <em>wedding seating chart</em>. Projections are ways of <em>flattening a globe onto a table</em>. When you truly understand the concept, the syntax writes itself.
+        Each concept is taught through analogies to tools I already know. D3 scales are translators
+        between data and pixels. Django's ORM is Prisma with a different accent. SQL window functions
+        are spreadsheet formulas that can see neighboring rows.
       </p>
     </div>
     <div class="pullquote">
-      <p>"I don't want to memorize syntax &mdash; I want to understand WHY things work so I can build anything."</p>
-    </div>
-    <div class="prose">
-      <p>
-        One concept per lesson. Depth over breadth. The goal after two weeks: <strong>read any D3 code like English and build any standard chart from memory.</strong>
-      </p>
+      <p>I don't want to memorize syntax &mdash; I want to understand why things work so I can build anything.</p>
     </div>
 
-    <!-- WHAT'S HERE -->
-    <div class="section-divider">
-      <h3>What's Here &mdash; Learn D3</h3>
-      <div class="line"></div>
-    </div>
-    <div class="prose">
-      <p>This is not a single course. It's a full learning environment with interconnected tools, all built around D3.js mastery.</p>
-    </div>
-    <div class="stats-row">
-      <div class="stat">
-        <div class="number">12</div>
-        <div class="label">Deep-Dive Lessons</div>
-      </div>
-      <div class="stat">
-        <div class="number">10</div>
-        <div class="label">Learning Games</div>
-      </div>
-      <div class="stat">
-        <div class="number">15</div>
-        <div class="label">Live Use Cases</div>
-      </div>
-      <div class="stat">
-        <div class="number">28</div>
-        <div class="label">Code Snippets</div>
-      </div>
-      <div class="stat">
-        <div class="number">9</div>
-        <div class="label">Sandbox Templates</div>
-      </div>
-      <div class="stat">
-        <div class="number">4</div>
-        <div class="label">Portfolio Projects</div>
-      </div>
-    </div>
-    <div class="feature-grid">
-      <div class="feature-card">
-        <div class="feature-icon">01&ndash;12</div>
-        <h4>12 Lessons</h4>
-        <p>Pure SVG, selections, scales, data binding, axes, enter/update/exit, lines, arcs, maps, interactivity, React integration, and a capstone dashboard.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">&ofcir;</div>
-        <h4>10 Learning Games</h4>
-        <p>Mobile-friendly second-screen games: shape quiz, code reader, scale calculator, memory match, speed round, and more. Reinforcement through play.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">&lt;/&gt;</div>
-        <h4>Live Sandbox</h4>
-        <p>9 starter templates with a visual debugger. Experiment with real D3 code in an environment that shows what every line does.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">#</div>
-        <h4>28 Searchable Snippets</h4>
-        <p>Copy-paste-ready code for every common D3 pattern. Searchable, categorized, with inline explanations.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">&rarr;</div>
-        <h4>15 Live Use Cases</h4>
-        <p>Real-world mini-demos: election map, bar chart race, force-directed graph, Sankey diagram, treemap, scatter with brushing, and more.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">&bull;</div>
-        <h4>AI Tutor</h4>
-        <p>Context-aware Claude-powered chatbot on every page. Knows which lesson you're on and what concepts you've covered.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">&sect;</div>
-        <h4>Workstation</h4>
-        <p>Real data journalism projects: SAVE America Act analysis, Mail Voting in America deep-dive. Working with real datasets and real editorial questions.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">&starf;</div>
-        <h4>Portfolio</h4>
-        <p>4 interview-ready D3 visualizations with real data: campaign finance, census maps, weather trends, election night dashboard.</p>
-      </div>
+    <div class="section-divider"><h2>What's Here</h2></div>
+    <div class="stats">
+      <div class="stat"><div class="num">3</div><div class="label">Active tracks</div></div>
+      <div class="stat"><div class="num">36</div><div class="label">Lessons</div></div>
+      <div class="stat"><div class="num">10</div><div class="label">Games</div></div>
+      <div class="stat"><div class="num">6</div><div class="label">AI tools</div></div>
     </div>
 
-    <!-- THE FULL PLATFORM -->
-    <div class="section-divider">
-      <h3>The Full Platform</h3>
-      <div class="line"></div>
-    </div>
-    <div class="prose">
-      <p>
-        D3 is just one track. The full learning ecosystem spans three active platforms (and four more planned), all connected through a central hub.
-      </p>
-    </div>
-    <div class="platform-grid">
-      <div class="platform-card d3">
-        <div class="platform-label">Active</div>
-        <h4>Learn D3.js</h4>
-        <p>Data visualization mastery. SVG, scales, maps, transitions, interactive broadcast-ready graphics.</p>
-        <span class="port-tag">localhost:3333</span>
+    <div class="platforms">
+      <div class="platform d3">
+        <h3>Learn D3.js</h3>
+        <p>12 lessons, 10 games, live sandbox, code snippets, use cases, portfolio projects, and a workstation with real data journalism.</p>
       </div>
-      <div class="platform-card django">
-        <div class="platform-label">Active</div>
-        <h4>Learn Python + Django</h4>
-        <p>5 Python lessons + 7 Django lessons. Taught through JS analogies so every concept connects to what I already know.</p>
-        <span class="port-tag">localhost:4444</span>
+      <div class="platform django">
+        <h3>Learn Python + Django</h3>
+        <p>5 Python lessons taught through JS analogies, then 7 Django lessons building full-stack apps from scratch.</p>
       </div>
-      <div class="platform-card sql">
-        <div class="platform-label">Active</div>
-        <h4>Learn SQL + PostgreSQL</h4>
+      <div class="platform sql">
+        <h3>Learn SQL + PostgreSQL</h3>
         <p>12 lessons from SELECT to window functions. Taught through Prisma ORM analogies for immediate comprehension.</p>
-        <span class="port-tag">localhost:5555</span>
-      </div>
-      <div class="platform-card planned">
-        <div class="platform-label">Planned</div>
-        <h4>JS/TS, React, CSS, AI/LLMs</h4>
-        <p>Four more tracks covering advanced JavaScript, React 19 deep dives, modern CSS design systems, and AI/LLM development.</p>
-      </div>
-    </div>
-    <div class="prose">
-      <p>
-        Every platform is standalone &mdash; just <code style="color: #f97316; background: #1a1a1a; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.9em;">npm run dev</code> in any project folder. A hub page at <strong>learn-coding</strong> ties everything together in one view.
-      </p>
-    </div>
-
-    <!-- LEARNING FEATURES -->
-    <div class="section-divider">
-      <h3>Learning Features</h3>
-      <div class="line"></div>
-    </div>
-    <div class="prose">
-      <p>Every platform shares a common set of learning tools, all custom-built to match how I actually learn.</p>
-    </div>
-    <div class="feature-grid">
-      <div class="feature-card">
-        <h4>AI Tutor</h4>
-        <p>Context-aware Claude-powered chatbot on every page. Knows the lesson, the concepts covered, and can answer follow-up questions or generate new exercises.</p>
-      </div>
-      <div class="feature-card">
-        <h4>Explain It Back</h4>
-        <p>Feynman technique: the AI asks you to explain a concept in your own words, then evaluates your understanding and fills gaps.</p>
-      </div>
-      <div class="feature-card">
-        <h4>Audio Mode</h4>
-        <p>Listen to lessons passively using the Web Speech API. Perfect for review while doing other things.</p>
-      </div>
-      <div class="feature-card">
-        <h4>XP Tracker</h4>
-        <p>Gamified progress with levels (Intern through Fellow). Earn XP by completing lessons, quizzes, games, and exercises.</p>
-      </div>
-      <div class="feature-card">
-        <h4>Skill Assessment</h4>
-        <p>AI-generated adaptive tests that measure your understanding. Take them multiple times and beat your own scores.</p>
-      </div>
-      <div class="feature-card">
-        <h4>Inline Quizzes</h4>
-        <p>Quiz sections embedded in every lesson with reveal-on-click answers. Plus "Explain This" buttons on all code blocks.</p>
       </div>
     </div>
 
-    <!-- TECH STACK -->
-    <div class="section-divider">
-      <h3>The Tech Stack</h3>
-      <div class="line"></div>
-    </div>
     <div class="prose">
       <p>
-        Deliberately minimal. No framework overhead for the learning sites &mdash; just fast, vanilla JavaScript served by Vite. The platforms are about <em>learning</em>, not showcasing framework mastery (that's what the portfolio projects are for).
+        Four more tracks are planned: <strong>JavaScript/TypeScript</strong>, <strong>React/Next.js</strong>,
+        <strong>CSS/Design Systems</strong>, and <strong>AI/LLMs</strong>.
       </p>
     </div>
-    <div class="tech-list">
-      <span class="tech-tag">Vite Dev Servers</span>
-      <span class="tech-tag">Vanilla JavaScript</span>
-      <span class="tech-tag">D3.js v7 (ESM)</span>
-      <span class="tech-tag">TopoJSON Client</span>
-      <span class="tech-tag">Anthropic Claude API</span>
-      <span class="tech-tag">Vite API Proxy Middleware</span>
+
+    <div class="section-divider"><h2>Learning Tools</h2></div>
+    <div class="prose">
+      <p>Every platform shares a common set of tools, all built to match how I actually learn.</p>
+    </div>
+    <div class="tools">
+      <div class="tool">
+        <h3>AI Tutor</h3>
+        <p>Context-aware Claude chatbot on every page. Knows the lesson, the concepts, and your progress.</p>
+      </div>
+      <div class="tool">
+        <h3>Explain It Back</h3>
+        <p>Feynman technique. The AI asks you to explain concepts, then pushes deeper on weak spots.</p>
+      </div>
+      <div class="tool">
+        <h3>Audio Mode</h3>
+        <p>Listen to lessons passively. Section-by-section playback for second-screen learning.</p>
+      </div>
+      <div class="tool">
+        <h3>Skill Test</h3>
+        <p>AI-generated adaptive assessment. 10 questions, difficulty scaling, score history.</p>
+      </div>
+      <div class="tool">
+        <h3>The Scroll</h3>
+        <p>Replace doomscrolling with learning. Interview Qs, hot takes, tips, and bugs from the dev timeline.</p>
+      </div>
+      <div class="tool">
+        <h3>The Pod</h3>
+        <p>AI-generated podcast episodes that break down each lesson into conversational audio you can learn from on the go.</p>
+      </div>
+    </div>
+
+    <div class="section-divider"><h2>Tech Stack</h2></div>
+    <div class="prose">
+      <p>
+        Deliberately minimal. No framework overhead &mdash; just fast, vanilla JavaScript served by Vite.
+        The platforms are about learning, not showcasing framework mastery.
+      </p>
+    </div>
+    <div class="tech-tags">
+      <span class="tech-tag">Vite</span>
+      <span class="tech-tag">Vanilla JS</span>
+      <span class="tech-tag">D3.js v7</span>
+      <span class="tech-tag">Claude API</span>
       <span class="tech-tag">Web Speech API</span>
-      <span class="tech-tag">localStorage (XP/Progress)</span>
-      <span class="tech-tag">SVG &amp; Canvas</span>
+      <span class="tech-tag">localStorage</span>
+      <span class="tech-tag">SVG + Canvas</span>
+      <span class="tech-tag">TopoJSON</span>
     </div>
 
-    <!-- ETHICS -->
-    <div class="section-divider">
-      <h3>Data Journalism Ethics</h3>
-      <div class="line"></div>
-    </div>
+    <div class="section-divider"><h2>Ethics</h2></div>
     <div class="prose">
       <p>
-        Visualization isn't decoration &mdash; it's editorial. Every pixel is a decision about what to show, what to hide, and what to emphasize. As a journalist, I take that responsibility seriously.
-      </p>
-    </div>
-    <div class="ethics-callout">
-      <h4>Ethics Framework</h4>
-      <ul>
-        <li>SPJ Code of Ethics applied to data visualization</li>
-        <li>Alberto Cairo's five qualities of great visualizations</li>
-        <li>Personal code of ethics for broadcast-ready graphics</li>
-        <li>"Every pixel is an editorial decision"</li>
-      </ul>
-    </div>
-    <div class="prose">
-      <p>
-        The <a href="/workstation/ethics/">full ethics page</a> covers how journalistic principles map to visualization choices &mdash; from axis scaling to color selection to annotation placement.
+        Visualization isn't decoration &mdash; it's editorial. Every pixel is a decision about what to show,
+        what to hide, and what to emphasize. As a journalist, that responsibility shapes every chart,
+        map, and dashboard I build. The <a href="/d3/workstation/ethics/">full ethics page</a> covers
+        how journalistic principles map to visualization choices.
       </p>
     </div>
 
-    <!-- CLAUDE CODE SKILLS -->
-    <div class="section-divider">
-      <h3>Claude Code Skills</h3>
-      <div class="line"></div>
-    </div>
+    <div class="section-divider"><h2>Built With Claude Code</h2></div>
     <div class="prose">
       <p>
-        This entire ecosystem was built in collaboration with Claude Code. Six custom AI skills guide development, ensuring every page, lesson, and feature is built with the right domain expertise.
+        This entire ecosystem was built in collaboration with Claude Code. Custom AI skills for
+        D3 tutoring, data journalism ethics, JavaScript patterns, React, CSS design systems,
+        and AI/LLM development guide every page and feature.
       </p>
-    </div>
-    <div class="skills-row">
-      <div class="skill-badge">
-        <div class="skill-name">D3 Tutor</div>
-        <div class="skill-desc">Visualization patterns</div>
-      </div>
-      <div class="skill-badge">
-        <div class="skill-name">Data Ethics</div>
-        <div class="skill-desc">Journalism standards</div>
-      </div>
-      <div class="skill-badge">
-        <div class="skill-name">JS / TS</div>
-        <div class="skill-desc">Language deep-dives</div>
-      </div>
-      <div class="skill-badge">
-        <div class="skill-name">React / Next.js</div>
-        <div class="skill-desc">Framework patterns</div>
-      </div>
-      <div class="skill-badge">
-        <div class="skill-name">CSS / Design</div>
-        <div class="skill-desc">Visual systems</div>
-      </div>
-      <div class="skill-badge">
-        <div class="skill-name">AI / LLMs</div>
-        <div class="skill-desc">AI-powered features</div>
-      </div>
     </div>
 
   </div>
 
-  <!-- Footer -->
-  <div class="about-footer">
-    <p>
-      Built by Trevor Brown &middot; 2026<br>
-      <a href="/">Back to Learn D3</a>
-    </p>
-  </div>
+  <footer>
+    <p>Trevor Brown &middot; 2026 &mdash; <a href="/">Back to home</a></p>
+  </footer>
 
-  <script type="module" src="/components/init-tutor.js"></script>
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  </script>
+
 </body>
 </html>

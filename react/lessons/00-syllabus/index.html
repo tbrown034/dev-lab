@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 00 - The Syllabus</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #06b6d4; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>00</span> The Syllabus &mdash; React + Frameworks Deep Dive</h1>
+    <a href="/react/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">You already know React.</strong> You've built apps with Next.js, written TypeScript, styled with Tailwind. This course isn't about teaching you useState. It's about teaching you <em>why</em> useState works the way it does &mdash; and everything that follows from that understanding.</p>
+
+    <!-- ============================================ -->
+    <!-- WHO THIS IS FOR                              -->
+    <!-- ============================================ -->
+
+    <h2>Who This Course Is For</h2>
+
+    <p>This course is built for a specific person: someone who can build React apps but wants to understand what's happening beneath the surface. You know the syntax. You want the mental models.</p>
+
+    <p>Think of it like investigative journalism. You've been reporting on React &mdash; using it, quoting its documentation, following its conventions. Now you're going to investigate it. Pull back the curtain. Read the source code. Understand the architecture decisions that shape everything you build.</p>
+
+    <div class="aha">
+      <p><strong>The goal isn't more syntax.</strong> It's the ability to look at any React problem &mdash; a performance issue, a hydration mismatch, a state management decision &mdash; and reason about it from first principles instead of Googling stack traces.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHAT YOU'LL LEARN                            -->
+    <!-- ============================================ -->
+
+    <h2>What You'll Learn</h2>
+
+    <h3>Phase 1: React Internals (Lessons 01-04)</h3>
+
+    <p>The foundation. How React actually works under the hood.</p>
+
+    <ul>
+      <li><strong>Lesson 01 &mdash; The React Mental Model:</strong> React as a rendering engine. Why "UI = f(state)" is the most important equation in frontend development. Components as pure functions of their props. The declarative paradigm and what it costs you.</li>
+      <li><strong>Lesson 02 &mdash; Fiber &amp; Reconciliation:</strong> The virtual DOM is a marketing term. What React actually maintains is a fiber tree. You'll learn how reconciliation works, why keys matter at an algorithmic level, and what "concurrent" rendering actually means.</li>
+      <li><strong>Lesson 03 &mdash; Hooks Deep Dive:</strong> Hooks aren't magic &mdash; they're array slots on a fiber node. You'll trace through the implementation of useState and useEffect, understand why the rules of hooks exist, and build custom hooks that compose cleanly.</li>
+      <li><strong>Lesson 04 &mdash; State Management:</strong> Context, Zustand, Jotai, and the signals debate. When global state helps, when it hurts, and the architectural patterns that prevent state from becoming a mess.</li>
+    </ul>
+
+    <h3>Phase 2: The Server Revolution (Lessons 05-08)</h3>
+
+    <p>React Server Components changed everything. This phase covers the new paradigm.</p>
+
+    <ul>
+      <li><strong>Lesson 05 &mdash; Server Components:</strong> The mental model shift from "everything runs in the browser" to "some code never ships to the client." The serialization boundary. Why RSC exists and what problems it solves.</li>
+      <li><strong>Lesson 06 &mdash; Next.js App Router:</strong> The file system as your routing API. Layouts, loading states, error boundaries, parallel routes. How App Router implements the RSC vision.</li>
+      <li><strong>Lesson 07 &mdash; Data Fetching:</strong> Server actions, React Query, SWR, streaming with Suspense. The decision tree for choosing the right approach.</li>
+      <li><strong>Lesson 08 &mdash; Performance:</strong> When React.memo helps (rarely). When useMemo helps (sometimes). Code splitting, bundle analysis, and the React Profiler. Measuring before optimizing.</li>
+    </ul>
+
+    <h3>Phase 3: Production Patterns (Lessons 09-12)</h3>
+
+    <p>Building real applications. Testing, forms, framework choices, and a capstone.</p>
+
+    <ul>
+      <li><strong>Lesson 09 &mdash; Forms &amp; Validation:</strong> Why controlled inputs exist. React Hook Form for performance. Zod for type-safe validation. Server-side validation that doesn't duplicate client logic.</li>
+      <li><strong>Lesson 10 &mdash; Testing:</strong> Testing Library's philosophy (test behavior, not implementation). MSW for API mocking. Playwright for E2E. What to test and what not to.</li>
+      <li><strong>Lesson 11 &mdash; Framework Comparison:</strong> Next.js vs Remix vs Astro vs SvelteKit. Not "which is best" but "which architecture fits which problem."</li>
+      <li><strong>Lesson 12 &mdash; Capstone:</strong> Build a full-stack data journalism dashboard. Next.js 15, RSC, streaming data, D3 visualizations, authentication, and deployment. Everything in one project.</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- HOW LESSONS WORK                             -->
+    <!-- ============================================ -->
+
+    <h2>How Each Lesson Works</h2>
+
+    <p>Every lesson follows the same structure, designed around how you actually learn:</p>
+
+    <ol>
+      <li><strong>Mental Model First:</strong> An analogy or framework for thinking about the concept. No code yet. Just the "why."</li>
+      <li><strong>The Concept in Depth:</strong> Technical explanation with diagrams, comparisons, and real code. This is the "how."</li>
+      <li><strong>Code Examples:</strong> Real TypeScript/JSX that you can run. Not toy examples &mdash; patterns you'd use in production.</li>
+      <li><strong>Quizzes:</strong> Check your understanding before moving on. Hidden answers so you can test yourself.</li>
+      <li><strong>Exercises:</strong> Build something that forces you to apply the mental model.</li>
+    </ol>
+
+    <div class="callout">
+      <p><strong>The journalism analogy runs throughout this course.</strong> You're investigating React. Each lesson is a beat: you develop sources (documentation, source code), gather evidence (experiments, benchmarks), and build a story (mental model) that explains what you've found. The best developers, like the best journalists, can explain complex systems simply because they understand them deeply.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PREREQUISITES                                -->
+    <!-- ============================================ -->
+
+    <h2>Prerequisites</h2>
+
+    <p>This course assumes you can already:</p>
+
+    <ul>
+      <li>Build a React app with functional components and hooks</li>
+      <li>Use Next.js for routing and basic data fetching</li>
+      <li>Write TypeScript (at least basic types, interfaces, generics)</li>
+      <li>Style with Tailwind CSS or CSS modules</li>
+      <li>Use Git and npm/pnpm for project management</li>
+    </ul>
+
+    <p>If any of those feel shaky, go build a small project first. This course won't re-teach the basics &mdash; it builds on them.</p>
+
+    <!-- ============================================ -->
+    <!-- THE ROADMAP                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Roadmap</h2>
+
+    <table>
+      <tr><th>Week</th><th>Lessons</th><th>Focus</th></tr>
+      <tr><td>1</td><td>01 &ndash; 04</td><td>React internals: mental model, Fiber, hooks, state management</td></tr>
+      <tr><td>2</td><td>05 &ndash; 08</td><td>Server revolution: RSC, App Router, data fetching, performance</td></tr>
+      <tr><td>3</td><td>09 &ndash; 12</td><td>Production: forms, testing, frameworks, capstone project</td></tr>
+    </table>
+
+    <p>Three weeks if you're going full-time. Six weeks at a comfortable pace. Each lesson is designed to stand alone &mdash; you can skip around if you already understand a topic deeply. But the mental models build on each other, so going in order is recommended for the first pass.</p>
+
+    <!-- ============================================ -->
+    <!-- WHAT SUCCESS LOOKS LIKE                      -->
+    <!-- ============================================ -->
+
+    <h2>What Success Looks Like</h2>
+
+    <p>By the end of this course, you should be able to:</p>
+
+    <ol>
+      <li><strong>Explain React's rendering model</strong> to a junior developer without using jargon</li>
+      <li><strong>Debug performance issues</strong> by reading the Profiler and understanding why components re-render</li>
+      <li><strong>Architect a Next.js application</strong> with proper server/client boundaries, streaming, and caching</li>
+      <li><strong>Choose the right tool</strong> for state management, data fetching, form handling, and testing</li>
+      <li><strong>Compare frameworks</strong> based on architectural tradeoffs, not Twitter hype</li>
+      <li><strong>Build a production-grade full-stack app</strong> that demonstrates all of the above</li>
+    </ol>
+
+    <div class="aha">
+      <p><strong>The real test:</strong> when you encounter a new React feature or a framework you've never used, you should be able to reason about what it does and why it exists &mdash; without reading the docs first. That's what mental models buy you.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <div class="quiz">
+      <h4>Before You Start: Self-Assessment</h4>
+
+      <div class="question">
+        <p>1. Can you explain what happens between calling setState and seeing the update on screen?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">If you said "React re-renders the component" &mdash; that's the surface answer. The deep answer involves fiber trees, reconciliation, commit phases, and batching. Lesson 02 covers this in detail.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why can't you call hooks inside an if statement?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because hooks are stored in a linked list on the fiber node, indexed by call order. Conditional hooks would shift the indices. Lesson 03 makes this completely clear.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What's the difference between a Server Component and a Client Component in Next.js?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Server Components run only on the server and send serialized JSX (not JavaScript) to the client. Client Components ship their JS bundle to the browser. The boundary is defined by "use client" directives. Lesson 05 goes deep on this.</div>
+      </div>
+
+      <div class="question">
+        <p>4. When should you use React.memo?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Almost never, unless you've profiled and confirmed that a component re-renders expensively with the same props. Most re-renders are cheap. React.memo adds comparison overhead on every render. Lesson 08 covers when memoization actually helps.</div>
+      </div>
+    </div>
+
+    <div class="nav-footer">
+      <a href="/react/">&larr; Home</a>
+      <a href="/react/lessons/01-react-mental-model/">Lesson 01: The React Mental Model &rarr;</a>
+    </div>
+  </div>
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

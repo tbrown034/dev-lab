@@ -23,6 +23,34 @@ export const PERSONAS = {
     windowFn: { handle: 'window_fn', name: 'Winda Function', avatar: '🪟', bio: 'ROW_NUMBER() OVER() is the answer. what was the question?' },
     nullHandler: { handle: 'null_handler', name: 'Nully McNull', avatar: '❓', bio: 'NULL != NULL. yes i will die on this hill.' },
   },
+  jsts: {
+    closureKing: { handle: 'closure_king', name: 'Claude Zure', avatar: '🎒', bio: 'closures are just functions with backpacks. fight me.' },
+    typeNarrow: { handle: 'type_narrow', name: 'Ty Narrow', avatar: '🔬', bio: 'if it compiles, it works. typeof !== "undefined" gang.' },
+    eventLooper: { handle: 'event_looper', name: 'Eva Loop', avatar: '🔄', bio: 'microtask queue supremacist. setTimeout(fn, 0) is a lie.' },
+    protoChain: { handle: 'proto_chain', name: 'Proto Typal', avatar: '⛓️', bio: '__proto__ walked so class could run.' },
+    asyncAwait: { handle: 'async_await', name: 'Promise Allison', avatar: '🤞', bio: 'i Promise i will .catch() all my errors. await me.' },
+  },
+  react: {
+    fiberNode: { handle: 'fiber_node', name: 'Faye Burr', avatar: '🧵', bio: 'reconciliation is just diffing with opinions. react internals daily.' },
+    useEffect: { handle: 'use_effect', name: 'Effie Hooks', avatar: '🪝', bio: 'useEffect is for synchronization, not for side effects. yes there is a difference.' },
+    serverComp: { handle: 'server_comp', name: 'Serena Component', avatar: '🖥️', bio: 'RSC is not SSR. i will explain this until i die.' },
+    stateManager: { handle: 'state_mgr', name: 'Zuzu Standish', avatar: '🏪', bio: 'prop drilling builds character. but zustand builds apps.' },
+    suspenseful: { handle: 'suspenseful', name: 'Sus Pence', avatar: '⏳', bio: 'loading states are a UX decision, not an afterthought.' },
+  },
+  css: {
+    cascader: { handle: 'cascader', name: 'Casey Cade', avatar: '🌊', bio: 'specificity is not a score. it is a coordinate. (0,1,0) gang.' },
+    gridMaster: { handle: 'grid_master', name: 'Griff Grid', avatar: '📐', bio: 'fr units are the only units. everything else is a suggestion.' },
+    tailwinder: { handle: 'tailwinder', name: 'Tay Elwind', avatar: '💨', bio: 'utility-first is not lazy. it is architecture. @apply is cope.' },
+    animista: { handle: 'animista', name: 'Annie Mation', avatar: '✨', bio: 'will-change: transform is not a performance hack. it is a promise.' },
+    tokenizer: { handle: 'tokenizer', name: 'Toki Dezine', avatar: '🎨', bio: 'if your color is hardcoded, your system is broken.' },
+  },
+  ai: {
+    prompter: { handle: 'prompter', name: 'Priya Promptson', avatar: '💬', bio: 'system prompts are just personality transplants for robots.' },
+    ragBuilder: { handle: 'rag_builder', name: 'Rag E. Builder', avatar: '📚', bio: 'retrieval-augmented generation is just open-book exams for AI.' },
+    agentSmith: { handle: 'agent_smith', name: 'Agent Aiden', avatar: '🤖', bio: 'autonomous agents are just interns with API keys.' },
+    embedder: { handle: 'embedder', name: 'Emma Bedding', avatar: '📍', bio: 'everything is a vector if you squint hard enough.' },
+    ethicsBot: { handle: 'ethics_bot', name: 'Ethel Ethics', avatar: '⚖️', bio: 'AI ethics is not a feature. it is a constraint. and constraints are good.' },
+  },
 };
 
 // Flat lookup: handle string → persona object
@@ -56,6 +84,13 @@ export const TRACK_META = {
   d3:     { name: 'The Bindery', subtitle: 'data in, pixels out' },
   django: { name: 'The Shell', subtitle: 'batteries included, opinions strong' },
   sql:    { name: 'The Table', subtitle: 'SELECT wisdom FROM experience' },
+  jsts:   { name: 'The Runtime', subtitle: 'closures, types, and event loops' },
+  react:  { name: 'The Fiber', subtitle: 'reconciliation is just diffing with opinions' },
+  css:    { name: 'The Cascade', subtitle: 'specificity is a coordinate, not a score' },
+  ai:     { name: 'The Prompt', subtitle: 'teaching machines to think like journalists' },
 };
 
-export const TRACK_COLORS = { d3: '#f97316', django: '#22c55e', sql: '#3b82f6' };
+export const TRACK_COLORS = {
+  d3: '#f97316', django: '#22c55e', sql: '#3b82f6',
+  jsts: '#eab308', react: '#06b6d4', css: '#a855f7', ai: '#f472b6',
+};

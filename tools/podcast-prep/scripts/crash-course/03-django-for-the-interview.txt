@@ -1,0 +1,176 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+EPISODE TITLE: Django — Everything You Need to Know for the Interview
+SERIES: Interview Prep — Texas Tribune Crash Course
+EPISODE: 3 of 3
+
+--- CONTEXT FOR HOSTS ---
+
+Who the learner is: Trevor Brown, investigative journalist with 15+ years experience, self-taught web developer comfortable with React/Next.js/TypeScript. He has an interview at the Texas Tribune tomorrow. He needs to understand Django conceptually — what it does, why newsrooms use it, the key vocabulary, and how it fits into the Tribune's stack. He doesn't need to write Django code from memory. He needs to sound like someone who understands the framework and can have an intelligent conversation about it.
+
+What this episode should accomplish: Trevor should understand Django's role at the Tribune, be able to explain the key concepts (models, views, URLs, templates, admin, ORM, migrations, DRF), and understand how Django and D3 work together in a newsroom data pipeline. He should also understand why Django is the default choice for newsrooms and how it compares to frameworks he already knows.
+
+Tone: Two developers having a real conversation. Make Django feel approachable, not intimidating. Use analogies from journalism constantly. Be honest about what's simple and what's complex. Connect everything back to "why would the Texas Tribune care about this?"
+
+--- SOURCE CONTENT ---
+
+WHAT DJANGO IS
+
+Django is a web framework written in Python. When someone visits a URL on a Django-powered site, here's what happens:
+
+1. The request arrives (someone visits a URL)
+2. Django matches the URL to a Python function (called a "view")
+3. That function queries the database (using Django's ORM)
+4. The data gets inserted into an HTML template (or returned as JSON)
+5. The response goes back to the browser
+
+That's the ENTIRE framework. Everything else is just Django's name for each step in that pipeline.
+
+The analogy: Django is like a newsroom's assignment desk. A request comes in (the URL). The assignment desk routes it to the right reporter (the view). The reporter pulls records from the filing cabinet (the database/models). Then writes the story using a standard layout (the template). The finished page goes out to the reader.
+
+Django's motto is "batteries included" — unlike minimal frameworks like Flask or Express.js, Django ships with authentication, database management, URL routing, form handling, an admin panel, and security features all built in. You don't assemble 15 packages — it's all there from day one.
+
+WHY NEWSROOMS USE DJANGO
+
+Django has been the default backend for news organizations for over a decade. The Washington Post, The New York Times, The Guardian, and the Texas Tribune all use or have used Django. Here's why:
+
+1. THE ADMIN PANEL — This is Django's killer feature for newsrooms. You define your data (stories, election results, county demographics) as Python classes, and Django auto-generates a full web-based editing interface. Reporters and editors can create, edit, search, filter, and bulk-update content without a developer touching anything. For a newsroom that publishes hundreds of stories and manages large datasets, this is transformative. At the Tribune, editors likely use the Django admin to manage election data, story metadata, event listings, and more.
+
+2. PYTHON IS THE NEWSROOM LANGUAGE — Data journalists already use Python for analysis with pandas, Jupyter notebooks, and data processing scripts. Django lets them use the same language for the web application. No context-switching between analysis and production.
+
+3. THE ORM HANDLES DATA WELL — Django's ORM (Object-Relational Mapper) lets you query databases in Python instead of raw SQL. For a newsroom importing AP election results, census data, or campaign finance records, this makes data pipelines straightforward to build and maintain.
+
+4. FAST TO BUILD WITH — Django's conventions mean less decision-making. There's one obvious way to structure a project, define models, route URLs. Teams can onboard new developers quickly because the patterns are standard.
+
+5. MATURE AND BATTLE-TESTED — Django has been around since 2005. It's extremely stable, well-documented, has a huge community, and has been used to build some of the highest-traffic sites on the internet. For a newsroom that can't afford downtime on election night, stability matters.
+
+DJANGO'S FOUR MAIN PIECES
+
+Models — Your database tables, defined as Python classes. A Story model has fields like headline, body, pub_date, published, and author. Each field becomes a column in the database. You NEVER write SQL to create tables — Django generates it from your Python code. When you change a model (add a field, rename something), Django generates a "migration" script that updates the database to match. Migrations are version-controlled — the whole team commits them to git so everyone's database stays in sync.
+
+The ORM lets you query in Python:
+- Story.objects.all() — get everything
+- Story.objects.filter(published=True) — get published stories
+- Story.objects.filter(author__name="Trevor") — double underscore follows relationships
+- Story.objects.order_by("-pub_date") — minus means descending
+- Story.objects.filter(published=True).count() — count them
+
+The mental model: Story.objects is like a spreadsheet. .filter() shows only matching rows. .order_by() sorts. .first() gives the top row. .count() tells you how many. Methods chain together and the query doesn't hit the database until you actually need the results (they're "lazy").
+
+Views — Python functions that handle requests. A view receives an HTTP request, does something (usually queries the database), and returns a response. That response can be an HTML page (rendered from a template) or JSON data (for an API).
+
+The simplest possible view: receive a request, return some text. A real view: receive a request, query the database for published stories, pass them to an HTML template, return the rendered page. An API view: receive a request, query election results, return JSON that a D3 chart will fetch.
+
+Django has two styles of views:
+- Function-based views — just a Python function. Simple, explicit, good for APIs and one-off pages.
+- Class-based views — a Python class that handles common patterns (list all items, show one item detail, handle a form). More structured, good for standard CRUD operations.
+
+URLs — The router. A Python file that maps URL patterns to view functions. "When someone visits /stories/, run the story_list view." "When someone visits /stories/texas-budget/, run the story_detail view with slug='texas-budget'." Unlike Next.js (file-based routing), Django's routing is explicit — you write it out in a urls.py file. The root URL file delegates to app-level URL files using include(), similar to how Express uses router middleware.
+
+Templates — HTML files with special tags that Django fills in with data. Two types of tags:
+- Double curly braces {{ variable }} — prints a value
+- Curly brace + percent {% tag %} — does logic (loops, conditionals)
+
+Templates support inheritance: a base template defines the layout with "blocks" (holes), and each page template "extends" the base and fills in the blocks. This is like Next.js layouts — one shared header/footer, each page provides its own content. The base template is defined once, and every page automatically gets the nav, footer, and shared styles.
+
+THE ADMIN PANEL — TALK ABOUT THIS
+
+If there is ONE Django feature Trevor should bring up with enthusiasm, it's the admin. Here's how it works:
+
+1. You define a model (a database table) as a Python class
+2. You add a few lines to register it with the admin
+3. Django AUTOMATICALLY generates a full web interface
+
+The interface lets non-technical users:
+- Create new records (add a story, add election results for a county)
+- Edit existing records
+- Search by any text field
+- Filter by status, date, author, category
+- Sort by any column
+- Bulk-select and perform actions ("publish selected stories", "mark as reviewed")
+- See related records inline (a story's comments, an election's races)
+
+No frontend code. No React forms. No API endpoints. Register the model and it works.
+
+For a newsroom, this means:
+- Reporters publish stories without bugging a developer
+- Editors update election results by hand if the automated pipeline breaks at 11pm on election night
+- Data journalists manage datasets through a web UI instead of raw SQL
+- Developers spend time on features, not building CRUD interfaces
+
+The admin is customizable — you can control which fields appear, what's searchable, add custom actions, make fields read-only, add inline editing of related models. A mature Django project like the Tribune's probably has heavily customized admin interfaces tailored to their editorial workflow.
+
+DJANGO REST FRAMEWORK (DRF)
+
+For serving JSON APIs (which is how Django feeds data to D3 charts), most Django projects use Django REST Framework (DRF). It's an add-on that handles:
+
+- Serializers: convert database objects to JSON (and vice versa)
+- ViewSets: handle CRUD operations for an API resource in one class
+- Routers: auto-generate API URL patterns
+- Pagination, filtering, authentication
+- A browsable API: visit the API URL in a browser and get a nice HTML interface for testing
+
+The concept: you define a Serializer (what fields should be in the JSON), a ViewSet (what data to query and how), and register it with a Router. DRF auto-generates endpoints for list, detail, create, update, and delete.
+
+This is how Django serves data to D3: a DRF endpoint returns JSON, and the D3 frontend fetches it with d3.json() or fetch().
+
+MANAGEMENT COMMANDS — DATA PIPELINES
+
+This is crucial for newsroom work. Django management commands are custom terminal scripts that have full access to your database. In a newsroom, these are your data pipelines:
+
+- "Import election results from this AP feed"
+- "Scrape the latest school ratings from the state education agency"
+- "Pull campaign finance data from the FEC API"
+- "Recalculate county-level demographic summaries from census data"
+
+You write the command as a Python class, and run it from the terminal: python manage.py import_election_results. It can be scheduled with a cron job to run automatically — like every 5 minutes on election night.
+
+The key pattern is update_or_create: "if this county already exists in the database, update its vote counts; if not, create a new record." This means you can run the import multiple times without creating duplicates. Perfect for live-updating data like election results.
+
+On election night at the Tribune, the pipeline probably looks like:
+1. A management command polls the AP results feed every few minutes
+2. It saves new and updated results to the Django database
+3. The DRF API serves the latest results as JSON
+4. The D3 frontend polls the API and updates the election map
+5. Readers see results appearing in near-real time
+
+HOW DJANGO AND D3 WORK TOGETHER
+
+This is the most important concept for the interview:
+
+Django and D3 are two completely separate layers that communicate through HTTP. Django handles the data side — database, data ingestion, API endpoints, admin interface. D3 handles the visualization side — rendering SVG, binding data to shapes, creating maps and charts.
+
+They meet at the API. Django serves JSON. D3 fetches JSON. Neither knows or cares about the other's implementation. A backend developer can change the database schema without touching the chart code. A graphics developer can redesign the visualization without touching the API. The same API can feed a D3 chart, a mobile app, and an internal dashboard.
+
+This clean separation is powerful for newsroom workflows: the data team focuses on getting clean data into Django, the graphics team focuses on making it visual with D3. On election night, neither team is blocked by the other.
+
+DJANGO VS OTHER FRAMEWORKS
+
+Express.js — Minimal, assemble-everything-yourself. Django is "batteries included."
+Next.js — Full-stack JavaScript/React. Django is Python-only backend. They can work together.
+Flask — Python but minimal (like Express). Django gives you the whole kitchen. Flask is better for tiny projects.
+Ruby on Rails — The closest equivalent. Both are batteries-included, opinionated, ORM-based. Django is to Python what Rails is to Ruby.
+WordPress — A ready-made CMS. Django is a framework you BUILD a CMS with. More flexible, more engineering required.
+
+TALKING POINTS FOR THE INTERVIEW
+
+1. "The Django admin is one of the reasons I'm drawn to working in a Django newsroom. In a fast-moving environment, giving editors direct access to manage data without engineering bottlenecks is incredibly valuable."
+
+2. "I understand the request lifecycle — URL routing, view logic, ORM queries, template rendering. And I understand how DRF extends that for JSON APIs that feed D3 visualizations."
+
+3. "Management commands for data pipelines make a lot of sense for election night — polling the AP feed, saving to the database, serving fresh JSON to the frontend graphics. The whole pipeline is automated."
+
+4. "Django's ORM being lazy and chainable is elegant — you build up complex queries in Python without worrying about raw SQL, and the query only executes when you need the results."
+
+5. "What I bring to this is the editorial side. I understand WHY the admin matters — because I've been the reporter waiting for a developer to update something. I know what it's like to need data updated at 11pm on a deadline. Django's admin solves that problem."
+
+TREVOR'S UNIQUE ADVANTAGE
+
+Most developer candidates can write Python and build APIs. They can't do what Trevor can:
+- He knows what makes a good story. He knows which data point is the lead.
+- He understands editorial process — deadlines, fact-checking, source verification, editorial judgment.
+- He can talk to reporters in their language. He knows what "the nut graf" means.
+- He understands why a graphic needs a clear takeaway, not just cool interactivity.
+- His trajectory — journalist to developer — is exactly what organizations like the Tribune value, because it's rare and it produces people who build tools that actually serve the journalism.

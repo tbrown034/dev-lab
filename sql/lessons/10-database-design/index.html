@@ -4,52 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lesson 10 - Views, Functions & Triggers</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #3b82f6; }</style>
   <link rel="icon" type="image/svg+xml" href="/sql/assets/favicon.svg">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: #0a0a0a; color: #e5e5e5; }
-    .header { padding: 1.5rem 2rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
-    .header a { color: #3b82f6; text-decoration: none; font-size: 0.85rem; }
-    .header h1 { font-size: 1.2rem; }
-    .header h1 span { color: #3b82f6; }
-    .content { max-width: 900px; margin: 0 auto; padding: 2rem; }
-    h2 { color: #3b82f6; font-size: 1.1rem; margin: 2.5rem 0 1rem; border-bottom: 1px solid #222; padding-bottom: 0.5rem; }
-    h3 { font-size: 1rem; margin: 1.5rem 0 0.75rem; color: #ccc; }
-    p, li { color: #bbb; line-height: 1.8; font-size: 0.95rem; }
-    ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
-    code { background: #1a1a1a; padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: #3b82f6; }
-    pre { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1.25rem; overflow-x: auto; margin: 1rem 0; }
-    pre code { background: none; padding: 0; color: #e5e5e5; }
-    .comment { color: #6b7280; }
-    .keyword { color: #3b82f6; }
-    .string { color: #4ade80; }
-    .number { color: #f472b6; }
-    .demo { background: #141414; border: 1px solid #222; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .demo h4 { color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
-    .quiz { background: #0a0a1a; border: 1px solid #3b82f644; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .quiz h4 { color: #3b82f6; margin-bottom: 1rem; }
-    .quiz .question { margin-bottom: 1.25rem; }
-    .quiz .question p { color: #e5e5e5; font-weight: 500; }
-    .quiz button { background: #3b82f6; color: #fff; border: none; padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; margin-top: 0.5rem; }
-    .quiz .answer { display: none; color: #4ade80; margin-top: 0.5rem; font-size: 0.9rem; padding: 0.75rem; background: #0a1a0a; border-radius: 4px; }
-    .exercise { background: #001a00; border: 1px solid #4ade8044; border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; }
-    .exercise h4 { color: #4ade80; margin-bottom: 0.75rem; }
-    .nav-footer { display: flex; justify-content: space-between; padding: 2rem 0; border-top: 1px solid #222; margin-top: 3rem; }
-    .nav-footer a { color: #3b82f6; text-decoration: none; }
-    .callout { background: #1a1a2e; border-left: 3px solid #818cf8; padding: 1rem 1.25rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
-    .callout p { color: #a5b4fc; }
-    .aha { background: #0a0a1a; border-left: 3px solid #3b82f6; padding: 1rem 1.25rem; margin: 1.5rem 0; border-radius: 0 6px 6px 0; }
-    .aha p { color: #93c5fd; }
-    .aha strong { color: #3b82f6; }
-    .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
-    .side-by-side > div { background: #141414; border: 1px solid #222; border-radius: 6px; padding: 1rem; }
-    .side-by-side h5 { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
-    @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
-    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
-    th { text-align: left; color: #3b82f6; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem; border-bottom: 1px solid #333; }
-    td { padding: 0.5rem; color: #bbb; font-size: 0.9rem; border-bottom: 1px solid #1a1a1a; }
-    td code { font-size: 0.8rem; }
-  </style>
 </head>
 <body>
   <div class="header">
@@ -59,7 +17,7 @@
 
   <div class="content">
 
-    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #3b82f6;">Think of views as saved queries and functions as stored JavaScript.</strong> You've been writing queries that you run once. Now you're going to package them up so the database remembers them &mdash; and can even run code automatically when data changes.</p>
+    <p class="lesson-intro"><strong>Think of views as saved queries and functions as stored JavaScript.</strong> You've been writing queries that you run once. Now you're going to package them up so the database remembers them &mdash; and can even run code automatically when data changes.</p>
 
     <!-- ============================================ -->
     <!-- VIEWS MENTAL MODEL                          -->
@@ -74,8 +32,8 @@
         <h5>React computed value</h5>
         <pre><code>// Derived from state, recalculated on render
 const publishedArticles = articles
-  .filter(a => a.published)
-  .map(a => ({
+  .filter(a =&gt; a.published)
+  .map(a =&gt; ({
     title: a.title,
     author: a.author.name,
     views: a.views,
@@ -102,7 +60,7 @@ SELECT * FROM published_articles;
 
 -- Filter it, sort it, join it
 SELECT * FROM published_articles
-WHERE views > 1000
+WHERE views &gt; 1000
 ORDER BY views DESC
 LIMIT 10;</code></pre>
 
@@ -300,7 +258,7 @@ ORDER BY words DESC;
 
 -- Use it in WHERE
 SELECT title FROM articles
-WHERE word_count(body) > 500;</code></pre>
+WHERE word_count(body) &gt; 500;</code></pre>
 
     <h3>Simple SQL Functions</h3>
 
@@ -336,7 +294,7 @@ SELECT * FROM get_articles_by_beat('politics');
 
 -- Filter the results further
 SELECT * FROM get_articles_by_beat('politics')
-WHERE views > 5000;</code></pre>
+WHERE views &gt; 5000;</code></pre>
 
     <!-- ============================================ -->
     <!-- PL/PGSQL BASICS                             -->
@@ -361,9 +319,9 @@ BEGIN
   FROM employees WHERE id = employee_id;
 
   -- Conditional logic
-  IF emp_salary > 100000 THEN
+  IF emp_salary &gt; 100000 THEN
     bonus_rate := 0.10;
-  ELSIF emp_salary > 60000 THEN
+  ELSIF emp_salary &gt; 60000 THEN
     bonus_rate := 0.15;
   ELSE
     bonus_rate := 0.20;
@@ -408,7 +366,7 @@ $$ LANGUAGE plpgsql;</code></pre>
       <div>
         <h5>JavaScript event listener</h5>
         <pre><code>// Run code when something happens
-document.addEventListener('click', (event) => {
+document.addEventListener('click', (event) =&gt; {
   console.log('Clicked!', event.target);
 });
 
@@ -540,7 +498,7 @@ WHERE a.published = true;
 
 -- Query it
 SELECT * FROM published_articles
-WHERE views > 1000;
+WHERE views &gt; 1000;
 
 -- Plus: materialized views, functions,
 -- triggers, updatable views, etc.
@@ -606,7 +564,7 @@ SELECT
 FROM articles a
 JOIN users u ON a.author_id = u.id
 WHERE a.published = true
-  AND a.published_at > NOW() - INTERVAL '7 days'
+  AND a.published_at &gt; NOW() - INTERVAL '7 days'
 ORDER BY views_per_hour DESC;</code></pre>
 
     <pre><code>-- 3. Function: daily editorial report

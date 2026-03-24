@@ -9,11 +9,10 @@ const READER_STYLES = `
   #audio-reader-btn {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
     z-index: 9000; background: #1a1a1a; color: #ccc; border: 1px solid #333;
-    padding: 8px 20px; border-radius: 20px; cursor: pointer;
-    font-size: 14px; font-family: -apple-system, system-ui, sans-serif;
+    padding: 8px 20px; border-radius: 6px; cursor: pointer;
+    font-size: 14px; font-family: var(--sans);
     display: flex; align-items: center; gap: 6px;
     transition: opacity 0.2s, transform 0.3s;
-    box-shadow: 0 4px 16px #0006;
   }
   #audio-reader-btn:hover { background: #222; color: #fff; }
 
@@ -21,9 +20,8 @@ const READER_STYLES = `
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 9000;
     background: #1a1a1a; border-top: 1px solid #333;
     padding: 8px 16px; display: none; align-items: center; gap: 12px;
-    font-family: -apple-system, system-ui, sans-serif;
+    font-family: var(--sans);
     transform: translateY(100%); transition: transform 0.3s ease;
-    box-shadow: 0 -4px 20px #0006;
   }
   #audio-reader-bar.visible { display: flex; transform: translateY(0); }
   #audio-reader-bar button {
@@ -121,8 +119,6 @@ export function initAudioReader() {
   let isPlaying = false;
   let selectedVoice = null;
   let rate = 1;
-  let listenStart = 0;
-  let xpAwarded = false;
   let prevHighlight = null;
   let barRevealed = false;
 
@@ -193,14 +189,6 @@ export function initAudioReader() {
     sectionLabel.textContent = `${currentIdx + 1}/${chunks.length}: ${title}`;
   }
 
-  function checkXP() {
-    if (xpAwarded || !listenStart) return;
-    if (Date.now() - listenStart >= 120000 && typeof window.awardXP === 'function') {
-      window.awardXP(10, 'Audio lesson');
-      xpAwarded = true;
-    }
-  }
-
   function speakChunk(idx) {
     synth.cancel();
     if (idx < 0 || idx >= chunks.length) { stop(); return; }
@@ -225,7 +213,6 @@ export function initAudioReader() {
       if (!isPlaying) return;
       if (i >= queue.length) {
         // Section done, advance
-        checkXP();
         if (currentIdx + 1 < chunks.length) { speakChunk(currentIdx + 1); }
         else { stop(); }
         return;
@@ -249,7 +236,6 @@ export function initAudioReader() {
   function resume() {
     isPlaying = true;
     synth.resume();
-    if (!listenStart) listenStart = Date.now();
     updateUI();
   }
 
@@ -268,7 +254,6 @@ export function initAudioReader() {
     chunks = extractChunks();
     if (!chunks.length) return;
     currentIdx = 0;
-    listenStart = Date.now();
     showBar();
     speakChunk(0);
   });
@@ -280,7 +265,7 @@ export function initAudioReader() {
     if (action === 'play') {
       if (isPlaying) { pause(); } else {
         if (synth.paused) { resume(); }
-        else { speakChunk(currentIdx); if (!listenStart) listenStart = Date.now(); }
+        else { speakChunk(currentIdx); }
       }
     }
     if (action === 'prev') { speakChunk(Math.max(0, currentIdx - 1)); }
