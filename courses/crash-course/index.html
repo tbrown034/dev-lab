@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interview Prep — Texas Tribune</title>
+  <title>Interview Prep — Texas Tribune Crash Course</title>
   <link rel="stylesheet" href="/assets/base.css">
   <link rel="stylesheet" href="/assets/shell.css">
   <style>
@@ -12,8 +12,13 @@
       --crash-dim: rgba(239, 68, 68, 0.15);
       --d3: #f97316;
       --django: #22c55e;
+      --sql: #3b82f6;
+      --react: #06b6d4;
+      --you: #a78bfa;
+      --ai: #f59e0b;
     }
 
+    /* ─── HERO ─── */
     .hero {
       max-width: 900px;
       margin: 0 auto;
@@ -73,6 +78,13 @@
       padding-bottom: 0.5rem;
       border-bottom: 1px solid var(--border);
     }
+    .section-intro {
+      font-size: 0.92rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-top: -0.5rem;
+      margin-bottom: 1.5rem;
+    }
 
     /* ─── CONTEXT BOX ─── */
     .context {
@@ -93,6 +105,61 @@
       font-size: 0.92rem;
       color: var(--text-dim);
       line-height: 1.7;
+    }
+
+    /* ─── PODCAST CARDS ─── */
+    .podcast-list {
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    .podcast-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 1rem;
+    }
+    .podcast-num {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--crash-dim);
+      color: var(--crash);
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .podcast-info { min-width: 0; }
+    .podcast-title {
+      font-family: var(--sans);
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+    .podcast-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 0.75rem;
+    }
+    .podcast-card audio {
+      width: 100%;
+      height: 40px;
+      border-radius: 6px;
+    }
+    .podcast-new {
+      font-family: var(--mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--crash);
+      margin-left: 0.5rem;
+      vertical-align: middle;
     }
 
     /* ─── TRACK CARDS ─── */
@@ -125,6 +192,316 @@
     .track-card.django .label { color: var(--django); }
     .track-card h3 { font-family: var(--sans); font-size: 1.15rem; font-weight: 600; margin-bottom: 0.5rem; }
     .track-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; }
+
+    /* ─── JOB REQUIREMENTS ─── */
+    .job-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .job-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .job-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; width: 3px; height: 100%;
+    }
+    .job-card.primary::before { background: var(--crash); }
+    .job-card.secondary::before { background: var(--text-muted); }
+    .job-card .job-title {
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+    .job-card .job-what {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin-bottom: 0.5rem;
+    }
+    .job-card .job-you {
+      font-size: 0.78rem;
+      color: var(--you);
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    /* ─── TECH STACK GRID ─── */
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 0.75rem;
+    }
+    .stack-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 0.75rem;
+      align-items: start;
+    }
+    .stack-icon {
+      width: 42px; height: 42px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+    .stack-name {
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+    .stack-use {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+    .stack-yours {
+      font-size: 0.72rem;
+      color: var(--you);
+      margin-top: 0.3rem;
+      line-height: 1.4;
+    }
+
+    /* ─── PIPELINE ─── */
+    .pipeline {
+      max-width: 520px;
+      margin: 0 auto;
+    }
+    .pipe-step {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+    .pipe-num {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+    .pipe-title {
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+    .pipe-tech {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-bottom: 0.3rem;
+    }
+    .pipe-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .pipe-arrow {
+      display: flex;
+      align-items: center;
+      padding: 0.3rem 0 0.3rem 18px;
+      color: var(--border);
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    /* ─── PROJECT GALLERY ─── */
+    .project-list {
+      display: flex; flex-direction: column; gap: 1px;
+      background: var(--border); border-radius: 8px;
+      overflow: hidden;
+    }
+    .project-row {
+      background: var(--surface);
+      padding: 1.25rem 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1rem; align-items: start;
+      text-decoration: none; color: inherit;
+      transition: background 0.15s;
+    }
+    a.project-row:hover { background: var(--surface-2); }
+    .project-name {
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      font-weight: 600;
+      margin-bottom: 0.2rem;
+    }
+    .project-meta {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .project-builder {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      margin-top: 0.25rem;
+    }
+    .project-tag {
+      font-family: var(--mono); font-size: 0.6rem;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      padding: 0.2rem 0.55rem; border-radius: 4px;
+      white-space: nowrap; align-self: center;
+    }
+    .tag-d3 { background: rgba(249, 115, 22, 0.12); color: var(--d3); }
+    .tag-django { background: rgba(34, 197, 94, 0.12); color: var(--django); }
+    .tag-both { background: rgba(239, 68, 68, 0.12); color: var(--crash); }
+    .tag-data { background: rgba(59, 130, 246, 0.12); color: var(--sql); }
+
+    /* ─── REPO LIST ─── */
+    .repo-list {
+      display: flex; flex-direction: column; gap: 1px;
+      background: var(--border); border-radius: 8px;
+      overflow: hidden;
+    }
+    .repo-row {
+      background: var(--surface);
+      padding: 1rem 1.5rem;
+      text-decoration: none; color: inherit;
+      transition: background 0.15s;
+    }
+    a.repo-row:hover { background: var(--surface-2); }
+    .repo-name {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--crash);
+      margin-bottom: 0.15rem;
+    }
+    .repo-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .repo-why {
+      font-size: 0.75rem;
+      color: var(--you);
+      margin-top: 0.3rem;
+      line-height: 1.4;
+    }
+
+    /* ─── SAY THIS / DON'T SAY ─── */
+    .say-this {
+      background: rgba(74, 222, 128, 0.06);
+      border-left: 3px solid #4ade80;
+      padding: 1rem 1.25rem;
+      margin: 0.75rem 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .say-this .label { color: #4ade80; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.35rem; }
+    .say-this p { font-size: 0.88rem; color: #86efac; line-height: 1.6; }
+    [data-theme="light"] .say-this p { color: #166534; }
+
+    .dont-say {
+      background: rgba(239, 68, 68, 0.06);
+      border-left: 3px solid #ef4444;
+      padding: 1rem 1.25rem;
+      margin: 0.75rem 0;
+      border-radius: 0 6px 6px 0;
+    }
+    .dont-say .label { color: #ef4444; font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.35rem; }
+    .dont-say p { font-size: 0.88rem; color: #fca5a5; line-height: 1.6; }
+    [data-theme="light"] .dont-say p { color: #991b1b; }
+
+    /* ─── AI SECTION ─── */
+    .ai-example {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .ai-example-title {
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--ai);
+      margin-bottom: 0.35rem;
+    }
+    .ai-example p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+    .ai-example .ai-pitch {
+      font-size: 0.78rem;
+      color: var(--you);
+      margin-top: 0.4rem;
+      line-height: 1.45;
+      font-style: italic;
+    }
+
+    /* ─── QUESTION LIST ─── */
+    .q-list {
+      display: flex; flex-direction: column; gap: 0.6rem;
+    }
+    .q-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+    }
+    .q-item .q-text {
+      font-family: var(--sans);
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      color: var(--text);
+    }
+    .q-item .q-why {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ─── STORY SECTION ─── */
+    .story-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .story-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+    }
+    .story-card .story-label {
+      font-family: var(--mono); font-size: 0.6rem;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .story-card.journalism .story-label { color: var(--crash); }
+    .story-card.tech .story-label { color: var(--react); }
+    .story-card h4 {
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+    .story-card p {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
 
     /* ─── VIDEO RECS ─── */
     .vid-list {
@@ -160,51 +537,710 @@
       margin: 1.5rem 0 0.75rem;
     }
 
+    /* ─── RESPONSIVE ─── */
     @media (max-width: 700px) {
-      .track-grid { grid-template-columns: 1fr; }
+      .track-grid, .job-grid, .story-grid { grid-template-columns: 1fr; }
+      .stack-grid { grid-template-columns: 1fr; }
+      .podcast-card { grid-template-columns: 1fr; text-align: center; }
+      .podcast-num { margin: 0 auto; }
+      .project-row { grid-template-columns: 1fr; }
+      .project-tag { justify-self: start; }
     }
   </style>
 </head>
 <body>
 
+  <!-- ═══════════════════════════════════════ -->
+  <!--  HERO                                   -->
+  <!-- ═══════════════════════════════════════ -->
   <div class="hero">
-    <div class="hero-kicker"><span class="pulse"></span> Interview Prep &mdash; March 25, 2026</div>
+    <div class="hero-kicker"><span class="pulse"></span> Interview Prep &mdash; March 25, 2026 at 3:00 PM</div>
     <h1>Texas Tribune <em>Crash Course</em></h1>
     <p class="hero-body">
-      <strong>Your goal isn't to become a D3/Django expert overnight.</strong> It's to walk into that interview able to talk about these tools with confidence &mdash; understand what they do, why the Tribune uses them, and how they fit together. Mental models, not memorized code.
+      <strong>Your goal isn't to become a D3/Django expert overnight.</strong> It's to walk into that interview able to talk about these tools with confidence &mdash; understand what they do, why the Tribune uses them, and how they fit together. Mental models and vocabulary, not memorized code.
     </p>
     <a href="/courses/" style="color: var(--crash); text-decoration: none; font-size: 0.85rem;">&larr; Back to courses</a>
   </div>
 
+  <!-- ═══════════════════════════════════════ -->
+  <!--  CONTEXT                                -->
+  <!-- ═══════════════════════════════════════ -->
   <div class="section">
     <div class="context">
-      <h3>The Goal</h3>
-      <p>You might not get a single technical question. But if D3 or Django comes up in conversation, you want to <strong>sound like someone who's worked with these tools</strong>, not someone who just read the Wikipedia page. That means understanding the <em>why</em> and the <em>how it feels</em> &mdash; not just the <em>what</em>.</p>
+      <h3>The Mindset</h3>
+      <p>You might not get a single technical question. But if D3 or Django comes up in conversation, you want to <strong>sound like someone who's worked with these tools</strong>, not someone who just read the Wikipedia page. That means understanding the <em>why</em> and the <em>how it feels</em> &mdash; not just the <em>what</em>. Your 15 years of journalism IS your superpower here &mdash; you understand the newsroom problems these tools solve.</p>
     </div>
   </div>
 
-  <!-- ─── THE LESSONS ─── -->
+  <!-- ═══════════════════════════════════════ -->
+  <!--  PODCASTS                               -->
+  <!-- ═══════════════════════════════════════ -->
   <div class="section">
-    <h2>The Two Concepts</h2>
+    <h2>Listen &amp; Learn &mdash; Crash Course Podcasts</h2>
+    <p class="section-intro">AI-generated podcast episodes covering everything you need. ~20 minutes each. Listen on your walk, in the car, or while cooking.</p>
+
+    <div class="podcast-list">
+      <div class="podcast-card">
+        <div class="podcast-num">01</div>
+        <div class="podcast-info">
+          <div class="podcast-title">Inside the Texas Tribune's Tech Stack</div>
+          <div class="podcast-desc">What the Tribune builds, who's on the data visuals team, their GitHub repos, the election pipeline, and why they're one of the best data journalism shops in the country.</div>
+          <audio controls preload="none" src="/audio/crash-course/01-texas-tribune-stack.mp3"></audio>
+        </div>
+      </div>
+
+      <div class="podcast-card">
+        <div class="podcast-num">02</div>
+        <div class="podcast-info">
+          <div class="podcast-title">D3.js &mdash; Everything You Need to Know</div>
+          <div class="podcast-desc">What D3 is (and isn't), data binding, selections, scales, projections, maps, enter-update-exit, and how the Tribune uses it for election graphics and interactive features.</div>
+          <audio controls preload="none" src="/audio/crash-course/02-d3-for-the-interview.mp3"></audio>
+        </div>
+      </div>
+
+      <div class="podcast-card">
+        <div class="podcast-num">03</div>
+        <div class="podcast-info">
+          <div class="podcast-title">Django &mdash; Everything You Need to Know</div>
+          <div class="podcast-desc">How Django works, the request lifecycle, models + ORM, views, templates, the admin panel, DRF for APIs, management commands, and how Django feeds data to D3.</div>
+          <audio controls preload="none" src="/audio/crash-course/03-django-for-the-interview.mp3"></audio>
+        </div>
+      </div>
+
+      <div class="podcast-card">
+        <div class="podcast-num">04</div>
+        <div class="podcast-info">
+          <div class="podcast-title">The Election Night Pipeline<span class="podcast-new">script ready</span></div>
+          <div class="podcast-desc">Step-by-step walkthrough of how election results go from AP data feed to a live-updating interactive map. The single most impressive workflow to understand.</div>
+        </div>
+      </div>
+
+      <div class="podcast-card">
+        <div class="podcast-num">05</div>
+        <div class="podcast-info">
+          <div class="podcast-title">Your Interview Strategy<span class="podcast-new">script ready</span></div>
+          <div class="podcast-desc">How to frame your background, handle the Django/D3 gap, your killer talking points, smart questions to ask, and how to close strong.</div>
+        </div>
+      </div>
+
+      <div class="podcast-card">
+        <div class="podcast-num">06</div>
+        <div class="podcast-info">
+          <div class="podcast-title">Real Tribune Projects Walkthrough<span class="podcast-new">script ready</span></div>
+          <div class="podcast-desc">Deep dive into what the team actually builds &mdash; election pages, schools explorer, housing analysis, flood coverage &mdash; and how you'd contribute to each.</div>
+        </div>
+      </div>
+    </div>
+
+    <p class="vid-note" style="margin-top: 1rem;">Episodes 4&ndash;6: scripts are in <code>tools/podcast-prep/scripts/crash-course/</code>. Paste into NotebookLM to generate audio.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  QUICK ACCESS                           -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+      <a href="/courses/crash-course/cheat-card/" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; background: var(--crash-dim); border: 1px solid rgba(239,68,68,0.25); border-radius: 6px; text-decoration: none; color: var(--crash); font-family: var(--mono); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em;">Interview Cheat Card &rarr;</a>
+      <a href="/courses/crash-course/d3-live/" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25); border-radius: 6px; text-decoration: none; color: var(--d3); font-family: var(--mono); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em;">D3 Live Examples &rarr;</a>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  CONCEPT GUIDES                         -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <h2>Deep-Dive Concept Guides</h2>
     <div class="track-grid">
       <a href="/courses/crash-course/d3/" class="track-card d3">
         <div class="label">Concept 1</div>
         <h3>D3.js &mdash; What It Is and How to Talk About It</h3>
-        <p>What D3 actually does, why it's different from Chart.js or Tableau, how the Tribune uses it for maps and election graphics, and the key vocabulary that shows you get it.</p>
+        <p>What D3 actually does, why it's different from Chart.js or Tableau, how the Tribune uses it for maps and election graphics, and the key vocabulary.</p>
       </a>
       <a href="/courses/crash-course/django/" class="track-card django">
         <div class="label">Concept 2</div>
         <h3>Django &mdash; What It Is and How to Talk About It</h3>
-        <p>How Django works as a framework, why newsrooms love it, the admin panel, how it serves data to D3 charts, and the key ideas that show you understand the stack.</p>
+        <p>How Django works as a framework, why newsrooms love it, the admin panel, DRF, management commands, and how it serves data to D3.</p>
       </a>
     </div>
   </div>
 
-  <!-- ─── YOUTUBE ─── -->
+  <!-- ═══════════════════════════════════════ -->
+  <!--  KNOW THE JOB                           -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <h2>Know the Job &mdash; What They're Actually Hiring For</h2>
+    <p class="section-intro">The listing is "Senior Data Visuals Developer." Here's what each requirement <em>really</em> means and where your existing skills connect.</p>
+
+    <div class="job-grid">
+      <div class="job-card primary">
+        <div class="job-title">Django API Development</div>
+        <div class="job-what">Build and maintain Django APIs for election tools and a campaign finance app. This is backend Python work &mdash; models, serializers, management commands.</div>
+        <div class="job-you">You know: Python, PostgreSQL, API design. Django's ORM is like a Python wrapper around the SQL you already understand.</div>
+      </div>
+
+      <div class="job-card primary">
+        <div class="job-title">D3 Data Visualization</div>
+        <div class="job-what">Build interactive charts, maps (especially Texas county choropleths), and data explorers. Every major project uses D3.</div>
+        <div class="job-you">You know: Chart.js concepts transfer. SVG is just HTML. D3's mental model = bind data to shapes.</div>
+      </div>
+
+      <div class="job-card primary">
+        <div class="job-title">React / Preact Frontend</div>
+        <div class="job-what">Build interactive page-level features and components. Some projects use React alongside D3.</div>
+        <div class="job-you">You know: React, Next.js, TypeScript, component architecture. This is your strongest technical area.</div>
+      </div>
+
+      <div class="job-card primary">
+        <div class="job-title">AI Experimentation</div>
+        <div class="job-what">Explore how AI/LLMs can help the data visuals workflow &mdash; from data analysis to story discovery to accessible graphics.</div>
+        <div class="job-you">You know: AI tools deeply. You've built AI-powered apps (News Pulse, AI Model Arena). Most D3/Django devs don't have this.</div>
+      </div>
+
+      <div class="job-card secondary">
+        <div class="job-title">Data Analysis &amp; Reporting</div>
+        <div class="job-what">Analyze datasets (elections, schools, demographics) and help reporters find stories in data.</div>
+        <div class="job-you">15 years of investigative journalism. You ARE this skill. FOIA, public records, data-driven stories.</div>
+      </div>
+
+      <div class="job-card secondary">
+        <div class="job-title">Editorial Judgment</div>
+        <div class="job-what">Know which data point is the story. Design graphics that inform readers, not just look cool.</div>
+        <div class="job-you">Award-winning investigative reporter. Writer of the Year. You understand what a reader needs.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  THE TECH STACK                         -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <h2>The Tribune's Tech Stack</h2>
+    <p class="section-intro">Every technology the team uses, what they use it for, and how your existing skills map.</p>
+
+    <div class="stack-grid">
+      <div class="stack-item">
+        <div class="stack-icon" style="background: var(--django);">DJ</div>
+        <div>
+          <div class="stack-name">Django</div>
+          <div class="stack-use">Backend framework. Powers CMS, data apps, election APIs, campaign finance tools. Admin panel for editors.</div>
+          <div class="stack-yours">You: Python + PostgreSQL + API design from Next.js. Same patterns, different names.</div>
+        </div>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-icon" style="background: var(--d3);">D3</div>
+        <div>
+          <div class="stack-name">D3.js</div>
+          <div class="stack-use">Data visualization. Interactive charts, election maps, data explorers. The team's primary graphics tool.</div>
+          <div class="stack-yours">You: Chart.js experience + SVG understanding. D3 is the professional version of what you've done.</div>
+        </div>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-icon" style="background: var(--react);">Re</div>
+        <div>
+          <div class="stack-name">React / Preact</div>
+          <div class="stack-use">Interactive components and page-level apps. Used alongside D3 for complex features.</div>
+          <div class="stack-yours">You: React + Next.js + TypeScript. This is your strongest skill on the list.</div>
+        </div>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-icon" style="background: #68a063;">No</div>
+        <div>
+          <div class="stack-name">Node.js</div>
+          <div class="stack-use">Build tooling, scaffolding, and CLI tools (data-visuals-create).</div>
+          <div class="stack-yours">You: Built full Node.js backends. Comfortable with npm, build tools, CLI scripts.</div>
+        </div>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-icon" style="background: #1c4913;">Nj</div>
+        <div>
+          <div class="stack-name">Nunjucks</div>
+          <div class="stack-use">HTML templating for graphics. Pulls in data from Google Sheets during build. Similar to Jinja2.</div>
+          <div class="stack-yours">You: JSX/React templating. Same concept &mdash; dynamic data in HTML templates.</div>
+        </div>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-icon" style="background: #c76494;">SC</div>
+        <div>
+          <div class="stack-name">SCSS / Sass</div>
+          <div class="stack-use">CSS preprocessor. Variables, nesting, mixins for consistent styling across graphics.</div>
+          <div class="stack-yours">You: CSS experience. SCSS adds variables and nesting &mdash; easy to pick up.</div>
+        </div>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-icon" style="background: #1c78c0;">WP</div>
+        <div>
+          <div class="stack-name">Webpack</div>
+          <div class="stack-use">JavaScript bundler in data-visuals-create. Modern/legacy bundle approach for browser compat.</div>
+          <div class="stack-yours">You: Vite/Next.js build systems. Same concept &mdash; bundle JS for production.</div>
+        </div>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-icon" style="background: #f90;">S3</div>
+        <div>
+          <div class="stack-name">AWS S3</div>
+          <div class="stack-use">Deployment target for graphics and features at apps.texastribune.org. Static hosting.</div>
+          <div class="stack-yours">You: Vercel deployment experience. S3 is simpler &mdash; just upload static files.</div>
+        </div>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-icon" style="background: var(--sql);">PG</div>
+        <div>
+          <div class="stack-name">PostgreSQL</div>
+          <div class="stack-use">Primary database. Stores election results, school data, campaign finance records. Handles concurrent reads/writes.</div>
+          <div class="stack-yours">You: PostgreSQL is already on your resume. Direct match.</div>
+        </div>
+      </div>
+
+      <div class="stack-item">
+        <div class="stack-icon" style="background: #0f9d58;">GS</div>
+        <div>
+          <div class="stack-name">Google Sheets + Docs</div>
+          <div class="stack-use">Integrated into build pipeline. Reporters put data in Sheets, the build system pulls it into graphics. ArchieML for narratives.</div>
+          <div class="stack-yours">You: Familiar with Google Workspace. The integration is handled by their build tools.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  ELECTION PIPELINE                      -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <h2>The Election Night Pipeline &mdash; Django + D3 Working Together</h2>
+    <p class="section-intro">This is the single most impressive workflow to understand for the interview. If they ask "how do Django and D3 work together?" &mdash; walk them through this.</p>
+
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-num" style="background: #6b7280;">1</div>
+        <div>
+          <div class="pipe-title">AP Election Feed</div>
+          <div class="pipe-tech">External data source &mdash; Associated Press</div>
+          <div class="pipe-desc">AP gathers results from the Secretary of State, county offices, and stringers on the ground. Structured JSON with race IDs, candidates, vote counts, precincts reporting.</div>
+        </div>
+      </div>
+      <div class="pipe-arrow">|</div>
+
+      <div class="pipe-step">
+        <div class="pipe-num" style="background: var(--django);">2</div>
+        <div>
+          <div class="pipe-title">Django Management Command</div>
+          <div class="pipe-tech">python manage.py import_election_results</div>
+          <div class="pipe-desc">Runs on a cron job every 2&ndash;5 minutes on election night. Fetches AP data. Uses <strong>update_or_create</strong> pattern &mdash; updates existing records, creates new ones. No duplicates.</div>
+        </div>
+      </div>
+      <div class="pipe-arrow">|</div>
+
+      <div class="pipe-step">
+        <div class="pipe-num" style="background: var(--sql);">3</div>
+        <div>
+          <div class="pipe-title">PostgreSQL Database</div>
+          <div class="pipe-tech">Django Models: Race, Candidate, CountyResult</div>
+          <div class="pipe-desc">Django's ORM maps Python classes to database tables. Query like Python: <code>Race.objects.filter(state='TX', called=False)</code>. Migrations keep schema in sync.</div>
+        </div>
+      </div>
+      <div class="pipe-arrow">|</div>
+
+      <div class="pipe-step">
+        <div class="pipe-num" style="background: var(--django);">4</div>
+        <div>
+          <div class="pipe-title">DRF JSON API</div>
+          <div class="pipe-tech">Django REST Framework &mdash; Serializers + ViewSets</div>
+          <div class="pipe-desc">Turns database objects into JSON endpoints. <code>GET /api/v1/races/</code> returns all races. Handles pagination, filtering, caching. This is the contract between backend and frontend.</div>
+        </div>
+      </div>
+      <div class="pipe-arrow">|</div>
+
+      <div class="pipe-step">
+        <div class="pipe-num" style="background: var(--d3);">5</div>
+        <div>
+          <div class="pipe-title">D3 Frontend + Maps</div>
+          <div class="pipe-tech">D3.js + GeoJSON + geoAlbers projection</div>
+          <div class="pipe-desc">Fetches JSON from the API. Binds data to SVG paths (one per county). Colors by party using scaleOrdinal. Enter-update-exit handles live updates &mdash; counties smoothly transition as results arrive.</div>
+        </div>
+      </div>
+      <div class="pipe-arrow">|</div>
+
+      <div class="pipe-step">
+        <div class="pipe-num" style="background: #6b7280;">6</div>
+        <div>
+          <div class="pipe-title">Reader Sees Live Results</div>
+          <div class="pipe-tech">apps.texastribune.org &mdash; hosted on AWS S3</div>
+          <div class="pipe-desc">Page polls the API every 30&ndash;60 seconds. Map and tables update in place. Readers can enter their address to see specific races. Mobile responsive. Accessible tabular fallbacks.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="say-this" style="margin-top: 1.5rem;">
+      <div class="label">Say this</div>
+      <p>"What I find elegant is the separation of concerns. The backend team can fix a data ingestion bug without touching the frontend. The frontend team can redesign the map without touching the API. And the Django admin is the emergency fallback &mdash; if the automated pipeline breaks at 11pm, an editor can manually update results."</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  AI + ELECTIONS                         -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <h2>AI + Elections &mdash; Where AI Can Help the Data Visuals Team</h2>
+    <p class="section-intro">The job listing specifically mentions "AI experimentation." Here are concrete examples of how AI/LLMs could help a team like the Tribune's &mdash; especially around elections. This is your competitive edge.</p>
+
+    <div class="ai-example">
+      <div class="ai-example-title">Automated Anomaly Detection in Election Results</div>
+      <p>An LLM or ML model could flag unusual patterns as results stream in on election night: "County X is showing a 30% swing from the primary &mdash; verify this isn't a data error." Catches AP data glitches or genuinely newsworthy shifts faster than a human scanning spreadsheets.</p>
+      <div class="ai-pitch">Your pitch: "I've built AI tools that process and compare large datasets. Applying that to election night data &mdash; flagging anomalies, catching errors before they go live &mdash; feels like a natural application."</div>
+    </div>
+
+    <div class="ai-example">
+      <div class="ai-example-title">Natural Language Data Summaries</div>
+      <p>Instead of just showing numbers, an LLM could generate plain-English summaries: "Republicans have flipped 3 border counties that haven't voted red since 1972." Auto-generated context blurbs for each race, updated as results change. Helps reporters write faster and gives readers instant narrative.</p>
+      <div class="ai-pitch">Your pitch: "As a journalist, I know what a good lede sounds like. I could help design AI prompts that generate useful narrative summaries, not generic ones &mdash; because I understand what makes a data point a story."</div>
+    </div>
+
+    <div class="ai-example">
+      <div class="ai-example-title">Accessibility &mdash; Alt Text and Descriptions for Charts</div>
+      <p>AI can auto-generate meaningful alt text for D3 visualizations: not just "a bar chart" but "Bar chart showing Travis County voter turnout at 62%, the highest in the state, compared to the statewide average of 41%." Makes every graphic accessible to screen reader users.</p>
+      <div class="ai-pitch">Your pitch: "Accessibility is one of the most practical AI applications for data journalism. Instead of generic alt text, we could generate descriptions that actually convey the insight the chart is showing."</div>
+    </div>
+
+    <div class="ai-example">
+      <div class="ai-example-title">Data Cleaning and Standardization</div>
+      <p>Election data comes from 254 Texas counties with inconsistent formatting. LLMs can help standardize names, fix encoding issues, match records across datasets (e.g., matching AP candidate IDs to FEC campaign finance records). Saves hours of manual cleaning.</p>
+      <div class="ai-pitch">Your pitch: "My Second Brain project processes 200k+ records. I understand the data cleaning problem at scale. AI assistants for entity resolution and format standardization could save the team significant time."</div>
+    </div>
+
+    <div class="ai-example">
+      <div class="ai-example-title">Story Discovery in Large Datasets</div>
+      <p>Feed a campaign finance dataset into an LLM: "What are the most unusual donation patterns?" "Which candidates received the largest out-of-state contributions?" AI can surface leads that would take a reporter days to find manually.</p>
+      <div class="ai-pitch">Your pitch: "I've spent 15 years finding stories in data manually. AI doesn't replace that instinct &mdash; it accelerates it. The journalist still decides what's a story. AI helps you look in more places, faster."</div>
+    </div>
+
+    <div class="ai-example">
+      <div class="ai-example-title">Conversational Data Explorer</div>
+      <p>A chatbot interface on top of Tribune data: "How did my county vote in the last three elections?" "Compare school ratings in Austin vs. Dallas." Readers ask questions in natural language, the system queries the API and returns visualizations. Like a personalized data journalist for every reader.</p>
+      <div class="ai-pitch">Your pitch: "I built an AI news aggregator and an AI model comparison tool. Building a reader-facing conversational data explorer for Tribune data is exactly the kind of project I'm excited about."</div>
+    </div>
+
+    <div class="say-this" style="margin-top: 1rem;">
+      <div class="label">Say this in the interview</div>
+      <p>"The listing mentions AI experimentation, and I think the biggest opportunity is using AI to make the team's existing data more accessible and discoverable &mdash; auto-generating alt text for charts, flagging anomalies in election data, helping readers ask natural language questions about datasets the Tribune already maintains. AI amplifies the journalism, it doesn't replace it."</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  TRIBUNE PROJECTS                       -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <h2>What They Actually Build &mdash; Real Projects</h2>
+    <p class="section-intro">Mention these by name in the interview. It shows you've done your homework and understand the team's work.</p>
+
+    <div class="project-list">
+      <a href="https://apps.texastribune.org/features/2024/texas-2024-general-election-results/" target="_blank" rel="noopener" class="project-row">
+        <div>
+          <div class="project-name">2024 General Election Results</div>
+          <div class="project-meta">County-level interactive maps, race-by-race results, personalized "find your races" by address. The most comprehensive election results in Texas.</div>
+          <div class="project-builder">Built by Carla Astudillo (the role you're interviewing for)</div>
+        </div>
+        <span class="project-tag tag-both">D3 + Django</span>
+      </a>
+
+      <div class="project-row">
+        <div>
+          <div class="project-name">Texas Schools Explorer (scuole)</div>
+          <div class="project-meta">Readers look up any Texas school &mdash; A-F ratings, demographics, test scores. A maintained product updated every school year, not a one-off graphic.</div>
+          <div class="project-builder">Ongoing project &mdash; Python/Django backend, open-source on GitHub</div>
+        </div>
+        <span class="project-tag tag-django">Django</span>
+      </div>
+
+      <div class="project-row">
+        <div>
+          <div class="project-name">Housing Zoning Analysis</div>
+          <div class="project-meta">Gathered zoning data from 11 Texas cities. Showed how dominant single-family zoning is. Described as "the most visually ambitious" piece of 2024.</div>
+          <div class="project-builder">Built by Carla Astudillo &mdash; data acquisition + analysis + visualization</div>
+        </div>
+        <span class="project-tag tag-d3">D3</span>
+      </div>
+
+      <div class="project-row">
+        <div>
+          <div class="project-name">Voter "Fish in a Pond" Visualization</div>
+          <div class="project-meta">Creative metaphor showing how only a fraction of Texas voters decide elections. A non-standard visualization that only D3 could build.</div>
+          <div class="project-builder">Built by Yuriko Schumacher</div>
+        </div>
+        <span class="project-tag tag-d3">D3</span>
+      </div>
+
+      <div class="project-row">
+        <div>
+          <div class="project-name">Congressional Redistricting Tool (2025)</div>
+          <div class="project-meta">Interactive tool for exploring proposed district boundaries. D3 mapping + demographic data overlays. Readers can see how maps affect their community.</div>
+        </div>
+        <span class="project-tag tag-d3">D3</span>
+      </div>
+
+      <div class="project-row">
+        <div>
+          <div class="project-name">Legislative Session Tracker (2025)</div>
+          <div class="project-meta">Tracked key proposals through the Texas legislature. Readers see how their representatives voted. Database work + visualization.</div>
+        </div>
+        <span class="project-tag tag-both">D3 + Django</span>
+      </div>
+
+      <div class="project-row">
+        <div>
+          <div class="project-name">Water Crisis Lookup Tool (2025)</div>
+          <div class="project-meta">Readers enter their location to see projected water shortage severity. Same "personalized data" pattern as election results.</div>
+        </div>
+        <span class="project-tag tag-both">D3 + Django</span>
+      </div>
+
+      <div class="project-row">
+        <div>
+          <div class="project-name">Border Wall Progress Tracker (2024)</div>
+          <div class="project-meta">Mapped how much of Texas's border wall has been built. Billions spent, barrier still far short of goals. Geographic D3 mapping.</div>
+          <div class="project-builder">Built by Yuriko Schumacher</div>
+        </div>
+        <span class="project-tag tag-d3">D3</span>
+      </div>
+
+      <div class="project-row">
+        <div>
+          <div class="project-name">July 4 Floods Coverage (2025)</div>
+          <div class="project-meta">Illustrated camps along the Guadalupe River and historically extreme flooding. 135+ deaths. Breaking news visualization shipped under pressure.</div>
+          <div class="project-builder">Built by Edison Wu</div>
+        </div>
+        <span class="project-tag tag-d3">D3</span>
+      </div>
+
+      <div class="project-row">
+        <div>
+          <div class="project-name">Measles Outbreak Tracker (2025)</div>
+          <div class="project-meta">Analyzed vaccination trends in Texas schools and mapped measles cases. Public health data + geographic visualization.</div>
+          <div class="project-builder">Built by Dan Keemahill</div>
+        </div>
+        <span class="project-tag tag-data">Data</span>
+      </div>
+
+      <div class="project-row">
+        <div>
+          <div class="project-name">Campaign Finance App</div>
+          <div class="project-meta">Django app tracking campaign contributions. Mentioned specifically in the job listing &mdash; you'd likely work on this.</div>
+        </div>
+        <span class="project-tag tag-django">Django</span>
+      </div>
+    </div>
+
+    <div class="say-this" style="margin-top: 1rem;">
+      <div class="label">Say this</div>
+      <p>"I was really impressed by the election results pages &mdash; the way they combine county-level mapping with personalized race results is exactly the kind of thing that makes data journalism useful to individual readers, not just data nerds. That personalization pattern is something I've built before in React apps."</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  TRIBUNE GITHUB                         -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <h2>Their GitHub &mdash; What the Repos Tell You</h2>
+    <p class="section-intro">The Tribune has 224+ public repos at github.com/texastribune. Mentioning specific repos shows you've gone beyond surface-level research.</p>
+
+    <div class="repo-list">
+      <a href="https://github.com/texastribune/data-visuals-create" target="_blank" rel="noopener" class="repo-row">
+        <div class="repo-name">data-visuals-create</div>
+        <div class="repo-desc">Their main scaffolding tool. Generates project boilerplates with Nunjucks, SCSS, Webpack, Google Sheets integration, and S3 deployment. This is the foundation of every graphic they build.</div>
+        <div class="repo-why">Shows a mature team that invests in tooling. Similar to how you'd use create-next-app or Vite templates.</div>
+      </a>
+
+      <a href="https://github.com/texastribune/data-visuals-guides" target="_blank" rel="noopener" class="repo-row">
+        <div class="repo-name">data-visuals-guides</div>
+        <div class="repo-desc">Documentation, conventions, and style guides for the data visuals team. Shows how they onboard new developers and maintain standards.</div>
+        <div class="repo-why">Ask about this: "I saw your data-visuals-guides repo &mdash; how does the team handle code review and standards?"</div>
+      </a>
+
+      <a href="https://github.com/texastribune/queso-ui" target="_blank" rel="noopener" class="repo-row">
+        <div class="repo-name">queso-ui</div>
+        <div class="repo-desc">Their shared UI library of styles and icons. MIT licensed. "Queso" &mdash; very Texas. Ensures visual consistency across all projects.</div>
+        <div class="repo-why">Like a design system. Shows the team values consistency. You've worked with component libraries in React.</div>
+      </a>
+
+      <a href="https://github.com/texastribune/scuole" target="_blank" rel="noopener" class="repo-row">
+        <div class="repo-name">scuole</div>
+        <div class="repo-desc">Python project for education data. Powers the Texas schools explorer. The scuole-data repo has the datasets. MIT licensed.</div>
+        <div class="repo-why">A real Django data app you could study. Shows the pattern: Python data processing + Django serving + public-facing tool.</div>
+      </a>
+
+      <a href="https://github.com/texastribune/django-locking" target="_blank" rel="noopener" class="repo-row">
+        <div class="repo-name">django-locking</div>
+        <div class="repo-desc">Django package that prevents concurrent editing in the admin. Useful when multiple editors work in the CMS simultaneously.</div>
+        <div class="repo-why">Shows the team contributes reusable Django packages back to the community. Open source culture.</div>
+      </a>
+
+      <a href="https://github.com/texastribune/newsapps-graphic-kit" target="_blank" rel="noopener" class="repo-row">
+        <div class="repo-name">newsapps-graphic-kit</div>
+        <div class="repo-desc">Older boilerplate for embeddable graphics. Gulp, BrowserSync, Nunjucks, NPR's pym.js for responsive iframes. Predecessor to data-visuals-create.</div>
+        <div class="repo-why">Understanding the evolution from this to data-visuals-create shows you grasp how newsroom tooling evolves.</div>
+      </a>
+    </div>
+
+    <div class="say-this" style="margin-top: 1rem;">
+      <div class="label">Say this</div>
+      <p>"I noticed you have data-visuals-create for scaffolding projects and queso-ui for shared styles. That kind of tooling investment shows a mature engineering culture. I'm curious how the team decides when to invest in internal tools vs. shipping features."</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  YOUR STORY                             -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <h2>Your Story &mdash; How to Position Yourself</h2>
+    <p class="section-intro">You're not a developer who also writes. You're a 15-year investigative journalist who also builds software. That's the frame.</p>
+
+    <div class="story-grid">
+      <div class="story-card journalism">
+        <div class="story-label">Journalism</div>
+        <h4>15+ Years Investigative Reporting</h4>
+        <p>Oklahoma Watch, Tulsa World. You know FOIA, data analysis, source cultivation, deadline pressure. You've broken stories that changed policy.</p>
+      </div>
+
+      <div class="story-card journalism">
+        <div class="story-label">Journalism</div>
+        <h4>Award-Winning Work</h4>
+        <p>Writer of the Year, Reporter of the Year, 1st Place Investigative Reporting (SPJ). You're not dabbling &mdash; you were one of the best in the room.</p>
+      </div>
+
+      <div class="story-card tech">
+        <div class="story-label">Technology</div>
+        <h4>Self-Taught Developer Since 2022</h4>
+        <p>React, Next.js, TypeScript, Python, PostgreSQL. Went from zero to building full-stack production apps in under 2 years while working full-time as a reporter.</p>
+      </div>
+
+      <div class="story-card tech">
+        <div class="story-label">Technology</div>
+        <h4>Real Projects, Real Scale</h4>
+        <p>Second Brain: 200k+ record research database. News Pulse: AI news aggregator. AI Model Arena. Keith Brown DDS dashboard. You build things that work.</p>
+      </div>
+    </div>
+
+    <div class="dont-say" style="margin-top: 1rem;">
+      <div class="label">Don't say</div>
+      <p>"I don't have much experience with Django or D3."</p>
+    </div>
+    <div class="say-this">
+      <div class="label">Instead say</div>
+      <p>"My Django and D3 are growing, and I'm studying the Tribune's stack specifically. But the hardest skills for this role &mdash; editorial judgment, investigative instincts, the ability to communicate complex data to readers &mdash; those are skills I've been building for 15 years. The technical gaps are weeks. The journalism background is a career."</p>
+    </div>
+
+    <div class="dont-say">
+      <div class="label">Don't say</div>
+      <p>"I'm transitioning from journalism to tech."</p>
+    </div>
+    <div class="say-this">
+      <div class="label">Instead say</div>
+      <p>"I'm not leaving journalism &mdash; I'm evolving how I practice it. I spent 15 years finding stories in data with spreadsheets and documents. Now I want to build the tools that help millions of readers understand those stories visually."</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  TALKING POINTS CHEAT SHEET             -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <h2>Talking Points Cheat Sheet</h2>
+    <p class="section-intro">Memorize the feel of these, not the exact words. Each one connects something about you to something about the role.</p>
+
+    <div class="say-this">
+      <div class="label">Opening</div>
+      <p>"What drew me to this role is that it sits at the exact intersection of my two careers &mdash; investigative journalism and web development. I've spent 15 years finding stories in data. Now I want to build the tools that help readers see those stories."</p>
+    </div>
+
+    <div class="say-this">
+      <div class="label">On D3</div>
+      <p>"I understand that D3 is a data binding toolkit, not a charting library &mdash; that's what makes it right for a newsroom where every graphic is different. The core concept is binding data to DOM elements, and everything else &mdash; scales, axes, projections &mdash; supports that idea."</p>
+    </div>
+
+    <div class="say-this">
+      <div class="label">On Django</div>
+      <p>"The admin panel is what excites me most about Django for newsroom work. In a fast-moving environment, giving editors direct access to manage data without engineering bottlenecks is incredibly valuable. I've been the reporter waiting for a developer to update something &mdash; I know why the admin matters."</p>
+    </div>
+
+    <div class="say-this">
+      <div class="label">On the Pipeline</div>
+      <p>"I understand the election pipeline: AP feed to Django management command to PostgreSQL to DRF API to D3 frontend. Each piece has a clear role, and the separation means the backend and frontend teams aren't blocked by each other on election night."</p>
+    </div>
+
+    <div class="say-this">
+      <div class="label">On AI</div>
+      <p>"I think the biggest AI opportunity for data journalism is making existing data more accessible &mdash; auto-generating alt text for charts, flagging anomalies in election data, helping readers ask natural language questions about datasets the Tribune already maintains."</p>
+    </div>
+
+    <div class="say-this">
+      <div class="label">On Their Work</div>
+      <p>"I've looked at the team's recent work &mdash; the election results pages, the housing zoning analysis, the redistricting tool. And I've explored your GitHub &mdash; data-visuals-create, queso-ui, scuole. The investment in both public-facing tools and internal infrastructure tells me this is a team that takes craft seriously."</p>
+    </div>
+
+    <div class="say-this">
+      <div class="label">The Close</div>
+      <p>"Most developer candidates can code. Not many can do what I do &mdash; sit in an editorial meeting, understand what makes a story, then build the visualization that tells it. My trajectory from investigative reporter to developer is rare, and it's exactly what produces people who build tools that actually serve the journalism."</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  SMART QUESTIONS                        -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
+    <h2>Smart Questions to Ask Them</h2>
+    <p class="section-intro">Ask 2&ndash;3 of these. Each one shows you understand how newsroom data teams actually work.</p>
+
+    <div class="q-list">
+      <div class="q-item">
+        <div class="q-text">"What does the workflow look like between the data visuals team and reporters? How early does the team get involved in a story?"</div>
+        <div class="q-why">Shows you understand the editorial collaboration, not just the code.</div>
+      </div>
+
+      <div class="q-item">
+        <div class="q-text">"How does the team decide when something needs a custom D3 graphic versus an off-the-shelf tool like Datawrapper?"</div>
+        <div class="q-why">Shows you know D3 isn't always the right tool. Practical judgment.</div>
+      </div>
+
+      <div class="q-item">
+        <div class="q-text">"What would the first few months look like for someone in this role? What would I be working on first?"</div>
+        <div class="q-why">Shows you're already thinking about the work, not just the offer.</div>
+      </div>
+
+      <div class="q-item">
+        <div class="q-text">"The listing mentions AI experimentation &mdash; what areas is the team most excited about?"</div>
+        <div class="q-why">Shows you read the listing carefully and have relevant experience to offer.</div>
+      </div>
+
+      <div class="q-item">
+        <div class="q-text">"What's the deployment pipeline for election night? How does the team handle last-minute data issues?"</div>
+        <div class="q-why">Shows you understand the high-stakes reality of newsroom tech work.</div>
+      </div>
+
+      <div class="q-item">
+        <div class="q-text">"Are you exploring any new tools or approaches &mdash; like Observable Plot, Svelte, or different build tooling?"</div>
+        <div class="q-why">Shows you know the landscape and are curious about the team's direction.</div>
+      </div>
+
+      <div class="q-item">
+        <div class="q-text">"How does the team handle code review and technical standards? I noticed you have data-visuals-guides on GitHub."</div>
+        <div class="q-why">Shows you've looked at their GitHub AND care about engineering quality.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  YOUTUBE                                -->
+  <!-- ═══════════════════════════════════════ -->
   <div class="section">
     <h2>YouTube &mdash; Watch These Tonight</h2>
 
-    <p class="vid-note" style="margin-top: 0;">These aren't coding tutorials. Pick the short ones. You're building a mental picture, not learning to code from scratch.</p>
+    <p class="vid-note" style="margin-top: 0;">Pick the short ones. You're building a mental picture, not learning to code from scratch.</p>
 
     <div class="vid-section-label" style="color: var(--d3);">D3.js</div>
     <div class="vid-list">
@@ -243,12 +1279,21 @@
       <a href="https://www.youtube.com/playlist?list=PL-osiE80TeTtoQCKZ03TU5fNfx2UY6U4p" target="_blank" rel="noopener" class="vid-row">
         <div>
           <div class="vid-title">Corey Schafer &mdash; Django Series</div>
-          <div class="vid-meta">The classic. Watch episode 1 &amp; 2 just to see how a project is set up. 17 episodes total but you only need the first couple.</div>
+          <div class="vid-meta">The classic. Watch episode 1 &amp; 2 just to see how a project is set up.</div>
         </div>
         <span class="vid-tag deep">ep 1-2</span>
       </a>
     </div>
-    <p class="vid-note">Recommended order: Fireship D3 (2 min) &rarr; Tech With Tim Django (20 min) &rarr; read both crash course pages &rarr; Traversy Django crash course if you have time.</p>
+
+    <p class="vid-note">Recommended order: Fireship D3 (2 min) &rarr; Tech With Tim Django (20 min) &rarr; read both crash course concept guides &rarr; listen to the podcasts on a walk.</p>
+  </div>
+
+  <div style="max-width: 900px; margin: 0 auto; padding: 2rem; text-align: center;">
+    <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.6;">
+      You've got this. You're not pretending to be someone you're not &mdash;<br>
+      you're an investigative journalist who builds software.<br>
+      That's exactly who they're looking for.
+    </p>
   </div>
 
   <script type="module" src="/components/init-tutor.js"></script>

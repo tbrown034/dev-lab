@@ -1,0 +1,218 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+EPISODE TITLE: Real Tribune Projects — What They Build, How They Think, and How You'd Contribute
+SERIES: Interview Prep — Texas Tribune Crash Course
+EPISODE: 6 of 6
+
+--- CONTEXT FOR HOSTS ---
+
+Who the learner is: Trevor Brown, investigative journalist with 15+ years experience, self-taught web developer comfortable with React/Next.js/TypeScript/PostgreSQL. He has an interview at the Texas Tribune tomorrow for the Senior Data Visuals Developer position — the role being vacated by Carla Astudillo. He's spent five episodes learning the tech stack (Django, D3, SQL, deployment). Now he needs to understand what the team ACTUALLY builds — the real projects, the patterns in their work, and specifically how his skills map to the things he'd be asked to do on day one.
+
+What this episode should accomplish: Trevor should walk into the interview knowing the team's major projects by name, understanding the editorial patterns that drive their work, and being able to articulate exactly how he'd contribute to each type of project. He should feel like he's been studying this team's output for months. When someone mentions the election results pages or the schools explorer, he shouldn't nod vaguely — he should be able to talk about county-level mapping, the AP data pipeline, the personalization features, and the Django backend that ties it all together.
+
+Tone: Enthusiastic, specific, concrete. Like a journalist briefing another journalist on a beat they're about to take over. Use real project names, real team member names, real URLs. Make Trevor feel like he already knows the team's work intimately. This is the final episode — send him into the interview feeling prepared and confident.
+
+--- SOURCE CONTENT ---
+
+THE TEAM'S OUTPUT — 2024-2025 HIGHLIGHTS
+
+The data visuals team contributed to roughly 100 stories per year. That's a story every 3-4 days. This is a high-output, high-impact team. Here are the standout projects that define what they do and how they think:
+
+ELECTION RESULTS PAGES (2024)
+
+This is the flagship project — and almost certainly the first major system Trevor would inherit.
+
+- Built primarily by Carla Astudillo (the person whose role Trevor is interviewing for)
+- Covered the March primary, May runoff, and November general election
+- Widely regarded as the most comprehensive election results pages in Texas
+- Features: county-level interactive maps, race-by-race results tables, personalized "find your races" search by address
+- Tech stack in action: Django backend ingesting AP election data, Django REST Framework API serving JSON, D3 rendering maps and charts, React for interactive components
+- URL pattern: apps.texastribune.org/features/2024/texas-2024-general-election-results/
+- Why it matters for Trevor: If he gets this job, he'll likely own this system for the 2026 midterms. He needs to understand the full pipeline — the Django management commands that poll AP data, the ORM models that store results, the DRF serializers that shape the JSON, and the D3 code that renders county-level maps with geoPath and choropleth color scales.
+
+THE VOTER FISH-IN-A-POND VISUALIZATION (2024)
+
+- Built by Yuriko Schumacher
+- Used a "small fish in a big pond" visual metaphor to show how only a fraction of Texas voters actually decide elections
+- This is a creative, non-standard visualization — the kind of thing D3 excels at because you can't do this with Chart.js or a charting library with pre-built chart types
+- Shows that the team values creative storytelling, not just standard bar charts
+- D3's power is custom mark rendering — when the story needs a unique visual form, D3 can build it from primitives (circles, paths, force simulations, whatever the metaphor demands)
+
+HOUSING ZONING ANALYSIS (2024)
+
+- Built by Carla Astudillo
+- Gathered and analyzed zoning data from 11 major Texas cities
+- Showed how dominant single-family zoning is across Texas cities
+- Described internally as "the most visually ambitious" piece of the year
+- This project involved significant data gathering, analysis, AND visualization — the full data journalism pipeline
+- The workflow: acquire data (likely through FOIA and direct requests to city planning departments) -> clean and analyze -> visualize -> tell the story
+- This is the kind of project where Trevor's investigative journalism skills (records requests, data validation, source verification) become a superpower
+
+BORDER WALL PROGRESS TRACKER (2024)
+
+- Built by Yuriko Schumacher
+- Tracked how much of Texas's proposed border wall has been built
+- Found billions spent with the barrier still far short of goals
+- Likely used D3 mapping — geoPath to draw the border wall segments geographically, showing where construction exists and where gaps remain
+- Geographic visualization of a politically charged story — this is data journalism at its most impactful
+
+REPUBLICAN SHIFT IN BORDER COUNTIES (2024)
+
+- Dan Keemahill's analysis
+- Showed sharp increases in Republican support in traditionally Democratic border counties over time
+- Time-series data visualization — likely line charts or small multiples showing voting trends across multiple election cycles
+- This is the "data reporter" role in action: Dan didn't just visualize someone else's data, he found the story in the numbers
+
+CONGRESSIONAL REDISTRICTING TOOL (2025)
+
+- Interactive tool for exploring proposed district boundaries
+- Uses D3 mapping extensively — drawing district boundaries with geoPath, overlaying demographic data as choropleths or proportional symbols
+- Readers can explore how proposed maps would affect their community
+- This is a tool, not just a graphic — it has user interaction, search, comparison features
+- Built as a standalone app on apps.texastribune.org, separate from the CMS
+- The engineering challenge: handling complex GeoJSON data efficiently, making comparisons between proposed and current districts intuitive, keeping the interface fast with large geographic datasets
+
+LEGISLATIVE SESSION TRACKER (2025)
+
+- Tracked key proposals through the Texas legislature
+- Let readers see how their representatives voted on consequential measures
+- Combines database work (tracking hundreds of bills and votes over months) with visualization
+- This is the kind of project that lives for an entire legislative session — it needs to be maintained, updated, and reliable over months
+- The Django admin likely plays a key role here: editors and reporters can flag which bills to feature, add context, update statuses without needing a developer for every change
+
+WATER CRISIS EXPLAINER + LOOKUP TOOL (2025)
+
+- Readers could enter their location and see projected water shortage severity for their area
+- Personalized data lookup — the same UX pattern as the election results "find your races" feature
+- Shows the team's recurring pattern: take big statewide data and make it personally relevant to individual readers
+- The technical pattern: user enters input (address, zip code, county) -> query a database or API -> return personalized results -> render with D3 or React
+- Trevor has built this exact pattern in his React/Next.js apps with PostgreSQL
+
+JULY 4 FLOODS COVERAGE (2025)
+
+- Edison Wu illustrated camps along the Guadalupe River near flooding areas
+- Showed how historically extreme the flooding was
+- 135+ people died — this was urgent, breaking news visualization
+- Shows the team can move fast on breaking news, not just planned features
+- Breaking news visualization requires a different skill set: rapid data acquisition, fast but accurate rendering, clear communication under pressure
+- Trevor's newsroom experience — 15+ years of deadline journalism — is directly relevant here
+
+MEASLES OUTBREAK TRACKER (2025)
+
+- Dan Keemahill analyzed vaccination trends in Texas schools
+- Built a tracker showing where measles cases were appearing
+- Public health data + geographic mapping
+- Another example of data reporting: Dan acquired the vaccination data, analyzed it, found the story, then built the visualization
+- This is the full pipeline from data acquisition to published graphic
+
+SCHOOLS EXPLORER (SCUOLE) — ONGOING
+
+- One of the Tribune's longest-running data apps
+- Lets readers look up any Texas school and see ratings, demographics, test scores
+- Built with Python/Django — the scuole repo on GitHub, with scuole-data containing the datasets
+- Uses education data from TEA (Texas Education Agency)
+- The Tribune released A-F school ratings in 2025 for the first time in 5 years — this was a major data release
+- This is a maintained product, not a one-off graphic — it gets updated every school year
+- The engineering challenge is different from a one-off graphic: data migrations when TEA changes formats, maintaining backward compatibility, handling edge cases in school data (closures, mergers, name changes)
+- Trevor would be responsible for maintaining and updating this system as part of the role
+
+
+PATTERNS IN THEIR WORK — WHAT THE TEAM VALUES
+
+Looking across all these projects, five patterns emerge that define how the Texas Tribune data visuals team thinks:
+
+1. PERSONALIZATION
+Almost every major project lets readers enter their address or location to see personally relevant data. The election results pages have "find your races." The water crisis tool has "see your area." The schools explorer has "look up your school." The redistricting tool has "see your district." The team doesn't just publish Texas-wide data — they make it about YOUR school, YOUR district, YOUR water supply, YOUR representative. This is a design philosophy, not just a feature. It's rooted in the journalistic principle that stories matter most when readers see themselves in them.
+
+2. DATA ACQUISITION AS JOURNALISM
+Many projects involve gathering data that isn't readily available — FOIA requests, scraping state agencies, combining multiple datasets from different sources. The housing zoning analysis required collecting data from 11 different city planning departments. The measles tracker required getting vaccination records from schools. The team doesn't just visualize data that falls into their lap — they go get it, like investigative reporters working a story.
+
+3. CREATIVE VISUALIZATION
+The fish-in-a-pond voter metaphor, the housing zoning maps, the border wall geographic tracker — this team doesn't default to bar charts. They find the visual form that tells the story best. When a bar chart is the right answer, they use a bar chart. But when the story calls for something novel — a metaphor, a geographic rendering, a custom interactive — they build it from scratch with D3. This is why they use D3 instead of Chart.js or Highcharts: D3 gives them the freedom to invent.
+
+4. TOOLS, NOT JUST GRAPHICS
+The schools explorer, the redistricting tool, the legislative tracker, the election results pages — these aren't single-view graphics that get published and forgotten. They're products that readers use over weeks and months. The schools explorer has been running for years. The election results system gets rebuilt every election cycle. This requires a different engineering mindset: thinking about maintainability, data updates, edge cases, and long-term reliability.
+
+5. SPEED ON BREAKING NEWS
+The July 4 floods coverage, election night results — the team can ship quality work under extreme deadline pressure. This means having systems (like the election pipeline) that can be activated quickly, having team members who can make editorial and technical decisions fast, and having deployment workflows that don't bottleneck on approvals. Trevor's 15+ years in newsrooms means he already lives in this world.
+
+6. DATA ANALYSIS AS JOURNALISM
+Dan Keemahill's role as "data reporter" shows the team does the analysis, not just the visualization. They find the story in the data. Dan's Republican-shift-in-border-counties analysis wasn't assigned by an editor who already knew the trend — Dan found it by analyzing election data. This is investigative journalism applied to datasets instead of documents.
+
+
+HOW TREVOR WOULD CONTRIBUTE TO EACH TYPE OF PROJECT
+
+ELECTION RESULTS — His likely first big project:
+- He'd inherit Carla Astudillo's election results system and prepare it for the 2026 midterms
+- Maintain the Django backend: update models if AP changes their data format, optimize management commands for faster data ingestion, ensure the DRF API serves the right shape of JSON
+- Update and improve D3 visualizations: county-level choropleth maps, results tables, the enter/update pattern for live election night updates
+- His journalism background is an asset here that most developers don't have: he understands which races matter, what readers want to know on election night, how to handle race calls and corrections, when to show "too early to call" vs. projecting a winner
+- His investigative skills add a dimension: he could find stories IN the election data — unusual turnout patterns, demographic shifts, anomalies that deserve follow-up reporting
+
+DATA ACQUISITION PROJECTS:
+- As an investigative journalist, Trevor knows FOIA inside and out, he knows public records law, he knows data scraping, he knows how to verify data against official sources
+- He's built "Second Brain" — a 200,000+ record research database — so he understands data at scale
+- He understands data cleaning, data validation, source verification — skills that most developers learn on the job but that Trevor has been doing for 15 years
+- On projects like the housing zoning analysis, Trevor wouldn't just build the visualization — he could help acquire the data, validate it, and spot the editorial angles
+
+PERSONALIZED LOOKUP TOOLS:
+- He's built full-stack apps with React/Next.js + PostgreSQL
+- The pattern — user enters input, query a database, display personalized results — is exactly what he's built before
+- His experience with Clerk (authentication) and API development transfers directly to building tools where users can save preferences, create accounts, or bookmark their results
+- The schools explorer, the water crisis lookup, the election "find your races" feature — these are all variations of a pattern Trevor already knows how to build
+
+CREATIVE VISUALIZATIONS:
+- This is where his learning curve is steepest — the specific D3 API for custom marks, force simulations, novel visual metaphors
+- But his editorial judgment — knowing what to show, what to emphasize, what to leave out, what simplifies the story for readers — is his unique strength
+- Most D3 developers can build a force-directed graph but can't tell you whether it's the right choice for the story. Trevor can make that editorial call.
+- He can pair with designers like Yuriko and learn D3's custom rendering API while contributing the editorial direction that shapes what gets built
+
+AI EXPERIMENTATION:
+- The job listing specifically mentions interest in AI exploration
+- Trevor has built AI-powered tools: News Pulse AI (a news aggregator using LLMs), AI Model Arena (comparing model outputs)
+- He can bring practical AI experience to the team: using LLMs for data analysis and story discovery, making graphics more accessible with AI-generated alt text and summaries, exploring AI-assisted data cleaning and validation
+- Most D3/Django developers DON'T have hands-on AI building experience — this is Trevor's competitive edge
+- He's not just theoretically interested in AI — he's shipped products that use it
+
+
+THE WORK RHYTHM — WHAT A TYPICAL WEEK LOOKS LIKE
+
+Understanding the cadence helps Trevor picture himself in the role:
+
+- Monday: Team standup with Chris Essig and the rest of the data visuals team. Review what's in progress, pick up tickets, discuss upcoming stories that need data support.
+- Tuesday-Wednesday: Heads-down building time. Iterate on a visualization or data pipeline. Code review with teammates. Work through D3 rendering challenges or Django data model questions.
+- Thursday: Polish and prepare for publishing. Help a reporter set up data in the Django admin. Test on mobile devices. Cross-browser QA.
+- Friday: Ship, test, and deploy a graphic or update for the weekend edition. Update documentation. Prepare for next week.
+- Election weeks: All hands on deck. Monitoring AP data pipelines, watching for ingestion errors, rapid iteration on results pages as data flows in, staying up late on election night.
+- Legislative session: Ongoing updates to the session tracker, adding new bills, updating vote tallies, responding to reporter requests for quick data checks.
+- Ongoing maintenance: The schools explorer needs annual data updates when TEA releases new ratings. The election system needs pre-election prep months before election day. Long-running tools need bug fixes, performance improvements, and occasional redesigns.
+
+
+TALKING POINTS ABOUT THEIR PROJECTS — WHAT TO SAY IN THE INTERVIEW
+
+These are specific things Trevor can say that demonstrate deep familiarity with the team's work:
+
+On election results:
+"The election results pages are impressive — combining county-level mapping with personalized race lookup is exactly what makes data journalism useful to individual readers, not just data nerds. I'd love to understand the AP ingestion pipeline and how the team handles the pressure of election night deploys."
+
+On the full pipeline:
+"I love that the team does the full pipeline — from data acquisition to analysis to visualization. That's journalism, not just development. The housing zoning analysis is a great example — gathering data from 11 cities, analyzing it, then building what you described as the most visually ambitious piece of the year. That's the kind of work I want to do."
+
+On maintained products:
+"The schools explorer interests me because it's a maintained product. Readers rely on it year after year. That's a different kind of engineering challenge than a one-off graphic — you're thinking about data migrations, backward compatibility, and long-term reliability. I've built apps that serve ongoing audiences, so I understand that mindset."
+
+On personalization:
+"The personalization pattern — 'enter your address to see your data' — is something I've built before in React apps with PostgreSQL. The UX challenge is making complex statewide data feel personally relevant without oversimplifying it. I think that's what the Tribune does better than anyone."
+
+On creative visualization:
+"The voter fish-in-a-pond visualization is exactly why D3 matters. You can't do that with a charting library. You need the ability to create custom visual metaphors that match the story. That kind of creative freedom is what attracted me to this role."
+
+On his unique contribution:
+"What I bring that's different is 15 years of investigative journalism experience combined with full-stack development skills. I can do the data acquisition — FOIA requests, records analysis, data validation — AND build the visualization. Plus I've been building with AI tools, which the listing mentioned as an area of interest."
+
+
+THE BIG PICTURE — WHY THIS ROLE EXISTS
+
+The Texas Tribune's data visuals team makes information accessible to Texans. They take complex datasets — election results, school ratings, legislative votes, water projections, zoning regulations — and turn them into tools that help people understand how policy affects their lives. The Senior Data Visuals Developer role isn't just a coding job. It's a journalism job that requires coding. Trevor's combination of investigative journalism expertise, full-stack development skills, and AI experience makes him a uniquely strong fit. He doesn't just know how to build the tools — he understands why they matter.
