@@ -1337,6 +1337,69 @@
   <!--  YOUTUBE                                -->
   <!-- ═══════════════════════════════════════ -->
   <div class="section">
+    <h2>Project Ideas to Pitch &mdash; What You'd Build</h2>
+    <p class="section-intro">Concrete ideas that show you've thought about the work, not just the tech. Each maps your existing skills to Tribune needs.</p>
+
+    <!-- AI + Elections -->
+    <div style="border: 1px solid var(--border); border-left: 3px solid var(--ai); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
+      <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ai); margin-bottom: 0.5rem;">AI + Elections</div>
+      <div style="font-weight: 600; margin-bottom: 0.4rem;">Election Night Anomaly Detector</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">An LLM-powered monitoring layer that watches incoming AP results and flags unusual patterns in real-time &mdash; unexpected vote swings, turnout anomalies, results that don't match historical baselines. Surfaces alerts to editors and reporters as data flows in.</p>
+      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Your proof:</strong> You built News Pulse AI, which aggregates and analyzes news with LLMs. Same pattern &mdash; ingest live data, run it through AI analysis, surface what matters.</div>
+    </div>
+
+    <div style="border: 1px solid var(--border); border-left: 3px solid var(--ai); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
+      <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ai); margin-bottom: 0.5rem;">AI + Accessibility</div>
+      <div style="font-weight: 600; margin-bottom: 0.4rem;">Auto-Generated Alt Text &amp; Plain-English Summaries</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">Every D3 chart and interactive map automatically gets a screen-reader-friendly description AND a plain-English summary: &ldquo;Republicans flipped 3 border counties for the first time since 1972.&rdquo; Attach it to the publishing pipeline so it happens on every graphic, not as an afterthought.</p>
+      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Why it matters:</strong> Accessibility is a Tribune value. Most newsrooms skip alt text because it's manual. AI makes it automatic.</div>
+    </div>
+
+    <!-- Data Journalism -->
+    <div style="border: 1px solid var(--border); border-left: 3px solid #ef4444; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
+      <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: #ef4444; margin-bottom: 0.5rem;">Data Acquisition + Viz</div>
+      <div style="font-weight: 600; margin-bottom: 0.4rem;">Texas Campaign Finance Explorer</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">A Django-backed app that ingests TEC (Texas Ethics Commission) campaign finance data, cleans and standardizes donor records, and serves a D3-powered explorer. Readers search by donor, candidate, or zip code. Surface the story: who's funding Texas politics, where the money comes from, which races are the most expensive.</p>
+      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Your proof:</strong> Your Second Brain is a 200k+ record research database. You know data at scale. Your investigative background means you know campaign finance records inside out.</div>
+    </div>
+
+    <div style="border: 1px solid var(--border); border-left: 3px solid #ef4444; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
+      <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: #ef4444; margin-bottom: 0.5rem;">Investigative + Interactive</div>
+      <div style="font-weight: 600; margin-bottom: 0.4rem;">Texas Accountability Tracker</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">A persistent database tracking promises vs. outcomes &mdash; what lawmakers said they'd do vs. what happened. Built with Django for reporters to maintain via admin, D3 for reader-facing scorecards and timelines. FOIA-sourced documents linked directly to claims.</p>
+      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Your proof:</strong> This is investigative journalism + software in one project. No pure developer thinks of this. Your 15 years of FOIA work IS the competitive advantage.</div>
+    </div>
+
+    <!-- Personalization Pattern -->
+    <div style="border: 1px solid var(--border); border-left: 3px solid var(--d3); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
+      <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--d3); margin-bottom: 0.5rem;">Personalization + D3</div>
+      <div style="font-weight: 600; margin-bottom: 0.4rem;">&ldquo;What Does Texas Spend on You?&rdquo; Budget Explorer</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">Enter your address &rarr; see your school district, water district, county, and state spending broken down per capita with D3 treemaps and bar charts. The Tribune's personalization pattern applied to the state budget. Makes abstract numbers personal.</p>
+      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Your proof:</strong> You've built personalized lookup tools with React + PostgreSQL. This is the Tribune's favorite UX pattern &mdash; and you already know how to build it.</div>
+    </div>
+
+    <div style="border: 1px solid var(--border); border-left: 3px solid var(--d3); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
+      <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--d3); margin-bottom: 0.5rem;">Real-Time Data + D3</div>
+      <div style="font-weight: 600; margin-bottom: 0.4rem;">Texas Energy Grid Live Dashboard</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">ERCOT publishes real-time grid data. Build a Django pipeline that ingests it, a DRF API that serves it, and a D3 dashboard showing live demand vs. capacity with historical context. When the next freeze or heat wave hits, readers see the grid stress in real time &mdash; not after the blackout.</p>
+      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Your proof:</strong> Same architecture as the election pipeline (AP &rarr; Django &rarr; DRF &rarr; D3), just different data. And you built a gas prices tracker &mdash; you understand commodity data feeds.</div>
+    </div>
+
+    <!-- AI + Reader Experience -->
+    <div style="border: 1px solid var(--border); border-left: 3px solid var(--ai); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
+      <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ai); margin-bottom: 0.5rem;">AI + Reader Experience</div>
+      <div style="font-weight: 600; margin-bottom: 0.4rem;">&ldquo;Ask the Data&rdquo; Conversational Explorer</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">Embed a chat interface on election results or school explorer pages. Readers type &ldquo;How did my county vote compared to 2020?&rdquo; or &ldquo;Which schools near me improved the most?&rdquo; &mdash; an LLM queries the database and returns a plain-English answer with a D3 chart. The Tribune already has an AI chatbot on their water crisis coverage &mdash; this extends that pattern.</p>
+      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Your proof:</strong> You built AI Model Arena (comparing LLM outputs) and News Pulse AI. You know how to build conversational AI interfaces. Most data viz devs don't.</div>
+    </div>
+
+    <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; margin-top: 1rem; padding: 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.15);"><strong>How to use these:</strong> Don't pitch all 6. Pick 1&ndash;2 that feel natural in conversation. When they ask &ldquo;what excites you about this role?&rdquo; or &ldquo;what would you want to build?&rdquo; &mdash; that's your opening. Lead with the journalism angle, not the tech.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════ -->
+  <!--  YOUTUBE                                -->
+  <!-- ═══════════════════════════════════════ -->
+  <div class="section">
     <h2>YouTube &mdash; Watch These Tonight</h2>
 
     <p class="vid-note" style="margin-top: 0;">Pick the short ones. You're building a mental picture, not learning to code from scratch.</p>
