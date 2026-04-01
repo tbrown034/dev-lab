@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artemis II: Journey to the Moon</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    /*
+      =========================================================
+      HOW SCROLLYTELLING WORKS — THE BIG PICTURE
+      =========================================================
+
+      Think of this like a theater:
+
+        - The STAGE is a big screen bolted to the wall.
+          It never moves. The audience always sees it.
+
+        - The SCRIPT is a set of cue cards on a conveyor belt
+          that scroll past the stage.
+
+        - The DIRECTOR watches which cue card is in front of
+          the audience right now, and tells the stage
+          "show scene 3!"
+
+      In code:
+        Stage    = .scrolly__graphic  (CSS makes it sticky)
+        Script   = .scrolly__steps    (the text cards that scroll)
+        Director = Scrollama          (we add this in Step 3)
+
+      All three are now wired up in this file.
+      =========================================================
+    */
+
+
+    /* --- RESET ---
+       Every browser adds its own default margins and padding
+       to elements (like <body> has 8px margin in Chrome).
+       This wipes all of that so we start from zero.
+
+       box-sizing: border-box means padding is INCLUDED in
+       an element's width/height instead of added on top.
+       Without it, a 400px box + 20px padding = 440px. With it, 400px stays 400px.
+    */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+
+    /* --- BODY ---
+       Georgia = a serif font, like you'd see in a newspaper.
+       NYT interactives use serif for body text — it says
+       "this is journalism, not a tech blog."
+
+       Background is near-black with a blue tint (#0a0e1a)
+       to feel like outer space. Text is light gray, not
+       pure white — pure white on dark backgrounds is harsh
+       on the eyes.
+    */
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: #0a0e1a;
+      color: #e0e0e0;
+    }
+
+
+    /* ==========================================================
+       SECTION 1: INTRO / HERO
+       ==========================================================
+       This is just a normal section — no tricks. It scrolls
+       away naturally. Its job is to hook the reader before the
+       interactive part begins.
+
+       min-height: 100vh = "be at least as tall as the browser
+       window." vh = viewport height. 100vh = 100% of what the
+       user can see. This makes the headline feel like a
+       full-screen title card.
+
+       Flexbox centers the text both vertically and horizontally:
+         - flex-direction: column  → stack children top to bottom
+         - justify-content: center → center along the main axis (vertical)
+         - align-items: center     → center along the cross axis (horizontal)
+    */
+    .intro {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .intro h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      line-height: 1.2;       /* tighter line spacing for big headlines */
+      max-width: 700px;        /* don't let it stretch edge-to-edge on wide screens */
+    }
+
+    .intro .byline {
+      margin-top: 1rem;
+      color: #888;             /* dimmer than body text — it's secondary info */
+      font-size: 0.95rem;
+    }
+
+
+    /* ==========================================================
+       SECTION 2: THE SCROLLY CONTAINER
+       ==========================================================
+       This is the parent that holds BOTH the graphic and the
+       text steps. Think of it as the theater building — it
+       contains the stage and the conveyor belt.
+
+       position: relative does TWO important things here:
+         1. It creates a "boundary" for the sticky graphic.
+            Sticky elements only stick while their parent
+            is in view. When .scrolly scrolls off screen,
+            the graphic un-sticks and scrolls away too.
+            (We add sticky in Step 2.)
+
+         2. It creates a "positioning context" — any child
+            with position: absolute will be positioned
+            relative to THIS element, not the whole page.
+    */
+    .scrolly {
+      position: relative;
+    }
+
+
+    /* --- THE GRAPHIC (a.k.a. "The Stage") --- [STEP 2]
+       This is where D3 will draw the visualization.
+
+       ★ position: sticky — THE KEY TO SCROLLYTELLING ★
+
+       Normal elements scroll with the page. Sticky elements
+       behave like normal UNTIL they hit a threshold (top: 0),
+       then they FREEZE in place like they're glued to the
+       viewport. They stay frozen until their PARENT (.scrolly)
+       scrolls completely off screen.
+
+       Think of it like a Post-it note on a conveyor belt:
+         - The conveyor belt is .scrolly (the parent)
+         - The Post-it is .scrolly__graphic
+         - When the Post-it reaches the glass window (viewport top),
+           it sticks to the glass
+         - But when the belt itself moves past the window,
+           the Post-it gets carried away with it
+
+       top: 0 = "stick when you reach 0px from the top of
+       the viewport." You could set top: 50px to leave a gap.
+
+       height: 100vh = fills the entire viewport so the
+       visualization has maximum visual impact while stuck.
+    */
+    .scrolly__graphic {
+      position: sticky;        /* ← THE MAGIC LINE — glue it in place */
+      top: 0;                  /* ← stick when it hits the top of the viewport */
+      width: 100%;
+      height: 100vh;
+      background: #101828;
+      border: 2px dashed #334; /* TEMPORARY — visual aid so you can see the box */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #556;
+      font-size: 1.2rem;
+    }
+
+
+    /* --- THE STEPS CONTAINER --- [STEP 2]
+       Holds all the text "cue cards."
+
+       ★ THE OVERLAP TRICK ★
+
+       Without the negative margin, the steps would appear
+       BELOW the graphic (off screen while it's stuck).
+       The reader would have to scroll past the entire sticky
+       graphic before seeing any text.
+
+       margin-top: -100vh pulls the steps container UP by
+       one full viewport height — placing the first step card
+       right on top of the sticky graphic.
+
+       Think of it: the graphic is 100vh tall. The steps come
+       after it in the HTML. So they start 100vh below the top
+       of .scrolly. We yank them back up with -100vh so they
+       overlap.
+
+       z-index: 1 makes sure the step cards float ABOVE
+       the graphic (z-index defaults to 0). Without this,
+       the sticky graphic could cover the text.
+
+       position: relative is required for z-index to work.
+       (z-index only applies to positioned elements.)
+    */
+    .scrolly__steps {
+      position: relative;
+      z-index: 1;              /* ← float above the sticky graphic */
+      margin-top: -100vh;      /* ← pull steps UP to overlap the graphic */
+    }
+
+
+    /* --- EACH INDIVIDUAL STEP (a.k.a. "Cue Card") ---
+       Each step is a card of narrative text. As it scrolls
+       into view, it will eventually trigger D3 to update
+       the visualization (that's Step 3 + Step 6).
+
+       max-width: 400px → keeps the text narrow and readable.
+       NYT uses narrow text columns (~400-500px) so your eye
+       doesn't have to travel far across the screen.
+
+       margin: 0 auto → centers the card horizontally.
+       "auto" on left and right margins = "split the remaining
+       space equally on both sides" = centered.
+
+       margin-bottom: 80vh → THIS IS THE KEY TRICK.
+       Each card has a HUGE gap below it — 80% of the viewport
+       height. This creates the empty scrolling space between
+       cards. Without it, all 5 cards would stack tight and
+       you'd scroll past them in a second. The big gap is what
+       gives each step its own "moment" — you scroll through
+       empty space, then the next card appears.
+
+       background: rgba(10, 14, 26, 0.85) → semi-transparent
+       dark background. The 0.85 = 85% opaque. Later, when
+       the graphic is sticky behind these cards, you'll be
+       able to slightly see through the cards to the
+       visualization underneath. This is a classic NYT move.
+
+       border-radius: 8px → rounded corners. Softens the cards.
+    */
+    .step {
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem;
+      margin-bottom: 80vh;
+      background: rgba(10, 14, 26, 0.85);
+      border: 1px solid #223;
+      border-radius: 8px;
+      opacity: 0.3;            /* [STEP 3] dim by default — not active yet */
+      transition: opacity 0.3s ease; /* [STEP 3] smooth fade when activating */
+    }
+
+    /* [STEP 3] — THE ACTIVE STEP
+       Scrollama adds this class to whichever step is
+       currently in the "trigger zone" (center of viewport).
+       The active card goes full brightness. The rest stay dim.
+       This gives the reader a clear sense of "I'm HERE in
+       the story."
+    */
+    .step.is-active {
+      opacity: 1;
+      border-color: #4a6fa5;   /* subtle blue highlight on active card */
+    }
+
+    .step h2 {
+      font-size: 1.3rem;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+
+    .step p {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: #bbb;
+    }
+
+
+    /* ==========================================================
+       SECTION 3: OUTRO
+       ==========================================================
+       Back to normal scrolling — no sticky, no tricks.
+       Just a closing paragraph. Same centering technique
+       as the intro (flexbox).
+    */
+    .outro {
+      min-height: 50vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .outro p {
+      color: #888;
+      max-width: 500px;
+      line-height: 1.7;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================================
+       SECTION 1: INTRO / HERO
+       ==========================================================
+       Just a full-screen title card. No interactivity.
+       The reader scrolls past this to enter the interactive.
+  -->
+  <section class="intro">
+    <h1>Artemis II: Humanity Returns to the Moon</h1>
+    <p class="byline">A visual guide to NASA's historic lunar flyby mission</p>
+  </section>
+
+
+  <!-- ==========================================================
+       SECTION 2: THE SCROLLY CONTAINER
+       ==========================================================
+       This is the heart of the whole page. Two children:
+
+       1. .scrolly__graphic — the D3 visualization (will be sticky)
+       2. .scrolly__steps   — the text cards (scroll past the graphic)
+
+       Right now they're stacked vertically (graphic, then steps).
+       That's WRONG — they should OVERLAP, with the graphic
+       pinned behind and the steps floating over it.
+       Step 2 (CSS sticky) fixes that.
+  -->
+  <section class="scrolly">
+
+    <!-- THE STAGE — D3 draws the mission visualization here.
+         Right now: just a placeholder box with dashed borders.
+         Step 4 replaces this text with an SVG. -->
+    <div class="scrolly__graphic">
+      [ D3 visualization will go here ]
+    </div>
+
+    <!-- THE SCRIPT — five narrative steps, one per mission phase.
+
+         data-step="1" through "5" are CUSTOM DATA ATTRIBUTES.
+         HTML lets you store arbitrary data on elements using
+         data-* attributes. JavaScript can read them with:
+           element.dataset.step  →  "1"
+
+         Scrollama will use these to tell us WHICH step the
+         reader just scrolled to, so D3 knows what to draw.
+    -->
+    <div class="scrolly__steps">
+
+      <!-- padding-top via CSS would also work, but this spacer div
+           gives the reader a beat of "just the graphic" before
+           the first card appears. It's 70vh of empty scroll space. -->
+      <div style="height: 70vh;"></div>
+
+      <!-- STEP 1: Launch -->
+      <div class="step" data-step="1">
+        <h2>Launch</h2>
+        <p>The Space Launch System rocket lifts off from Kennedy Space Center's Launch Complex 39B, carrying four astronauts inside the Orion spacecraft.</p>
+      </div>
+
+      <!-- STEP 2: Earth Orbit -->
+      <div class="step" data-step="2">
+        <h2>Earth Orbit</h2>
+        <p>Orion enters an initial orbit around Earth, where the crew checks all spacecraft systems before committing to the journey to the Moon.</p>
+      </div>
+
+      <!-- STEP 3: Translunar Injection (TLI) -->
+      <div class="step" data-step="3">
+        <h2>Translunar Injection</h2>
+        <p>The upper stage fires one final time, accelerating Orion to 24,500 mph and sending it on a trajectory toward the Moon — the fastest any humans have traveled since Apollo.</p>
+      </div>
+
+      <!-- STEP 4: Lunar Flyby -->
+      <div class="step" data-step="4">
+        <h2>Lunar Flyby</h2>
+        <p>Orion passes just 80 miles above the lunar surface — close enough to see boulders in craters. The Moon's gravity bends the flight path and slings the spacecraft back toward Earth.</p>
+      </div>
+
+      <!-- STEP 5: Return & Splashdown -->
+      <div class="step" data-step="5">
+        <h2>Return &amp; Splashdown</h2>
+        <p>After 10 days in space, Orion re-enters Earth's atmosphere at 25,000 mph. Its heat shield endures 5,000°F before parachutes deploy for a Pacific Ocean splashdown.</p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ==========================================================
+       SECTION 3: OUTRO
+       ==========================================================
+       The conveyor belt has passed. The stage goes dark.
+       We're back to normal scrolling for a closing thought.
+  -->
+  <section class="outro">
+    <p>Artemis II is the first crewed lunar mission in over 50 years — and the first step toward landing astronauts on the Moon with Artemis III.</p>
+  </section>
+
+
+  <!-- ==========================================================
+       STEP 3: SCROLLAMA — THE DIRECTOR
+       ==========================================================
+       Scrollama is a small library (~2KB) that watches your
+       scroll position and fires callbacks when elements enter
+       or exit a "trigger zone."
+
+       Think of it like a laser tripwire across the middle of
+       your screen. When a step card crosses that line,
+       Scrollama yells "STEP 3 JUST ENTERED!" and runs your
+       callback function.
+
+       Under the hood, it uses Intersection Observer — a
+       browser API that efficiently watches when elements
+       enter/leave the viewport. You COULD use Intersection
+       Observer directly, but Scrollama wraps it with a much
+       cleaner API for the scrollytelling use case.
+
+       type="module" lets us use import/export syntax.
+       Vite handles bundling scrollama from node_modules.
+  -->
+  <script type="module">
+    import scrollama from 'scrollama';
+
+    // --- 1. CREATE THE DIRECTOR ---
+    // scrollama() returns a "scroller" instance.
+    // Think of it as hiring the director for your theater.
+    const scroller = scrollama();
+
+    // --- 2. TELL THE DIRECTOR WHAT TO WATCH ---
+    scroller
+      .setup({
+        // Which elements are the "steps"?
+        // This is a CSS selector — it grabs all .step divs.
+        step: '.scrolly__steps .step',
+
+        // Where is the "tripwire"?
+        // 0.5 = middle of the viewport (50% down).
+        // When a step's top edge crosses this line,
+        // it becomes the active step.
+        // Try changing to 0.8 (near bottom) or 0.2 (near top)
+        // to see how it feels.
+        offset: 0.5,
+      })
+
+      // --- 3. WHAT HAPPENS WHEN A STEP ENTERS ---
+      // This callback fires every time a NEW step crosses
+      // the tripwire. The `response` object contains:
+      //   - response.element: the DOM element (.step div)
+      //   - response.index:   which step (0, 1, 2, 3, 4)
+      //   - response.direction: "up" or "down"
+      .onStepEnter((response) => {
+        // Remove "is-active" from ALL steps
+        // (so only one is highlighted at a time)
+        document.querySelectorAll('.step').forEach(el => {
+          el.classList.remove('is-active');
+        });
+
+        // Add "is-active" to the step that just entered
+        response.element.classList.add('is-active');
+
+        // Log it so you can SEE it working in the console
+        // Open DevTools (Cmd+Option+J) to watch these fire
+        console.log(
+          `Step ${response.index + 1} entered (scrolling ${response.direction})`
+        );
+
+        // ★ FUTURE: This is where we'll tell D3 to update.
+        // Something like: updateVisualization(response.index)
+      });
+
+    // --- 4. HANDLE WINDOW RESIZE ---
+    // If the user resizes their browser, the trigger
+    // positions need to be recalculated.
+    window.addEventListener('resize', scroller.resize);
+  </script>
+
+</body>
+</html>
