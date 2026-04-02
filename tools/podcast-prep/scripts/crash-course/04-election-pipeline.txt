@@ -3,24 +3,16 @@ SECTION 1: SOURCE DOCUMENT
 ========================================
 
 EPISODE TITLE: The Election Night Pipeline — How Data Becomes a Live Election Map
-SERIES: Interview Prep — Texas Tribune Crash Course
+SERIES: Newsroom Dev Crash Course
 EPISODE: 4 of 6
-
---- CONTEXT FOR HOSTS ---
-
-Who the learner is: Trevor Brown, investigative journalist with 15+ years experience, self-taught web developer comfortable with React/Next.js/TypeScript. He has an interview at the Texas Tribune tomorrow (March 25, 2026) for Senior Data Visuals Developer. He needs mental models, not code memorization. He's already covered the Tribune's stack overview (Episode 1), D3 (Episode 2), and Django (Episode 3). Now he needs to see how it all fits together in the single most impressive technical workflow he can reference in the interview: the election night pipeline.
-
-What this episode should accomplish: Trevor should be able to walk through the entire election night pipeline from memory — from raw AP vote data arriving to a reader seeing a live-updating election map on their phone. He should understand each step concretely: the Django management command that ingests AP data, the PostgreSQL models that store it, the DRF API that serves it, and the D3 frontend that renders it. By the end, he should be able to stand at a whiteboard and diagram this pipeline with specific model names, field names, and API endpoints.
-
-Tone: Two developers standing at a whiteboard, walking through the pipeline step by step. Be concrete — use specific model names, field names, API endpoints. But always connect it back to WHY each step matters for journalism. This is the episode where everything from Episodes 2 and 3 clicks together into a real system.
 
 --- SOURCE CONTENT ---
 
 THE BIG PICTURE — WHAT HAPPENS ON ELECTION NIGHT
 
-On election night at a newsroom like the Texas Tribune, a data team is responsible for getting live vote results in front of readers as fast and as accurately as possible. Here's the chain:
+On election night at a top digital newsroom, a data team is responsible for getting live vote results in front of readers as fast and as accurately as possible. Here's the chain:
 
-The AP (Associated Press) is the primary source of election results for nearly every newsroom in the country. AP gathers data from Secretary of State offices, county election sites, and stringers physically on the ground at counting locations across every state. The Tribune subscribes to the AP Elections API — a structured data feed that delivers race IDs, candidate information, vote counts, and precincts reporting as JSON. The AP updates results frequently — every few minutes or faster on election night, sometimes every 30 seconds when counting is active.
+The AP (Associated Press) is the primary source of election results for nearly every newsroom in the country. AP gathers data from Secretary of State offices, county election sites, and stringers physically on the ground at counting locations across every state. Newsrooms subscribe to the AP Elections API — a structured data feed that delivers race IDs, candidate information, vote counts, and precincts reporting as JSON. The AP updates results frequently — every few minutes or faster on election night, sometimes every 30 seconds when counting is active.
 
 The pipeline looks like this:
 AP Elections API → Django Management Command → PostgreSQL Database → DRF API → D3 Frontend → Reader's Screen
@@ -29,7 +21,7 @@ Each step in this chain has a clear job. Nothing is magic. Let's walk through ea
 
 STEP 1: DATA INGESTION — DJANGO MANAGEMENT COMMANDS
 
-The first step is getting AP data into the Tribune's database. This is handled by a custom Django management command — a Python script that has full access to Django's ORM and can be run from the terminal or scheduled as a cron job.
+The first step is getting AP data into the newsroom's database. This is handled by a custom Django management command — a Python script that has full access to Django's ORM and can be run from the terminal or scheduled as a cron job.
 
 The command: python manage.py import_election_results
 
@@ -39,7 +31,7 @@ On election night, this runs on a schedule — a cron job triggers it every 2-5 
 2. It receives structured JSON — an array of races, each containing candidates, vote counts, precincts reporting
 3. For each race in the response, it uses Django's update_or_create pattern
 
-The update_or_create pattern is the key insight here. On election night, data is incremental — Bexar County might report 10% of precincts at 8:15pm and 45% at 8:20pm. The management command says: "If a record for Bexar County in the Governor's race already exists, UPDATE its vote counts. If it doesn't exist yet, CREATE a new record." This means you can re-run the import every few minutes without ever creating duplicate records. It's idempotent — running it twice with the same data produces the same result.
+The update_or_create pattern is the key insight here. On election night, data is incremental — a county might report 10% of precincts at 8:15pm and 45% at 8:20pm. The management command says: "If a record for this county in the Governor's race already exists, UPDATE its vote counts. If it doesn't exist yet, CREATE a new record." This means you can re-run the import every few minutes without ever creating duplicate records. It's idempotent — running it twice with the same data produces the same result.
 
 Error handling is critical. If the AP feed goes down for a cycle — and it does happen — the command logs the error and retries on the next scheduled run. It never crashes. On election night, a crashed import script could mean readers see stale data for 10 minutes. The command has to be bulletproof.
 
@@ -49,20 +41,20 @@ STEP 2: THE DATABASE — DJANGO MODELS + POSTGRESQL
 
 Django models define the data structure. For an election night system, the key models look like this:
 
-Race model — Fields: race_id (from the AP), name ("Texas Governor"), state ("TX"), office_type ("Governor", "Senate", "House"), total_precincts (254 for a statewide Texas race), precincts_reporting (how many have reported so far), called (a boolean — has the AP called this race?). The race_id is the unique identifier that ties everything back to the AP feed.
+Race model — Fields: race_id (from the AP), name ("Governor"), state, office_type ("Governor", "Senate", "House"), total_precincts, precincts_reporting (how many have reported so far), called (a boolean — has the AP called this race?). The race_id is the unique identifier that ties everything back to the AP feed.
 
-Candidate model — Fields: name ("Greg Abbott"), party ("REP" or "DEM"), incumbent (boolean), vote_count (integer), vote_percentage (float), winner (boolean — set to True when the AP calls the race). A Candidate belongs to a Race through a foreign key relationship.
+Candidate model — Fields: name, party ("REP" or "DEM"), incumbent (boolean), vote_count (integer), vote_percentage (float), winner (boolean — set to True when the AP calls the race). A Candidate belongs to a Race through a foreign key relationship.
 
-CountyResult model — Fields: county_name ("Travis"), fips_code ("48453"), candidate (foreign key to Candidate), race (foreign key to Race), vote_count (the votes for this candidate in this specific county), precincts_reporting (county-level). This is the granular data that makes a county-level map possible.
+CountyResult model — Fields: county_name, fips_code, candidate (foreign key to Candidate), race (foreign key to Race), vote_count (the votes for this candidate in this specific county), precincts_reporting (county-level). This is the granular data that makes a county-level map possible.
 
 PostgreSQL is the database backend, and it's not arbitrary. PostgreSQL handles concurrent reads and writes well. On election night, thousands of readers are hitting the API (reads) while the management command is updating results every few minutes (writes). A database that chokes on concurrent access would be a disaster. PostgreSQL handles this gracefully.
 
 Django migrations keep the database schema in sync across the team. When a developer adds a field to the Race model — say, a margin field for how close the race is — they run python manage.py makemigrations and Django generates a migration file. That file gets committed to git. Every other developer runs python manage.py migrate and their local database matches. No one has to manually alter database tables.
 
 The ORM makes querying clean and readable:
-- Race.objects.filter(state='TX', called=False) — all uncalled Texas races
+- Race.objects.filter(state='TX', called=False) — all uncalled races in a state
 - Candidate.objects.filter(race__office_type='Governor', winner=True) — the winner of the Governor's race
-- CountyResult.objects.filter(race__name='Texas Governor').select_related('candidate') — all county-level results for the Governor's race, with candidate data included to avoid extra queries
+- CountyResult.objects.filter(race__name='Governor').select_related('candidate') — all county-level results for the Governor's race, with candidate data included to avoid extra queries
 
 STEP 3: THE API — DJANGO REST FRAMEWORK
 
@@ -70,23 +62,23 @@ DRF (Django REST Framework) turns the database models into JSON API endpoints. T
 
 A serializer converts each model to JSON. The RaceSerializer takes a Race object and produces something like:
 {
-  "race_id": "tx-gov-2024",
-  "name": "Texas Governor",
+  "race_id": "state-gov-2024",
+  "name": "Governor",
   "precincts_reporting": 187,
   "total_precincts": 254,
   "percent_reporting": 73.6,
   "called": false,
   "candidates": [
-    { "name": "Greg Abbott", "party": "REP", "vote_count": 2847291, "vote_percentage": 54.2, "winner": false },
-    { "name": "Challenger Name", "party": "DEM", "vote_count": 2405183, "vote_percentage": 45.8, "winner": false }
+    { "name": "Candidate A", "party": "REP", "vote_count": 2847291, "vote_percentage": 54.2, "winner": false },
+    { "name": "Candidate B", "party": "DEM", "vote_count": 2405183, "vote_percentage": 45.8, "winner": false }
   ]
 }
 
 A ViewSet handles HTTP requests:
 - GET /api/v1/races/ — returns all races
-- GET /api/v1/races/tx-gov/ — returns one specific race
+- GET /api/v1/races/state-gov/ — returns one specific race
 - GET /api/v1/races/?state=TX&office_type=Governor — filtered results
-- GET /api/v1/counties/tx-gov/ — county-level results for a specific race
+- GET /api/v1/counties/state-gov/ — county-level results for a specific race
 
 Pagination, filtering, and caching are all built into DRF. On election night, the API might cache results for 30-60 seconds. This is a deliberate tradeoff: results might be up to a minute old, but the server can handle 50,000 simultaneous readers without melting. Without caching, every single page load would trigger a fresh database query — that doesn't scale on the busiest traffic night of the year.
 
@@ -96,13 +88,13 @@ The analogy: The API is like the wire service itself. The AP takes raw, messy da
 
 STEP 4: THE FRONTEND — D3 VISUALIZATION
 
-The frontend is a standalone page — not part of the Django templates. It's a static page deployed to AWS S3, hosted at something like apps.texastribune.org/2024-election-results. This is important: separating the frontend deployment from the backend means you can push a frontend fix without redeploying Django, and vice versa.
+The frontend is a standalone page — not part of the Django templates. It's a static page deployed to a hosting service like AWS S3. This is important: separating the frontend deployment from the backend means you can push a frontend fix without redeploying Django, and vice versa.
 
 The D3 code does the following:
 
-1. Fetches JSON from the API: d3.json("/api/v1/races/tx-gov/") returns the race data as a JavaScript object.
+1. Fetches JSON from the API: d3.json("/api/v1/races/state-gov/") returns the race data as a JavaScript object.
 
-2. Loads a GeoJSON file that defines Texas county boundaries. GeoJSON is just JSON that describes geographic shapes — each county is a polygon defined by coordinates. This file rarely changes (county lines don't move), so it can be bundled with the frontend.
+2. Loads a GeoJSON file that defines county boundaries. GeoJSON is just JSON that describes geographic shapes — each county is a polygon defined by coordinates. This file rarely changes (county lines don't move), so it can be bundled with the frontend.
 
 3. Uses D3's geo functions to draw the map:
 - d3.geoAlbersUsa() or d3.geoAlbers() — a projection that converts latitude/longitude coordinates to screen pixel positions
@@ -129,15 +121,15 @@ The page also includes:
 
 STEP 5: THE READER EXPERIENCE
 
-The reader visits texastribune.org/2024-election-results on their phone, tablet, or desktop.
+The reader visits the election results page on their phone, tablet, or desktop.
 
 The page polls the API on a timer — every 30-60 seconds, a JavaScript setInterval fires a new fetch() call to the API. When new data arrives, the map and tables update in place. The reader doesn't refresh the page. The map just gradually fills in with color as counties report results. Some newsrooms use server-sent events (SSE) instead of polling — a persistent connection where the server pushes updates as soon as they're available — but polling is simpler and works well enough when the API is caching on a similar interval.
 
 The reader can enter their address to see their specific races — a geocoding step matches the address to a precinct and shows only the relevant races. This personalization turns a statewide results page into a personal election guide.
 
-Social sharing is built in — readers can share individual race results as cards on Twitter or Facebook. Each race has its own shareable URL and preview image.
+Social sharing is built in — readers can share individual race results as cards on social media. Each race has its own shareable URL and preview image.
 
-Mobile-responsive design means the map adjusts for phone screens. On a small screen, the map might become a scrollable list of results instead, since tapping tiny Texas counties on a 5-inch screen is frustrating. The tables restack into cards.
+Mobile-responsive design means the map adjusts for phone screens. On a small screen, the map might become a scrollable list of results instead, since tapping tiny counties on a 5-inch screen is frustrating. The tables restack into cards.
 
 Accessibility matters — screen reader users get tabular fallbacks. The results exist as actual data tables in the DOM, not just visual elements trapped inside SVG. ARIA labels describe the map. Color is never the only indicator — winning candidates also get a checkmark icon.
 
@@ -151,15 +143,15 @@ An editor uses the Django admin as the human layer. If the AP sends a correction
 
 A reporter writes the narrative story while the graphics update automatically. They're watching the same data, but they're crafting the human story around it — which races are surprisingly close, what the turnout looks like, what it means for the state. The reporter doesn't need to understand D3 or Django — they just need the numbers, and the admin gives them direct access.
 
-If something breaks — and something always breaks — the Django admin is the fallback. A developer can also run the management command manually: python manage.py import_election_results --race-id=tx-gov — to import just one specific race while debugging the broader issue.
+If something breaks — and something always breaks — the Django admin is the fallback. A developer can also run the management command manually: python manage.py import_election_results --race-id=state-gov — to import just one specific race while debugging the broader issue.
 
 The whole team can see the same admin interface. There's a shared understanding of what the data looks like. This shared visibility is why Django's admin is so central to newsroom culture.
 
-WHY THIS PIPELINE MATTERS FOR THE INTERVIEW
+KEY TAKEAWAYS
 
-This pipeline is the single most impressive technical concept Trevor can reference in the interview. Here's why:
+This pipeline is one of the most impressive technical workflows in newsroom development. Here's why:
 
-It demonstrates Django and D3 working together perfectly — the two core technologies in the Tribune's stack. It's not an abstract "these tools are cool" argument. It's a concrete workflow where each tool has a clear, irreplaceable role.
+It demonstrates Django and D3 working together perfectly — the two core technologies in a modern newsroom data stack. It's not an abstract "these tools are cool" argument. It's a concrete workflow where each tool has a clear, irreplaceable role.
 
 It shows why Django's admin panel matters — not as a nice-to-have, but as an emergency fallback that keeps election results flowing when automation fails at the worst possible moment.
 
@@ -171,15 +163,13 @@ It shows why D3's enter-update-exit pattern matters — live data means elements
 
 It shows why PostgreSQL matters — concurrent reads and writes under extreme traffic conditions on the biggest news night of the year.
 
-TALKING POINTS FOR THE INTERVIEW
+SUMMARY CONCEPTS
 
-Trevor should be able to say these naturally, in his own words:
-
-1. "I understand the full pipeline: AP feed → Django management command → PostgreSQL → DRF API → D3 frontend. Each piece has a clear role, and the separation between them is what makes it manageable for a small team."
+1. "The full pipeline: AP feed → Django management command → PostgreSQL → DRF API → D3 frontend. Each piece has a clear role, and the separation between them is what makes it manageable for a small team."
 
 2. "The update_or_create pattern is perfect for election night — you can re-run the import every few minutes without duplicating data. It's idempotent, which means you can safely retry if something fails."
 
-3. "What I find elegant is the separation of concerns. The backend team can fix a data ingestion bug without touching the frontend. The frontend team can redesign the map without touching the API. On the busiest night of the year, that independence matters."
+3. "The separation of concerns is elegant. The backend team can fix a data ingestion bug without touching the frontend. The frontend team can redesign the map without touching the API. On the busiest night of the year, that independence matters."
 
 4. "The Django admin as an emergency fallback is brilliant — if the automated pipeline breaks at 11pm, an editor can manually update results through the admin while a developer fixes the script. The journalism doesn't stop."
 
@@ -187,10 +177,6 @@ Trevor should be able to say these naturally, in his own words:
 
 6. "The API caching layer is a practical tradeoff — results might be up to 60 seconds old, but the server can handle tens of thousands of readers without going down. On election night, availability matters more than split-second freshness."
 
-TREVOR'S ANGLE — WHY HIS BACKGROUND MAKES THIS CLICK
+WHY THIS MATTERS FOR NEWSROOM DEVELOPERS
 
-Trevor has been on the other side of this pipeline. He's been the reporter waiting for results. He's been the editor who needs to make a correction at 11pm. He's been the journalist who knows that getting a number wrong — even briefly — erodes trust with readers.
-
-That perspective is what makes him different from a pure developer. A developer builds the pipeline to be technically correct. Trevor builds it to be journalistically reliable. He knows that the admin isn't just a database interface — it's the tool an editor uses under deadline pressure. He knows that the management command can't just work — it has to fail gracefully, because a crashed script on election night is a story the Tribune can't tell.
-
-When Trevor describes this pipeline in the interview, he's not reciting architecture. He's describing a system he understands from both sides — the engineering side and the editorial side. That's rare, and that's exactly what the Texas Tribune is hiring for.
+Understanding this pipeline means understanding the intersection of engineering and editorial judgment. A developer builds the pipeline to be technically correct. A journalist-developer builds it to be journalistically reliable. That means knowing the admin isn't just a database interface — it's the tool an editor uses under deadline pressure. It means knowing a management command can't just work — it has to fail gracefully, because a crashed script on election night means a story the newsroom can't tell. That dual perspective — engineering and editorial — is what makes newsroom development a distinct discipline.

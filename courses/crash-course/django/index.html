@@ -6,7 +6,13 @@
   <title>Django — What It Is and How to Talk About It</title>
   <link rel="stylesheet" href="/assets/base.css">
   <link rel="stylesheet" href="/assets/lesson.css">
+  <script type="module">
+    import { checkAuth } from '/components/auth-guard.js';
+    const session = await checkAuth();
+    if (session) document.documentElement.classList.add('authed');
+  </script>
   <style>
+    html:not(.authed) body { visibility: hidden; }
     :root { --track-color: #22c55e; }
     .crash-tag {
       display: inline-block; font-family: var(--mono); font-size: 0.6rem;
@@ -109,9 +115,9 @@
 
   <div class="content">
 
-    <div class="crash-tag">Texas Tribune Interview Prep</div>
+    <div class="crash-tag">Newsroom Dev Crash Course</div>
 
-    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Django is a Python web framework.</strong> That's the whole sentence. It takes a URL someone visits, runs some Python, and sends back a web page or JSON data. The Tribune uses it to run their CMS, their data apps, and the backend that feeds their D3 graphics. Here's what you need to know to talk about it.</p>
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">Django is a Python web framework.</strong> That's the whole sentence. It takes a URL someone visits, runs some Python, and sends back a web page or JSON data. Newsrooms use it to run their CMS, their data apps, and the backend that feeds their D3 graphics. Here's what you need to know to talk about it.</p>
 
     <!-- ============================================ -->
     <!-- WHAT IS DJANGO                               -->
@@ -151,7 +157,7 @@
 
     <h2>Why Newsrooms Love Django</h2>
 
-    <p>Django has been the default backend for news organizations for years. The Washington Post, The New York Times, the Tribune &mdash; tons of newsrooms use it. Here's why:</p>
+    <p>Django has been the default backend for news organizations for years. The Washington Post, The New York Times, the Texas Tribune &mdash; tons of newsrooms use it. Here's why:</p>
 
     <ul>
       <li><strong>The admin panel is free.</strong> You define your data (stories, election results, county data) and Django auto-generates a full editing interface. Reporters and editors can create, edit, search, and filter content without a developer building anything. This is Django's killer feature for newsrooms.</li>
@@ -227,7 +233,7 @@
         <dd>How Django talks to the web server in production. WSGI is the traditional (synchronous) standard. ASGI is the newer async version. You don't need to know the details &mdash; just know that in production, Django runs behind something like Gunicorn (a WSGI server) or Uvicorn (ASGI), not the built-in <code>runserver</code>.</dd>
 
         <dt>Apps</dt>
-        <dd>Django projects are made of "apps" &mdash; self-contained modules. A Tribune project might have a <code>stories</code> app, an <code>elections</code> app, and a <code>data_visuals</code> app. Each has its own models, views, and URLs. They're meant to be reusable and independent.</dd>
+        <dd>Django projects are made of "apps" &mdash; self-contained modules. A newsroom project might have a <code>stories</code> app, an <code>elections</code> app, and a <code>data_visuals</code> app. Each has its own models, views, and URLs. They're meant to be reusable and independent.</dd>
       </dl>
     </div>
 
@@ -276,7 +282,7 @@
 
     <h2>How D3 and Django Work Together</h2>
 
-    <p>This is probably the most useful thing you can talk about in the interview &mdash; because it shows you understand the full stack:</p>
+    <p>This is one of the most useful things to understand &mdash; because it shows you grasp the full stack:</p>
 
     <div class="flow-diagram">
       <div class="flow-row">
@@ -374,21 +380,21 @@
     <!-- YOUR ADVANTAGE                               -->
     <!-- ============================================ -->
 
-    <h2>Your Advantage &mdash; Don't Forget This</h2>
+    <h2>The Journalist-Developer Advantage</h2>
 
-    <p>You're a journalist who codes. Not a developer who reads the news. That distinction matters.</p>
+    <p>Journalists who code bring something most pure developers can't. That distinction matters in newsroom dev work.</p>
 
-    <p>Most developers the Tribune interviews can write Python and build APIs. They can't do what you can do:</p>
+    <p>Most developers can write Python and build APIs. What sets a journalist-developer apart:</p>
 
     <ul>
       <li><strong>You know what makes a good story.</strong> You know which data point is the lead, what context readers need, and what questions they'll ask.</li>
       <li><strong>You understand the editorial process.</strong> Deadline pressure, fact-checking, source verification, editorial judgment about what to publish.</li>
       <li><strong>You can talk to reporters.</strong> You speak their language. You know what "the nut graf" is. You know why a graphic needs a clear takeaway, not just cool interactivity.</li>
-      <li><strong>You're learning the technical side.</strong> That trajectory &mdash; journalist &rarr; developer &mdash; is exactly what organizations like the Tribune value, because it's rare.</li>
+      <li><strong>You're learning the technical side.</strong> That trajectory &mdash; journalist to developer &mdash; is exactly what newsrooms value, because it's rare.</li>
     </ul>
 
     <div class="say-this">
-      <p><strong>If you say one thing in this interview, say this:</strong> "I bring editorial judgment to the development process. I've been in newsrooms. I know what makes a graphic useful to readers, not just technically impressive. The code skills I'm building are how I deliver on that editorial instinct at scale."</p>
+      <p><strong>The key concept:</strong> "Editorial judgment in the development process matters. Understanding what makes a graphic useful to readers, not just technically impressive, is the difference. Code skills are how you deliver on that editorial instinct at scale."</p>
     </div>
 
     <div class="nav-footer">

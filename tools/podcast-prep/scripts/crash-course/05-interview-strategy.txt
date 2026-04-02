@@ -2,149 +2,74 @@
 SECTION 1: SOURCE DOCUMENT
 ========================================
 
-EPISODE TITLE: Your Interview Strategy — How to Frame Your Story and Close Strong
-SERIES: Interview Prep — Texas Tribune Crash Course
+EPISODE TITLE: Career Strategy — Framing the Journalist-to-Developer Transition
+SERIES: Newsroom Dev Crash Course
 EPISODE: 5 of 6
-
---- CONTEXT FOR HOSTS ---
-
-Who the learner is: Trevor Brown, an investigative journalist with 15+ years of experience (Oklahoma Watch, Tulsa World, and more) who's also a self-taught web developer comfortable with React, Next.js, and TypeScript. He has an interview at the Texas Tribune TOMORROW (March 25, 2026) for the Senior Data Visuals Developer position. He's anxious because he hasn't used Django or D3 professionally — but he has deep editorial experience and has built serious full-stack applications on his own. He's replacing Carla Astudillo, who left for ProPublica in February 2026.
-
-What this episode should accomplish: This is the pre-game talk. Trevor has spent the previous four episodes learning the Tribune's stack, D3, Django, and SQL. Now it's time to pull it all together into a cohesive interview strategy. He needs to know exactly how to tell his story, how to frame his gaps as temporary and his strengths as irreplaceable, what talking points to have ready, what questions to ask, and how to handle the tough moments. He should walk away from this episode feeling prepared, confident, and genuinely excited — not anxious.
-
-Tone: Warm, encouraging, practical. Like a coach giving a pre-game talk the night before the big day. Acknowledge the anxiety but redirect it into preparation. Be specific — use real project names, real talking points, real interview scenarios. Make Trevor feel like his background is an asset, not a liability. This is not about faking it. It's about helping Trevor see what's already true: he's a strong candidate.
 
 --- SOURCE CONTENT ---
 
-WHY TREVOR IS ACTUALLY A GREAT FIT
+WHY JOURNALIST-DEVELOPERS ARE A GREAT FIT
 
-Let's start with something Trevor needs to hear: he's not an imposter sneaking into a developer role. He's exactly the kind of person the Texas Tribune hires.
+Let's start with something worth internalizing: a journalist moving into a developer role at a newsroom is not an imposter sneaking in. It's exactly the kind of hire top data visuals teams make.
 
-The Tribune's job listing for Senior Data Visuals Developer literally says they want someone who can work at the intersection of journalism and technology. That's not a throwaway line — it's the core of the role. And it describes Trevor's entire career trajectory.
+Job listings for data visuals roles at leading newsrooms literally say they want someone who can work at the intersection of journalism and technology. That's not a throwaway line — it's the core of the role.
 
-Here's what most developer candidates bring to this interview: strong technical skills, maybe some portfolio projects, probably a CS degree. Here's what they almost certainly don't bring: 15 years of investigative journalism, the ability to look at a dataset and know which number is the lead, experience working on deadline in a newsroom, the editorial judgment to know what a reader needs to understand, and the communication skills to explain complex findings to a general audience.
+Here's what most developer candidates bring: strong technical skills, maybe some portfolio projects, probably a CS degree. Here's what they almost certainly don't bring: years of investigative journalism, the ability to look at a dataset and know which number is the lead, experience working on deadline in a newsroom, the editorial judgment to know what a reader needs to understand, and the communication skills to explain complex findings to a general audience.
 
-Trevor can do both. He can code AND he can think editorially. That combination is rare.
+A journalist-developer can do both — code AND think editorially. That combination is rare.
 
-Consider the evidence:
-- He's won Writer of the Year and Reporter of the Year awards
-- He's won 1st Place Investigative Reporting from SPJ
-- He taught himself JavaScript, TypeScript, React, Next.js, Node.js, Python, SQL, and PostgreSQL — while working full-time as a journalist
-- He's built production applications: Second Brain (a research database with 200,000+ records), a dental practice dashboard, News Pulse (an AI news aggregator), and AI Model Arena
-- He uses Playwright for testing, Clerk for authentication, Chart.js for visualization — this is a real developer's toolkit
+THE DJANGO LEARNING CURVE — HOW TO THINK ABOUT IT
 
-And here's the most important detail: Carla Astudillo, whose role Trevor would be filling, had a remarkably similar trajectory. She was originally a journalist who transitioned into development. She built the Tribune's election results pages. The Tribune doesn't just tolerate journalist-turned-developers — they actively seek them out. Trevor IS the profile this team hires.
+For a developer coming from a JavaScript/React background, Django is new but not foreign. Here's a helpful framework:
 
-HOW TO FRAME THE DJANGO GAP
+Step 1 — Acknowledge it honestly: "I haven't worked in Django professionally."
 
-Rule number one: don't apologize for it. Don't lead with it. Don't bring it up unless they ask. And when they do ask, here's the framework:
-
-Step 1 — Acknowledge it honestly but briefly: "I haven't worked in Django professionally."
-
-Step 2 — Show conceptual understanding: "But I understand the framework — models, views, URL routing, the ORM, the admin panel, and how Django REST Framework serves JSON APIs. I've been studying the Tribune's stack specifically."
+Step 2 — Show conceptual understanding: "But I understand the framework — models, views, URL routing, the ORM, the admin panel, and how Django REST Framework serves JSON APIs."
 
 Step 3 — Pivot to transferable experience: "I've built full-stack applications with Next.js and PostgreSQL. The patterns are the same — routing, database queries, API endpoints, authentication. Django just has different names for the same concepts."
 
-Step 4 — Demonstrate learning velocity: "I taught myself React, TypeScript, and full-stack development in under two years while working full-time as an investigative journalist. I learn fast because I have a journalist's research instincts."
+Step 4 — Demonstrate learning velocity: "I taught myself React, TypeScript, and full-stack development in under two years while working full-time. I learn fast because I have a journalist's research instincts."
 
-Step 5 — Deliver the real pitch: "My Django learning curve is weeks, not months. My 15 years of editorial judgment and investigative skills — that's what takes a career to build and can't be learned from a tutorial."
+Step 5 — Reframe the conversation: "A Django learning curve is weeks, not months. Years of editorial judgment and investigative skills — that's what takes a career to build and can't be learned from a tutorial."
 
-That last line is the key. It reframes the conversation from "what Trevor lacks" to "what Trevor has that nobody else does." The Django gap is temporary. The journalism background is permanent.
+That last line is the key. It reframes from "what's missing" to "what's irreplaceable." The Django gap is temporary. The journalism background is permanent.
 
-HOW TO FRAME THE D3 GAP
+THE D3 LEARNING CURVE — HOW TO THINK ABOUT IT
 
-Same approach — don't apologize, demonstrate understanding, pivot to what matters.
+Same approach — demonstrate understanding, pivot to what matters.
 
-Show you understand D3's mental model: "I understand that D3 is a data binding toolkit, not a charting library. You bind data to DOM elements, use scales to convert data values to visual properties, and use generators for paths and projections for maps."
+Show you understand D3's mental model: "D3 is a data binding toolkit, not a charting library. You bind data to DOM elements, use scales to convert data values to visual properties, and use generators for paths and projections for maps."
 
 Show you've done related work: "I've built charts with Chart.js and experimented with D3. The concepts — scales, axes, data binding, SVG manipulation — I understand. My learning curve is the D3 API specifics, not the visualization concepts."
 
-Then pivot to the thing that actually matters for the Tribune's work: "What I bring that most D3 developers don't is the editorial eye. I know which data point is the story. I know what a reader needs to understand versus what's just noise. That editorial judgment shapes every visualization decision — what to highlight, what to simplify, what to leave out entirely. You can teach someone the D3 API in a few weeks. You can't teach them 15 years of newsroom instincts."
+Then pivot to the thing that actually matters for newsroom work: "What most D3 developers don't have is an editorial eye. Knowing which data point is the story. Knowing what a reader needs to understand versus what's just noise. That editorial judgment shapes every visualization decision — what to highlight, what to simplify, what to leave out entirely. You can teach someone the D3 API in a few weeks. You can't teach them years of newsroom instincts."
 
-KILLER TALKING POINTS — MEMORIZE THESE
+SMART QUESTIONS TO ASK DATA VISUALS TEAMS
 
-These are Trevor's go-to lines. They should feel natural, not rehearsed, but he should know them cold.
-
-The opening pitch: "What drew me to this role is that it sits at the exact intersection of my two careers — investigative journalism and web development. I've spent 15 years finding stories in data. Now I want to build the tools that help readers see those stories."
-
-On the Tribune specifically: "I've been following the Tribune's work for years as a journalist. Your election results pages, the schools explorer, the housing zoning analysis — this is the kind of work that makes me excited to be in this field."
-
-On the team's engineering culture: "I've looked at the team's GitHub repos — data-visuals-create for scaffolding, queso-ui for shared styles, scuole for education data. The investment in internal tooling tells me this is a team that takes craft seriously."
-
-On AI (it's in the job listing): "The listing mentions AI experimentation, and that's an area I'm actively working in. I built an AI news aggregator and an AI model comparison tool. I think there's huge potential for AI to help with data analysis, story discovery, and making graphics more accessible."
-
-The closing statement: "I know my Django and D3 experience is growing rather than deep. But I also know that the hardest skills for this role — editorial judgment, investigative instincts, the ability to communicate complex data to readers — those are skills I've been building for 15 years. The technical gaps are a matter of weeks. The journalism background is a matter of a career."
-
-SMART QUESTIONS TO ASK THEM
-
-Good questions show preparation and genuine curiosity. Trevor should pick 3-4 of these depending on how the conversation flows:
+Good questions show preparation and genuine curiosity. Pick 3-4 depending on how a conversation flows:
 
 About workflow: "What does the workflow look like between the data visuals team and reporters? How early does the team get involved in a story?"
 
 About technical decisions: "How does the team decide when something needs a custom D3 graphic versus an off-the-shelf tool like Datawrapper?"
 
-About election night (the team's signature product): "What's the deployment pipeline for election night? How does the team handle last-minute data issues?"
+About election night (often the team's signature product): "What's the deployment pipeline for election night? How does the team handle last-minute data issues?"
 
-About AI: "The listing mentions AI experimentation — what areas is the team most excited about?"
+About AI: "What areas of AI experimentation is the team most excited about?"
 
 About onboarding: "What would the first few months look like for someone in this role? What would I be working on first?"
 
-About team culture: "How does the team handle code review and technical standards? I noticed you have data-visuals-guides on GitHub."
+About team culture: "How does the team handle code review and technical standards?"
 
 About challenges: "What's the biggest technical challenge the team is facing right now?"
 
-Important: Do NOT ask about salary, benefits, or time off in the first interview. Those conversations come later.
+THE JOURNALIST-DEVELOPER IDENTITY
 
-HANDLING THE TOUGH QUESTIONS
+A journalist who builds software isn't leaving journalism — they're evolving how they practice it. Spending years finding stories in data with spreadsheets and documents, then building the tools that help millions of readers understand those stories visually. That's a coherent career arc, not a career change.
 
-These are the moments that make or break an interview. Trevor should have answers ready so he doesn't freeze.
+The strongest framing: "My biggest technical gaps are self-taught and growing. But I compensate by being a relentless learner and by bringing something most candidates can't — the editorial judgment that comes from years in a newsroom."
 
-"Tell me about a time you used D3."
-Answer: "I've studied D3 extensively and built experimental visualizations. But more importantly, I understand the mental model and I've used Chart.js in production. I learn new libraries quickly — I went from zero JavaScript to building full-stack React apps in under a year."
+WHAT NEWSROOM DATA TEAMS VALUE
 
-"Do you have Django experience?"
-Answer: "Not professionally, but I understand the framework deeply — models and the ORM for data, views and URL routing for logic, templates for rendering, and Django REST Framework for APIs. My Python is solid and I've built production apps with PostgreSQL, which is the standard Django database."
+Newsroom data visuals teams have a demonstrated pattern of hiring journalist-turned-developers. They're not just tolerant of non-traditional backgrounds — they actively seek them out. Many team members at top newsrooms made the same career pivot mid-career.
 
-"Why are you leaving journalism?"
-Answer: "I'm not leaving journalism — I'm evolving how I practice it. I've spent 15 years finding stories in data with spreadsheets and documents. Now I want to build the tools that help millions of readers understand those stories visually."
-
-"What's your biggest weakness?"
-Answer: Frame it honestly but forward-looking: "My Django and D3 are self-taught and growing. But I compensate by being a relentless learner and by bringing something most candidates can't — the editorial judgment that comes from 15 years in a newsroom."
-
-BODY LANGUAGE AND ENERGY
-
-This isn't just about what Trevor says — it's about how he shows up.
-
-Be genuinely enthusiastic. The Tribune does incredible work. Trevor's excitement about their projects should be real, not performed. Enthusiasm is contagious and memorable.
-
-Don't be defensive about gaps. When Django or D3 come up, be matter-of-fact. State what you know, state what you're learning, pivot to strengths. Defensive energy makes gaps feel bigger than they are. Confident energy makes them feel manageable.
-
-Ask follow-up questions throughout the conversation. Don't save all questions for the end. When they describe a project or a workflow, ask a genuine follow-up. This shows curiosity and engagement — both qualities they want in a teammate.
-
-Take notes during the interview. Bring a notebook or have a notes app ready. It shows you're engaged and taking the conversation seriously. It also gives you something to do with your hands if you're nervous.
-
-Mention specific Tribune projects by name. Nothing impresses an interviewer more than a candidate who has clearly done their homework. Reference the election results pages, the housing zoning analysis, the schools explorer, the water crisis tool. Show them you've been paying attention.
-
-THE CARLA ASTUDILLO CONNECTION
-
-This is important context Trevor should know but handle carefully.
-
-Carla Astudillo left the Texas Tribune for ProPublica's data visuals team in February 2026. She was the Senior Data Visuals Developer — the exact role Trevor is interviewing for. And here's the key: she was originally a journalist who transitioned into development. Her career arc mirrors Trevor's almost exactly.
-
-She built the Tribune's election results pages. She did the housing zoning analysis. She was a journalist who learned to code and became one of the Tribune's most impactful developers.
-
-Trevor IS the type of person who fills this role. The Tribune has a demonstrated pattern of hiring journalist-turned-developers and giving them the space to grow technically while leveraging their editorial strengths.
-
-However — don't bring up Carla explicitly in the interview. It could feel presumptuous or awkward. Just know that your profile matches the team's hiring pattern. If they bring her up, you can say something like: "I admire her work — the election results pages are remarkable. And I think my background as a journalist-turned-developer would let me contribute in a similar way."
-
-FINAL PEP TALK — THE NIGHT-BEFORE MINDSET
-
-Trevor should go into tomorrow knowing three things:
-
-First, his anxiety is normal and actually useful. It means he cares. Channel it into focus, not fear.
-
-Second, he's not pretending to be something he's not. He IS a journalist who builds software. He IS someone who finds stories in data. He IS someone who has taught himself an entire technology stack in two years. Those are facts, not spin.
-
-Third, the Tribune needs someone who can do what Trevor does. They can find developers who know Django and D3. What they can't easily find is a developer who has won investigative journalism awards, who knows what makes a story land, who can sit in an editorial meeting and speak the language of reporters AND then go build the visualization that brings the story to life. That's Trevor. That's the pitch. That's the truth.
-
-Go get it.
+The job postings often include language like "We know some great candidates won't check all of these boxes." They're signaling that Django and D3 aren't the whole picture. They're looking for editorial judgment and data instinct too.

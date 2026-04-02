@@ -6,7 +6,13 @@
   <title>D3.js — What It Is and How to Talk About It</title>
   <link rel="stylesheet" href="/assets/base.css">
   <link rel="stylesheet" href="/assets/lesson.css">
+  <script type="module">
+    import { checkAuth } from '/components/auth-guard.js';
+    const session = await checkAuth();
+    if (session) document.documentElement.classList.add('authed');
+  </script>
   <style>
+    html:not(.authed) body { visibility: hidden; }
     :root { --track-color: #f97316; }
     .crash-tag {
       display: inline-block; font-family: var(--mono); font-size: 0.6rem;
@@ -75,9 +81,9 @@
 
   <div class="content">
 
-    <div class="crash-tag">Texas Tribune Interview Prep</div>
+    <div class="crash-tag">Newsroom Dev Crash Course</div>
 
-    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">You don't need to write D3 code from memory tomorrow.</strong> You need to understand what D3 does, why it exists, and be able to have an intelligent conversation about it. This page gives you that.</p>
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;"><strong style="color: var(--track-color);">You don't need to write D3 code from memory.</strong> You need to understand what D3 does, why it exists, and be able to have an intelligent conversation about it. This page gives you that.</p>
 
     <!-- ============================================ -->
     <!-- WHAT IS D3                                   -->
@@ -94,23 +100,23 @@
     </div>
 
     <div class="say-this">
-      <p><strong>How to say it in an interview:</strong> "D3 gives you low-level control over every element in a visualization. It's not a charting library &mdash; it's a toolkit for binding data to DOM elements. That's what makes it powerful for newsroom work, because every graphic is different. You can't just drop election results into a pre-built chart type and have it tell the right story."</p>
+      <p><strong>How to say it:</strong> "D3 gives you low-level control over every element in a visualization. It's not a charting library &mdash; it's a toolkit for binding data to DOM elements. That's what makes it powerful for newsroom work, because every graphic is different. You can't just drop election results into a pre-built chart type and have it tell the right story."</p>
     </div>
 
     <!-- ============================================ -->
-    <!-- WHY THE TRIBUNE USES IT                      -->
+    <!-- WHY NEWSROOMS USE IT                         -->
     <!-- ============================================ -->
 
-    <h2>Why Does the Tribune Use D3?</h2>
+    <h2>Why Do Newsrooms Use D3?</h2>
 
-    <p>The Texas Tribune publishes interactive graphics constantly &mdash; election results maps, budget explorers, school district comparisons, demographic breakdowns. Every one of those is different. They're not standard bar charts you can get from a dashboard tool.</p>
+    <p>Digital newsrooms publish interactive graphics constantly &mdash; election results maps, budget explorers, school district comparisons, demographic breakdowns. Every one of those is different. They're not standard bar charts you can get from a dashboard tool.</p>
 
-    <p>D3 lets their graphics team:</p>
+    <p>D3 lets a graphics team:</p>
     <ul>
       <li><strong>Build exactly what the story needs</strong> &mdash; not what a charting library offers</li>
       <li><strong>Make it interactive</strong> &mdash; hover to see county details, click to filter, animate between states</li>
-      <li><strong>Use real geographic data</strong> &mdash; D3 can draw maps directly from GeoJSON boundary files (Texas counties, legislative districts, school zones)</li>
-      <li><strong>Control every pixel</strong> &mdash; match the Tribune's design system, typography, colors exactly</li>
+      <li><strong>Use real geographic data</strong> &mdash; D3 can draw maps directly from GeoJSON boundary files (counties, legislative districts, school zones)</li>
+      <li><strong>Control every pixel</strong> &mdash; match the newsroom's design system, typography, colors exactly</li>
       <li><strong>Ship as plain HTML</strong> &mdash; no heavy framework needed, loads fast on mobile</li>
     </ul>
 
@@ -179,7 +185,7 @@
         <dd>Smooth animations between states. Bars grow from zero, colors fade between values, maps zoom in. D3 handles the animation math &mdash; you just say "go from here to here over 500 milliseconds."</dd>
 
         <dt>GeoJSON / TopoJSON</dt>
-        <dd>Data formats for geographic boundaries. GeoJSON is the standard (easy to understand, verbose). TopoJSON is a compressed version (smaller files, good for maps with lots of boundaries like all 254 Texas counties). The Tribune probably uses these constantly.</dd>
+        <dd>Data formats for geographic boundaries. GeoJSON is the standard (easy to understand, verbose). TopoJSON is a compressed version (smaller files, good for maps with lots of boundaries like all 254 counties in a state). Newsrooms use these constantly.</dd>
       </dl>
     </div>
 
@@ -189,7 +195,7 @@
 
     <h2>D3 vs. Other Tools &mdash; Know the Landscape</h2>
 
-    <p>If they ask why D3 instead of something else, here's the lay of the land:</p>
+    <p>If someone asks why D3 instead of something else, here's the lay of the land:</p>
 
     <table>
       <tr>
@@ -220,7 +226,7 @@
     </table>
 
     <div class="say-this">
-      <p><strong>How to say it:</strong> "I see D3 as the right tool when the visualization is the story &mdash; when you need something custom that no off-the-shelf tool can do. For a quick chart in a daily story, Datawrapper is probably faster. But for the big interactive pieces that the Tribune is known for &mdash; election maps, data explorers &mdash; D3 gives you the control you need."</p>
+      <p><strong>How to say it:</strong> "I see D3 as the right tool when the visualization is the story &mdash; when you need something custom that no off-the-shelf tool can do. For a quick chart in a daily story, Datawrapper is probably faster. But for the big interactive pieces newsrooms are known for &mdash; election maps, data explorers &mdash; D3 gives you the control you need."</p>
     </div>
 
     <!-- ============================================ -->

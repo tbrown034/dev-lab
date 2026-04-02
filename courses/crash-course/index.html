@@ -3,10 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interview Prep — Texas Tribune Crash Course</title>
+  <title>Newsroom Dev Crash Course</title>
   <link rel="stylesheet" href="/assets/base.css">
   <link rel="stylesheet" href="/assets/shell.css">
+  <script type="module">
+    import { checkAuth } from '/components/auth-guard.js';
+    const session = await checkAuth();
+    if (session) document.documentElement.classList.add('authed');
+  </script>
   <style>
+    /* Hide content until auth check completes */
+    html:not(.authed) body { visibility: hidden; }
     :root {
       --crash: #ef4444;
       --crash-dim: rgba(239, 68, 68, 0.15);
@@ -550,14 +557,46 @@
 </head>
 <body>
 
+  <!-- ─── HEADER ─── -->
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <span class="dot"></span>
+        Learn Coding
+      </a>
+      <nav>
+        <a href="/courses/">Courses</a>
+        <span class="sep">/</span>
+        <a href="/projects/">Projects</a>
+        <span class="sep">/</span>
+        <a href="/feed/">The Scroll</a>
+        <span class="sep">/</span>
+        <a href="/pod/">The Pod</a>
+        <span class="sep">/</span>
+        <a href="/about/">About</a>
+        <a href="/jobs/" class="nav-auth-only" style="color: var(--accent-django); font-weight: 600;">Jobs</a>
+      </nav>
+      <div class="header-actions">
+        <button class="auth-toggle" id="auth-toggle" aria-label="Sign in">
+          <svg class="icon-login" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          <svg class="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
   <!-- ═══════════════════════════════════════ -->
   <!--  HERO                                   -->
   <!-- ═══════════════════════════════════════ -->
   <div class="hero">
-    <div class="hero-kicker"><span class="pulse"></span> Interview Prep &mdash; March 25, 2026 at 3:00 PM</div>
-    <h1>Texas Tribune <em>Crash Course</em></h1>
+    <div class="hero-kicker"><span class="pulse"></span> Crash Course</div>
+    <h1>Newsroom Dev <em>Crash Course</em></h1>
     <p class="hero-body">
-      <strong>Your goal isn't to become a D3/Django expert overnight.</strong> It's to walk into that interview able to talk about these tools with confidence &mdash; understand what they do, why the Tribune uses them, and how they fit together. Mental models and vocabulary, not memorized code.
+      <strong>Your goal isn't to become a D3/Django expert overnight.</strong> It's to understand these tools well enough to talk about them with confidence &mdash; what they do, why newsrooms use them, and how they fit together. Mental models and vocabulary, not memorized code.
     </p>
     <a href="/courses/" style="color: var(--crash); text-decoration: none; font-size: 0.85rem;">&larr; Back to courses</a>
   </div>
@@ -568,7 +607,7 @@
   <div class="section">
     <div class="context">
       <h3>The Mindset</h3>
-      <p>You might not get a single technical question. But if D3 or Django comes up in conversation, you want to <strong>sound like someone who's worked with these tools</strong>, not someone who just read the Wikipedia page. That means understanding the <em>why</em> and the <em>how it feels</em> &mdash; not just the <em>what</em>. Your 15 years of journalism IS your superpower here &mdash; you understand the newsroom problems these tools solve.</p>
+      <p>When D3 or Django comes up in conversation, you want to <strong>sound like someone who's worked with these tools</strong>, not someone who just read the Wikipedia page. That means understanding the <em>why</em> and the <em>how it feels</em> &mdash; not just the <em>what</em>. A journalism background is a superpower here &mdash; you understand the newsroom problems these tools solve.</p>
     </div>
   </div>
 
@@ -583,8 +622,8 @@
       <div class="podcast-card">
         <div class="podcast-num">01</div>
         <div class="podcast-info">
-          <div class="podcast-title">Inside the Texas Tribune's Tech Stack</div>
-          <div class="podcast-desc">What the Tribune builds, who's on the data visuals team, their GitHub repos, the election pipeline, and why they're one of the best data journalism shops in the country.</div>
+          <div class="podcast-title">Inside a Newsroom Tech Stack</div>
+          <div class="podcast-desc">What a top digital newsroom builds, how data visuals teams work, common GitHub repos, the election pipeline, and why these are some of the best data journalism shops in the country.</div>
           <audio controls preload="none" src="/audio/crash-course/01-texas-tribune-stack.mp3"></audio>
         </div>
       </div>
@@ -593,7 +632,7 @@
         <div class="podcast-num">02</div>
         <div class="podcast-info">
           <div class="podcast-title">D3.js &mdash; Everything You Need to Know</div>
-          <div class="podcast-desc">What D3 is (and isn't), data binding, selections, scales, projections, maps, enter-update-exit, and how the Tribune uses it for election graphics and interactive features.</div>
+          <div class="podcast-desc">What D3 is (and isn't), data binding, selections, scales, projections, maps, enter-update-exit, and how newsrooms use it for election graphics and interactive features.</div>
           <audio controls preload="none" src="/audio/crash-course/02-d3-for-the-interview.mp3"></audio>
         </div>
       </div>
@@ -619,8 +658,8 @@
       <div class="podcast-card">
         <div class="podcast-num">05</div>
         <div class="podcast-info">
-          <div class="podcast-title">Your Interview Strategy</div>
-          <div class="podcast-desc">How to frame your background, handle the Django/D3 gap, your killer talking points, smart questions to ask, and how to close strong.</div>
+          <div class="podcast-title">Learning Strategy &amp; Key Talking Points</div>
+          <div class="podcast-desc">How to frame your background, approach learning Django and D3, key talking points, and how to think about newsroom dev work.</div>
           <audio controls preload="none" src="/audio/crash-course/05-interview-strategy.mp3"></audio>
         </div>
       </div>
@@ -628,8 +667,8 @@
       <div class="podcast-card">
         <div class="podcast-num">06</div>
         <div class="podcast-info">
-          <div class="podcast-title">Real Tribune Projects Walkthrough</div>
-          <div class="podcast-desc">Deep dive into what the team actually builds &mdash; election pages, schools explorer, housing analysis, flood coverage &mdash; and how you'd contribute to each.</div>
+          <div class="podcast-title">Real Newsroom Projects Walkthrough</div>
+          <div class="podcast-desc">Deep dive into what data visuals teams actually build &mdash; election pages, schools explorers, housing analysis, flood coverage &mdash; and common patterns across projects.</div>
           <audio controls preload="none" src="/audio/crash-course/06-real-projects.mp3"></audio>
         </div>
       </div>
@@ -641,7 +680,7 @@
   <!-- ═══════════════════════════════════════ -->
   <div class="section">
     <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
-      <a href="/courses/crash-course/cheat-card/" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; background: var(--crash-dim); border: 1px solid rgba(239,68,68,0.25); border-radius: 6px; text-decoration: none; color: var(--crash); font-family: var(--mono); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em;">Interview Cheat Card &rarr;</a>
+      <a href="/courses/crash-course/cheat-card/" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; background: var(--crash-dim); border: 1px solid rgba(239,68,68,0.25); border-radius: 6px; text-decoration: none; color: var(--crash); font-family: var(--mono); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em;">Cheat Card &rarr;</a>
       <a href="/courses/crash-course/d3-live/" style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25); border-radius: 6px; text-decoration: none; color: var(--d3); font-family: var(--mono); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em;">D3 Live Examples &rarr;</a>
     </div>
   </div>
@@ -655,7 +694,7 @@
       <a href="/courses/crash-course/d3/" class="track-card d3">
         <div class="label">Concept 1</div>
         <h3>D3.js &mdash; What It Is and How to Talk About It</h3>
-        <p>What D3 actually does, why it's different from Chart.js or Tableau, how the Tribune uses it for maps and election graphics, and the key vocabulary.</p>
+        <p>What D3 actually does, why it's different from Chart.js or Tableau, how newsrooms use it for maps and election graphics, and the key vocabulary.</p>
       </a>
       <a href="/courses/crash-course/django/" class="track-card django">
         <div class="label">Concept 2</div>
@@ -669,44 +708,38 @@
   <!--  KNOW THE JOB                           -->
   <!-- ═══════════════════════════════════════ -->
   <div class="section">
-    <h2>Know the Job &mdash; What They're Actually Hiring For</h2>
-    <p class="section-intro">The listing is "Senior Data Visuals Developer." Here's what each requirement <em>really</em> means and where your existing skills connect.</p>
+    <h2>Core Skills &mdash; What Newsroom Data Teams Need</h2>
+    <p class="section-intro">A typical "Data Visuals Developer" role at a top newsroom. Here's what each skill area <em>really</em> means.</p>
 
     <div class="job-grid">
       <div class="job-card primary">
         <div class="job-title">Django API Development</div>
-        <div class="job-what">Build and maintain Django APIs for election tools and a campaign finance app. This is backend Python work &mdash; models, serializers, management commands.</div>
-        <div class="job-you">You know: Python, PostgreSQL, API design. Django's ORM is like a Python wrapper around the SQL you already understand.</div>
+        <div class="job-what">Build and maintain Django APIs for election tools and campaign finance apps. Backend Python work &mdash; models, serializers, management commands.</div>
       </div>
 
       <div class="job-card primary">
         <div class="job-title">D3 Data Visualization</div>
-        <div class="job-what">Build interactive charts, maps (especially Texas county choropleths), and data explorers. Every major project uses D3.</div>
-        <div class="job-you">You know: Chart.js concepts transfer. SVG is just HTML. D3's mental model = bind data to shapes.</div>
+        <div class="job-what">Build interactive charts, maps (county-level choropleths), and data explorers. The primary graphics tool on most data visuals teams.</div>
       </div>
 
       <div class="job-card primary">
         <div class="job-title">React / Preact Frontend</div>
         <div class="job-what">Build interactive page-level features and components. Some projects use React alongside D3.</div>
-        <div class="job-you">You know: React, Next.js, TypeScript, component architecture. This is your strongest technical area.</div>
       </div>
 
       <div class="job-card primary">
         <div class="job-title">AI Experimentation</div>
         <div class="job-what">Explore how AI/LLMs can help the data visuals workflow &mdash; from data analysis to story discovery to accessible graphics.</div>
-        <div class="job-you">You know: AI tools deeply. You've built AI-powered apps (News Pulse, AI Model Arena). Most D3/Django devs don't have this.</div>
       </div>
 
       <div class="job-card secondary">
         <div class="job-title">Data Analysis &amp; Reporting</div>
         <div class="job-what">Analyze datasets (elections, schools, demographics) and help reporters find stories in data.</div>
-        <div class="job-you">15 years of investigative journalism. You ARE this skill. FOIA, public records, data-driven stories.</div>
       </div>
 
       <div class="job-card secondary">
         <div class="job-title">Editorial Judgment</div>
         <div class="job-what">Know which data point is the story. Design graphics that inform readers, not just look cool.</div>
-        <div class="job-you">Award-winning investigative reporter. Writer of the Year. You understand what a reader needs.</div>
       </div>
     </div>
   </div>
@@ -715,8 +748,8 @@
   <!--  THE TECH STACK                         -->
   <!-- ═══════════════════════════════════════ -->
   <div class="section">
-    <h2>The Tribune's Tech Stack</h2>
-    <p class="section-intro">Every technology the team uses, what they use it for, and how your existing skills map.</p>
+    <h2>The Newsroom Tech Stack</h2>
+    <p class="section-intro">Common technologies used by data visuals teams at top digital newsrooms.</p>
 
     <div class="stack-grid">
       <div class="stack-item">
@@ -724,7 +757,6 @@
         <div>
           <div class="stack-name">Django</div>
           <div class="stack-use">Backend framework. Powers CMS, data apps, election APIs, campaign finance tools. Admin panel for editors.</div>
-          <div class="stack-yours">You: Python + PostgreSQL + API design from Next.js. Same patterns, different names.</div>
         </div>
       </div>
 
@@ -732,8 +764,7 @@
         <div class="stack-icon" style="background: var(--d3);">D3</div>
         <div>
           <div class="stack-name">D3.js</div>
-          <div class="stack-use">Data visualization. Interactive charts, election maps, data explorers. The team's primary graphics tool.</div>
-          <div class="stack-yours">You: Chart.js experience + SVG understanding. D3 is the professional version of what you've done.</div>
+          <div class="stack-use">Data visualization. Interactive charts, election maps, data explorers. The primary graphics tool on most data visuals teams.</div>
         </div>
       </div>
 
@@ -742,7 +773,6 @@
         <div>
           <div class="stack-name">React / Preact</div>
           <div class="stack-use">Interactive components and page-level apps. Used alongside D3 for complex features.</div>
-          <div class="stack-yours">You: React + Next.js + TypeScript. This is your strongest skill on the list.</div>
         </div>
       </div>
 
@@ -750,8 +780,7 @@
         <div class="stack-icon" style="background: #68a063;">No</div>
         <div>
           <div class="stack-name">Node.js</div>
-          <div class="stack-use">Build tooling, scaffolding, and CLI tools (data-visuals-create).</div>
-          <div class="stack-yours">You: Built full Node.js backends. Comfortable with npm, build tools, CLI scripts.</div>
+          <div class="stack-use">Build tooling, scaffolding, and CLI tools for project generation.</div>
         </div>
       </div>
 
@@ -760,7 +789,6 @@
         <div>
           <div class="stack-name">Nunjucks</div>
           <div class="stack-use">HTML templating for graphics. Pulls in data from Google Sheets during build. Similar to Jinja2.</div>
-          <div class="stack-yours">You: JSX/React templating. Same concept &mdash; dynamic data in HTML templates.</div>
         </div>
       </div>
 
@@ -769,7 +797,6 @@
         <div>
           <div class="stack-name">SCSS / Sass</div>
           <div class="stack-use">CSS preprocessor. Variables, nesting, mixins for consistent styling across graphics.</div>
-          <div class="stack-yours">You: CSS experience. SCSS adds variables and nesting &mdash; easy to pick up.</div>
         </div>
       </div>
 
@@ -777,8 +804,7 @@
         <div class="stack-icon" style="background: #1c78c0;">WP</div>
         <div>
           <div class="stack-name">Webpack</div>
-          <div class="stack-use">JavaScript bundler in data-visuals-create. Modern/legacy bundle approach for browser compat.</div>
-          <div class="stack-yours">You: Vite/Next.js build systems. Same concept &mdash; bundle JS for production.</div>
+          <div class="stack-use">JavaScript bundler used in newsroom project scaffolding. Modern/legacy bundle approach for browser compat.</div>
         </div>
       </div>
 
@@ -786,8 +812,7 @@
         <div class="stack-icon" style="background: #f90;">S3</div>
         <div>
           <div class="stack-name">AWS S3</div>
-          <div class="stack-use">Deployment target for graphics and features at apps.texastribune.org. Static hosting.</div>
-          <div class="stack-yours">You: Vercel deployment experience. S3 is simpler &mdash; just upload static files.</div>
+          <div class="stack-use">Deployment target for graphics and interactive features. Static hosting for production pages.</div>
         </div>
       </div>
 
@@ -796,7 +821,6 @@
         <div>
           <div class="stack-name">PostgreSQL</div>
           <div class="stack-use">Primary database. Stores election results, school data, campaign finance records. Handles concurrent reads/writes.</div>
-          <div class="stack-yours">You: PostgreSQL is already on your resume. Direct match.</div>
         </div>
       </div>
 
@@ -805,7 +829,6 @@
         <div>
           <div class="stack-name">Google Sheets + Docs</div>
           <div class="stack-use">Integrated into build pipeline. Reporters put data in Sheets, the build system pulls it into graphics. ArchieML for narratives.</div>
-          <div class="stack-yours">You: Familiar with Google Workspace. The integration is handled by their build tools.</div>
         </div>
       </div>
     </div>
@@ -816,7 +839,7 @@
   <!-- ═══════════════════════════════════════ -->
   <div class="section">
     <h2>The Election Night Pipeline &mdash; Django + D3 Working Together</h2>
-    <p class="section-intro">This is the single most impressive workflow to understand for the interview. If they ask "how do Django and D3 work together?" &mdash; walk them through this.</p>
+    <p class="section-intro">This is the single most impressive workflow to understand. It shows how Django and D3 work together in a real production system.</p>
 
     <div class="pipeline">
       <div class="pipe-step">
@@ -844,7 +867,7 @@
         <div>
           <div class="pipe-title">PostgreSQL Database</div>
           <div class="pipe-tech">Django Models: Race, Candidate, CountyResult</div>
-          <div class="pipe-desc">Django's ORM maps Python classes to database tables. Query like Python: <code>Race.objects.filter(state='TX', called=False)</code>. Migrations keep schema in sync.</div>
+          <div class="pipe-desc">Django's ORM maps Python classes to database tables. Query like Python: <code>Race.objects.filter(state='CA', called=False)</code>. Migrations keep schema in sync.</div>
         </div>
       </div>
       <div class="pipe-arrow">|</div>
@@ -873,15 +896,15 @@
         <div class="pipe-num" style="background: #6b7280;">6</div>
         <div>
           <div class="pipe-title">Reader Sees Live Results</div>
-          <div class="pipe-tech">apps.texastribune.org &mdash; hosted on AWS S3</div>
+          <div class="pipe-tech">Newsroom site &mdash; hosted on AWS S3</div>
           <div class="pipe-desc">Page polls the API every 30&ndash;60 seconds. Map and tables update in place. Readers can enter their address to see specific races. Mobile responsive. Accessible tabular fallbacks.</div>
         </div>
       </div>
     </div>
 
     <div class="say-this" style="margin-top: 1.5rem;">
-      <div class="label">Say this</div>
-      <p>"What I find elegant is the separation of concerns. The backend team can fix a data ingestion bug without touching the frontend. The frontend team can redesign the map without touching the API. And the Django admin is the emergency fallback &mdash; if the automated pipeline breaks at 11pm, an editor can manually update results."</p>
+      <div class="label">Key takeaway</div>
+      <p>The separation of concerns is what makes this elegant. The backend team can fix a data ingestion bug without touching the frontend. The frontend team can redesign the map without touching the API. And the Django admin is the emergency fallback &mdash; if the automated pipeline breaks at 11pm, an editor can manually update results.</p>
     </div>
   </div>
 
@@ -889,73 +912,65 @@
   <!--  AI + ELECTIONS                         -->
   <!-- ═══════════════════════════════════════ -->
   <div class="section">
-    <h2>AI + Elections &mdash; Where AI Can Help the Data Visuals Team</h2>
-    <p class="section-intro">The job listing specifically mentions "AI experimentation." Here are concrete examples of how AI/LLMs could help a team like the Tribune's &mdash; especially around elections. This is your competitive edge.</p>
+    <h2>AI + Elections &mdash; Where AI Can Help Data Visuals Teams</h2>
+    <p class="section-intro">AI experimentation is a growing area in newsroom dev work. Here are concrete examples of how AI/LLMs could help a data visuals team &mdash; especially around elections.</p>
 
     <div class="ai-example">
       <div class="ai-example-title">Automated Anomaly Detection in Election Results</div>
       <p>An LLM or ML model could flag unusual patterns as results stream in on election night: "County X is showing a 30% swing from the primary &mdash; verify this isn't a data error." Catches AP data glitches or genuinely newsworthy shifts faster than a human scanning spreadsheets.</p>
-      <div class="ai-pitch">Your pitch: "I've built AI tools that process and compare large datasets. Applying that to election night data &mdash; flagging anomalies, catching errors before they go live &mdash; feels like a natural application."</div>
     </div>
 
     <div class="ai-example">
       <div class="ai-example-title">Natural Language Data Summaries</div>
       <p>Instead of just showing numbers, an LLM could generate plain-English summaries: "Republicans have flipped 3 border counties that haven't voted red since 1972." Auto-generated context blurbs for each race, updated as results change. Helps reporters write faster and gives readers instant narrative.</p>
-      <div class="ai-pitch">Your pitch: "As a journalist, I know what a good lede sounds like. I could help design AI prompts that generate useful narrative summaries, not generic ones &mdash; because I understand what makes a data point a story."</div>
     </div>
 
     <div class="ai-example">
       <div class="ai-example-title">Accessibility &mdash; Alt Text and Descriptions for Charts</div>
       <p>AI can auto-generate meaningful alt text for D3 visualizations: not just "a bar chart" but "Bar chart showing Travis County voter turnout at 62%, the highest in the state, compared to the statewide average of 41%." Makes every graphic accessible to screen reader users.</p>
-      <div class="ai-pitch">Your pitch: "Accessibility is one of the most practical AI applications for data journalism. Instead of generic alt text, we could generate descriptions that actually convey the insight the chart is showing."</div>
     </div>
 
     <div class="ai-example">
       <div class="ai-example-title">Data Cleaning and Standardization</div>
-      <p>Election data comes from 254 Texas counties with inconsistent formatting. LLMs can help standardize names, fix encoding issues, match records across datasets (e.g., matching AP candidate IDs to FEC campaign finance records). Saves hours of manual cleaning.</p>
-      <div class="ai-pitch">Your pitch: "My Second Brain project processes 200k+ records. I understand the data cleaning problem at scale. AI assistants for entity resolution and format standardization could save the team significant time."</div>
+      <p>Election data comes from hundreds of counties with inconsistent formatting. LLMs can help standardize names, fix encoding issues, match records across datasets (e.g., matching AP candidate IDs to FEC campaign finance records). Saves hours of manual cleaning.</p>
     </div>
 
     <div class="ai-example">
       <div class="ai-example-title">Story Discovery in Large Datasets</div>
       <p>Feed a campaign finance dataset into an LLM: "What are the most unusual donation patterns?" "Which candidates received the largest out-of-state contributions?" AI can surface leads that would take a reporter days to find manually.</p>
-      <div class="ai-pitch">Your pitch: "I've spent 15 years finding stories in data manually. AI doesn't replace that instinct &mdash; it accelerates it. The journalist still decides what's a story. AI helps you look in more places, faster."</div>
     </div>
 
     <div class="ai-example">
-      <div class="ai-example-title">Conversational Data Explorer &mdash; They're Already Doing This</div>
-      <p>The Tribune built an <strong>AI chatbot on their 2025 water crisis coverage</strong> that answers reader questions based on Tribune reporting. This is not hypothetical &mdash; they're already experimenting. Imagine extending this to election data, school ratings, or campaign finance: "How did my county vote?" "Compare school ratings in Austin vs. Dallas." Readers ask questions in natural language, the system queries the API and returns insights.</p>
-      <div class="ai-pitch">Your pitch: "I saw the AI chatbot on the water crisis coverage &mdash; that's exactly the kind of experiment I'm excited about. I built an AI news aggregator and a model comparison tool. Extending conversational AI across Tribune datasets is a natural next step."</div>
+      <div class="ai-example-title">Conversational Data Explorer</div>
+      <p>Some newsrooms are already building <strong>AI chatbots on their coverage</strong> that answer reader questions based on the newsroom's reporting. Imagine extending this to election data, school ratings, or campaign finance: "How did my county vote?" "Compare school ratings in these two cities." Readers ask questions in natural language, the system queries the API and returns insights.</p>
     </div>
 
     <div class="say-this" style="margin-top: 1rem;">
-      <div class="label">Say this in the interview</div>
-      <p>"The listing mentions AI experimentation, and I think the biggest opportunity is using AI to make the team's existing data more accessible and discoverable &mdash; auto-generating alt text for charts, flagging anomalies in election data, helping readers ask natural language questions about datasets the Tribune already maintains. AI amplifies the journalism, it doesn't replace it."</p>
+      <div class="label">Key takeaway</div>
+      <p>The biggest AI opportunity for data journalism is making existing data more accessible and discoverable &mdash; auto-generating alt text for charts, flagging anomalies in election data, helping readers ask natural language questions about datasets a newsroom already maintains. AI amplifies the journalism, it doesn't replace it.</p>
     </div>
   </div>
 
   <!-- ═══════════════════════════════════════ -->
-  <!--  TRIBUNE PROJECTS                       -->
+  <!--  NEWSROOM DATA PROJECTS                 -->
   <!-- ═══════════════════════════════════════ -->
   <div class="section">
-    <h2>What They Actually Build &mdash; Real Projects</h2>
-    <p class="section-intro">Mention these by name in the interview. It shows you've done your homework and understand the team's work.</p>
+    <h2>Newsroom Data Projects &mdash; What Teams Actually Build</h2>
+    <p class="section-intro">Real examples of what data visuals teams produce at top digital newsrooms. These illustrate the range of work &mdash; from election night tools to long-term data apps.</p>
 
     <div class="project-list">
-      <a href="https://apps.texastribune.org/features/2024/texas-2024-general-election-results/" target="_blank" rel="noopener" class="project-row">
+      <div class="project-row">
         <div>
-          <div class="project-name">2024 General Election Results</div>
-          <div class="project-meta">County-level interactive maps, race-by-race results, personalized "find your races" by address. The most comprehensive election results in Texas.</div>
-          <div class="project-builder">Built by Carla Astudillo (the role you're interviewing for)</div>
+          <div class="project-name">Election Results Pages</div>
+          <div class="project-meta">County-level interactive maps, race-by-race results, personalized "find your races" by address. The flagship product of most newsroom data teams.</div>
         </div>
         <span class="project-tag tag-both">D3 + Django</span>
-      </a>
+      </div>
 
       <div class="project-row">
         <div>
-          <div class="project-name">Texas Schools Explorer (scuole)</div>
-          <div class="project-meta">Readers look up any Texas school &mdash; A-F ratings, demographics, test scores. A maintained product updated every school year, not a one-off graphic.</div>
-          <div class="project-builder">Ongoing project &mdash; Python/Django backend, open-source on GitHub</div>
+          <div class="project-name">Schools Explorer</div>
+          <div class="project-meta">Readers look up any school &mdash; ratings, demographics, test scores. A maintained product updated every school year, not a one-off graphic. Python/Django backend.</div>
         </div>
         <span class="project-tag tag-django">Django</span>
       </div>
@@ -963,17 +978,15 @@
       <div class="project-row">
         <div>
           <div class="project-name">Housing Zoning Analysis</div>
-          <div class="project-meta">Gathered zoning data from 11 Texas cities. Showed how dominant single-family zoning is. Described as "the most visually ambitious" piece of 2024.</div>
-          <div class="project-builder">Built by Carla Astudillo &mdash; data acquisition + analysis + visualization</div>
+          <div class="project-meta">Gathered zoning data from multiple cities. Showed how dominant single-family zoning is. Data acquisition + analysis + visualization in one project.</div>
         </div>
         <span class="project-tag tag-d3">D3</span>
       </div>
 
       <div class="project-row">
         <div>
-          <div class="project-name">Voter "Fish in a Pond" Visualization</div>
-          <div class="project-meta">Creative metaphor showing how only a fraction of Texas voters decide elections. A non-standard visualization that only D3 could build.</div>
-          <div class="project-builder">Built by Yuriko Schumacher</div>
+          <div class="project-name">Creative Voter Participation Visualization</div>
+          <div class="project-meta">Creative metaphor showing how only a fraction of voters decide elections. A non-standard visualization that only D3 could build.</div>
         </div>
         <span class="project-tag tag-d3">D3</span>
       </div>
@@ -988,8 +1001,8 @@
 
       <div class="project-row">
         <div>
-          <div class="project-name">Legislative Session Tracker (2025)</div>
-          <div class="project-meta">Tracked key proposals through the Texas legislature. Readers see how their representatives voted. Database work + visualization.</div>
+          <div class="project-name">Legislative Session Tracker</div>
+          <div class="project-meta">Tracked key proposals through the legislature. Readers see how their representatives voted. Database work + visualization.</div>
         </div>
         <span class="project-tag tag-both">D3 + Django</span>
       </div>
@@ -1004,287 +1017,138 @@
 
       <div class="project-row">
         <div>
-          <div class="project-name">Border Wall Progress Tracker (2024)</div>
-          <div class="project-meta">Mapped how much of Texas's border wall has been built. Billions spent, barrier still far short of goals. Geographic D3 mapping.</div>
-          <div class="project-builder">Built by Yuriko Schumacher</div>
+          <div class="project-name">Infrastructure Progress Tracker</div>
+          <div class="project-meta">Mapped the progress of a major infrastructure project. Billions spent, goals still unmet. Geographic D3 mapping with data overlays.</div>
         </div>
         <span class="project-tag tag-d3">D3</span>
       </div>
 
       <div class="project-row">
         <div>
-          <div class="project-name">July 4 Floods Coverage (2025)</div>
-          <div class="project-meta">Illustrated camps along the Guadalupe River and historically extreme flooding. 135+ deaths. Breaking news visualization shipped under pressure.</div>
-          <div class="project-builder">Built by Edison Wu</div>
+          <div class="project-name">Breaking News Flood Coverage</div>
+          <div class="project-meta">Illustrated the scope of historically extreme flooding. Breaking news visualization shipped under deadline pressure.</div>
         </div>
         <span class="project-tag tag-d3">D3</span>
       </div>
 
       <div class="project-row">
         <div>
-          <div class="project-name">Measles Outbreak Tracker (2025)</div>
-          <div class="project-meta">Analyzed vaccination trends in Texas schools and mapped measles cases. Public health data + geographic visualization.</div>
-          <div class="project-builder">Built by Dan Keemahill</div>
+          <div class="project-name">Public Health Outbreak Tracker</div>
+          <div class="project-meta">Analyzed vaccination trends in schools and mapped disease cases. Public health data + geographic visualization.</div>
         </div>
         <span class="project-tag tag-data">Data</span>
       </div>
 
-      <a href="https://salaries.texastribune.org/" target="_blank" rel="noopener" class="project-row">
+      <div class="project-row">
         <div>
           <div class="project-name">Government Salaries Explorer</div>
-          <div class="project-meta">Searchable database of 155,132 state employees across 116 Texas agencies. Downloadable CSV exports. A public transparency tool readers use year-round.</div>
-          <div class="project-builder">Django backend (tx_salaries) &mdash; open source on GitHub</div>
+          <div class="project-meta">Searchable database of state employees across government agencies. Downloadable CSV exports. A public transparency tool readers use year-round. Django backend.</div>
         </div>
         <span class="project-tag tag-django">Django</span>
-      </a>
-
-      <a href="https://apps.texastribune.org/death-row/" target="_blank" rel="noopener" class="project-row">
-        <div>
-          <div class="project-name">Faces of Death Row</div>
-          <div class="project-meta">Interactive database of Texas death row inmates. Filterable by years on death row, race, age, crime county. Photos, crime summaries, execution dates.</div>
-          <div class="project-builder">Node.js + Google Sheets backend, jQuery frontend &mdash; open source</div>
-        </div>
-        <span class="project-tag tag-data">Data</span>
-      </a>
+      </div>
 
       <div class="project-row">
         <div>
-          <div class="project-name">ICE Enforcement Data Analysis (2025)</div>
-          <div class="project-meta">Analyzed federal ICE arrest data (Sept 2023&ndash;July 2025). Found ICE arrests in Texas doubled, 24% of national arrests. 59% had no criminal conviction.</div>
-          <div class="project-builder">Built by Carla Astudillo &mdash; data acquisition + analysis</div>
+          <div class="project-name">Criminal Justice Database</div>
+          <div class="project-meta">Interactive database filterable by multiple criteria. Photos, case summaries, key dates. Node.js + Google Sheets backend, jQuery frontend.</div>
         </div>
         <span class="project-tag tag-data">Data</span>
       </div>
 
       <div class="project-row">
         <div>
-          <div class="project-name">Campaign Finance App &amp; Lobbying Data</div>
-          <div class="project-meta">Django apps tracking campaign contributions and Texas Ethics Commission lobbying data. Mentioned specifically in the job listing &mdash; you'd likely work on this. Open-source repos: tx_lobbying, tx_salaries.</div>
+          <div class="project-name">Federal Enforcement Data Analysis</div>
+          <div class="project-meta">Analyzed federal enforcement data over multiple years. Surfaced trends in arrest patterns and geographic distribution. Data acquisition + analysis.</div>
+        </div>
+        <span class="project-tag tag-data">Data</span>
+      </div>
+
+      <div class="project-row">
+        <div>
+          <div class="project-name">Campaign Finance &amp; Lobbying Data Apps</div>
+          <div class="project-meta">Django apps tracking campaign contributions and ethics commission lobbying data. A common project type for newsroom data teams.</div>
         </div>
         <span class="project-tag tag-django">Django</span>
       </div>
     </div>
 
     <div class="say-this" style="margin-top: 1rem;">
-      <div class="label">Say this</div>
-      <p>"I was really impressed by the election results pages &mdash; the way they combine county-level mapping with personalized race results is exactly the kind of thing that makes data journalism useful to individual readers, not just data nerds. That personalization pattern is something I've built before in React apps."</p>
+      <div class="label">Key takeaway</div>
+      <p>Election results pages that combine county-level mapping with personalized race results represent the best of data journalism &mdash; useful to individual readers, not just data nerds. That personalization pattern is a hallmark of strong newsroom data teams.</p>
     </div>
   </div>
 
   <!-- ═══════════════════════════════════════ -->
-  <!--  TRIBUNE GITHUB                         -->
+  <!--  COMMON NEWSROOM REPOS                  -->
   <!-- ═══════════════════════════════════════ -->
   <div class="section">
-    <h2>Their GitHub &mdash; What the Repos Tell You</h2>
-    <p class="section-intro">The Tribune has 224+ public repos at github.com/texastribune. Mentioning specific repos shows you've gone beyond surface-level research.</p>
+    <h2>Common Newsroom Open-Source Patterns</h2>
+    <p class="section-intro">Top newsroom data teams publish open-source repos. Here are the types of repos you'll commonly find.</p>
 
     <div class="repo-list">
-      <a href="https://github.com/texastribune/data-visuals-create" target="_blank" rel="noopener" class="repo-row">
-        <div class="repo-name">data-visuals-create</div>
-        <div class="repo-desc">Their main scaffolding tool. Generates project boilerplates with Nunjucks, SCSS, Webpack, Google Sheets integration, and S3 deployment. This is the foundation of every graphic they build.</div>
-        <div class="repo-why">Shows a mature team that invests in tooling. Similar to how you'd use create-next-app or Vite templates.</div>
-      </a>
+      <div class="repo-row">
+        <div class="repo-name">Project Scaffolding Tools</div>
+        <div class="repo-desc">Scaffolding tools that generate project boilerplates with Nunjucks, SCSS, Webpack, Google Sheets integration, and S3 deployment. The foundation of every graphic the team builds.</div>
+      </div>
 
-      <a href="https://github.com/texastribune/data-visuals-guides" target="_blank" rel="noopener" class="repo-row">
-        <div class="repo-name">data-visuals-guides</div>
-        <div class="repo-desc">Documentation, conventions, and style guides for the data visuals team. Shows how they onboard new developers and maintain standards.</div>
-        <div class="repo-why">Ask about this: "I saw your data-visuals-guides repo &mdash; how does the team handle code review and standards?"</div>
-      </a>
+      <div class="repo-row">
+        <div class="repo-name">Style Guides &amp; Documentation</div>
+        <div class="repo-desc">Documentation, conventions, and style guides for the data visuals team. Shows how teams onboard new developers and maintain standards.</div>
+      </div>
 
-      <a href="https://github.com/texastribune/queso-ui" target="_blank" rel="noopener" class="repo-row">
-        <div class="repo-name">queso-ui</div>
-        <div class="repo-desc">Their shared UI library of styles and icons. MIT licensed. "Queso" &mdash; very Texas. Ensures visual consistency across all projects.</div>
-        <div class="repo-why">Like a design system. Shows the team values consistency. You've worked with component libraries in React.</div>
-      </a>
+      <div class="repo-row">
+        <div class="repo-name">Shared UI Libraries</div>
+        <div class="repo-desc">Shared libraries of styles and icons. Ensures visual consistency across all projects. Like a design system for newsroom graphics.</div>
+      </div>
 
-      <a href="https://github.com/texastribune/scuole" target="_blank" rel="noopener" class="repo-row">
-        <div class="repo-name">scuole</div>
-        <div class="repo-desc">Python project for education data. Powers the Texas schools explorer. The scuole-data repo has the datasets. MIT licensed.</div>
-        <div class="repo-why">A real Django data app you could study. Shows the pattern: Python data processing + Django serving + public-facing tool.</div>
-      </a>
+      <div class="repo-row">
+        <div class="repo-name">Django Data Apps</div>
+        <div class="repo-desc">Python projects for education data, salary data, campaign finance. The pattern: Python data processing + Django serving + public-facing tool.</div>
+      </div>
 
-      <a href="https://github.com/texastribune/django-locking" target="_blank" rel="noopener" class="repo-row">
-        <div class="repo-name">django-locking</div>
-        <div class="repo-desc">Django package that prevents concurrent editing in the admin. Useful when multiple editors work in the CMS simultaneously.</div>
-        <div class="repo-why">Shows the team contributes reusable Django packages back to the community. Open source culture.</div>
-      </a>
+      <div class="repo-row">
+        <div class="repo-name">Reusable Django Packages</div>
+        <div class="repo-desc">Django packages that solve common newsroom problems (concurrent editing locks, data navigation tools). Teams contribute these back to the community.</div>
+      </div>
 
-      <a href="https://github.com/texastribune/newsapps-graphic-kit" target="_blank" rel="noopener" class="repo-row">
-        <div class="repo-name">newsapps-graphic-kit</div>
-        <div class="repo-desc">Older boilerplate for embeddable graphics. Gulp, BrowserSync, Nunjucks, NPR's pym.js for responsive iframes. Predecessor to data-visuals-create.</div>
-        <div class="repo-why">Understanding the evolution from this to data-visuals-create shows you grasp how newsroom tooling evolves.</div>
-      </a>
-
-      <a href="https://github.com/texastribune/tacobots" target="_blank" rel="noopener" class="repo-row">
-        <div class="repo-name">tacobots</div>
-        <div class="repo-desc">Slack bots for newsroom workflow: StyleBot (style guide enforcement), Hoedown Helper (formatting errors), Source Reminder (demographic sourcing prompts). Python + AWS Lambda.</div>
-        <div class="repo-why">Shows the team automates editorial workflow, not just graphics. A great example of developer-journalist thinking.</div>
-      </a>
-
-      <a href="https://github.com/texastribune/tx_salaries" target="_blank" rel="noopener" class="repo-row">
-        <div class="repo-name">tx_salaries</div>
-        <div class="repo-desc">Django app for Texas government employee salary data. Transformers convert spreadsheet data to standardized format. Powers salaries.texastribune.org.</div>
-        <div class="repo-why">A real Django data pipeline you could study &mdash; import, transform, serve. Similar to what you'd do with campaign finance data.</div>
-      </a>
-
-      <a href="https://github.com/texastribune/info-navigator" target="_blank" rel="noopener" class="repo-row">
-        <div class="repo-name">info-navigator</div>
-        <div class="repo-desc">Django app that transforms model relationships into data exploration tables for non-technical users (reporters). Democratizes database access.</div>
-        <div class="repo-why">Perfect example of building tools that serve journalism. Reporters explore data without writing SQL.</div>
-      </a>
+      <div class="repo-row">
+        <div class="repo-name">Newsroom Automation Bots</div>
+        <div class="repo-desc">Slack bots for newsroom workflow: style guide enforcement, formatting error detection, sourcing reminders. Python + AWS Lambda. Developer-journalist thinking.</div>
+      </div>
     </div>
 
     <div class="say-this" style="margin-top: 1rem;">
-      <div class="label">Say this</div>
-      <p>"I noticed you have data-visuals-create for scaffolding projects and queso-ui for shared styles. That kind of tooling investment shows a mature engineering culture. I'm curious how the team decides when to invest in internal tools vs. shipping features."</p>
+      <div class="label">Key takeaway</div>
+      <p>Mature newsroom data teams invest in scaffolding tools for project creation and shared UI libraries for visual consistency. That kind of tooling investment is a signal of strong engineering culture.</p>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════ -->
-  <!--  KEY PEOPLE                             -->
-  <!-- ═══════════════════════════════════════ -->
-  <div class="section">
-    <h2>Know the Team</h2>
-    <p class="section-intro">Names and roles you should know going in. Don't name-drop awkwardly, but if they come up, you want to recognize them.</p>
-
-    <div class="stack-grid">
-      <div class="stack-item">
-        <div class="stack-icon" style="background: var(--crash);">CE</div>
-        <div>
-          <div class="stack-name">Chris Essig</div>
-          <div class="stack-use"><strong>Data Visuals Editor</strong> &mdash; leads the team. 10+ years as a newsroom developer. Journalism degree from Eastern Illinois. Previously in Iowa at The Gazette.</div>
-        </div>
-      </div>
-      <div class="stack-item">
-        <div class="stack-icon" style="background: var(--crash);">DC</div>
-        <div>
-          <div class="stack-name">Darla Cameron</div>
-          <div class="stack-use"><strong>Chief Product Officer</strong> &mdash; oversees photo, multimedia, and data visuals. Previously data visuals editor at Washington Post and Tampa Bay Times.</div>
-        </div>
-      </div>
-      <div class="stack-item">
-        <div class="stack-icon" style="background: #6b7280;">CA</div>
-        <div>
-          <div class="stack-name">Carla Astudillo</div>
-          <div class="stack-use"><strong>Your predecessor</strong> &mdash; left for ProPublica Feb 2026. Built election results pages, redistricting tools, ICE data analysis. Journalist &rarr; developer trajectory (like you).</div>
-        </div>
-      </div>
-      <div class="stack-item">
-        <div class="stack-icon" style="background: #6b7280;">YS</div>
-        <div>
-          <div class="stack-name">Yuriko Schumacher</div>
-          <div class="stack-use">Designer/developer. Built the voter fish-in-a-pond visualization and border wall tracker. Master's from Northeastern. Previously Wall Street Journal.</div>
-        </div>
-      </div>
-      <div class="stack-item">
-        <div class="stack-icon" style="background: #6b7280;">DK</div>
-        <div>
-          <div class="stack-name">Dan Keemahill</div>
-          <div class="stack-use">Data reporter. Measles outbreak tracker, border county voting shifts. Does the data analysis that feeds visualizations.</div>
-        </div>
-      </div>
-      <div class="stack-item">
-        <div class="stack-icon" style="background: #6b7280;">EW</div>
-        <div>
-          <div class="stack-name">Edison Wu</div>
-          <div class="stack-use">Developer. Built the July 4 floods coverage. Breaking news visualization under pressure.</div>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- ═══════════════════════════════════════ -->
-  <!--  YOUR STORY                             -->
+  <!--  KEY CONCEPTS                           -->
   <!-- ═══════════════════════════════════════ -->
   <div class="section">
-    <h2>Your Story &mdash; How to Position Yourself</h2>
-    <p class="section-intro">You're not a developer who also writes. You're a 15-year investigative journalist who also builds software. That's the frame.</p>
-
-    <div class="story-grid">
-      <div class="story-card journalism">
-        <div class="story-label">Journalism</div>
-        <h4>15+ Years Investigative Reporting</h4>
-        <p>Oklahoma Watch, Tulsa World. You know FOIA, data analysis, source cultivation, deadline pressure. You've broken stories that changed policy.</p>
-      </div>
-
-      <div class="story-card journalism">
-        <div class="story-label">Journalism</div>
-        <h4>Award-Winning Work</h4>
-        <p>Writer of the Year, Reporter of the Year, 1st Place Investigative Reporting (SPJ). You're not dabbling &mdash; you were one of the best in the room.</p>
-      </div>
-
-      <div class="story-card tech">
-        <div class="story-label">Technology</div>
-        <h4>Self-Taught Developer Since 2022</h4>
-        <p>React, Next.js, TypeScript, Python, PostgreSQL. Went from zero to building full-stack production apps in under 2 years while working full-time as a reporter.</p>
-      </div>
-
-      <div class="story-card tech">
-        <div class="story-label">Technology</div>
-        <h4>Real Projects, Real Scale</h4>
-        <p>Second Brain: 200k+ record research database. News Pulse: AI news aggregator. AI Model Arena. Keith Brown DDS dashboard. You build things that work.</p>
-      </div>
-    </div>
-
-    <div class="dont-say" style="margin-top: 1rem;">
-      <div class="label">Don't say</div>
-      <p>"I don't have much experience with Django or D3."</p>
-    </div>
-    <div class="say-this">
-      <div class="label">Instead say</div>
-      <p>"My Django and D3 are growing, and I'm studying the Tribune's stack specifically. But the hardest skills for this role &mdash; editorial judgment, investigative instincts, the ability to communicate complex data to readers &mdash; those are skills I've been building for 15 years. The technical gaps are weeks. The journalism background is a career."</p>
-    </div>
-
-    <div class="dont-say">
-      <div class="label">Don't say</div>
-      <p>"I'm transitioning from journalism to tech."</p>
-    </div>
-    <div class="say-this">
-      <div class="label">Instead say</div>
-      <p>"I'm not leaving journalism &mdash; I'm evolving how I practice it. I spent 15 years finding stories in data with spreadsheets and documents. Now I want to build the tools that help millions of readers understand those stories visually."</p>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════ -->
-  <!--  TALKING POINTS CHEAT SHEET             -->
-  <!-- ═══════════════════════════════════════ -->
-  <div class="section">
-    <h2>Talking Points Cheat Sheet</h2>
-    <p class="section-intro">Memorize the feel of these, not the exact words. Each one connects something about you to something about the role.</p>
-
-    <div class="say-this">
-      <div class="label">Opening</div>
-      <p>"What drew me to this role is that it sits at the exact intersection of my two careers &mdash; investigative journalism and web development. I've spent 15 years finding stories in data. Now I want to build the tools that help readers see those stories."</p>
-    </div>
+    <h2>Key Concepts to Internalize</h2>
+    <p class="section-intro">The mental models that matter most when learning newsroom data development.</p>
 
     <div class="say-this">
       <div class="label">On D3</div>
-      <p>"I understand that D3 is a data binding toolkit, not a charting library &mdash; that's what makes it right for a newsroom where every graphic is different. The core concept is binding data to DOM elements, and everything else &mdash; scales, axes, projections &mdash; supports that idea."</p>
+      <p>D3 is a data binding toolkit, not a charting library &mdash; that's what makes it right for a newsroom where every graphic is different. The core concept is binding data to DOM elements, and everything else &mdash; scales, axes, projections &mdash; supports that idea.</p>
     </div>
 
     <div class="say-this">
       <div class="label">On Django</div>
-      <p>"The admin panel is what excites me most about Django for newsroom work. In a fast-moving environment, giving editors direct access to manage data without engineering bottlenecks is incredibly valuable. I've been the reporter waiting for a developer to update something &mdash; I know why the admin matters."</p>
+      <p>The admin panel is what makes Django so valuable for newsroom work. In a fast-moving environment, giving editors direct access to manage data without engineering bottlenecks is incredibly valuable.</p>
     </div>
 
     <div class="say-this">
       <div class="label">On the Pipeline</div>
-      <p>"I understand the election pipeline: AP feed to Django management command to PostgreSQL to DRF API to D3 frontend. Each piece has a clear role, and the separation means the backend and frontend teams aren't blocked by each other on election night."</p>
+      <p>The election pipeline: AP feed to Django management command to PostgreSQL to DRF API to D3 frontend. Each piece has a clear role, and the separation means the backend and frontend teams aren't blocked by each other on election night.</p>
     </div>
 
     <div class="say-this">
       <div class="label">On AI</div>
-      <p>"I think the biggest AI opportunity for data journalism is making existing data more accessible &mdash; auto-generating alt text for charts, flagging anomalies in election data, helping readers ask natural language questions about datasets the Tribune already maintains."</p>
-    </div>
-
-    <div class="say-this">
-      <div class="label">On Their Work</div>
-      <p>"I've looked at the team's recent work &mdash; the election results pages, the housing zoning analysis, the redistricting tool. And I've explored your GitHub &mdash; data-visuals-create, queso-ui, scuole. The investment in both public-facing tools and internal infrastructure tells me this is a team that takes craft seriously."</p>
-    </div>
-
-    <div class="say-this">
-      <div class="label">The Close</div>
-      <p>"Most developer candidates can code. Not many can do what I do &mdash; sit in an editorial meeting, understand what makes a story, then build the visualization that tells it. My trajectory from investigative reporter to developer is rare, and it's exactly what produces people who build tools that actually serve the journalism."</p>
+      <p>The biggest AI opportunity for data journalism is making existing data more accessible &mdash; auto-generating alt text for charts, flagging anomalies in election data, helping readers ask natural language questions about datasets a newsroom already maintains.</p>
     </div>
   </div>
 
@@ -1292,43 +1156,33 @@
   <!--  SMART QUESTIONS                        -->
   <!-- ═══════════════════════════════════════ -->
   <div class="section">
-    <h2>Smart Questions to Ask Them</h2>
-    <p class="section-intro">Ask 2&ndash;3 of these. Each one shows you understand how newsroom data teams actually work.</p>
+    <h2>Questions Worth Thinking About</h2>
+    <p class="section-intro">These questions reflect how newsroom data teams actually work. Good to think through as you learn.</p>
 
     <div class="q-list">
       <div class="q-item">
-        <div class="q-text">"What does the workflow look like between the data visuals team and reporters? How early does the team get involved in a story?"</div>
-        <div class="q-why">Shows you understand the editorial collaboration, not just the code.</div>
+        <div class="q-text">What does the workflow look like between a data visuals team and reporters? How early does the team get involved in a story?</div>
+        <div class="q-why">Understanding editorial collaboration, not just code.</div>
       </div>
 
       <div class="q-item">
-        <div class="q-text">"How does the team decide when something needs a custom D3 graphic versus an off-the-shelf tool like Datawrapper?"</div>
-        <div class="q-why">Shows you know D3 isn't always the right tool. Practical judgment.</div>
+        <div class="q-text">How does a team decide when something needs a custom D3 graphic versus an off-the-shelf tool like Datawrapper?</div>
+        <div class="q-why">D3 isn't always the right tool. Practical judgment matters.</div>
       </div>
 
       <div class="q-item">
-        <div class="q-text">"What would the first few months look like for someone in this role? What would I be working on first?"</div>
-        <div class="q-why">Shows you're already thinking about the work, not just the offer.</div>
+        <div class="q-text">What's the deployment pipeline for election night? How does the team handle last-minute data issues?</div>
+        <div class="q-why">Understanding the high-stakes reality of newsroom tech work.</div>
       </div>
 
       <div class="q-item">
-        <div class="q-text">"The listing mentions AI experimentation &mdash; what areas is the team most excited about?"</div>
-        <div class="q-why">Shows you read the listing carefully and have relevant experience to offer.</div>
+        <div class="q-text">What new tools or approaches are newsroom data teams exploring &mdash; Observable Plot, Svelte, different build tooling?</div>
+        <div class="q-why">Knowing the landscape and where the industry is heading.</div>
       </div>
 
       <div class="q-item">
-        <div class="q-text">"What's the deployment pipeline for election night? How does the team handle last-minute data issues?"</div>
-        <div class="q-why">Shows you understand the high-stakes reality of newsroom tech work.</div>
-      </div>
-
-      <div class="q-item">
-        <div class="q-text">"Are you exploring any new tools or approaches &mdash; like Observable Plot, Svelte, or different build tooling?"</div>
-        <div class="q-why">Shows you know the landscape and are curious about the team's direction.</div>
-      </div>
-
-      <div class="q-item">
-        <div class="q-text">"How does the team handle code review and technical standards? I noticed you have data-visuals-guides on GitHub."</div>
-        <div class="q-why">Shows you've looked at their GitHub AND care about engineering quality.</div>
+        <div class="q-text">How do data visuals teams handle code review and technical standards?</div>
+        <div class="q-why">Engineering quality matters, even in fast-moving newsrooms.</div>
       </div>
     </div>
   </div>
@@ -1337,70 +1191,63 @@
   <!--  YOUTUBE                                -->
   <!-- ═══════════════════════════════════════ -->
   <div class="section">
-    <h2>Project Ideas to Pitch &mdash; What You'd Build</h2>
-    <p class="section-intro">Concrete ideas that show you've thought about the work, not just the tech. Each maps your existing skills to Tribune needs.</p>
+    <h2>Project Ideas</h2>
+    <p class="section-intro">Concrete project ideas that demonstrate the kinds of things newsroom data teams build. Good exercises for learning D3 + Django together.</p>
 
     <!-- AI + Elections -->
     <div style="border: 1px solid var(--border); border-left: 3px solid var(--ai); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
       <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ai); margin-bottom: 0.5rem;">AI + Elections</div>
       <div style="font-weight: 600; margin-bottom: 0.4rem;">Election Night Anomaly Detector</div>
-      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">An LLM-powered monitoring layer that watches incoming AP results and flags unusual patterns in real-time &mdash; unexpected vote swings, turnout anomalies, results that don't match historical baselines. Surfaces alerts to editors and reporters as data flows in.</p>
-      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Your proof:</strong> You built News Pulse AI, which aggregates and analyzes news with LLMs. Same pattern &mdash; ingest live data, run it through AI analysis, surface what matters.</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55;">An LLM-powered monitoring layer that watches incoming AP results and flags unusual patterns in real-time &mdash; unexpected vote swings, turnout anomalies, results that don't match historical baselines. Surfaces alerts to editors and reporters as data flows in.</p>
     </div>
 
     <div style="border: 1px solid var(--border); border-left: 3px solid var(--ai); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
       <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ai); margin-bottom: 0.5rem;">AI + Accessibility</div>
       <div style="font-weight: 600; margin-bottom: 0.4rem;">Auto-Generated Alt Text &amp; Plain-English Summaries</div>
-      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">Every D3 chart and interactive map automatically gets a screen-reader-friendly description AND a plain-English summary: &ldquo;Republicans flipped 3 border counties for the first time since 1972.&rdquo; Attach it to the publishing pipeline so it happens on every graphic, not as an afterthought.</p>
-      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Why it matters:</strong> Accessibility is a Tribune value. Most newsrooms skip alt text because it's manual. AI makes it automatic.</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55;">Every D3 chart and interactive map automatically gets a screen-reader-friendly description AND a plain-English summary: &ldquo;Republicans flipped 3 border counties for the first time since 1972.&rdquo; Attach it to the publishing pipeline so it happens on every graphic, not as an afterthought. Most newsrooms skip alt text because it's manual. AI makes it automatic.</p>
     </div>
 
     <!-- Data Journalism -->
     <div style="border: 1px solid var(--border); border-left: 3px solid #ef4444; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
       <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: #ef4444; margin-bottom: 0.5rem;">Data Acquisition + Viz</div>
-      <div style="font-weight: 600; margin-bottom: 0.4rem;">Texas Campaign Finance Explorer</div>
-      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">A Django-backed app that ingests TEC (Texas Ethics Commission) campaign finance data, cleans and standardizes donor records, and serves a D3-powered explorer. Readers search by donor, candidate, or zip code. Surface the story: who's funding Texas politics, where the money comes from, which races are the most expensive.</p>
-      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Your proof:</strong> Your Second Brain is a 200k+ record research database. You know data at scale. Your investigative background means you know campaign finance records inside out.</div>
+      <div style="font-weight: 600; margin-bottom: 0.4rem;">Campaign Finance Explorer</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55;">A Django-backed app that ingests ethics commission campaign finance data, cleans and standardizes donor records, and serves a D3-powered explorer. Readers search by donor, candidate, or zip code. Surface the story: who's funding politics, where the money comes from, which races are the most expensive.</p>
     </div>
 
     <div style="border: 1px solid var(--border); border-left: 3px solid #ef4444; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
       <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: #ef4444; margin-bottom: 0.5rem;">Investigative + Interactive</div>
-      <div style="font-weight: 600; margin-bottom: 0.4rem;">Texas Accountability Tracker</div>
-      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">A persistent database tracking promises vs. outcomes &mdash; what lawmakers said they'd do vs. what happened. Built with Django for reporters to maintain via admin, D3 for reader-facing scorecards and timelines. FOIA-sourced documents linked directly to claims.</p>
-      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Your proof:</strong> This is investigative journalism + software in one project. No pure developer thinks of this. Your 15 years of FOIA work IS the competitive advantage.</div>
+      <div style="font-weight: 600; margin-bottom: 0.4rem;">Accountability Tracker</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55;">A persistent database tracking promises vs. outcomes &mdash; what lawmakers said they'd do vs. what happened. Built with Django for reporters to maintain via admin, D3 for reader-facing scorecards and timelines. FOIA-sourced documents linked directly to claims. A great example of investigative journalism + software in one project.</p>
     </div>
 
     <!-- Personalization Pattern -->
     <div style="border: 1px solid var(--border); border-left: 3px solid var(--d3); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
       <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--d3); margin-bottom: 0.5rem;">Personalization + D3</div>
-      <div style="font-weight: 600; margin-bottom: 0.4rem;">&ldquo;What Does Texas Spend on You?&rdquo; Budget Explorer</div>
-      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">Enter your address &rarr; see your school district, water district, county, and state spending broken down per capita with D3 treemaps and bar charts. The Tribune's personalization pattern applied to the state budget. Makes abstract numbers personal.</p>
-      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Your proof:</strong> You've built personalized lookup tools with React + PostgreSQL. This is the Tribune's favorite UX pattern &mdash; and you already know how to build it.</div>
+      <div style="font-weight: 600; margin-bottom: 0.4rem;">Personalized Budget Explorer</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55;">Enter your address &rarr; see your school district, water district, county, and state spending broken down per capita with D3 treemaps and bar charts. The personalization pattern applied to the state budget. Makes abstract numbers personal.</p>
     </div>
 
     <div style="border: 1px solid var(--border); border-left: 3px solid var(--d3); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
       <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--d3); margin-bottom: 0.5rem;">Real-Time Data + D3</div>
-      <div style="font-weight: 600; margin-bottom: 0.4rem;">Texas Energy Grid Live Dashboard</div>
-      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">ERCOT publishes real-time grid data. Build a Django pipeline that ingests it, a DRF API that serves it, and a D3 dashboard showing live demand vs. capacity with historical context. When the next freeze or heat wave hits, readers see the grid stress in real time &mdash; not after the blackout.</p>
-      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Your proof:</strong> Same architecture as the election pipeline (AP &rarr; Django &rarr; DRF &rarr; D3), just different data. And you built a gas prices tracker &mdash; you understand commodity data feeds.</div>
+      <div style="font-weight: 600; margin-bottom: 0.4rem;">Energy Grid Live Dashboard</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55;">Grid operators publish real-time energy data. Build a Django pipeline that ingests it, a DRF API that serves it, and a D3 dashboard showing live demand vs. capacity with historical context. When the next extreme weather event hits, readers see the grid stress in real time &mdash; not after the blackout. Same architecture as the election pipeline, just different data.</p>
     </div>
 
     <!-- AI + Reader Experience -->
     <div style="border: 1px solid var(--border); border-left: 3px solid var(--ai); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; background: var(--surface);">
       <div style="font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ai); margin-bottom: 0.5rem;">AI + Reader Experience</div>
       <div style="font-weight: 600; margin-bottom: 0.4rem;">&ldquo;Ask the Data&rdquo; Conversational Explorer</div>
-      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin-bottom: 0.5rem;">Embed a chat interface on election results or school explorer pages. Readers type &ldquo;How did my county vote compared to 2020?&rdquo; or &ldquo;Which schools near me improved the most?&rdquo; &mdash; an LLM queries the database and returns a plain-English answer with a D3 chart. The Tribune already has an AI chatbot on their water crisis coverage &mdash; this extends that pattern.</p>
-      <div style="font-size: 0.72rem; color: var(--text-muted);"><strong>Your proof:</strong> You built AI Model Arena (comparing LLM outputs) and News Pulse AI. You know how to build conversational AI interfaces. Most data viz devs don't.</div>
+      <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.55;">Embed a chat interface on election results or school explorer pages. Readers type &ldquo;How did my county vote compared to 2020?&rdquo; or &ldquo;Which schools near me improved the most?&rdquo; &mdash; an LLM queries the database and returns a plain-English answer with a D3 chart. Some newsrooms are already building AI chatbots on their coverage &mdash; this extends that pattern to structured data.</p>
     </div>
 
-    <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; margin-top: 1rem; padding: 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.15);"><strong>How to use these:</strong> Don't pitch all 6. Pick 1&ndash;2 that feel natural in conversation. When they ask &ldquo;what excites you about this role?&rdquo; or &ldquo;what would you want to build?&rdquo; &mdash; that's your opening. Lead with the journalism angle, not the tech.</p>
+    <p style="font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; margin-top: 1rem; padding: 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.15);"><strong>Learning approach:</strong> Pick 1&ndash;2 of these to build as practice projects. Each one exercises the full Django + D3 stack in a realistic newsroom context. Start with the journalism angle &mdash; what story does this data tell?</p>
   </div>
 
   <!-- ═══════════════════════════════════════ -->
   <!--  YOUTUBE                                -->
   <!-- ═══════════════════════════════════════ -->
   <div class="section">
-    <h2>YouTube &mdash; Watch These Tonight</h2>
+    <h2>YouTube &mdash; Recommended Videos</h2>
 
     <p class="vid-note" style="margin-top: 0;">Pick the short ones. You're building a mental picture, not learning to code from scratch.</p>
 
@@ -1452,12 +1299,45 @@
 
   <div style="max-width: 900px; margin: 0 auto; padding: 2rem; text-align: center;">
     <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.6;">
-      You've got this. You're not pretending to be someone you're not &mdash;<br>
-      you're an investigative journalist who builds software.<br>
-      That's exactly who they're looking for.
+      Newsroom data development sits at the intersection of journalism and software engineering.<br>
+      Understanding both the story and the tools that tell it is what makes this work meaningful.
     </p>
   </div>
 
   <script type="module" src="/components/init-tutor.js"></script>
+
+  <script>
+    // Theme toggle
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+    else if (window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.setAttribute('data-theme', 'light');
+    toggle.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  </script>
+
+  <script type="module">
+    import { authClient } from '/lib/auth-client.js';
+    const btn = document.getElementById('auth-toggle');
+    try {
+      const { data: session } = await authClient.getSession();
+      if (session) {
+        btn.classList.add('signed-in');
+        btn.setAttribute('aria-label', 'Sign out');
+        btn.title = session.user.name || session.user.email;
+      }
+    } catch {}
+    btn.addEventListener('click', async () => {
+      if (btn.classList.contains('signed-in')) {
+        await authClient.signOut();
+        window.location.href = '/';
+      } else {
+        window.location.href = '/login/';
+      }
+    });
+  </script>
 </body>
 </html>

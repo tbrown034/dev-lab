@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
+import { toNodeHandler } from 'better-auth/node';
+import { auth } from '../lib/auth.js';
 
 // Load .env manually — Vite's env loading only applies to client-side code,
 // not server middleware (unlike Next.js which auto-loads process.env)
@@ -208,11 +210,67 @@ const SYSTEM_PROMPTS = {
 
 const MAX_BODY_SIZE = 100_000; // 100KB limit
 
+// ---------------------------------------------------------------------------
+// Rate limiting — per-IP, sliding window
+// ---------------------------------------------------------------------------
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const RATE_LIMIT_MAX = 30; // max requests per window per IP
+const rateLimitMap = new Map();
+
+function getRateLimitKey(req) {
+  return req.headers['x-forwarded-for']?.split(',')[0]?.trim()
+    || req.socket?.remoteAddress
+    || 'unknown';
+}
+
+function checkRateLimit(ip) {
+  const now = Date.now();
+  let entry = rateLimitMap.get(ip);
+  if (!entry) {
+    entry = { timestamps: [] };
+    rateLimitMap.set(ip, entry);
+  }
+  // Drop timestamps outside the window
+  entry.timestamps = entry.timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
+  if (entry.timestamps.length >= RATE_LIMIT_MAX) {
+    return false;
+  }
+  entry.timestamps.push(now);
+  return true;
+}
+
+// Clean up stale entries every 10 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap) {
+    entry.timestamps = entry.timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
+    if (entry.timestamps.length === 0) rateLimitMap.delete(ip);
+  }
+}, 10 * 60 * 1000);
+
 export function createApiProxy() {
+  const authHandler = toNodeHandler(auth);
+
   return {
     name: 'learn-coding-proxy',
     configureServer(server) {
+      // Better Auth routes — mount at root so Better Auth handles its own path matching
+      server.middlewares.use((req, res, next) => {
+        if (req.url?.startsWith('/api/auth')) {
+          return authHandler(req, res);
+        }
+        next();
+      });
+
       server.middlewares.use('/api/chat', async (req, res) => {
+        // Rate limit check
+        const ip = getRateLimitKey(req);
+        if (!checkRateLimit(ip)) {
+          res.statusCode = 429;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Too many requests. Try again in a bit.' }));
+          return;
+        }
         if (req.method !== 'POST') {
           res.statusCode = 405;
           res.end('Method not allowed');
@@ -262,7 +320,7 @@ export function createApiProxy() {
 
             const response = await client.messages.create({
               model: 'claude-sonnet-4-20250514',
-              max_tokens: 2048,
+              max_tokens: 1024,
               system: systemPrompt,
               messages: messages,
             });

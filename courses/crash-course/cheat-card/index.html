@@ -3,9 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interview Cheat Card</title>
+  <title>Quick Reference Card</title>
   <link rel="stylesheet" href="/assets/base.css">
+  <script type="module">
+    import { checkAuth } from '/components/auth-guard.js';
+    const session = await checkAuth();
+    if (session) document.documentElement.classList.add('authed');
+  </script>
   <style>
+    html:not(.authed) body { visibility: hidden; }
     :root {
       --crash: #ef4444;
       --d3: #f97316;
@@ -107,8 +113,7 @@
 <body>
   <div class="card">
     <div class="card-header">
-      <h1>Interview <em>Cheat Card</em></h1>
-      <p>Texas Tribune &mdash; Senior Data Visuals Developer &mdash; March 25, 2026</p>
+      <h1>Newsroom Data Visualization &mdash; <em>Quick Reference</em></h1>
     </div>
 
     <!-- D3 -->
@@ -152,18 +157,18 @@
         <li><strong>Anomaly detection:</strong> flag unusual vote swings or data errors in real-time</li>
         <li><strong>Auto alt text:</strong> generate meaningful chart descriptions for accessibility</li>
         <li><strong>Natural language summaries:</strong> "Republicans flipped 3 border counties for the first time since 1972"</li>
-        <li><strong>Data cleaning:</strong> standardize names/formats across 254 Texas counties</li>
+        <li><strong>Data cleaning:</strong> standardize names/formats across hundreds of counties or districts</li>
         <li><strong>Story discovery:</strong> surface unusual patterns in campaign finance data</li>
         <li><strong>Conversational explorer:</strong> readers ask "How did my county vote?" in plain English</li>
       </ul>
     </div>
 
-    <!-- Your Story -->
+    <!-- Journalist-Developer Edge -->
     <div class="block you">
-      <div class="block-label">Your Frame</div>
-      <p><strong>You are:</strong> A 15-year investigative journalist who also builds software. Not a developer switching careers.</p>
-      <p style="margin-top: 0.4rem;"><strong>What transfers:</strong> Editorial judgment, FOIA/data skills, deadline instincts, knowing what makes a story, Python, PostgreSQL, React/Next.js, API design, AI tools.</p>
-      <p style="margin-top: 0.4rem;"><strong>The gap:</strong> "My Django and D3 are growing. The technical gap is weeks. My 15 years of editorial judgment &mdash; that's what takes a career to build."</p>
+      <div class="block-label">The Journalist-Developer Edge</div>
+      <p><strong>What transfers from journalism:</strong> Editorial judgment, FOIA/data skills, deadline instincts, knowing what makes a story, source verification, audience awareness.</p>
+      <p style="margin-top: 0.4rem;"><strong>Technical toolkit:</strong> Python, PostgreSQL, React/Next.js, API design, AI tools.</p>
+      <p style="margin-top: 0.4rem;"><strong>Why it matters:</strong> The code skills can be learned quickly. Editorial judgment takes a career to build.</p>
     </div>
 
     <!-- Vocab -->
@@ -192,21 +197,20 @@
       </ul>
     </div>
 
-    <!-- Their Repos -->
+    <!-- Common Newsroom Tools -->
     <div class="block" style="border-left: 3px solid var(--text-muted);">
-      <div class="block-label" style="color: var(--text-muted);">Name-Drop These Repos</div>
+      <div class="block-label" style="color: var(--text-muted);">Common Newsroom Tools</div>
       <ul>
-        <li><strong>data-visuals-create</strong> &mdash; their project scaffolding tool</li>
-        <li><strong>queso-ui</strong> &mdash; shared UI styles &amp; icons ("very Texas")</li>
-        <li><strong>scuole</strong> &mdash; schools explorer (Django data app)</li>
-        <li><strong>data-visuals-guides</strong> &mdash; team conventions &amp; standards</li>
+        <li><strong>ArchieML</strong> &mdash; structured text format for Google Docs (invented at NYT)</li>
+        <li><strong>pym.js</strong> &mdash; NPR's responsive iframe tool for embeddable graphics</li>
+        <li><strong>Datawrapper</strong> &mdash; no-code charting tool widely used by reporters</li>
+        <li><strong>Observable Plot</strong> &mdash; high-level charting built on D3, by the D3 creator</li>
       </ul>
     </div>
 
     <div class="closer">
-      You've got this.<br>
-      You're not pretending &mdash; you're an investigative journalist who builds software.<br>
-      That's exactly who they're looking for.
+      The best newsroom developers combine editorial instinct with technical skill.<br>
+      That's the foundation for this work.
     </div>
   </div>
 </body>

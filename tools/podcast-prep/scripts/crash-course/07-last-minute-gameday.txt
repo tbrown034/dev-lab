@@ -1,0 +1,75 @@
+========================================
+SECTION 1: SOURCE DOCUMENT
+========================================
+
+EPISODE TITLE: Putting It All Together — Key Concepts Review
+SERIES: Newsroom Dev Crash Course
+EPISODE: 7 of 7
+
+--- SOURCE CONTENT ---
+
+CHATBOT ARCHITECTURE — RAG AND TOOL USE
+
+One of the most interesting recent developments in newsroom tech is AI-powered chatbots built on top of published reporting. Here's how these systems work:
+
+- RAG architecture: search published articles via embeddings and vector database, retrieve relevant chunks, put them in the prompt, the LLM answers grounded in the newsroom's reporting
+- Originally deployed as pop-out chat widgets, later redesigned to embedded format — engagement increased
+- The smartest feature: unanswered reader questions become reporter story leads. That's not just a tech feature — it's an editorial innovation.
+
+The next evolution is connecting chatbots to structured databases — not just article archives. With tool use patterns, the model decides which data source to query. A reader asks "how did my rep vote on vouchers and who donated to their campaign?" and it pulls the legislative tracker AND the campaign finance database. That's way more powerful than article search alone.
+
+This is a strong area for developers with AI experience because it shows understanding of architecture (RAG vs. tool use), references real products, and proposes concrete improvements.
+
+NEWSROOM DATA PRODUCTS — KNOW THESE PATTERNS
+
+Election Results: Real-time results, "Find Your Races" personalization by address, county-level choropleth maps, D3 frontend with enter-update-exit, Django backend with AP feed ingestion.
+
+Schools Explorers: Django data apps covering school districts, student demographics and test scores. These are maintained products that run for years, not one-off graphics.
+
+Campaign Finance Tools: Django apps tracking contributions. These can involve hundreds of millions in tracked records.
+
+Legislative Trackers: Bills through legislative sessions, voting records, legislator profiles. These run for the full session and require ongoing maintenance.
+
+Elected Officials Directories: Find-your-officials-by-address tools. A between-elections utility that readers use year-round.
+
+AI Chatbots: RAG-based bots grounded in published reporting, with feedback loops where unanswered questions become story leads.
+
+FIVE CONCRETE PITCHES FOR NEWSROOM DATA TEAMS
+
+These are the kinds of ideas that demonstrate genuine understanding of newsroom data work:
+
+PITCH 1: Between-elections utility. Legislative trackers, directories, and campaign finance tools should be useful year-round, not just during sessions or election night. "How did my rep vote on X?" available any Tuesday.
+
+PITCH 2: FOIA and data acquisition instinct. Most developers wait for data to arrive. Journalists FILE records requests. Investigative skills mean knowing where public data lives and how to get it.
+
+PITCH 3: AI beyond the chatbot — tool use. Connect chatbots to structured databases via tool use patterns. Way more powerful than article search alone.
+
+PITCH 4: Reporter-facing tools. Not just reader tools. Internal dashboards for reporters — anomaly detection in campaign finance, automated alerts when new data drops.
+
+PITCH 5: Cross-database intelligence. Connect siloed databases. A legislative vote plus a campaign finance record plus an elected officials directory equals one connected story. Right now at most newsrooms, they're separate tools.
+
+THE "BE SPECIFIC" RULE
+
+The most important principle for any developer working in newsrooms: always be concrete.
+
+- Never say "I believe in good data journalism." Instead say "I structured 22,250 court records and built a searchable dashboard."
+- Never say "I'm passionate about visualization." Instead say "I built county-level choropleths and interactive bill trackers."
+- Never say "I'm interested in AI." Instead say "I use AI coding tools daily, I have LLM APIs in a production app, and I'd connect a chatbot to campaign finance data via tool use."
+
+Every statement should have a number, a project name, or a tool name. Specificity demonstrates competence in a way that enthusiasm alone cannot.
+
+KEY TECHNICAL CONCEPTS REVIEW
+
+The election pipeline: AP Elections API → Django management command → PostgreSQL → DRF API → D3 frontend. Each piece has a clear role.
+
+Django's update_or_create: Idempotent data ingestion. Re-run the import every few minutes without duplicating records. Essential for any automated data pipeline.
+
+D3's enter-update-exit: The pattern for live-updating visualizations. When new data arrives, existing DOM elements smoothly transition to their updated state. No full page refresh needed.
+
+Django admin as fallback: If automation breaks at 11pm on election night, an editor can manually update results through the admin while a developer fixes the script. The journalism doesn't stop.
+
+DRF as contract: The API defines the boundary between backend and frontend teams. As long as the JSON shape stays the same, both teams can work and deploy independently.
+
+PostgreSQL for concurrency: Handles thousands of simultaneous reads (readers) and writes (data imports) without choking. Critical for high-traffic news events.
+
+RAG vs. tool use: RAG searches an article archive. Tool use lets the model query structured databases dynamically. Tool use is the more powerful pattern for newsrooms with rich data products.

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projects — Learn Coding</title>
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/shell.css">
+  <style>
+    .page { max-width: 900px; margin: 0 auto; padding: 4rem 2rem 5rem; }
+    .page-kicker {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    .page h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      font-weight: 400;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+    .page-intro {
+      font-size: 1rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+      max-width: 600px;
+      margin-bottom: 3rem;
+    }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .project-card {
+      background: var(--surface);
+      padding: 2rem;
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.2s;
+    }
+    .project-card:hover { background: var(--surface-2); }
+    .project-track {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .project-title {
+      font-family: var(--sans);
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .project-desc {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+    }
+    .project-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      margin-top: 0.75rem;
+    }
+    .project-tag {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ─── HEADER ─── -->
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">
+        <span class="dot"></span>
+        Learn Coding
+      </a>
+      <nav>
+        <a href="/courses/">Courses</a>
+        <span class="sep">/</span>
+        <a href="/projects/">Projects</a>
+        <span class="sep">/</span>
+        <a href="/feed/">The Scroll</a>
+        <span class="sep">/</span>
+        <a href="/pod/">The Pod</a>
+        <span class="sep">/</span>
+        <a href="/about/">About</a>
+        <a href="/jobs/" id="nav-jobs" class="nav-auth-only" style="display:none;">Jobs</a>
+      </nav>
+      <div class="header-actions">
+        <button class="auth-toggle" id="auth-toggle" aria-label="Sign in">
+          <svg class="icon-login" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          <svg class="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page">
+    <div class="page-kicker">Portfolio</div>
+    <h1>Projects</h1>
+    <p class="page-intro">
+      Real projects built while learning. Data visualizations, interactive stories, and tools that go beyond tutorials.
+    </p>
+
+    <div class="projects-grid">
+
+      <a href="/d3/projects/artemis/" class="project-card">
+        <div class="project-track" style="color: var(--accent-d3);">D3 / Scrollytelling</div>
+        <div class="project-title">Artemis II Mission</div>
+        <div class="project-desc">Interactive scrollytelling piece about NASA's Artemis II lunar mission. Built with Scrollama and D3 for scroll-driven data transitions.</div>
+        <div class="project-tags">
+          <span class="project-tag">D3.js</span>
+          <span class="project-tag">Scrollama</span>
+          <span class="project-tag">SVG</span>
+          <span class="project-tag">NASA Data</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+    else if (window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.setAttribute('data-theme', 'light');
+    toggle.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  </script>
+
+  <script type="module">
+    import { authClient } from '/lib/auth-client.js';
+    const btn = document.getElementById('auth-toggle');
+    try {
+      const { data: session } = await authClient.getSession();
+      if (session) {
+        btn.classList.add('signed-in');
+        btn.setAttribute('aria-label', 'Sign out');
+        document.querySelectorAll('.nav-auth-only').forEach(el => el.style.display = '');
+      }
+    } catch {}
+    btn.addEventListener('click', async () => {
+      if (btn.classList.contains('signed-in')) {
+        await authClient.signOut();
+        window.location.href = '/';
+      } else {
+        window.location.href = '/login/';
+      }
+    });
+  </script>
+</body>
+</html>

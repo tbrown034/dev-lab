@@ -2,133 +2,124 @@
 SECTION 1: SOURCE DOCUMENT
 ========================================
 
-EPISODE TITLE: Inside the Texas Tribune's Tech Stack — How a Newsroom Builds with Django and D3
-SERIES: Interview Prep — Texas Tribune Crash Course
+EPISODE TITLE: Inside a Top Digital Newsroom's Tech Stack — How News Organizations Build with Django and D3
+SERIES: Newsroom Dev Crash Course
 EPISODE: 1 of 3
-
---- CONTEXT FOR HOSTS ---
-
-Who the learner is: Trevor Brown, an investigative journalist with 15+ years of experience who's also a self-taught web developer (comfortable with React, Next.js, TypeScript). He has an interview at the Texas Tribune tomorrow for a developer position. He needs to understand the Tribune's technology stack so he can talk about it intelligently — what they build, how they build it, and why they make the choices they do.
-
-What this episode should accomplish: Give Trevor a clear, confident understanding of the Texas Tribune as a technology organization — what their data visuals team does, what tools they use, what open-source projects they maintain, and how their engineering work supports their journalism mission. He should walk away able to talk about the Tribune's tech stack like he's been paying attention for years.
-
-Tone: Conversational, enthusiastic, specific. Use real project names and real team member names. This should feel like two journalists who cover the tech industry geeking out about a newsroom that does it right.
 
 --- SOURCE CONTENT ---
 
-ABOUT THE TEXAS TRIBUNE
+ABOUT TOP DIGITAL NEWSROOMS
 
-The Texas Tribune is a nonprofit, nonpartisan digital news organization focused on Texas politics and policy. Founded in 2009, it has become one of the most respected state-level news organizations in the country. They're fully digital — no print edition — and they've been a pioneer in using technology to serve journalism.
+The best digital-first news organizations have become technology powerhouses. Nonprofit, nonpartisan outlets focused on state politics and policy have pioneered the use of technology to serve journalism. Many are fully digital with no print edition.
 
-Their data visuals team is led by Chris Essig, who has been a newsroom developer for about a decade. The team builds charts, maintains public databases, and analyzes data to help reporters hold elected officials accountable. The team includes developers like Carla Astudillo (Senior Data Visuals Developer), Yuriko Schumacher (designer/developer), Edison Wu, Dan Keemahill (data reporter), and Andrew (developer).
+Their data visuals teams are typically led by experienced newsroom developers. These teams build charts, maintain public databases, and analyze data to help reporters hold elected officials accountable. A mature team includes developers, designer-developers, and data reporters working in close collaboration.
 
 THE TECHNOLOGY STACK
 
-The Tribune's stack spans several technologies:
+A typical newsroom data visuals stack spans several technologies:
 
-1. Django (Python) — Their backend framework. Django powers their CMS, data apps, and internal tools. The Tribune has been a Django shop for years, which is common among news organizations. Django's admin panel is especially valuable — editors and reporters can manage content without engineering help.
+1. Django (Python) — The backend framework. Django powers the CMS, data apps, and internal tools. Many newsrooms have been Django shops for years, and for good reason. Django's admin panel is especially valuable — editors and reporters can manage content without engineering help.
 
-2. D3.js — Their primary data visualization library. Used for interactive charts, election maps, data explorers, demographic breakdowns, and all the custom graphics that can't be built with off-the-shelf tools.
+2. D3.js — The primary data visualization library. Used for interactive charts, election maps, data explorers, demographic breakdowns, and all the custom graphics that can't be built with off-the-shelf tools.
 
 3. React — Used alongside D3 for more complex interactive features and page-level applications.
 
-4. Node.js — Used in their build tooling and scaffolding systems.
+4. Node.js — Used in build tooling and scaffolding systems.
 
-5. Nunjucks — A templating language (similar to Jinja2) used in their graphic-building workflow for pulling in text and data from Google Spreadsheets.
+5. Nunjucks — A templating language (similar to Jinja2) used in graphic-building workflows for pulling in text and data from Google Spreadsheets.
 
-6. SCSS/Sass — Their CSS preprocessor of choice, using the dart-sass implementation.
+6. SCSS/Sass — A common CSS preprocessor choice, using the dart-sass implementation.
 
-7. Webpack — JavaScript bundler used in their data-visuals-create tool with a modern/legacy bundle approach for browser compatibility.
+7. Webpack — JavaScript bundler used in scaffolding tools with a modern/legacy bundle approach for browser compatibility.
 
-8. AWS S3 — Their deployment target for graphics and features, with assets served from S3.
+8. AWS S3 — A common deployment target for graphics and features, with assets served from S3.
 
-9. Google Sheets + Google Docs — Integrated into their build pipeline. Reporters can put data in Google Sheets, and the build system pulls it directly into the graphic. Google Docs can be formatted with ArchieML (a structured text format invented at the NYT) for longer narrative pieces.
+9. Google Sheets + Google Docs — Integrated into build pipelines. Reporters can put data in Google Sheets, and the build system pulls it directly into the graphic. Google Docs can be formatted with ArchieML (a structured text format invented at the NYT) for longer narrative pieces.
 
-10. PostgreSQL — The likely database backend (standard for Django projects, especially at news organizations that deal with large datasets).
+10. PostgreSQL — The standard database backend for Django projects, especially at news organizations that deal with large datasets.
 
-OPEN SOURCE PROJECTS ON GITHUB
+OPEN SOURCE IN NEWSROOMS
 
-The Tribune has 224 repositories on GitHub at github.com/texastribune. Key ones:
+Leading newsrooms maintain dozens or even hundreds of open-source repositories on GitHub. Common project types include:
 
-1. data-visuals-create — Their main scaffolding tool for creating data visualization projects. Generates project boilerplates with Nunjucks templating, SCSS styles, Webpack-bundled JavaScript, Google Sheets data integration, and S3 deployment. This is the foundation of their graphics workflow.
+1. Scaffolding tools — Main tools for creating data visualization projects. These generate project boilerplates with Nunjucks templating, SCSS styles, Webpack-bundled JavaScript, Google Sheets data integration, and S3 deployment. This is the foundation of a graphics workflow.
 
-2. data-visuals-guides — Documentation and guides for the data visuals team. Shows their conventions, style guides, and workflows.
+2. Style and documentation guides — Documentation and guides for the data visuals team. Shows conventions, style guides, and workflows.
 
-3. newsapps-graphic-kit — An older boilerplate for embeddable graphics, built with Gulp, BrowserSync, Nunjucks, and NPR's pym.js for responsive iframes in CMS environments. Framework-agnostic — developers add their own visualization libraries (D3, etc.) as needed.
+3. Embeddable graphic kits — Boilerplates for embeddable graphics, often built with Gulp, BrowserSync, Nunjucks, and NPR's pym.js for responsive iframes in CMS environments. Framework-agnostic — developers add their own visualization libraries (D3, etc.) as needed.
 
-4. newsapps-app-kit — For building special features and series that live outside the regular CMS. Full standalone pages with custom layouts.
+4. Feature/app kits — For building special features and series that live outside the regular CMS. Full standalone pages with custom layouts.
 
-5. generator-tt-newsapps — A Yeoman generator that scaffolds out front-end web apps or embeddable graphics using Texas Tribune stylings.
+5. Shared UI libraries — Shared styles and icon sets, often MIT licensed, that keep branding consistent across projects.
 
-6. scuole — A Python project (MIT licensed) for education data, with scuole-data containing the datasets. This is likely behind their school ratings and education data tools.
+6. Data-specific tools — Python projects for education data, public salary data, and other structured datasets that power public-facing lookup tools.
 
-7. queso-ui — Their shared UI library of styles and icons (MIT licensed). "Queso" — very Texas.
+7. Docker libraries — Standardized development environments.
 
-8. docks — Their Docker library for standardized development environments.
+8. Django utilities — Packages like concurrent-editing locks for the admin interface, useful when multiple editors are working in the CMS simultaneously.
 
-9. django-locking — A Django package that prevents concurrent editing in the admin interface. Useful when multiple editors are working in the CMS simultaneously.
+WHAT DATA VISUALS TEAMS BUILD
 
-WHAT THE DATA VISUALS TEAM BUILDS
+Based on the kind of output top newsroom teams produce year over year:
 
-Based on their 2024 and 2025 year-end retrospectives:
+Election coverage:
+- Election results pages for primaries and general elections — comprehensive, with county-level maps, race-by-race results, and personalization features where readers can enter their address to see their specific races.
+- These are often the most technically impressive projects a newsroom ships.
 
-2024 highlights:
-- Election results pages for the March primary and November general election — the most comprehensive election results pages in Texas. Built by Carla Astudillo. These pages include county-level maps, race-by-race results, and a personalization feature where readers can enter their address to see their specific races.
-- An interactive visualization showing how only a fraction of Texas voters decide elections — built by Yuriko Schumacher, using a "small fish in a big pond" visual metaphor.
-- Border wall progress tracking — Yuriko examined how much of the proposed border wall has been built, finding billions spent over three years with the barrier still far short of goals.
-- Housing crisis analysis — Carla gathered and analyzed zoning data from 11 cities to show how dominant single-family housing is across Texas cities. Described as "the most visually ambitious" piece of the year.
-- Visualization of Dan Keemahill showing sharp increases in Republican support in border counties over time.
-- Extreme weather visualizations — flooding scope in East Texas, comprehensive weather extremes story.
+Data-driven investigations:
+- Interactive visualizations showing voter turnout patterns and how small fractions of eligible voters decide elections.
+- Housing crisis analysis — gathering and analyzing zoning data from multiple cities to show how dominant single-family housing is, described as "visually ambitious" work.
+- Tracking government spending on infrastructure projects, showing how actual progress compares to stated goals.
+- Visualizing shifting political trends across regions over time.
+- Extreme weather visualizations — flooding, drought, heat, and comprehensive climate storytelling.
 
-2025 highlights:
-- Congressional redistricting tool — interactive tool for exploring proposed district boundaries
-- Legislative session tracker — tracked key proposals and let readers see how their local representatives voted on consequential measures
-- Water crisis explainer and interactive lookup tool — readers could see how severe water shortages are expected to be in their area
-- July 4 floods coverage — Edison Wu illustrated camps along the Guadalupe River near flooding areas and showed how historically extreme the flooding was. 135+ people died.
-- Measles outbreak tracker — Dan Keemahill analyzed vaccination trends in Texas schools
-- Education data releases — A-F school ratings (first time in 5 years), higher education outcomes data
+Legislative and policy tools:
+- Redistricting tools — interactive tools for exploring proposed district boundaries.
+- Legislative session trackers — letting readers see how their local representatives voted on consequential measures.
+- Water and resource crisis explainers with interactive lookup tools.
+
+Public health and education:
+- Outbreak trackers showing vaccination trends in schools.
+- Education data releases — school ratings, higher education outcomes data.
 
 THE ELECTION RESULTS PIPELINE
 
-This is the most technically interesting workflow at the Tribune and worth understanding:
+This is the most technically interesting workflow in newsroom development and worth understanding deeply:
 
 1. Data comes from the Associated Press (AP), which gathers voting information from the Secretary of State's office, county election sites, and stringers on the ground.
-2. A Django management command (most likely) polls the AP results feed on a schedule (every few minutes on election night).
+2. A Django management command polls the AP results feed on a schedule (every few minutes on election night).
 3. Results are saved to the database via Django's ORM.
-4. The frontend election results pages (hosted at apps.texastribune.org) fetch data from the API.
+4. The frontend election results pages fetch data from the API.
 5. D3 (or another visualization library) renders interactive maps and results tables.
 6. As new data arrives, the pipeline updates automatically — the enter/update pattern in D3 handles new and changed results gracefully.
 7. The pages include a personalization feature where users can enter their zip code to see relevant races.
 
 This pipeline is a perfect example of Django and D3 working together: Django handles data ingestion and serving, D3 handles visualization.
 
-THE APPS SUBDOMAIN
+STANDALONE APPS AND FEATURES
 
-The Tribune publishes major interactives at apps.texastribune.org — these are standalone features built outside the main CMS. Examples:
-- apps.texastribune.org/features/2024/texas-2024-general-election-results/
-- apps.texastribune.org/features/2024/primary-election-results-2024/
-- apps.texastribune.org/features/2024/texas-may-2024-runoff-election-results/
+Leading newsrooms publish major interactives on a separate subdomain or path — standalone features built outside the main CMS. These are deployed to AWS S3 and are separate from the main site (which often runs on WordPress/Newspack for editorial content). The separation lets the data visuals team ship custom code without being constrained by the CMS.
 
-These are deployed to AWS S3 and are separate from the main texastribune.org site (which runs on WordPress/Newspack for editorial content). The separation lets the data visuals team ship custom code without being constrained by the CMS.
+WHY THIS APPROACH MATTERS
 
-WHY THE TRIBUNE'S APPROACH MATTERS
-
-1. Open source culture — They share their tools publicly. This is rare and shows they value the broader journalism-technology community.
+1. Open source culture — Sharing tools publicly is rare and shows an organization values the broader journalism-technology community.
 
 2. Two-system architecture — WordPress/Newspack for daily editorial content, custom Django + standalone apps for data-heavy features. This is a practical, modern approach.
 
 3. Data-to-story pipeline — Reporters find stories in data (using Python, SQL, spreadsheets). Developers visualize those stories with D3. The admin panel lets editors manage and update data. Management commands automate data ingestion. It's a complete loop.
 
-4. Team structure — They have dedicated data visuals developers who can code AND understand journalism. The job listings mention both technical skills and editorial judgment.
+4. Team structure — Dedicated data visuals developers who can code AND understand journalism. Job listings mention both technical skills and editorial judgment.
 
-5. The team contributed to roughly 100 impactful stories in 2025 alone. That's a story roughly every 3-4 days. This is a high-output, high-impact team.
+5. High-output teams contribute to roughly 100 impactful stories a year. That's a story roughly every 3-4 days. High-output, high-impact work.
 
-TALKING POINTS FOR THE INTERVIEW
+KEY TAKEAWAYS
 
-- Mention specific projects: "I was really impressed by the election results pages — the way they combine county-level mapping with personalized race results is exactly the kind of thing that makes data journalism useful to individual readers."
+- Newsroom data visuals stacks center on Django for the backend and D3 for visualization. Understanding both is essential for any newsroom developer role.
 
-- Show you've looked at their GitHub: "I noticed you have data-visuals-create for scaffolding projects and queso-ui for shared styles. That kind of tooling investment shows a mature engineering culture."
+- The Django admin is a force multiplier for editorial teams. It removes engineering bottlenecks and lets editors manage data directly.
 
-- Connect to your background: "As a journalist, what excites me about this stack is how it serves the editorial mission. The Django admin lets editors manage data without engineering bottlenecks. The D3 graphics tell stories that text alone can't. The whole pipeline is designed to get important information to Texans faster."
+- Open-source tooling investment (scaffolding tools, shared UI libraries, documentation) signals a mature engineering culture.
 
-- Ask smart questions: "What does the workflow look like between the data visuals team and reporters? How much does editorial shape the final graphic?" / "Are you exploring any new tools or approaches, like Observable Plot or Svelte, or is D3 still the primary tool?"
+- The election results pipeline — Django ingesting AP data, serving it via API, D3 rendering it live — is the gold standard of newsroom data engineering.
+
+- The two-system architecture (CMS for editorial, custom apps for data features) is a practical pattern worth understanding and being able to discuss.

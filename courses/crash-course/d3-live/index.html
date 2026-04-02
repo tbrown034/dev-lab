@@ -6,7 +6,13 @@
   <title>D3 Mental Model &mdash; Live Examples</title>
   <link rel="stylesheet" href="/assets/base.css">
   <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script type="module">
+    import { checkAuth } from '/components/auth-guard.js';
+    const session = await checkAuth();
+    if (session) document.documentElement.classList.add('authed');
+  </script>
   <style>
+    html:not(.authed) body { visibility: hidden; }
     :root {
       --d3: #f97316;
       --django: #22c55e;
@@ -244,7 +250,7 @@
     <!--  DEMO 3: TEXAS COUNTY MAP               -->
     <!-- ═══════════════════════════════════════ -->
     <div class="demo">
-      <h2>3. Maps &mdash; How the Tribune Draws Texas</h2>
+      <h2>3. Maps &mdash; How Newsrooms Draw Maps</h2>
       <p class="demo-subtitle">D3 draws maps from GeoJSON boundary data + a projection + a path generator. Each county is one SVG path element, colored by data.</p>
 
       <div class="mental-model">
@@ -256,7 +262,7 @@
       </div>
 
       <div class="code-peek">
-        <span class="comment">// The Tribune's Texas map in ~10 lines</span><br>
+        <span class="comment">// A newsroom county map in ~10 lines</span><br>
         <span class="keyword">const</span> projection = d3.geoAlbers().fitSize([width, height], texasGeo)<br>
         <span class="keyword">const</span> path = d3.geoPath(projection)<br>
         <br>
@@ -267,7 +273,7 @@
         &nbsp;&nbsp;.attr(<span class="string">"fill"</span>, d =&gt; colorByParty(d)) <span class="comment">// color by election data</span>
       </div>
 
-      <p class="explain">This simplified Texas map uses randomly generated "election results" to demonstrate the choropleth pattern. In production, the Tribune merges real AP election data with county GeoJSON using FIPS codes as the key. Hover/tap counties to see the concept.</p>
+      <p class="explain">This simplified Texas map uses randomly generated "election results" to demonstrate the choropleth pattern. In production, newsrooms merge real AP election data with county GeoJSON using FIPS codes as the key. Hover/tap counties to see the concept.</p>
     </div>
 
     <!-- ═══════════════════════════════════════ -->
