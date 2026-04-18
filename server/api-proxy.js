@@ -1,8 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { toNodeHandler } from 'better-auth/node';
-import { auth } from '../lib/auth.js';
 
 // Load .env manually — Vite's env loading only applies to client-side code,
 // not server middleware (unlike Next.js which auto-loads process.env)
@@ -249,11 +247,14 @@ setInterval(() => {
 }, 10 * 60 * 1000);
 
 export function createApiProxy() {
-  const authHandler = toNodeHandler(auth);
-
   return {
-    name: 'learn-coding-proxy',
-    configureServer(server) {
+    name: 'dev-lab-proxy',
+    async configureServer(server) {
+      // Lazy-import auth so it doesn't block vite build (pg + better-auth are Node-only)
+      const { toNodeHandler } = await import('better-auth/node');
+      const { auth } = await import('../lib/auth.js');
+      const authHandler = toNodeHandler(auth);
+
       // Better Auth routes — mount at root so Better Auth handles its own path matching
       server.middlewares.use((req, res, next) => {
         if (req.url?.startsWith('/api/auth')) {
