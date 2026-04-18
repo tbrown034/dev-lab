@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite';
-import { resolve, join, relative } from 'path';
-import { readdirSync, statSync, existsSync } from 'fs';
-import { createApiProxy } from './server/api-proxy.js';
+import { resolve, join } from 'path';
+import { readdirSync, statSync } from 'fs';
 
 // Directories to skip when searching for HTML entry points
 const SKIP_DIRS = new Set([
@@ -55,17 +54,19 @@ function findHtmlFiles(dir, base = '') {
   return entries;
 }
 
-export default defineConfig({
+export default defineConfig(async ({ command }) => ({
   root: '.',
   server: {
     port: 3000,
     open: true,
   },
-  plugins: [createApiProxy()],
+  plugins: command === 'serve'
+    ? [(await import('./server/api-proxy.js')).createApiProxy()]
+    : [],
   build: {
     target: 'esnext',
     rollupOptions: {
       input: findHtmlFiles('.'),
     },
   },
-});
+}));
