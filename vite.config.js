@@ -63,6 +63,7 @@ export default defineConfig({
   },
   plugins: [createApiProxy()],
   build: {
+    target: 'esnext',
     rollupOptions: {
       input: findHtmlFiles('.'),
     },
