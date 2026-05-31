@@ -47,7 +47,7 @@
     /* ─── ACTIVE COURSE CARDS ─── */
     .courses-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 1.25rem;
       margin-bottom: 4rem;
     }
@@ -154,6 +154,21 @@
     }
     .course-card[data-color="d3"] .course-status { color: var(--accent-d3); }
     .course-card[data-color="django"] .course-status { color: var(--accent-django); }
+    .course-card[data-color="python"]::before { background: linear-gradient(90deg, #4b8bbe, transparent 80%); }
+    .course-card[data-color="python"]:hover { border-color: #4b8bbe; }
+    .course-card[data-color="python"] .course-icon { background: rgba(75,139,190,0.12); color: #4b8bbe; }
+    .course-card[data-color="python"] .course-tag { background: rgba(75,139,190,0.1); color: #4b8bbe; }
+    .course-card[data-color="python"] .course-status { color: #4b8bbe; }
+    .course-card[data-color="pandas"]::before { background: linear-gradient(90deg, #e70488, transparent 80%); }
+    .course-card[data-color="pandas"]:hover { border-color: #e70488; }
+    .course-card[data-color="pandas"] .course-icon { background: rgba(231,4,136,0.12); color: #e70488; }
+    .course-card[data-color="pandas"] .course-tag { background: rgba(231,4,136,0.1); color: #e70488; }
+    .course-card[data-color="pandas"] .course-status { color: #e70488; }
+    .course-card[data-color="r"]::before { background: linear-gradient(90deg, #276dc3, transparent 80%); }
+    .course-card[data-color="r"]:hover { border-color: #276dc3; }
+    .course-card[data-color="r"] .course-icon { background: rgba(39,109,195,0.12); color: #276dc3; }
+    .course-card[data-color="r"] .course-tag { background: rgba(39,109,195,0.1); color: #276dc3; }
+    .course-card[data-color="r"] .course-status { color: #276dc3; }
     .course-card[data-color="sql"] .course-status { color: var(--accent-sql); }
     .course-card[data-color="jsts"] .course-status { color: var(--accent-jsts); }
     .course-card[data-color="react"] .course-status { color: var(--accent-react); }
@@ -261,7 +276,7 @@
 
     <div class="section-header">
       <h2>Active</h2>
-      <span class="count">3 courses</span>
+      <span class="count">4 courses</span>
     </div>
 
     <div class="courses-grid">
@@ -281,18 +296,32 @@
         </div>
       </a>
 
-      <a href="/django/" class="course-card" data-color="django">
-        <div class="course-icon">Dj</div>
-        <h3>Learn Python + Django</h3>
-        <p class="course-desc">Python first, Django second. 5 lessons of pure Python taught through JS analogies, then 7 lessons building full-stack apps.</p>
+      <a href="/python/" class="course-card" data-color="python">
+        <div class="course-icon">Py</div>
+        <h3>Learn Python</h3>
+        <p class="course-desc">The language from scratch, taught through JavaScript analogies. Syntax, collections, functions, OOP, and working with data and files.</p>
         <div class="course-tags">
-          <span class="course-tag">5 Python</span>
-          <span class="course-tag">7 Django</span>
+          <span class="course-tag">5 Lessons</span>
           <span class="course-tag">AI Tutor</span>
           <span class="course-tag">JS &harr; Py</span>
         </div>
         <div class="course-footer">
-          <span class="course-status">Active &middot; 12 lessons</span>
+          <span class="course-status">Active &middot; 5 lessons</span>
+          <span class="course-lessons">/python/</span>
+        </div>
+      </a>
+
+      <a href="/django/" class="course-card" data-color="django">
+        <div class="course-icon">Dj</div>
+        <h3>Learn Django</h3>
+        <p class="course-desc">Take Python to the backend. Build full-stack web apps and REST APIs, mapped concept-for-concept to Next.js.</p>
+        <div class="course-tags">
+          <span class="course-tag">7 Lessons</span>
+          <span class="course-tag">AI Tutor</span>
+          <span class="course-tag">Next.js &harr; Django</span>
+        </div>
+        <div class="course-footer">
+          <span class="course-status">Active &middot; 7 lessons</span>
           <span class="course-lessons">/django/</span>
         </div>
       </a>
@@ -315,7 +344,7 @@
 
     <div class="section-header">
       <h2>New</h2>
-      <span class="count">4 courses</span>
+      <span class="count">6 courses</span>
     </div>
 
     <div class="courses-grid">
@@ -367,15 +396,43 @@
       <a href="/ai-llm/" class="course-card" data-color="ai">
         <div class="course-icon">AI</div>
         <h3>AI + LLMs</h3>
-        <p class="course-desc">Claude API, prompt engineering, RAG, embeddings, agents, and ethical AI in journalism. Build AI-powered tools for the newsroom.</p>
+        <p class="course-desc">Claude API, prompt engineering, RAG, embeddings, agents, and responsible AI. Build practical AI-powered features end to end.</p>
         <div class="course-tags">
           <span class="course-tag">13 Lessons</span>
           <span class="course-tag">AI Tutor</span>
-          <span class="course-tag">Newsroom AI</span>
+          <span class="course-tag">Applied AI</span>
         </div>
         <div class="course-footer">
           <span class="course-status">Active &middot; 13 lessons</span>
           <span class="course-lessons">/ai-llm/</span>
+        </div>
+      </a>
+
+      <a href="/pandas/" class="course-card" data-color="pandas">
+        <div class="course-icon">Pd</div>
+        <h3>Pandas (Python)</h3>
+        <p class="course-desc">Data analysis in Python — DataFrames, cleaning, grouping, and merging — taught through SQL and JavaScript analogies.</p>
+        <div class="course-tags">
+          <span class="course-tag">AI Tutor</span>
+          <span class="course-tag">SQL &harr; Pandas</span>
+        </div>
+        <div class="course-footer">
+          <span class="course-status">In progress</span>
+          <span class="course-lessons">/pandas/</span>
+        </div>
+      </a>
+
+      <a href="/r/" class="course-card" data-color="r">
+        <div class="course-icon">R</div>
+        <h3>R + Tidyverse</h3>
+        <p class="course-desc">Data, statistics, and visualization. Vectors, data frames, dplyr, and ggplot2 — through Python and SQL analogies.</p>
+        <div class="course-tags">
+          <span class="course-tag">AI Tutor</span>
+          <span class="course-tag">Python &harr; R</span>
+        </div>
+        <div class="course-footer">
+          <span class="course-status">In progress</span>
+          <span class="course-lessons">/r/</span>
         </div>
       </a>
     </div>

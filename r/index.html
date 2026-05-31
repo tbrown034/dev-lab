@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn R — Dev Lab</title>
+  <meta name="description" content="Learn R for data analysis, statistics, and visualization — vectors, data frames, the tidyverse (dplyr, ggplot2) — taught through Python, SQL, and JavaScript analogies. Lessons in progress; the AI tutor is live now.">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/shell.css">
+  <style>
+    :root { --accent: #276dc3; --accent-hover: #4a8ad4; }
+
+    .track-hero {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 5rem 2rem 2rem;
+    }
+    .track-hero .kicker {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.25rem;
+    }
+    .track-hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+    .track-hero p {
+      font-size: 1rem;
+      color: var(--text-dim);
+      line-height: 1.65;
+      max-width: 640px;
+    }
+    .track-hero p + p { margin-top: 1rem; }
+
+    .roadmap {
+      max-width: 860px;
+      margin: 2.5rem auto 0;
+      padding: 0 2rem 4rem;
+    }
+    .roadmap h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+    .roadmap .sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+    .roadmap-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .roadmap-row {
+      background: var(--surface);
+      padding: 1.05rem 1.5rem;
+      display: grid;
+      grid-template-columns: 2.5rem 1fr auto;
+      gap: 1rem;
+      align-items: center;
+    }
+    .roadmap-row .num { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); }
+    .roadmap-row h3 { font-size: 0.9rem; font-weight: 600; }
+    .roadmap-row .desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; line-height: 1.45; }
+    .roadmap-row .tag {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      background: var(--surface-2);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .start-note {
+      margin-top: 1.5rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+    .start-note a { color: var(--accent); text-decoration: none; }
+    .start-note a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      .roadmap-row { grid-template-columns: 2rem 1fr; }
+      .roadmap-row .tag { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/r/" class="logo">Learn <span class="accent" style="color: var(--accent);">R</span></a>
+      <div class="header-right">
+        <a href="/" class="back-link">&larr; Home</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <section class="track-hero">
+    <div class="kicker">Data &amp; Statistics &middot; Track in progress</div>
+    <h1>Learn R</h1>
+    <p>
+      R is the language built for data and statistics — strong at analysis, modeling, and
+      publication-quality charts. If you already know Python or SQL, you have most of the
+      mental model; R just has its own dialect, plus the tidyverse (dplyr, ggplot2).
+    </p>
+    <p>
+      Lessons are being written. In the meantime, the <strong>AI tutor on this page is
+      live</strong> — ask it anything about vectors, data frames, dplyr verbs, or ggplot2,
+      and it will explain through Python, SQL, and JS analogies.
+    </p>
+  </section>
+
+  <section class="roadmap">
+    <h2>Planned lessons</h2>
+    <div class="sub">The shape of the track — subject to change as it is built.</div>
+    <div class="roadmap-list">
+      <div class="roadmap-row">
+        <div class="num">01</div>
+        <div><h3>R Basics &amp; Vectors</h3><div class="desc">Assignment, vectors, the R console and RStudio. Where R differs from Python.</div></div>
+        <span class="tag">Planned</span>
+      </div>
+      <div class="roadmap-row">
+        <div class="num">02</div>
+        <div><h3>Data Frames &amp; Tibbles</h3><div class="desc">Tabular data in R. Like a Pandas DataFrame or a SQL table, with R's own quirks.</div></div>
+        <span class="tag">Planned</span>
+      </div>
+      <div class="roadmap-row">
+        <div class="num">03</div>
+        <div><h3>The Tidyverse: dplyr</h3><div class="desc">filter, select, mutate, group_by, summarise — verbs for reshaping data, and the pipe.</div></div>
+        <span class="tag">Planned</span>
+      </div>
+      <div class="roadmap-row">
+        <div class="num">04</div>
+        <div><h3>Visualization: ggplot2</h3><div class="desc">The grammar of graphics. Building charts layer by layer.</div></div>
+        <span class="tag">Planned</span>
+      </div>
+      <div class="roadmap-row">
+        <div class="num">05</div>
+        <div><h3>Statistics in R</h3><div class="desc">Summaries, distributions, regression, and the tests R was built for.</div></div>
+        <span class="tag">Planned</span>
+      </div>
+    </div>
+    <p class="start-note">
+      Coming from Python? The <a href="/pandas/">Pandas track</a> covers the same data work
+      in Python. Need the database side? See the <a href="/sql/">SQL track</a>.
+    </p>
+  </section>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  </script>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+</body>
+</html>

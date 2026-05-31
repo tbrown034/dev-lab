@@ -102,7 +102,7 @@
     /* ─── TRACK CARDS ─── */
     .tracks {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 1px;
       background: var(--border);
       border-radius: 8px;
@@ -188,6 +188,10 @@
     .track[data-color="d3"] .track-status { color: var(--accent-d3); }
     .track[data-color="django"] .track-status { color: var(--accent-django); }
     .track[data-color="sql"] .track-status { color: var(--accent-sql); }
+    .track[data-color="python"]::after { background: linear-gradient(90deg, #4b8bbe, transparent); }
+    .track[data-color="python"] .track-icon { background: rgba(75,139,190,0.12); color: #4b8bbe; }
+    .track[data-color="python"] .track-tag { background: rgba(75,139,190,0.1); color: #4b8bbe; }
+    .track[data-color="python"] .track-status { color: #4b8bbe; }
     .track .track-port {
       font-family: var(--mono);
       font-size: 0.7rem;
@@ -197,7 +201,7 @@
     /* ─── PLANNED TRACKS ─── */
     .planned {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 1px;
       background: var(--border);
       border-radius: 8px;
@@ -227,6 +231,8 @@
     .planned-track[data-color="react"] .plan-icon { background: rgba(6,182,212,0.1); color: var(--accent-react); }
     .planned-track[data-color="css"] .plan-icon { background: rgba(168,85,247,0.1); color: var(--accent-css); }
     .planned-track[data-color="ai"] .plan-icon { background: rgba(244,114,182,0.1); color: var(--accent-ai); }
+    .planned-track[data-color="pandas"] .plan-icon { background: rgba(231,4,136,0.1); color: #e70488; }
+    .planned-track[data-color="r"] .plan-icon { background: rgba(39,109,195,0.1); color: #276dc3; }
     .planned-track h3 {
       font-family: var(--sans);
       font-size: 0.95rem;
@@ -367,24 +373,25 @@
   <!-- ─── HERO ─── -->
   <div class="hero">
     <div class="hero-inner">
-      <div class="hero-kicker">Free learning platform &mdash; 7 tracks</div>
+      <div class="hero-kicker">Free learning platform &mdash; 10 tracks</div>
       <h1>Concepts first.<br>Code second.</h1>
       <div class="hero-body">
         <div>
           <p>
-            Seven courses &mdash; <strong>D3.js</strong>, <strong>Python</strong>, <strong>SQL</strong>,
-            <strong>React</strong>, <strong>TypeScript</strong>, <strong>CSS</strong>, and <strong>AI</strong>
+            Ten tracks &mdash; <strong>Python</strong>, <strong>JavaScript</strong>, <strong>TypeScript</strong>,
+            <strong>React</strong>, <strong>CSS</strong>, <strong>SQL</strong>, <strong>Pandas</strong>,
+            <strong>R</strong>, <strong>D3.js</strong>, and <strong>AI</strong>
             &mdash; each with interactive lessons, an AI tutor, skill tests, games, and real projects.
           </p>
           <p style="margin-top: 1rem;">
             Every concept taught through analogies to things you already know.
-            Built from scratch by a journalist who learned to code the hard way;
+            Built from scratch by a developer who learned the hard way;
             the lessons teach what stuck.
           </p>
         </div>
         <div class="hero-stats">
           <div class="stat"><div class="num">36</div><div class="label">Lessons</div></div>
-          <div class="stat"><div class="num">7</div><div class="label">Tracks</div></div>
+          <div class="stat"><div class="num">10</div><div class="label">Tracks</div></div>
           <div class="stat"><div class="num">10</div><div class="label">Games</div></div>
           <div class="stat"><div class="num">6</div><div class="label">AI Skills</div></div>
         </div>
@@ -396,7 +403,7 @@
   <section id="tracks">
     <div class="section-header reveal-on-scroll">
       <h2>Active Tracks</h2>
-      <span class="count">3 platforms running</span>
+      <span class="count">4 platforms running</span>
     </div>
 
     <div class="tracks reveal-on-scroll">
@@ -416,18 +423,32 @@
         </div>
       </a>
 
-      <a href="/django/" class="track" data-color="django">
-        <div class="track-icon">Dj</div>
-        <h3>Learn Python + Django</h3>
-        <p class="track-desc">Python first, Django second. 5 lessons of pure Python taught through JS analogies, then 7 lessons building full-stack apps.</p>
+      <a href="/python/" class="track" data-color="python">
+        <div class="track-icon">Py</div>
+        <h3>Learn Python</h3>
+        <p class="track-desc">The language from scratch, taught through JavaScript analogies. Syntax, collections, functions, OOP, and working with data and files.</p>
         <div class="track-tags">
-          <span class="track-tag">5 Python</span>
-          <span class="track-tag">7 Django</span>
+          <span class="track-tag">5 Lessons</span>
           <span class="track-tag">AI Tutor</span>
           <span class="track-tag">JS &#8596; Py</span>
         </div>
         <div class="track-footer">
-          <span class="track-status">Active &middot; 12 lessons</span>
+          <span class="track-status">Active &middot; 5 lessons</span>
+          <span class="track-port">/python/</span>
+        </div>
+      </a>
+
+      <a href="/django/" class="track" data-color="django">
+        <div class="track-icon">Dj</div>
+        <h3>Learn Django</h3>
+        <p class="track-desc">Take Python to the backend. Build full-stack web apps and REST APIs, mapped concept-for-concept to Next.js.</p>
+        <div class="track-tags">
+          <span class="track-tag">7 Lessons</span>
+          <span class="track-tag">AI Tutor</span>
+          <span class="track-tag">Next.js &#8596; Django</span>
+        </div>
+        <div class="track-footer">
+          <span class="track-status">Active &middot; 7 lessons</span>
           <span class="track-port">/django/</span>
         </div>
       </a>
@@ -451,7 +472,7 @@
     <!-- ─── MORE COURSES ─── -->
     <div class="section-header reveal-on-scroll">
       <h2>More Courses</h2>
-      <span class="count">4 more</span>
+      <span class="count">6 more</span>
     </div>
 
     <div class="planned reveal-on-scroll">
@@ -473,7 +494,17 @@
       <a href="/ai-llm/" class="planned-track" data-color="ai" style="text-decoration:none;color:inherit;cursor:pointer;">
         <div class="plan-icon">AI</div>
         <h3>AI + LLMs</h3>
-        <p>Claude API, prompt engineering, RAG, embeddings, ethical AI in journalism.</p>
+        <p>Claude API, prompt engineering, RAG, embeddings, and responsible AI.</p>
+      </a>
+      <a href="/pandas/" class="planned-track" data-color="pandas" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">Pd</div>
+        <h3>Pandas (Python)</h3>
+        <p>DataFrames, cleaning, grouping, and merging data — through SQL and JS analogies.</p>
+      </a>
+      <a href="/r/" class="planned-track" data-color="r" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">R</div>
+        <h3>R + Tidyverse</h3>
+        <p>Data, statistics, and visualization. Vectors, data frames, dplyr, and ggplot2.</p>
       </a>
     </div>
   </section>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn Pandas — Dev Lab</title>
+  <meta name="description" content="Learn Pandas for data analysis in Python — DataFrames, cleaning, reshaping, grouping, and merging — taught through SQL and JavaScript analogies. Lessons in progress; the AI tutor is live now.">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/shell.css">
+  <style>
+    :root { --accent: #e70488; --accent-hover: #f23ba6; }
+
+    .track-hero {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 5rem 2rem 2rem;
+    }
+    .track-hero .kicker {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.25rem;
+    }
+    .track-hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+    .track-hero p {
+      font-size: 1rem;
+      color: var(--text-dim);
+      line-height: 1.65;
+      max-width: 640px;
+    }
+    .track-hero p + p { margin-top: 1rem; }
+
+    .roadmap {
+      max-width: 860px;
+      margin: 2.5rem auto 0;
+      padding: 0 2rem 4rem;
+    }
+    .roadmap h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+    .roadmap .sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+    .roadmap-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .roadmap-row {
+      background: var(--surface);
+      padding: 1.05rem 1.5rem;
+      display: grid;
+      grid-template-columns: 2.5rem 1fr auto;
+      gap: 1rem;
+      align-items: center;
+    }
+    .roadmap-row .num { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); }
+    .roadmap-row h3 { font-size: 0.9rem; font-weight: 600; }
+    .roadmap-row .desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; line-height: 1.45; }
+    .roadmap-row .tag {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      background: var(--surface-2);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .start-note {
+      margin-top: 1.5rem;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+    .start-note a { color: var(--accent); text-decoration: none; }
+    .start-note a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      .roadmap-row { grid-template-columns: 2rem 1fr; }
+      .roadmap-row .tag { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/pandas/" class="logo">Learn <span class="accent" style="color: var(--accent);">Pandas</span></a>
+      <div class="header-right">
+        <a href="/" class="back-link">&larr; Home</a>
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <section class="track-hero">
+    <div class="kicker">Data Analysis &middot; Track in progress</div>
+    <h1>Learn Pandas</h1>
+    <p>
+      Pandas is how Python works with tabular data — the spreadsheet, the CSV, the SQL
+      result set — all loaded into memory and reshaped with code. If you know SQL or
+      JavaScript array methods, most of it will feel familiar fast.
+    </p>
+    <p>
+      Lessons are being written. In the meantime, the <strong>AI tutor on this page is
+      live</strong> — ask it anything about DataFrames, cleaning data, grouping, or
+      merging, and it will explain through SQL and JS analogies.
+    </p>
+  </section>
+
+  <section class="roadmap">
+    <h2>Planned lessons</h2>
+    <div class="sub">The shape of the track — subject to change as it is built.</div>
+    <div class="roadmap-list">
+      <div class="roadmap-row">
+        <div class="num">01</div>
+        <div><h3>DataFrames &amp; Series</h3><div class="desc">Loading data, inspecting it, selecting rows and columns. The spreadsheet, in code.</div></div>
+        <span class="tag">Planned</span>
+      </div>
+      <div class="roadmap-row">
+        <div class="num">02</div>
+        <div><h3>Filtering &amp; Selecting</h3><div class="desc">Boolean indexing, loc/iloc, query — the Pandas version of WHERE and .filter().</div></div>
+        <span class="tag">Planned</span>
+      </div>
+      <div class="roadmap-row">
+        <div class="num">03</div>
+        <div><h3>Cleaning Data</h3><div class="desc">Missing values, types, duplicates, renaming. The unglamorous 80% of real work.</div></div>
+        <span class="tag">Planned</span>
+      </div>
+      <div class="roadmap-row">
+        <div class="num">04</div>
+        <div><h3>Grouping &amp; Aggregation</h3><div class="desc">groupby + agg — SQL GROUP BY, the Pandas way. Pivot tables and summaries.</div></div>
+        <span class="tag">Planned</span>
+      </div>
+      <div class="roadmap-row">
+        <div class="num">05</div>
+        <div><h3>Merging &amp; Reshaping</h3><div class="desc">merge (JOINs), concat, melt, pivot. Combining and reshaping datasets.</div></div>
+        <span class="tag">Planned</span>
+      </div>
+    </div>
+    <p class="start-note">
+      New to Python itself? Start with the <a href="/python/">Python track</a> first.
+      Coming from databases? The <a href="/sql/">SQL track</a> pairs well with this one.
+    </p>
+  </section>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    toggle.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  </script>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+
+</body>
+</html>
