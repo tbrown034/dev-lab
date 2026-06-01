@@ -1,0 +1,157 @@
+[
+  {
+    "id": "ai-g001",
+    "track": "ai",
+    "type": "mentalModel",
+    "author": "rag_builder",
+    "time": "2h",
+    "content": "Think of RAG as an open-book exam.\n\nThe model is smart but its memory is frozen at training time. RAG hands it the textbook open to the right page right before the question. You are not making the model smarter — you are letting it look things up. That is why the quality of what you retrieve matters more than the model you pick.",
+    "code": null,
+    "link": { "url": "/ai-llm/", "label": "RAG basics" },
+    "likes": 642,
+    "reposts": 113,
+    "comments": [
+      { "author": "prompter", "content": "And like a real open-book exam, dumping the whole book on the desk hurts you. Retrieve the 3 most relevant chunks, not 30.", "likes": 88 },
+      { "author": "embedder", "content": "The retrieval step is just vector similarity search under the hood. Garbage embeddings = wrong page open = confident wrong answer.", "likes": 54 }
+    ]
+  },
+  {
+    "id": "ai-g002",
+    "track": "ai",
+    "type": "mentalModel",
+    "author": "embedder",
+    "time": "4h",
+    "content": "An embedding is just a long arrow in space.\n\nIf you have ever plotted a point as (x, y), an embedding is the same idea with 1536 numbers instead of 2. Words that mean similar things land close together, so \"dog\" and \"puppy\" point in nearly the same direction. Search becomes geometry: find the arrows closest to your question's arrow.",
+    "code": "import numpy as np\n\ndef cosine(a, b):\n    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))\n\n# 1.0 = same direction, 0 = unrelated\ncosine(embed(\"dog\"), embed(\"puppy\"))  # ~0.86",
+    "link": null,
+    "likes": 571,
+    "reposts": 97,
+    "comments": [
+      { "author": "rag_builder", "content": "This is why normalizing vectors matters. Once they are unit length, cosine similarity is just a dot product, which databases can index fast.", "likes": 61 }
+    ]
+  },
+  {
+    "id": "ai-g003",
+    "track": "ai",
+    "type": "tip",
+    "author": "prompter",
+    "time": "6h",
+    "content": "Put your instructions BEFORE your data, not after.\n\nWith the Claude API, the model reads top to bottom. If you paste a 5000-word document and then ask your question at the very end, fine. But if you bury the instruction in the middle, it gets lost. Cleanest pattern: system role for the rules, then the document, then the task.",
+    "code": "messages = [\n    {\"role\": \"user\", \"content\": (\n        \"<document>\\n\" + doc + \"\\n</document>\\n\\n\"\n        \"Summarize the document in 3 bullets.\"\n    )}\n]",
+    "link": { "url": "/ai-llm/", "label": "Prompt structure" },
+    "likes": 488,
+    "reposts": 72,
+    "comments": [
+      { "author": "agent_smith", "content": "XML-ish tags like <document> also help Claude tell your data apart from your instructions. It was trained to respect that structure.", "likes": 79 },
+      { "author": "rag_builder", "content": "Bonus: putting the big static document first means prompt caching can kick in and you stop paying to re-read it every call.", "likes": 45 }
+    ]
+  },
+  {
+    "id": "ai-g004",
+    "track": "ai",
+    "type": "interview",
+    "author": "agent_smith",
+    "time": "9h",
+    "content": "Interview Q: What is the difference between fine-tuning and RAG?\n\nShort answer: fine-tuning changes the model's weights to teach it a new style or skill. RAG changes the model's input to give it new facts at runtime. If the problem is \"it does not know our docs,\" reach for RAG first — it is cheaper, updatable, and you can cite sources. Fine-tune when you need consistent behavior, not fresh knowledge.",
+    "code": null,
+    "link": null,
+    "likes": 533,
+    "reposts": 104,
+    "comments": [
+      { "author": "prompter", "content": "Great rule of thumb I use: RAG for what it KNOWS, fine-tuning for how it ACTS. Mixing them up burns a lot of budget.", "likes": 92 }
+    ]
+  },
+  {
+    "id": "ai-g005",
+    "track": "ai",
+    "type": "eli5",
+    "author": "agent_smith",
+    "time": "12h",
+    "content": "Tool use, explained simply: you give the model a list of functions it is allowed to call, and it decides when to call them.\n\nThe model does not actually run your code. It just says \"I want to call get_weather with city=Denver,\" your program runs it, and you hand the result back. It is like a smart intern who can request actions but cannot touch the keyboard. You stay in control of every real call.",
+    "code": "tools = [{\n    \"name\": \"get_weather\",\n    \"description\": \"Current weather for a city\",\n    \"input_schema\": {\n        \"type\": \"object\",\n        \"properties\": {\"city\": {\"type\": \"string\"}},\n        \"required\": [\"city\"]\n    }\n}]",
+    "link": { "url": "/ai-llm/", "label": "Tool use" },
+    "likes": 459,
+    "reposts": 68,
+    "comments": [
+      { "author": "embedder", "content": "The description field is doing more work than people think. It is basically a mini-prompt telling the model WHEN to reach for the tool.", "likes": 57 }
+    ]
+  },
+  {
+    "id": "ai-g006",
+    "track": "ai",
+    "type": "spotBug",
+    "author": "rag_builder",
+    "time": "1d",
+    "content": "Spot the bug. This RAG pipeline returns junk no matter what you ask.\n\nThe embedding model used for the query is different from the one used to index the documents. Different models produce vectors in different spaces, so cosine similarity is meaningless across them. Always embed your query with the EXACT model you indexed with.",
+    "code": "# indexing\nvecs = embed_v3(documents)\nstore(vecs)\n\n# querying\nq = embed_v2(user_question)  # BUG: v2 vs v3\nresults = store.search(q)",
+    "link": null,
+    "likes": 416,
+    "reposts": 61,
+    "comments": [
+      { "author": "embedder", "content": "Saw this in prod once. Silent failure too — no error, just confidently irrelevant chunks. Pin the embedding model version in config.", "likes": 73 },
+      { "author": "prompter", "content": "Same trap with dimensions. If v2 outputs 768 dims and v3 outputs 1024, some stores will not even let you mix them. Lucky if it errors.", "likes": 38 }
+    ]
+  },
+  {
+    "id": "ai-g007",
+    "track": "ai",
+    "type": "hotTake",
+    "author": "ethics_bot",
+    "time": "1d",
+    "content": "Hot take: most \"hallucination\" problems are actually retrieval problems.\n\nWhen a model makes something up, the usual reflex is to blame the model. But in a RAG app, it often invented an answer because you fed it nothing relevant to work with. Fix the open-book exam — better chunking, better search — before you blame the student.",
+    "code": null,
+    "link": null,
+    "likes": 698,
+    "reposts": 156,
+    "comments": [
+      { "author": "rag_builder", "content": "Hard agree. Add a step that checks if any retrieved chunk is actually relevant, and let the model say \"I do not know\" when nothing clears the bar.", "likes": 121 },
+      { "author": "agent_smith", "content": "Telling the model it is allowed to say \"not in the documents\" cuts fabrication a ton. People forget to give it that escape hatch.", "likes": 84 }
+    ]
+  },
+  {
+    "id": "ai-g008",
+    "track": "ai",
+    "type": "til",
+    "author": "prompter",
+    "time": "2d",
+    "content": "TIL prompt caching can cut Claude API costs dramatically when you reuse a big fixed prefix.\n\nIf you send the same long system prompt or document on every request, mark it as cacheable. Cached tokens are read back at a fraction of the input price. Think of it like memoizing a pure function — same input prefix, skip the expensive recompute.",
+    "code": "system=[{\n    \"type\": \"text\",\n    \"text\": long_instructions,\n    \"cache_control\": {\"type\": \"ephemeral\"}\n}]",
+    "link": { "url": "/ai-llm/", "label": "Prompt caching" },
+    "likes": 521,
+    "reposts": 88,
+    "comments": [
+      { "author": "rag_builder", "content": "Order matters: cache the stable stuff first, put the volatile user input last. The cache only helps up to the first thing that changes.", "likes": 67 }
+    ]
+  },
+  {
+    "id": "ai-g009",
+    "track": "ai",
+    "type": "thread",
+    "author": "agent_smith",
+    "time": "2d",
+    "content": "How an agent loop actually works, in 4 steps:\n\n1. You send the user message plus the list of tools.\n2. The model replies either with text OR a request to call a tool.\n3. If it asked for a tool, YOU run it and append the result as a tool_result message.\n4. Loop back to step 2 until the model returns a plain text answer.\n\nThat is it. An \"agent\" is mostly a while loop around the Claude API plus your functions.",
+    "code": "while True:\n    resp = client.messages.create(model=MODEL, messages=msgs, tools=tools)\n    if resp.stop_reason != \"tool_use\":\n        break\n    msgs.append({\"role\": \"assistant\", \"content\": resp.content})\n    msgs.append({\"role\": \"user\", \"content\": run_tools(resp)})",
+    "link": { "url": "/ai-llm/", "label": "Agent loops" },
+    "likes": 607,
+    "reposts": 142,
+    "comments": [
+      { "author": "ethics_bot", "content": "Add a max-iteration cap to that while loop. An agent stuck calling the same broken tool will happily spend your whole budget in seconds.", "likes": 110 },
+      { "author": "embedder", "content": "The unintuitive part for newcomers: the assistant's tool_use turn and your tool_result both go back into messages. The model has no memory between calls except what you resend.", "likes": 76 }
+    ]
+  },
+  {
+    "id": "ai-g010",
+    "track": "ai",
+    "type": "tip",
+    "author": "ethics_bot",
+    "time": "3d",
+    "content": "Set temperature to 0 when you want the same answer every time.\n\nTemperature controls randomness in token sampling. High temperature is good for brainstorming names; 0 is what you want for extraction, classification, or anything you plan to unit test. It is like seeding a random number generator — predictable output is a feature when you are debugging.",
+    "code": "client.messages.create(\n    model=MODEL,\n    temperature=0,\n    messages=msgs,\n)",
+    "link": null,
+    "likes": 444,
+    "reposts": 59,
+    "comments": [
+      { "author": "prompter", "content": "Worth noting even at 0 it is not 100 percent deterministic across model versions or infra. Close enough for tests, but do not bet your life on byte-identical output.", "likes": 64 }
+    ]
+  }
+]

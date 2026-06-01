@@ -1,0 +1,207 @@
+[
+  {
+    "id": "react-g001",
+    "track": "react",
+    "type": "mentalModel",
+    "author": "fiber_node",
+    "time": "2h",
+    "content": "In vanilla JS you grab the DOM and tell it what to do: document.querySelector then .textContent = count.\nReact flips it. You never touch the DOM. You describe what the UI should look like for a given state, and React figures out the minimal edits.\nThe mental shift: stop writing instructions, start writing a description.",
+    "code": "// vanilla: imperative\ncountEl.textContent = count;\n\n// react: declarative\nreturn <span>{count}</span>;",
+    "link": { "url": "/react/", "label": "Thinking in React" },
+    "likes": 612,
+    "reposts": 88,
+    "comments": [
+      {
+        "author": "state_mgr",
+        "content": "This clicked for me when I realized JSX is just the return value of a function. Same input, same output.",
+        "likes": 71
+      }
+    ]
+  },
+  {
+    "id": "react-g002",
+    "track": "react",
+    "type": "spotBug",
+    "author": "use_effect",
+    "time": "4h",
+    "content": "Spot the bug: this counter logs the old value every time.\nThe effect closes over count from the render it was created in. With an empty dependency array, that closure never updates, so it forever sees the count from the first render.\nFix: add count to the deps, or use the updater function form.",
+    "code": "useEffect(() => {\n  const id = setInterval(() => {\n    console.log(count); // always 0\n  }, 1000);\n  return () => clearInterval(id);\n}, []);",
+    "link": null,
+    "likes": 488,
+    "reposts": 63,
+    "comments": [
+      {
+        "author": "fiber_node",
+        "content": "Stale closures are the number one effect bug. The lint rule react-hooks/exhaustive-deps catches most of these for free.",
+        "likes": 94
+      },
+      {
+        "author": "suspenseful",
+        "content": "setCount(c => c + 1) is the cleaner escape hatch here since you don't even need count in scope.",
+        "likes": 52
+      }
+    ]
+  },
+  {
+    "id": "react-g003",
+    "track": "react",
+    "type": "interview",
+    "author": "state_mgr",
+    "time": "7h",
+    "content": "Common interview question: why is state a snapshot, not a live variable?\nWhen you call setState, you don't mutate the current value. You schedule a re-render, and the new value only shows up in the next render's scope.\nThat's why setCount(count + 1) three times in a row only adds one. Each call reads the same snapshot of count.",
+    "code": "// adds 1, not 3\nsetCount(count + 1);\nsetCount(count + 1);\nsetCount(count + 1);\n\n// adds 3\nsetCount(c => c + 1);\nsetCount(c => c + 1);\nsetCount(c => c + 1);",
+    "link": { "url": "/react/", "label": "State as a snapshot" },
+    "likes": 547,
+    "reposts": 79,
+    "comments": [
+      {
+        "author": "use_effect",
+        "content": "The updater form is reading from the queued state, not the snapshot. That's the whole difference.",
+        "likes": 66
+      }
+    ]
+  },
+  {
+    "id": "react-g004",
+    "track": "react",
+    "type": "hotTake",
+    "author": "server_comp",
+    "time": "11h",
+    "content": "Hot take: most useEffect calls in your app should not exist.\nIf you're using an effect to transform props into derived data, just compute it during render. If you're fetching on mount in the App Router, move it to a Server Component and await the data directly.\nEffects are for syncing with systems outside React: subscriptions, timers, the DOM. Not for reacting to your own state.",
+    "code": "// don't\nuseEffect(() => setFullName(first + ' ' + last), [first, last]);\n\n// do\nconst fullName = first + ' ' + last;",
+    "link": null,
+    "likes": 723,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "use_effect",
+        "content": "The You Might Not Need an Effect docs page should be required reading. Half my old code violated it.",
+        "likes": 118
+      },
+      {
+        "author": "suspenseful",
+        "content": "Server Components killed my biggest effect use case overnight. No more fetch-on-mount spinners.",
+        "likes": 87
+      }
+    ]
+  },
+  {
+    "id": "react-g005",
+    "track": "react",
+    "type": "eli5",
+    "author": "suspenseful",
+    "time": "14h",
+    "content": "ELI5 the key prop: imagine a coat check with numbered tags.\nWhen you hand items back and forth, the number on the tag is how the attendant knows which coat is which, even if you shuffle the order.\nReact uses key the same way to track list items across renders. Use array index as the key and you've basically swapped everyone's tags when the list reorders.",
+    "code": "{todos.map(t => (\n  <Todo key={t.id} item={t} />\n))}",
+    "link": { "url": "/react/", "label": "Lists and keys" },
+    "likes": 401,
+    "reposts": 47,
+    "comments": [
+      {
+        "author": "state_mgr",
+        "content": "The classic index-as-key bug: type into an input, delete a row above it, and your text jumps to the wrong row.",
+        "likes": 73
+      }
+    ]
+  },
+  {
+    "id": "react-g006",
+    "track": "react",
+    "type": "til",
+    "author": "fiber_node",
+    "time": "1d",
+    "content": "TIL the difference between server and client components is really just where the code runs.\nA Server Component runs once on the server, ships zero JS to the browser, and can touch the database directly. A Client Component ships its JS so it can use state, effects, and event handlers.\nThe rule of thumb: server by default, add 'use client' only at the leaf where interactivity actually starts.",
+    "code": "'use client';\n// only the button needs this, not the whole page\nexport function LikeButton() {\n  const [liked, setLiked] = useState(false);\n  return <button onClick={() => setLiked(true)}>...</button>;\n}",
+    "link": { "url": "/react/", "label": "Server vs Client" },
+    "likes": 559,
+    "reposts": 102,
+    "comments": [
+      {
+        "author": "server_comp",
+        "content": "Key insight: a Client Component can still render Server Components passed as children. The boundary is about where useState lives, not a hard wall.",
+        "likes": 91
+      }
+    ]
+  },
+  {
+    "id": "react-g007",
+    "track": "react",
+    "type": "tip",
+    "author": "use_effect",
+    "time": "1d",
+    "content": "Tip: an effect's cleanup function runs before the next effect AND on unmount.\nThink of it like removeEventListener in vanilla JS. Every addEventListener needs a matching removeEventListener or you leak listeners.\nReact's cleanup is that pairing made automatic. Subscribe in the body, unsubscribe in the return.",
+    "code": "useEffect(() => {\n  window.addEventListener('resize', onResize);\n  return () => window.removeEventListener('resize', onResize);\n}, []);",
+    "link": null,
+    "likes": 372,
+    "reposts": 41,
+    "comments": [
+      {
+        "author": "fiber_node",
+        "content": "In Strict Mode dev, the effect mounts, cleans up, then mounts again. If your cleanup is wrong, this surfaces it immediately.",
+        "likes": 58
+      }
+    ]
+  },
+  {
+    "id": "react-g008",
+    "track": "react",
+    "type": "thread",
+    "author": "state_mgr",
+    "time": "2d",
+    "content": "Thread: how to pick where state lives. (1/3)\nStart by asking which components need the value. State should sit at the closest common parent of everyone who reads it, then flow down as props.\nIf you find yourself bubbling the same value up through five components, that's the signal to lift it, not to reach for a global store on day one.",
+    "code": "// lifted to the parent that both children need\nfunction Form() {\n  const [query, setQuery] = useState('');\n  return (\n    <>\n      <SearchBox value={query} onChange={setQuery} />\n      <Results query={query} />\n    </>\n  );\n}",
+    "link": { "url": "/react/", "label": "Lifting state up" },
+    "likes": 434,
+    "reposts": 60,
+    "comments": [
+      {
+        "author": "server_comp",
+        "content": "And remember: not everything is state. URL search params and the server are both valid places to store data the App Router can read on the next request.",
+        "likes": 77
+      },
+      {
+        "author": "suspenseful",
+        "content": "Reach for Context when prop drilling gets deep, reach for a store like Zustand only when many distant trees share fast-changing state.",
+        "likes": 45
+      }
+    ]
+  },
+  {
+    "id": "react-g009",
+    "track": "react",
+    "type": "mentalModel",
+    "author": "suspenseful",
+    "time": "3d",
+    "content": "Mental model for Suspense: it's a try/catch for loading.\nA component throws a promise while data is pending, and the nearest Suspense boundary catches it and shows your fallback until the promise resolves.\nThat's why you wrap with one boundary instead of scattering isLoading checks through every component. The boundary owns the waiting.",
+    "code": "<Suspense fallback={<Skeleton />}>\n  <Profile />   {/* awaits its own data */}\n  <Feed />\n</Suspense>",
+    "link": { "url": "/react/", "label": "Suspense basics" },
+    "likes": 466,
+    "reposts": 71,
+    "comments": [
+      {
+        "author": "server_comp",
+        "content": "In the App Router this is what loading.js wires up for you automatically. The file is just a Suspense fallback for the route.",
+        "likes": 83
+      }
+    ]
+  },
+  {
+    "id": "react-g010",
+    "track": "react",
+    "type": "spotBug",
+    "author": "server_comp",
+    "time": "3d",
+    "content": "Spot the bug: this Server Component crashes at build.\nYou can't use onClick or any event handler in a Server Component because there's no JS shipped to the browser to run it. Handlers only exist in Client Components.\nFix: pull the interactive bit into its own 'use client' component and import it here.",
+    "code": "// app/page.tsx (Server Component)\nexport default function Page() {\n  return <button onClick={() => alert('hi')}>Click</button>;\n  // Error: event handlers cannot be passed to Client Component props\n}",
+    "link": null,
+    "likes": 419,
+    "reposts": 55,
+    "comments": [
+      {
+        "author": "fiber_node",
+        "content": "Good tell: if a component needs onClick, useState, or useEffect, it has to be a Client Component. Those three are your boundary markers.",
+        "likes": 69
+      }
+    ]
+  }
+]

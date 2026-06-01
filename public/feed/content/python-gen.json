@@ -1,0 +1,212 @@
+[
+  {
+    "id": "python-g001",
+    "track": "python",
+    "type": "mentalModel",
+    "author": "list_comp",
+    "time": "2h",
+    "content": "If you know JS map and filter, list comprehensions are the same idea with the order flipped.\nIn JS you chain: nums.filter(n => n % 2 === 0).map(n => n * 2).\nIn Python you write the transform first, the loop next, the filter last. One readable line, no callbacks.",
+    "code": "nums = [1, 2, 3, 4, 5, 6]\nresult = [n * 2 for n in nums if n % 2 == 0]\n# [4, 8, 12]",
+    "link": { "url": "/python/", "label": "List comprehensions" },
+    "likes": 612,
+    "reposts": 143,
+    "comments": [
+      {
+        "author": "pythonic",
+        "content": "The mental flip that helped me: read it as 'give me n*2, for each n, where n is even'. It maps to plain English better than the chained version.",
+        "likes": 88
+      },
+      {
+        "author": "duck_typer",
+        "content": "Worth adding: swap the brackets for parentheses and you get a generator that streams lazily instead of building the whole list. Huge for big data.",
+        "likes": 54
+      }
+    ]
+  },
+  {
+    "id": "python-g002",
+    "track": "python",
+    "type": "tip",
+    "author": "pythonic",
+    "time": "5h",
+    "content": "Python dicts are JS objects, but better behaved for lookups.\nUse .get() to dodge KeyError the same way JS gives you undefined for a missing key.\nNo more wrapping every access in a try/except.",
+    "code": "user = {\"name\": \"Ada\"}\nuser.get(\"email\")          # None, no crash\nuser.get(\"email\", \"n/a\")   # default fallback",
+    "link": null,
+    "likes": 421,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "list_comp",
+        "content": "And unlike JS where obj.missing silently returns undefined, plain dict['missing'] actually throws. So .get() is how you opt into the JS-style soft behavior on purpose.",
+        "likes": 71
+      }
+    ]
+  },
+  {
+    "id": "python-g003",
+    "track": "python",
+    "type": "interview",
+    "author": "duck_typer",
+    "time": "7h",
+    "content": "Classic interview trap: what does this print?\nThe gotcha is that default arguments are evaluated ONCE at function definition, not on every call. The same list gets reused, so it keeps growing.\nFix: default to None and build the list inside.",
+    "code": "def add(item, bucket=[]):\n    bucket.append(item)\n    return bucket\n\nadd(1)  # [1]\nadd(2)  # [1, 2]  surprise!",
+    "link": { "url": "/python/", "label": "Mutable defaults" },
+    "likes": 738,
+    "reposts": 189,
+    "comments": [
+      {
+        "author": "pythonic",
+        "content": "The fix is muscle memory once you have been burned: def add(item, bucket=None): if bucket is None: bucket = []. Interviewers love this one because it reveals if you understand when code actually runs.",
+        "likes": 132
+      },
+      {
+        "author": "list_comp",
+        "content": "Mental hook: the def line runs once, the body runs every call. The default lives on the def line, so it is frozen in place.",
+        "likes": 64
+      }
+    ]
+  },
+  {
+    "id": "python-g004",
+    "track": "python",
+    "type": "eli5",
+    "author": "list_comp",
+    "time": "11h",
+    "content": "f-strings are Python's template literals.\nIf you have written `Hello ${name}` in JS backticks, you already get it. Just swap the backtick for an f and the dollar-brace for a plain brace.\nYou can run real expressions inside the braces too.",
+    "code": "name = \"Sam\"\nf\"Hello {name}, you have {3 + 4} messages\"\n# 'Hello Sam, you have 7 messages'",
+    "link": null,
+    "likes": 503,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "duck_typer",
+        "content": "Pro move for debugging: f\"{user=}\" prints both the variable name and its value, like user=42. No JS equivalent and it is a lifesaver.",
+        "likes": 97
+      }
+    ]
+  },
+  {
+    "id": "python-g005",
+    "track": "python",
+    "type": "spotBug",
+    "author": "pythonic",
+    "time": "1d",
+    "content": "Spot the bug. This function should return a copy with one item added, but the caller's original list keeps changing.\nThe issue: assigning a list does not copy it, it just makes a second name for the same object. Same trap as JS where const b = a only copies the reference.",
+    "code": "def with_extra(items):\n    copy = items\n    copy.append(\"new\")\n    return copy\n\norig = [1, 2]\nwith_extra(orig)\nprint(orig)  # [1, 2, 'new']  oops",
+    "link": { "url": "/python/", "label": "Copying lists" },
+    "likes": 389,
+    "reposts": 52,
+    "comments": [
+      {
+        "author": "list_comp",
+        "content": "Fix is copy = items[:] or list(items), same energy as JS spread [...items]. For nested structures reach for copy.deepcopy or you will hit the same trap one level down.",
+        "likes": 78
+      }
+    ]
+  },
+  {
+    "id": "python-g006",
+    "track": "python",
+    "type": "hotTake",
+    "author": "duck_typer",
+    "time": "1d",
+    "content": "Hot take: stop reaching for a for-loop to build a dict.\nDict comprehensions are right there, and they read like the data they produce. If you came from JS, think Object.fromEntries but native and shorter.\nYour future self reviewing the diff will thank you.",
+    "code": "names = [\"ada\", \"linus\", \"grace\"]\nlengths = {n: len(n) for n in names}\n# {'ada': 3, 'linus': 5, 'grace': 5}",
+    "link": null,
+    "likes": 456,
+    "reposts": 91,
+    "comments": [
+      {
+        "author": "pythonic",
+        "content": "Counterpoint: when the build logic is more than a line or two, a plain loop is more readable. Comprehensions are great until they need an if/else and a nested loop, then they become a riddle.",
+        "likes": 103
+      }
+    ]
+  },
+  {
+    "id": "python-g007",
+    "track": "python",
+    "type": "til",
+    "author": "list_comp",
+    "time": "2d",
+    "content": "TIL Python has tuple unpacking that makes swapping variables a one-liner, no temp variable.\nJS got this later with array destructuring [a, b] = [b, a]. Python had it from the start and drops the brackets entirely.",
+    "code": "a, b = 1, 2\na, b = b, a\n# a is 2, b is 1\n\nfirst, *rest = [1, 2, 3, 4]\n# first=1, rest=[2, 3, 4]",
+    "link": null,
+    "likes": 547,
+    "reposts": 112,
+    "comments": [
+      {
+        "author": "duck_typer",
+        "content": "That *rest is the same as JS rest syntax const [first, ...rest] = arr. Python just puts the star in front instead of dots. Works on the left of any assignment.",
+        "likes": 69
+      },
+      {
+        "author": "pythonic",
+        "content": "This is also why functions can return multiple values cleanly: return x, y is just a tuple, and the caller unpacks it. Feels like returning an object in JS but with zero ceremony.",
+        "likes": 58
+      }
+    ]
+  },
+  {
+    "id": "python-g008",
+    "track": "python",
+    "type": "mentalModel",
+    "author": "pythonic",
+    "time": "2d",
+    "content": "Truthiness in Python lines up with JS more than people expect.\nEmpty list, empty dict, empty string, 0, and None are all falsy. Same instinct as JS where [] is truthy but '' and 0 are falsy.\nOne big gotcha: an empty list IS falsy in Python, unlike JS where [] is truthy.",
+    "code": "if not items:        # runs when items is []\n    print(\"empty\")\n\nif name:             # runs when name is non-empty string\n    print(name)",
+    "link": { "url": "/python/", "label": "Truthiness" },
+    "likes": 478,
+    "reposts": 84,
+    "comments": [
+      {
+        "author": "list_comp",
+        "content": "That [] difference burns every JS dev once. In JS you check arr.length, in Python you just check the list directly. Cleaner, but retrain the reflex.",
+        "likes": 91
+      }
+    ]
+  },
+  {
+    "id": "python-g009",
+    "track": "python",
+    "type": "tip",
+    "author": "duck_typer",
+    "time": "3d",
+    "content": "enumerate is the answer to 'how do I get the index in a for loop'.\nDon't write range(len(items)) and index back in, that's the manual JS for-loop you left behind. enumerate is Python's version of arr.forEach((item, i) => ...).",
+    "code": "for i, name in enumerate(names):\n    print(i, name)\n\n# start counting from 1\nfor i, name in enumerate(names, start=1):\n    print(i, name)",
+    "link": null,
+    "likes": 434,
+    "reposts": 73,
+    "comments": [
+      {
+        "author": "pythonic",
+        "content": "Pair it with zip when you need to walk two lists together: for a, b in zip(list1, list2). That is the Python answer to mapping over paired arrays in JS.",
+        "likes": 82
+      }
+    ]
+  },
+  {
+    "id": "python-g010",
+    "track": "python",
+    "type": "thread",
+    "author": "list_comp",
+    "time": "3d",
+    "content": "Thread: the 3 imports every JS dev should learn first in Python's standard library, because they replace npm packages you reach for by reflex.\n\n1. json: JSON.parse and JSON.stringify, built in. json.loads and json.dumps.\n2. pathlib: file paths done right, no path.join juggling.\n3. collections.Counter: tally things without a manual reduce.",
+    "code": "import json\nfrom pathlib import Path\nfrom collections import Counter\n\ndata = json.loads('{\"a\": 1}')          # parse\nPath(\"logs\") / \"today.txt\"             # join paths\nCounter(\"banana\")                       # {'a':3,'n':2,'b':1}",
+    "link": { "url": "/python/", "label": "Standard library" },
+    "likes": 661,
+    "reposts": 158,
+    "comments": [
+      {
+        "author": "pythonic",
+        "content": "The pathlib slash operator is the underrated one. Path('a') / 'b' / 'c' beats os.path.join and reads like the path it builds. No npm install required, unlike the JS world where you would grab a package for half of this.",
+        "likes": 119
+      },
+      {
+        "author": "duck_typer",
+        "content": "Add datetime to the list and you have replaced most of what people npm install on day one. The batteries-included philosophy is the real selling point coming from node.",
+        "likes": 76
+      }
+    ]
+  }
+]

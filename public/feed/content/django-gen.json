@@ -1,0 +1,202 @@
+[
+  {
+    "id": "django-g001",
+    "track": "django",
+    "type": "mentalModel",
+    "author": "queryset",
+    "time": "2h",
+    "content": "If you came from Express + Prisma, Django's ORM will feel familiar fast.\n\nA model is your Prisma schema. A QuerySet is your query builder. The big difference: QuerySets are lazy. Nothing hits the database until you iterate, slice, or print.\n\nThat laziness is the whole secret to chaining filters without firing 10 queries.",
+    "code": "qs = Article.objects.filter(published=True)\nqs = qs.exclude(author=me)\n# still zero SQL queries here\nlist(qs)  # NOW it runs, one query",
+    "link": { "url": "/django/", "label": "QuerySet basics" },
+    "likes": 612,
+    "reposts": 88,
+    "comments": [
+      {
+        "author": "manage_py",
+        "content": "The lazy part trips up everyone. If you print a QuerySet in the shell to debug, you just evaluated it. Wrap it in str() of the .query attribute instead to see SQL without running it.",
+        "likes": 74
+      }
+    ]
+  },
+  {
+    "id": "django-g002",
+    "track": "django",
+    "type": "spotBug",
+    "author": "manage_py",
+    "time": "4h",
+    "content": "Spot the bug. This view renders a list of 50 blog posts, each showing its author's name. Page takes 2 seconds and fires 51 queries.\n\nWhat went wrong?",
+    "code": "posts = Post.objects.filter(published=True)\nfor post in posts:\n    print(post.author.name)  # one query PER post",
+    "link": null,
+    "likes": 540,
+    "reposts": 110,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "Classic N+1. Add .select_related('author') so Django does a single JOIN instead of one lookup per post. Same idea as Prisma's include on a relation.",
+        "likes": 156
+      },
+      {
+        "author": "middleware_stack",
+        "content": "Use select_related for ForeignKey/OneToOne, prefetch_related for ManyToMany and reverse FKs. Mixing them up is the next bug people hit.",
+        "likes": 92
+      }
+    ]
+  },
+  {
+    "id": "django-g003",
+    "track": "django",
+    "type": "hotTake",
+    "author": "middleware_stack",
+    "time": "6h",
+    "content": "Hot take: fat models, thin views.\n\nIf your view function is 80 lines of business logic, you built it wrong. A view's job is the same as an Express route handler: take a request, call something, return a response.\n\nPut the logic on the model or a service layer. Views should read like a table of contents.",
+    "code": null,
+    "link": null,
+    "likes": 423,
+    "reposts": 61,
+    "comments": [
+      {
+        "author": "template_tag",
+        "content": "Agreed, but I'd add: keep template logic thin too. The moment you're writing nested if/for gymnastics in a template, move it into a model method or a custom tag.",
+        "likes": 47
+      }
+    ]
+  },
+  {
+    "id": "django-g004",
+    "track": "django",
+    "type": "interview",
+    "author": "queryset",
+    "time": "9h",
+    "content": "Interview question I ask every Django candidate: what's the difference between null=True and blank=True?\n\nThe gotcha: they operate at different layers. null is about the database column. blank is about form/validation. They are not interchangeable.",
+    "code": "# DB allows NULL, but forms still require a value\nbio = models.TextField(null=True)\n\n# DB requires a value, but forms allow empty\nname = models.CharField(blank=True)\n\n# usually you want both for optional text\nnote = models.TextField(null=True, blank=True)",
+    "link": { "url": "/django/", "label": "Model fields" },
+    "likes": 701,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "migration_runner",
+        "content": "And the bonus trap: for CharField/TextField the Django docs recommend avoiding null=True because you end up with two empty states, NULL and empty string. Use blank=True alone for strings.",
+        "likes": 118
+      }
+    ]
+  },
+  {
+    "id": "django-g005",
+    "track": "django",
+    "type": "til",
+    "author": "migration_runner",
+    "time": "12h",
+    "content": "TIL you can see the actual SQL a migration will run before applying it.\n\nNo more guessing whether that field change drops a column or just alters it. sqlmigrate prints the SQL for any migration without touching the database.",
+    "code": "python manage.py sqlmigrate blog 0007",
+    "link": null,
+    "likes": 388,
+    "reposts": 72,
+    "comments": [
+      {
+        "author": "manage_py",
+        "content": "Pair it with `migrate --plan` to see the order migrations will run across apps. Saved me from a bad dependency chain on a Friday deploy.",
+        "likes": 65
+      }
+    ]
+  },
+  {
+    "id": "django-g006",
+    "track": "django",
+    "type": "eli5",
+    "author": "middleware_stack",
+    "time": "1d",
+    "content": "ELI5 middleware: it's an onion around your view.\n\nA request enters from the outside, passes through each layer going in (auth, sessions, CSRF), reaches your view in the center, then the response travels back out through the same layers.\n\nIt's basically Express middleware, except Django runs each one on the way in AND the way out.",
+    "code": "MIDDLEWARE = [\n    'django.middleware.security.SecurityMiddleware',\n    'django.contrib.sessions.middleware.SessionMiddleware',\n    'django.middleware.common.CommonMiddleware',\n    'django.contrib.auth.middleware.AuthenticationMiddleware',\n]",
+    "link": { "url": "/django/", "label": "Middleware" },
+    "likes": 466,
+    "reposts": 79,
+    "comments": [
+      {
+        "author": "template_tag",
+        "content": "Order matters a lot here. AuthenticationMiddleware needs SessionMiddleware above it, because request.user is built from the session. Reorder them and login silently breaks.",
+        "likes": 88
+      }
+    ]
+  },
+  {
+    "id": "django-g007",
+    "track": "django",
+    "type": "tip",
+    "author": "manage_py",
+    "time": "1d",
+    "content": "If urls.py feels like routing in Next.js, that's because it is — just centralized instead of file-based.\n\nName your routes. Then never hardcode a URL again. When the path changes, you update one line and every reverse() and {% url %} updates with it.",
+    "code": "# urls.py\npath('posts/<int:pk>/', views.detail, name='post-detail')\n\n# in a view\nreturn redirect('post-detail', pk=post.id)\n\n# in a template\n<a href=\"{% url 'post-detail' post.id %}\">Read</a>",
+    "link": { "url": "/django/", "label": "URL routing" },
+    "likes": 519,
+    "reposts": 84,
+    "comments": [
+      {
+        "author": "queryset",
+        "content": "Add app namespaces too. With app_name = 'blog' you reference 'blog:post-detail', so two apps can both have a 'detail' route without colliding.",
+        "likes": 53
+      }
+    ]
+  },
+  {
+    "id": "django-g008",
+    "track": "django",
+    "type": "thread",
+    "author": "queryset",
+    "time": "2d",
+    "content": "Thread: the 4 QuerySet methods that will fix 90% of your slow Django pages.\n\n1/ select_related — JOINs forward ForeignKey/OneToOne in one query.\n2/ prefetch_related — separate query for M2M and reverse relations, then stitched in Python.\n3/ only / defer — fetch just the columns you need.\n4/ annotate — push counts and sums into the database instead of looping in Python.",
+    "code": "from django.db.models import Count\n\nauthors = (Author.objects\n    .annotate(num_posts=Count('post'))\n    .filter(num_posts__gt=5)\n    .only('name', 'email'))",
+    "link": { "url": "/django/", "label": "Query optimization" },
+    "likes": 634,
+    "reposts": 147,
+    "comments": [
+      {
+        "author": "migration_runner",
+        "content": "5/ would be django-debug-toolbar. It shows the exact query count per page so you actually know which of these to reach for instead of guessing.",
+        "likes": 101
+      }
+    ]
+  },
+  {
+    "id": "django-g009",
+    "track": "django",
+    "type": "tip",
+    "author": "template_tag",
+    "time": "2d",
+    "content": "Django templates are not JSX and that's the point.\n\nThey're intentionally dumb. You can't call functions with arguments or run arbitrary Python. That constraint forces you to prepare data in the view and keep presentation logic where it belongs.\n\nNeed a method on the model? Templates call it without the parens.",
+    "code": "{# template calls get_absolute_url() with no () #}\n<a href=\"{{ post.get_absolute_url }}\">{{ post.title }}</a>\n\n{# this is NOT allowed in a template #}\n{{ post.do_thing(42) }}",
+    "link": null,
+    "likes": 357,
+    "reposts": 44,
+    "comments": [
+      {
+        "author": "middleware_stack",
+        "content": "When you do need a computed value with arguments, that's what custom template tags and filters are for. Define it once, register it, and the template stays clean.",
+        "likes": 39
+      }
+    ]
+  },
+  {
+    "id": "django-g010",
+    "track": "django",
+    "type": "spotBug",
+    "author": "migration_runner",
+    "time": "3d",
+    "content": "Spot the bug. A teammate set a default of an empty list on a model field. Every new object somehow shares the same list — adding to one mutates all of them.\n\nWhy?",
+    "code": "# wrong: the list is created ONCE at import time\ntags = models.JSONField(default=[])\n\n# right: pass a callable, called fresh per instance\ntags = models.JSONField(default=list)",
+    "link": null,
+    "likes": 478,
+    "reposts": 96,
+    "comments": [
+      {
+        "author": "manage_py",
+        "content": "Same mutable-default trap as Python function args. Django actually blocks this now and makemigrations will warn you to use a callable. Old code still bites people though.",
+        "likes": 84
+      },
+      {
+        "author": "queryset",
+        "content": "For a dict default use default=dict the same way. Never default={} or default={'key': 1} inline.",
+        "likes": 41
+      }
+    ]
+  }
+]

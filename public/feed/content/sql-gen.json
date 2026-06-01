@@ -1,0 +1,157 @@
+[
+  {
+    "id": "sql-g001",
+    "track": "sql",
+    "type": "mentalModel",
+    "author": "inner_join",
+    "time": "2h",
+    "content": "If you already know JS array methods, you already know SQL.\nSELECT is .map() (pick the shape you want), WHERE is .filter() (keep the rows you want), and ORDER BY is .sort().\nThe only real twist: SQL runs WHERE before SELECT, so you filter the rows first, then shape them. Same operations, just a different order.",
+    "code": "-- SQL\nSELECT name, email\nFROM users\nWHERE active = true;\n\n// JS\nusers\n  .filter(u => u.active)\n  .map(u => ({ name: u.name, email: u.email }));",
+    "link": { "url": "/sql/", "label": "SQL basics" },
+    "likes": 612,
+    "reposts": 143,
+    "comments": [
+      { "author": "group_by", "content": "The execution-order point is the part nobody tells beginners. WHERE can't see column aliases you create in SELECT because it ran first.", "likes": 88 },
+      { "author": "window_fn", "content": "Add GROUP BY = .reduce() and the whole mental map clicks into place.", "likes": 54 }
+    ]
+  },
+  {
+    "id": "sql-g002",
+    "track": "sql",
+    "type": "interview",
+    "author": "group_by",
+    "time": "5h",
+    "content": "Classic interview question: \"What's the difference between WHERE and HAVING?\"\nWHERE filters rows before they're grouped. HAVING filters groups after aggregation.\nRule of thumb: if your condition uses COUNT, SUM, or AVG, it belongs in HAVING. Anything on raw columns goes in WHERE.",
+    "code": "SELECT customer_id, COUNT(*) AS orders\nFROM orders\nWHERE status = 'paid'      -- filter rows first\nGROUP BY customer_id\nHAVING COUNT(*) > 5;       -- then filter groups",
+    "link": null,
+    "likes": 488,
+    "reposts": 97,
+    "comments": [
+      { "author": "null_handler", "content": "Putting both in is the power move: WHERE narrows the dataset cheaply, then HAVING handles the aggregate. Faster than dumping everything into HAVING.", "likes": 71 }
+    ]
+  },
+  {
+    "id": "sql-g003",
+    "track": "sql",
+    "type": "spotBug",
+    "author": "null_handler",
+    "time": "8h",
+    "content": "Spot the bug. This query is supposed to find users who never placed an order. It returns zero rows every time.\nWhy? NULL is not a value, it's the absence of one. Comparing anything to NULL with = yields NULL, never true.\nUse IS NULL, never = NULL.",
+    "code": "-- Broken\nSELECT * FROM users WHERE last_order_date = NULL;\n\n-- Fixed\nSELECT * FROM users WHERE last_order_date IS NULL;",
+    "link": { "url": "/sql/", "label": "Working with NULL" },
+    "likes": 534,
+    "reposts": 118,
+    "comments": [
+      { "author": "bobby_tables", "content": "This bites people in JS too where == null is truthy for both null and undefined. SQL is stricter: NULL infects every comparison it touches.", "likes": 63 },
+      { "author": "inner_join", "content": "Same trap in JOINs and NOT IN. If your subquery returns a NULL, NOT IN silently returns nothing. Use NOT EXISTS instead.", "likes": 79 }
+    ]
+  },
+  {
+    "id": "sql-g004",
+    "track": "sql",
+    "type": "tip",
+    "author": "window_fn",
+    "time": "12h",
+    "content": "Stop self-joining a table just to compare a row to the previous one. Window functions do it cleanly.\nLAG() grabs the value from the prior row, OVER defines the ordering. It's like array[i] vs array[i-1], but declarative.\nGreat for month-over-month growth, running totals, and \"days since last login.\"",
+    "code": "SELECT\n  month,\n  revenue,\n  revenue - LAG(revenue) OVER (ORDER BY month) AS change\nFROM monthly_sales;",
+    "link": null,
+    "likes": 421,
+    "reposts": 88,
+    "comments": [
+      { "author": "group_by", "content": "PARTITION BY is the unlock. Add PARTITION BY product_id and you get per-product running comparisons without a single join.", "likes": 66 }
+    ]
+  },
+  {
+    "id": "sql-g005",
+    "track": "sql",
+    "type": "eli5",
+    "author": "inner_join",
+    "time": "1d",
+    "content": "JOINs explained like you're matching socks.\nINNER JOIN: only keep socks that have a pair. Lonely socks get tossed.\nLEFT JOIN: keep every sock from the left drawer, pair it if you can, otherwise leave the partner slot empty (NULL).\nIt's basically a lookup: for each row on the left, go find the matching row on the right.",
+    "code": "SELECT o.id, c.name\nFROM orders o\nLEFT JOIN customers c\n  ON o.customer_id = c.id;\n-- orders with no customer still show, name = NULL",
+    "link": { "url": "/sql/", "label": "JOIN types" },
+    "likes": 567,
+    "reposts": 134,
+    "comments": [
+      { "author": "null_handler", "content": "And that NULL from a LEFT JOIN is your debugging gold. Filter WHERE c.id IS NULL to find orphaned orders with no matching customer.", "likes": 92 }
+    ]
+  },
+  {
+    "id": "sql-g006",
+    "track": "sql",
+    "type": "hotTake",
+    "author": "bobby_tables",
+    "time": "1d",
+    "content": "Hot take: SELECT * in production code is a bug waiting to happen.\nIt breaks the moment someone adds a column, ships extra bytes over the wire, and makes your query's intent invisible in code review.\nName your columns. Future you, reading the query at 2am, will know exactly what data the app actually depends on.",
+    "code": "-- Lazy\nSELECT * FROM users;\n\n-- Intentional\nSELECT id, email, created_at FROM users;",
+    "link": null,
+    "likes": 698,
+    "reposts": 156,
+    "comments": [
+      { "author": "window_fn", "content": "SELECT * in an exploratory query in your SQL editor? Fine. In an app that other code parses by column position? Genuinely dangerous.", "likes": 84 },
+      { "author": "inner_join", "content": "It also nukes covering-index optimizations. The planner can serve named columns from the index alone, but * forces a trip to the table.", "likes": 58 }
+    ]
+  },
+  {
+    "id": "sql-g007",
+    "track": "sql",
+    "type": "til",
+    "author": "group_by",
+    "time": "2d",
+    "content": "TIL: COUNT(*) and COUNT(column) are not the same thing.\nCOUNT(*) counts every row. COUNT(email) counts only rows where email is not NULL.\nSo COUNT(*) - COUNT(email) tells you exactly how many users are missing an email. A one-line data-quality check.",
+    "code": "SELECT\n  COUNT(*) AS total,\n  COUNT(email) AS with_email,\n  COUNT(*) - COUNT(email) AS missing_email\nFROM users;",
+    "link": null,
+    "likes": 445,
+    "reposts": 79,
+    "comments": [
+      { "author": "null_handler", "content": "And COUNT(DISTINCT email) gives unique non-null emails. Three flavors of COUNT, three different questions answered.", "likes": 61 }
+    ]
+  },
+  {
+    "id": "sql-g008",
+    "track": "sql",
+    "type": "mentalModel",
+    "author": "null_handler",
+    "time": "2d",
+    "content": "If you've used Pandas, GROUP BY is just df.groupby().agg().\nSELECT region, SUM(sales) FROM t GROUP BY region is df.groupby('region')['sales'].sum().\nThe mental model is the same in both: split the data into buckets by a key, then collapse each bucket into one summary row.",
+    "code": "-- SQL\nSELECT region, SUM(sales)\nFROM orders\nGROUP BY region;\n\n# Pandas\ndf.groupby('region')['sales'].sum()",
+    "link": { "url": "/sql/", "label": "Aggregation" },
+    "likes": 472,
+    "reposts": 103,
+    "comments": [
+      { "author": "bobby_tables", "content": "The gotcha coming from Pandas: in SQL every non-aggregated column in SELECT must appear in GROUP BY. Pandas is more forgiving, SQL makes you be explicit.", "likes": 74 }
+    ]
+  },
+  {
+    "id": "sql-g009",
+    "track": "sql",
+    "type": "tip",
+    "author": "bobby_tables",
+    "time": "3d",
+    "content": "Never build SQL with string concatenation from user input. That's literally how my namesake works.\nUse parameterized queries. The driver sends your query and the values separately, so input can never be parsed as SQL.\nIt's not just security theater, it also handles quoting and escaping for you correctly every time.",
+    "code": "// Dangerous\ndb.query(`SELECT * FROM users WHERE name = '${name}'`);\n\n// Safe\ndb.query('SELECT * FROM users WHERE name = $1', [name]);",
+    "link": { "url": "/sql/", "label": "SQL injection" },
+    "likes": 743,
+    "reposts": 187,
+    "comments": [
+      { "author": "group_by", "content": "Little Bobby Tables, we call him. The xkcd is funny until it's your prod users table getting dropped.", "likes": 121 },
+      { "author": "window_fn", "content": "Parameterized queries also let the DB cache the query plan since the SQL text is stable across calls. Security and speed in one.", "likes": 47 }
+    ]
+  },
+  {
+    "id": "sql-g010",
+    "track": "sql",
+    "type": "thread",
+    "author": "window_fn",
+    "time": "3d",
+    "content": "Why is my query slow? A starter checklist before you blame the database.\n1. Is there an index on the column in your WHERE clause? No index = full table scan.\n2. Are you wrapping the indexed column in a function? WHERE LOWER(email) = ... ignores the index on email.\n3. Run EXPLAIN. It shows whether the planner uses your index or scans every row, like console.log for query performance.",
+    "code": "EXPLAIN ANALYZE\nSELECT * FROM orders\nWHERE customer_id = 42;\n-- Look for 'Index Scan' good, 'Seq Scan' on big tables bad",
+    "link": { "url": "/sql/", "label": "Query performance" },
+    "likes": 589,
+    "reposts": 128,
+    "comments": [
+      { "author": "inner_join", "content": "Point 2 is sneaky. WHERE created_at::date = '2024-01-01' kills the index. Rewrite as a range: created_at >= '2024-01-01' AND created_at < '2024-01-02'.", "likes": 96 },
+      { "author": "null_handler", "content": "Also check selectivity. An index on a boolean that's true for 90% of rows is nearly useless, the planner will scan anyway.", "likes": 52 }
+    ]
+  }
+]

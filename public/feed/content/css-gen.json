@@ -1,0 +1,207 @@
+[
+  {
+    "id": "css-g001",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "cascader",
+    "time": "2h",
+    "content": "Every element is a box wearing four nested layers: content, then padding, then border, then margin.\nThink of a framed photo: the picture is content, the mat board is padding, the wood frame is border, and the gap to the next frame on the wall is margin.\nOnce you see the box, half of CSS layout stops being magic.",
+    "code": "/* default box: width = content only */\n.card { box-sizing: border-box; }\n/* now width INCLUDES padding + border */",
+    "link": { "url": "/css-design/", "label": "Box model" },
+    "likes": 612,
+    "reposts": 88,
+    "comments": [
+      {
+        "author": "tailwinder",
+        "content": "And `box-sizing: border-box` is why a 200px-wide box stays 200px even after you add padding. Most resets set it globally on `*` so you never fight it.",
+        "likes": 97
+      }
+    ]
+  },
+  {
+    "id": "css-g002",
+    "track": "css",
+    "type": "interview",
+    "author": "grid_master",
+    "time": "5h",
+    "content": "Classic interview question: flexbox vs grid, when do you reach for each?\nShort answer that lands well: flexbox is one-dimensional (a row OR a column), grid is two-dimensional (rows AND columns at once).\nIf you're laying out a navbar of items that wrap, that's flex. If you're placing things into a page template with defined tracks, that's grid.",
+    "code": "/* flex: distribute along ONE axis */\n.nav { display: flex; gap: 1rem; }\n\n/* grid: control BOTH axes */\n.layout { display: grid; grid-template-columns: 200px 1fr; }",
+    "link": null,
+    "likes": 543,
+    "reposts": 110,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "The follow-up they love: 'can they work together?' Yes, a grid cell can be a flex container. Use grid for the page skeleton, flex for the contents of each region.",
+        "likes": 84
+      },
+      {
+        "author": "animista",
+        "content": "I always say flex follows the content, grid defines the container. That phrasing has gotten me through three interviews.",
+        "likes": 61
+      }
+    ]
+  },
+  {
+    "id": "css-g003",
+    "track": "css",
+    "type": "tip",
+    "author": "tailwinder",
+    "time": "8h",
+    "content": "Tailwind utility classes are just raw CSS with the decisions pre-made.\n`p-4` is literally `padding: 1rem`. `flex` is `display: flex`. You aren't learning a new language, you're learning shorthand for the CSS you already know.\nIf you can't picture the CSS a class compiles to, you don't understand the class yet.",
+    "code": "<div class=\"flex gap-4 p-4\">\n<!-- equals -->\n<div style=\"display:flex; gap:1rem; padding:1rem\">",
+    "link": { "url": "/css-design/", "label": "Tailwind basics" },
+    "likes": 488,
+    "reposts": 72,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "This is why the scaling matters: 4 = 1rem because the default scale is 0.25rem per step. So p-8 is 2rem, not 8 of anything. Learn the scale once and the whole system clicks.",
+        "likes": 70
+      }
+    ]
+  },
+  {
+    "id": "css-g004",
+    "track": "css",
+    "type": "spotBug",
+    "author": "cascader",
+    "time": "11h",
+    "content": "Spot the bug: this button's color won't change to red no matter what you do.\nIt's not broken CSS, it's specificity. The ID selector beats the class selector, so blue always wins.\nMore specific selector wins, regardless of source order. That's the whole rule.",
+    "code": "#cta { color: blue; }   /* specificity 1,0,0 */\n.btn { color: red; }    /* specificity 0,1,0 */\n\n<button id=\"cta\" class=\"btn\">won't be red</button>",
+    "link": null,
+    "likes": 421,
+    "reposts": 59,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "Fix without !important: match or beat the specificity, like `#cta.btn { color: red }`. Reaching for !important here just starts an arms race you lose later.",
+        "likes": 78
+      }
+    ]
+  },
+  {
+    "id": "css-g005",
+    "track": "css",
+    "type": "eli5",
+    "author": "animista",
+    "time": "14h",
+    "content": "Margin collapsing, explained simply: when two vertical margins touch, they don't add up, they overlap and the bigger one wins.\nImagine two people standing back to back, each asking for a meter of personal space. You don't give them two meters, you give them one and they share it.\nThis only happens vertically between block elements, never horizontally, and never inside flex or grid.",
+    "code": "/* 30px gap here, NOT 50px */\n.top { margin-bottom: 30px; }\n.bottom { margin-top: 20px; }",
+    "link": { "url": "/css-design/", "label": "Margins" },
+    "likes": 367,
+    "reposts": 64,
+    "comments": [
+      {
+        "author": "tailwinder",
+        "content": "This is the hidden reason switching a container to flex or grid 'magically fixes' weird spacing. Those layouts use gap instead, and gap never collapses.",
+        "likes": 55
+      }
+    ]
+  },
+  {
+    "id": "css-g006",
+    "track": "css",
+    "type": "hotTake",
+    "author": "tokenizer",
+    "time": "1d",
+    "content": "Hot take: most people reach for px when they should reach for rem.\npx is a fixed pixel that ignores the user's browser font setting. rem scales with the root font size, so a visually impaired user who bumps their default to 20px gets your whole layout scaling with them.\nUse px for borders and hairlines. Use rem for type and spacing.",
+    "code": ":root { font-size: 16px; }\nh1 { font-size: 2rem; }   /* 32px, but scales */\n.box { padding: 1rem; }  /* respects user prefs */",
+    "link": null,
+    "likes": 529,
+    "reposts": 124,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Worth adding: em is relative to the PARENT font size, rem is relative to the ROOT. Nest a few em-based elements and they compound into a mess. rem sidesteps that entirely.",
+        "likes": 91
+      },
+      {
+        "author": "animista",
+        "content": "Tailwind already does this for you, by the way. Its spacing and text scales output rem under the hood, so you get accessible scaling for free.",
+        "likes": 47
+      }
+    ]
+  },
+  {
+    "id": "css-g007",
+    "track": "css",
+    "type": "til",
+    "author": "grid_master",
+    "time": "1d",
+    "content": "TIL `place-items: center` is the entire centering solution people write paragraphs about.\nOn a grid container it sets align-items and justify-items at once, dropping the child dead center on both axes.\nNo absolute positioning, no transform translate hack, no negative margins. Two words.",
+    "code": ".box {\n  display: grid;\n  place-items: center;\n}",
+    "link": { "url": "/css-design/", "label": "Centering" },
+    "likes": 698,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "tokenizer",
+        "content": "The flex equivalent is `display:flex; align-items:center; justify-content:center`. Same outcome, but grid gives you the one-liner because place-items only exists where there are two axes to set.",
+        "likes": 102
+      }
+    ]
+  },
+  {
+    "id": "css-g008",
+    "track": "css",
+    "type": "mentalModel",
+    "author": "tailwinder",
+    "time": "2d",
+    "content": "z-index is not a global ranking. It's a ranking inside whatever stacking context an element lives in.\nThink of floors in a building: a z-index of 9999 on the second floor still sits below anything on the third floor. A high number doesn't help if your element is trapped on a lower floor.\nThings like transform, opacity below 1, and position with a z-index quietly create new floors.",
+    "code": ".parent { transform: scale(1); } /* new context */\n.child { z-index: 9999; } /* trapped inside parent */",
+    "link": null,
+    "likes": 445,
+    "reposts": 97,
+    "comments": [
+      {
+        "author": "grid_master",
+        "content": "This is the number one reason a modal hides behind a header. The fix is usually moving the element out of the trapping context, not cranking z-index higher.",
+        "likes": 88
+      }
+    ]
+  },
+  {
+    "id": "css-g009",
+    "track": "css",
+    "type": "thread",
+    "author": "tokenizer",
+    "time": "2d",
+    "content": "Thread: design tokens are just CSS custom properties with a job.\n1/ A token is a named decision, like --color-primary, instead of a raw hex scattered across 40 files.\n2/ Change the variable once and every component that references it updates, the same way a Tailwind config color cascades everywhere.\n3/ This is how dark mode works: swap the values under a different selector, the component code never changes.",
+    "code": ":root { --bg: white; --fg: black; }\n[data-theme=\"dark\"] { --bg: black; --fg: white; }\nbody { background: var(--bg); color: var(--fg); }",
+    "link": { "url": "/css-design/", "label": "Design tokens" },
+    "likes": 401,
+    "reposts": 83,
+    "comments": [
+      {
+        "author": "tailwinder",
+        "content": "And Tailwind v4 leans into exactly this, defining its theme as CSS variables. So your utility classes and your raw CSS can read from the same source of truth now.",
+        "likes": 64
+      }
+    ]
+  },
+  {
+    "id": "css-g010",
+    "track": "css",
+    "type": "tip",
+    "author": "animista",
+    "time": "3d",
+    "content": "Animate transform and opacity, almost nothing else.\nThe browser can hand transform and opacity to the GPU and skip recalculating layout. Animating width, height, top, or margin forces a reflow on every frame and your animation stutters.\nWant to move something? translate it. Want to resize it? scale it. Your phone will thank you.",
+    "code": "/* janky: triggers layout each frame */\n.bad { transition: width 0.3s; }\n\n/* smooth: GPU-friendly */\n.good { transition: transform 0.3s; }",
+    "link": null,
+    "likes": 472,
+    "reposts": 91,
+    "comments": [
+      {
+        "author": "cascader",
+        "content": "Add `will-change: transform` sparingly if you need a hint, but don't slap it on everything. Overusing it eats memory and can make things slower, the opposite of the goal.",
+        "likes": 58
+      },
+      {
+        "author": "tokenizer",
+        "content": "Connects straight to the box model too: width and height changes ripple out to siblings via reflow, but a transform paints in place and touches nobody. That's why one stutters and one doesn't.",
+        "likes": 49
+      }
+    ]
+  }
+]

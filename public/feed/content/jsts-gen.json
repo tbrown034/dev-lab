@@ -1,0 +1,217 @@
+[
+  {
+    "id": "jsts-g001",
+    "track": "jsts",
+    "type": "mentalModel",
+    "author": "closure_king",
+    "time": "2h",
+    "content": "A closure is just a function that remembers the variables around it when it was born, even after that outer function returns.\nThink of it like a backpack: the inner function packs the variables it needs and carries them everywhere.\nThis is why your click handler still knows the `count` from the function that set it up.",
+    "code": "function counter() {\n  let count = 0;\n  return () => ++count; // the returned fn keeps `count` alive\n}\nconst tick = counter();\ntick(); // 1\ntick(); // 2",
+    "link": { "url": "/jsts/", "label": "Closures explained" },
+    "likes": 612,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "proto_chain",
+        "content": "The backpack metaphor finally made this click for me. Bonus: this is exactly how React's useState callback closes over a stale value if you forget the functional updater.",
+        "likes": 88
+      },
+      {
+        "author": "event_looper",
+        "content": "Worth adding: each call to counter() makes a fresh backpack, so two counters never share their count.",
+        "likes": 41
+      }
+    ]
+  },
+  {
+    "id": "jsts-g002",
+    "track": "jsts",
+    "type": "eli5",
+    "author": "event_looper",
+    "time": "4h",
+    "content": "JavaScript runs on one thread, like a single cashier. setTimeout doesn't hire a second cashier — it puts your task at the back of the line.\nThat's why `setTimeout(fn, 0)` doesn't run immediately. It waits until the current line of customers (your synchronous code) is done.\nThe event loop is just the manager waving the next customer forward.",
+    "code": "console.log('a');\nsetTimeout(() => console.log('b'), 0);\nconsole.log('c');\n// prints: a, c, b",
+    "link": null,
+    "likes": 478,
+    "reposts": 97,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "And promises jump a shorter queue (microtasks) that fully drains before any setTimeout callback runs. So a resolved promise logs before that timeout 0.",
+        "likes": 73
+      }
+    ]
+  },
+  {
+    "id": "jsts-g003",
+    "track": "jsts",
+    "type": "interview",
+    "author": "type_narrow",
+    "time": "6h",
+    "content": "Common interview trap: \"What's the difference between TypeScript types and runtime checks?\"\nTypes are erased at compile time. They are gone before your code ever runs, like guardrails a compiler removes before shipping.\nSo `if (typeof x === 'string')` survives to runtime, but a type annotation does not. If you need a check at runtime, write actual JS.",
+    "code": "function f(x: unknown) {\n  // x as string -> compiler only, no runtime guard\n  if (typeof x === 'string') x.toUpperCase(); // real check\n}",
+    "link": { "url": "/jsts/", "label": "TS vs JS" },
+    "likes": 539,
+    "reposts": 121,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "This is the whole reason Zod and similar libs exist: TS can't validate API responses for you because the types vanish. You still parse at the boundary.",
+        "likes": 96
+      },
+      {
+        "author": "proto_chain",
+        "content": "I bombed this exact question once. The phrase 'types are erased' is the answer they want to hear.",
+        "likes": 38
+      }
+    ]
+  },
+  {
+    "id": "jsts-g004",
+    "track": "jsts",
+    "type": "spotBug",
+    "author": "async_await",
+    "time": "8h",
+    "content": "Spot the bug: this loop is supposed to log 0, 1, 2 but logs 3, 3, 3.\nThe culprit is `var` — it's function-scoped, so all three callbacks close over the same single `i`.\nSwap `var` for `let` and each iteration gets its own binding. Same fix you'd reach for in any closure-in-a-loop gotcha.",
+    "code": "for (var i = 0; i < 3; i++) {\n  setTimeout(() => console.log(i), 0);\n}\n// 3, 3, 3  ->  use `let i` to get 0, 1, 2",
+    "link": null,
+    "likes": 701,
+    "reposts": 158,
+    "comments": [
+      {
+        "author": "closure_king",
+        "content": "Classic. Before let existed people wrapped the body in an IIFE to capture i by value. let just bakes that fresh-binding behavior in for you.",
+        "likes": 112
+      },
+      {
+        "author": "event_looper",
+        "content": "And it logs 3 not 2 because the loop finishes incrementing i to 3 before any timeout fires. Event loop strikes again.",
+        "likes": 64
+      }
+    ]
+  },
+  {
+    "id": "jsts-g005",
+    "track": "jsts",
+    "type": "mentalModel",
+    "author": "proto_chain",
+    "time": "11h",
+    "content": "Prototypes are JavaScript's version of inheritance, but it's lookup, not copying.\nWhen you call `arr.map(...)`, JS doesn't find map on your array, so it walks up the chain to Array.prototype and finds it there.\nIf you came from Java or Python classes: it's like every object having a pointer to its parent, and method calls bubble up that pointer chain until they hit a match or null.",
+    "code": "const arr = [1, 2];\narr.hasOwnProperty('map'); // false\nObject.getPrototypeOf(arr) === Array.prototype; // true",
+    "link": { "url": "/jsts/", "label": "Prototype chain" },
+    "likes": 423,
+    "reposts": 88,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "And `class` in modern JS is just sugar over this. extends sets up the prototype link, super walks up the chain. Same machinery underneath.",
+        "likes": 71
+      }
+    ]
+  },
+  {
+    "id": "jsts-g006",
+    "track": "jsts",
+    "type": "tip",
+    "author": "async_await",
+    "time": "14h",
+    "content": "Stop reaching for try/catch around every await. Wrap the unit of work, not each line.\nIf three awaits belong to one operation, one try/catch communicates \"this whole thing can fail\" far more clearly.\nAnd remember: an unhandled rejection in an async function is a thrown error to whoever awaits it — it doesn't silently vanish.",
+    "code": "async function load() {\n  try {\n    const user = await getUser();\n    const posts = await getPosts(user.id);\n    return { user, posts };\n  } catch (err) {\n    return { error: err };\n  }\n}",
+    "link": null,
+    "likes": 356,
+    "reposts": 62,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "If those three awaits don't depend on each other, Promise.all runs them concurrently instead of waiting in sequence. Big latency win.",
+        "likes": 83
+      }
+    ]
+  },
+  {
+    "id": "jsts-g007",
+    "track": "jsts",
+    "type": "hotTake",
+    "author": "type_narrow",
+    "time": "1d",
+    "content": "Hot take: `any` is worse than no types at all.\nWith plain JS you stay alert because you know nothing is checked. With `any` you get a false green light — the compiler shrugs and lets bugs through while you feel safe.\nReach for `unknown` instead. It forces you to prove what the value is before you touch it.",
+    "code": "function parse(input: unknown) {\n  // input.trim() -> error, must narrow first\n  if (typeof input === 'string') return input.trim();\n  throw new Error('not a string');\n}",
+    "link": { "url": "/jsts/", "label": "unknown vs any" },
+    "likes": 588,
+    "reposts": 143,
+    "comments": [
+      {
+        "author": "async_await",
+        "content": "Hard agree. Turn on noImplicitAny so stray anys can't sneak in from untyped imports either.",
+        "likes": 97
+      },
+      {
+        "author": "closure_king",
+        "content": "The 'false green light' framing is perfect. any doesn't disable a check, it lies about one passing.",
+        "likes": 54
+      }
+    ]
+  },
+  {
+    "id": "jsts-g008",
+    "track": "jsts",
+    "type": "til",
+    "author": "event_looper",
+    "time": "1d",
+    "content": "TIL await doesn't block the thread — it pauses your function and hands control back to the event loop.\nUnder the hood, the rest of your async function is essentially scheduled as a microtask callback once the promise settles. It's closures again: the paused function remembers its local state.\nSo while you 'wait', other code keeps running. The cashier never stops serving the line.",
+    "code": "async function go() {\n  console.log(1);\n  await null; // yields here\n  console.log(3);\n}\ngo();\nconsole.log(2);\n// 1, 2, 3",
+    "link": null,
+    "likes": 467,
+    "reposts": 104,
+    "comments": [
+      {
+        "author": "proto_chain",
+        "content": "This is why async/await felt like magic until it didn't. It's just a state machine over promises that the engine resumes when the microtask runs.",
+        "likes": 79
+      }
+    ]
+  },
+  {
+    "id": "jsts-g009",
+    "track": "jsts",
+    "type": "tip",
+    "author": "proto_chain",
+    "time": "2d",
+    "content": "If you're coming from Python, `===` is your `==`, and JS `==` is the weird one.\n`==` coerces types before comparing, so `0 == ''` is true and `null == undefined` is true. That coercion table is a footgun.\nUse `===` everywhere and the rule becomes simple: same type and same value, no surprises.",
+    "code": "0 == '';        // true  (coerced)\n0 === '';       // false\nnull == undefined;  // true\nnull === undefined; // false",
+    "link": { "url": "/jsts/", "label": "Equality in JS" },
+    "likes": 401,
+    "reposts": 76,
+    "comments": [
+      {
+        "author": "type_narrow",
+        "content": "The one pragmatic exception people allow: x == null to catch both null and undefined in one shot. Otherwise === always.",
+        "likes": 68
+      }
+    ]
+  },
+  {
+    "id": "jsts-g010",
+    "track": "jsts",
+    "type": "thread",
+    "author": "closure_king",
+    "time": "3d",
+    "content": "Thread: how a debounce works, and why it's just a closure.\n1/ A debounce delays running a function until the user stops triggering it — like waiting for someone to finish typing before you search.\n2/ The trick is remembering the pending timer between calls. That memory lives in a closure over `timer`.\n3/ Each new call clears the old timer and sets a fresh one, so only the last call survives.",
+    "code": "function debounce(fn, ms) {\n  let timer; // closed over\n  return (...args) => {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn(...args), ms);\n  };\n}",
+    "link": { "url": "/jsts/", "label": "Debounce walkthrough" },
+    "likes": 644,
+    "reposts": 149,
+    "comments": [
+      {
+        "author": "event_looper",
+        "content": "Nice tie-in: clearTimeout cancels the pending macrotask before the event loop ever gets to it. The closure holds the handle that lets you cancel.",
+        "likes": 91
+      },
+      {
+        "author": "async_await",
+        "content": "Throttle is the sibling worth learning next: run at most once per interval instead of waiting for silence. Same closure pattern, different timing logic.",
+        "likes": 47
+      }
+    ]
+  }
+]

@@ -3,11 +3,12 @@ import { readFileSync, existsSync, readdirSync } from 'fs';
 import { resolve, join } from 'path';
 
 const ROOT = resolve(import.meta.dirname, '..');
-const FEED_DIR = resolve(ROOT, 'feed', 'content');
+// Feed content lives in public/ so Vite copies it verbatim into the build.
+const FEED_DIR = resolve(ROOT, 'public', 'feed', 'content');
 
 // ─── Known valid values ───
 
-const KNOWN_TRACKS = ['d3', 'django', 'sql', 'jsts', 'react', 'css', 'ai'];
+const KNOWN_TRACKS = ['d3', 'django', 'sql', 'jsts', 'react', 'css', 'ai', 'python', 'pandas', 'r'];
 
 const VALID_POST_TYPES = [
   'interview', 'tip', 'hotTake', 'spotBug', 'mentalModel',
@@ -43,7 +44,12 @@ const ALL_PERSONA_HANDLES = extractPersonaHandles();
 
 // ─── Feed JSON files (top-level, not generated) ───
 
-const FEED_JSON_FILES = ['d3.json', 'django.json', 'sql.json', 'jsts.json', 'react.json', 'css.json', 'ai.json'];
+// Per-track curated files plus the generated batches (one *-gen.json per track).
+const FEED_TRACK_KEYS = ['d3', 'django', 'sql', 'jsts', 'react', 'css', 'ai', 'python', 'pandas', 'r'];
+const FEED_JSON_FILES = [
+  ...FEED_TRACK_KEYS.map(k => `${k}.json`),
+  ...FEED_TRACK_KEYS.map(k => `${k}-gen.json`),
+];
 
 /** Load and parse a feed JSON file */
 function loadFeedJSON(filename) {

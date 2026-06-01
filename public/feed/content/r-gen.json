@@ -1,0 +1,217 @@
+[
+  {
+    "id": "r-g001",
+    "track": "r",
+    "type": "mentalModel",
+    "author": "dplyr_fan",
+    "time": "2h",
+    "content": "If you know SQL, you already know dplyr. The pipe %>% (or |>) just chains verbs the same way a query reads top to bottom.\n\nfilter() is WHERE. group_by() + summarise() is GROUP BY. select() is the column list. arrange() is ORDER BY.\n\nThe difference: SQL forces you to write them out of order (SELECT first, WHERE later). dplyr lets you write them in the order they actually run.",
+    "code": "flights %>%\n  filter(month == 1) %>%\n  group_by(carrier) %>%\n  summarise(avg_delay = mean(dep_delay, na.rm = TRUE)) %>%\n  arrange(desc(avg_delay))",
+    "link": null,
+    "likes": 612,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "vectorize",
+        "content": "The out-of-order thing is exactly why SQL confuses beginners. dplyr reading like a sentence is the whole selling point.",
+        "likes": 88
+      },
+      {
+        "author": "tidyverse",
+        "content": "Worth adding: na.rm = TRUE is the gotcha. SQL's AVG() skips NULLs automatically, but mean() in R returns NA if any value is missing.",
+        "likes": 102
+      }
+    ]
+  },
+  {
+    "id": "r-g002",
+    "track": "r",
+    "type": "tip",
+    "author": "tidyverse",
+    "time": "5h",
+    "content": "Coming from pandas? A data.frame is R's DataFrame, but the indexing is flipped from what you expect.\n\nIn pandas you reach for df.loc and df.iloc. In R you use df[rows, cols] with a comma. Leave one side blank to mean 'all of them'.\n\ndf[1, ] is the first row, df[, 1] is the first column. The comma is not optional.",
+    "code": "# rows where mpg > 20, all columns\nmtcars[mtcars$mpg > 20, ]\n\n# all rows, just the 'hp' column\nmtcars[, \"hp\"]",
+    "link": { "url": "/r/", "label": "Indexing basics" },
+    "likes": 421,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "dplyr_fan",
+        "content": "The forgotten comma is the #1 error for pandas converts. df[1] in R grabs a column, not a row, which feels backwards at first.",
+        "likes": 74
+      }
+    ]
+  },
+  {
+    "id": "r-g003",
+    "track": "r",
+    "type": "hotTake",
+    "author": "vectorize",
+    "time": "8h",
+    "content": "Hot take: writing a for loop to transform a vector in R is almost always a mistake.\n\nR is vectorized at its core. ifelse(), the math operators, most functions already work on the whole vector at once. The loop is slower and harder to read.\n\nIf you're looping in R, ask whether the operation already broadcasts. It usually does.",
+    "code": "# slow, un-R-like\nout <- numeric(length(x))\nfor (i in seq_along(x)) out[i] <- x[i] * 2\n\n# the R way\nout <- x * 2",
+    "link": null,
+    "likes": 538,
+    "reposts": 121,
+    "comments": [
+      {
+        "author": "tidyverse",
+        "content": "Same lesson as NumPy in Python. The moment you write a loop over array elements, there's usually a vectorized call hiding right there.",
+        "likes": 96
+      },
+      {
+        "author": "dplyr_fan",
+        "content": "Caveat: when each step depends on the previous one (cumulative state), a loop or purrr::accumulate is fair. Vectorization isn't magic for sequential logic.",
+        "likes": 58
+      }
+    ]
+  },
+  {
+    "id": "r-g004",
+    "track": "r",
+    "type": "spotBug",
+    "author": "dplyr_fan",
+    "time": "11h",
+    "content": "Spot the bug. This R code is supposed to keep only the rows where region is 'West', but it returns weird half-empty results.\n\nWhat went wrong?",
+    "code": "df[df$region = \"West\", ]\n\n# vs what you actually meant:\ndf[df$region == \"West\", ]",
+    "link": null,
+    "likes": 367,
+    "reposts": 49,
+    "comments": [
+      {
+        "author": "vectorize",
+        "content": "Single = is assignment, == is comparison. Same trap as SQL WHERE region = 'West' (one equals) vs R/Python comparison (two). Switching languages all day will get you.",
+        "likes": 81
+      },
+      {
+        "author": "tidyverse",
+        "content": "In real code the single = would actually error here, but the deeper fix is filter(df, region == \"West\") so the intent is unmistakable.",
+        "likes": 63
+      }
+    ]
+  },
+  {
+    "id": "r-g005",
+    "track": "r",
+    "type": "eli5",
+    "author": "tidyverse",
+    "time": "1d",
+    "content": "ELI5: what is a factor in R?\n\nImagine a dropdown menu with a fixed list of options: Small, Medium, Large. A factor is a column that can only hold values from that list, and R remembers the order.\n\nIt's like a SQL ENUM or pandas Categorical. Great for plotting and grouping, but it bites you when you forget a number got stored as a label.",
+    "code": "size <- factor(c(\"S\", \"L\", \"M\", \"S\"),\n               levels = c(\"S\", \"M\", \"L\"))\nlevels(size)  # \"S\" \"M\" \"L\"\nas.integer(size)  # 1 3 2 1",
+    "link": { "url": "/r/", "label": "Factors explained" },
+    "likes": 489,
+    "reposts": 78,
+    "comments": [
+      {
+        "author": "vectorize",
+        "content": "The classic horror: as.numeric(factor) gives you the level codes, not the original numbers. Always do as.numeric(as.character(x)) for numeric factors.",
+        "likes": 134
+      }
+    ]
+  },
+  {
+    "id": "r-g006",
+    "track": "r",
+    "type": "til",
+    "author": "vectorize",
+    "time": "1d",
+    "content": "TIL the pipe is now built into base R. You no longer need to library(magrittr) or even dplyr just to chain functions.\n\nR 4.1+ ships the native |> pipe. It feeds the left side into the first argument of the right side, same idea as method chaining in pandas.\n\nFor most everyday work, |> and %>% are interchangeable.",
+    "code": "c(1, 4, 9, 16) |> sqrt() |> sum()\n# 1 + 2 + 3 + 4 = 10",
+    "link": null,
+    "likes": 273,
+    "reposts": 41,
+    "comments": [
+      {
+        "author": "dplyr_fan",
+        "content": "One difference worth knowing: %>% lets you use a . placeholder anywhere, the native |> historically needed the value as the first arg. Newer R added _ placeholder but only with named args.",
+        "likes": 52
+      }
+    ]
+  },
+  {
+    "id": "r-g007",
+    "track": "r",
+    "type": "interview",
+    "author": "dplyr_fan",
+    "time": "2d",
+    "content": "Common R interview question: what's the difference between <- and =?\n\nBoth assign, but the convention is <- for assigning variables and = for passing named arguments inside a function call. Mixing them up rarely breaks code, but it signals you learned by copy-paste.\n\nGood answer: mention that <- works anywhere, while = as assignment is restricted at the top level of a call.",
+    "code": "x <- 10            # variable assignment\nmean(x, na.rm = TRUE)  # = is for named args\n\n# this assigns AND works, but reads badly:\nmean(x = 10)",
+    "link": { "url": "/r/", "label": "R interview prep" },
+    "likes": 344,
+    "reposts": 56,
+    "comments": [
+      {
+        "author": "tidyverse",
+        "content": "Bonus points if you mention that mean(x = 10) creates the binding only inside the call, so x doesn't exist afterward. That trips people up.",
+        "likes": 47
+      }
+    ]
+  },
+  {
+    "id": "r-g008",
+    "track": "r",
+    "type": "mentalModel",
+    "author": "vectorize",
+    "time": "2d",
+    "content": "Mental model: R's NA is not Python's None and not SQL's NULL, even though they feel similar.\n\nNA is 'a value that exists but is unknown,' and it's contagious. Any arithmetic touching NA returns NA, just like NULL poisons a SQL expression.\n\nThat's why sum(x) gives NA if x has one missing value. Reach for na.rm = TRUE to tell R to skip them, the same way SUM() ignores NULLs in SQL.",
+    "code": "x <- c(2, 4, NA, 8)\nsum(x)              # NA\nsum(x, na.rm = TRUE)  # 14\nis.na(x)            # FALSE FALSE TRUE FALSE",
+    "link": null,
+    "likes": 458,
+    "reposts": 92,
+    "comments": [
+      {
+        "author": "dplyr_fan",
+        "content": "And never test NA with ==. x == NA returns NA, not TRUE. You must use is.na(x). Same reason SQL makes you write IS NULL instead of = NULL.",
+        "likes": 119
+      },
+      {
+        "author": "tidyverse",
+        "content": "R even has typed NAs: NA_integer_, NA_real_, NA_character_. Mostly invisible until a function complains about type, then suddenly it matters.",
+        "likes": 44
+      }
+    ]
+  },
+  {
+    "id": "r-g009",
+    "track": "r",
+    "type": "thread",
+    "author": "tidyverse",
+    "time": "3d",
+    "content": "Reshaping data confuses everyone. Here's the long vs wide idea in one breath, mapped to tools you know.\n\nWide: one row per subject, a column per measurement. Long: one row per measurement. tidyr's pivot_longer() and pivot_wider() do the conversion, exactly like pandas melt() and pivot().\n\nRule of thumb: ggplot and dplyr want long data. Humans reading a table want wide. You'll pivot constantly between the two.",
+    "code": "# wide -> long, like pandas melt\nlong <- pivot_longer(df,\n  cols = c(q1, q2, q3),\n  names_to = \"quarter\",\n  values_to = \"sales\")",
+    "link": { "url": "/r/", "label": "Reshaping with tidyr" },
+    "likes": 401,
+    "reposts": 88,
+    "comments": [
+      {
+        "author": "vectorize",
+        "content": "The mnemonic that stuck for me: 'tidy = long'. Each variable a column, each observation a row. Once data is long, every downstream step gets easier.",
+        "likes": 73
+      }
+    ]
+  },
+  {
+    "id": "r-g010",
+    "track": "r",
+    "type": "tip",
+    "author": "dplyr_fan",
+    "time": "3d",
+    "content": "If a dplyr summarise() is dropping rows you expected to keep, check whether you're still grouped.\n\ngroup_by() sticks to the data frame until you remove it. summarise() peels off one grouping layer, but nested groups can linger and silently change later joins or mutates.\n\nWhen in doubt, end your chain with ungroup(). It's the equivalent of resetting after a SQL GROUP BY before you run another aggregate.",
+    "code": "sales %>%\n  group_by(region, month) %>%\n  summarise(total = sum(amount), .groups = \"drop\")\n# .groups = \"drop\" ungroups for you",
+    "link": null,
+    "likes": 312,
+    "reposts": 47,
+    "comments": [
+      {
+        "author": "tidyverse",
+        "content": "The .groups = \"drop\" argument is the clean fix and it silences that 'summarise has grouped output' message everyone ignores until it bites them.",
+        "likes": 61
+      },
+      {
+        "author": "vectorize",
+        "content": "Learned this the hard way when a downstream mutate() ran per-group instead of over the whole frame. Numbers looked plausible, which is the dangerous part.",
+        "likes": 55
+      }
+    ]
+  }
+]

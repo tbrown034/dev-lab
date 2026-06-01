@@ -1,0 +1,217 @@
+[
+  {
+    "id": "d3-g001",
+    "track": "d3",
+    "type": "mentalModel",
+    "author": "bindData",
+    "time": "2h",
+    "content": "The data-join is the one idea that unlocks D3. You are not telling D3 to draw 10 bars. You hand it an array and describe what a bar looks like for one item.\n\nThink React: you map over data and return JSX. D3 does the same, but splits it into three buckets — enter (new data, no element yet), update (data + element exist), exit (element with no data anymore).",
+    "code": "const bars = svg.selectAll(\"rect\").data(values);\nbars.enter().append(\"rect\");   // new\nbars.attr(\"height\", d => d);    // update\nbars.exit().remove();           // gone",
+    "link": { "url": "/d3/", "label": "Data-join basics" },
+    "likes": 612,
+    "reposts": 144,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "The phrase that finally clicked for me: selectAll on an empty selection is a promise about elements that should exist, not a query for ones that do.",
+        "likes": 98
+      }
+    ]
+  },
+  {
+    "id": "d3-g002",
+    "track": "d3",
+    "type": "eli5",
+    "author": "scaleLinear",
+    "time": "5h",
+    "content": "A scale is just a translator between two number lines.\n\nYour data lives in one world (sales from 0 to 5000). Your screen lives in another (0 to 600 pixels tall). A scale maps one onto the other so you never do the math by hand.\n\nIt is the same mental move as CSS calc() turning a percentage into pixels, except D3 gives you the function.",
+    "code": "const y = d3.scaleLinear()\n  .domain([0, 5000])   // data world\n  .range([400, 0]);    // pixel world (flipped: SVG y grows down)\ny(2500); // -> 200",
+    "link": { "url": "/d3/", "label": "Scales explained" },
+    "likes": 540,
+    "reposts": 97,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "The flipped range trips up everyone. SVG y=0 is the top, so range goes [height, 0] to make bigger values sit higher.",
+        "likes": 76
+      },
+      {
+        "author": "svgArtist",
+        "content": "Once this clicks, scaleBand for categorical axes feels like the same idea with padding built in.",
+        "likes": 41
+      }
+    ]
+  },
+  {
+    "id": "d3-g003",
+    "track": "d3",
+    "type": "hotTake",
+    "author": "geoProjection",
+    "time": "8h",
+    "content": "Hot take: most people reach for D3 when they only needed SVG and a loop.\n\nIf your chart never updates, you do not need the data-join. Render static `<rect>` elements in React, position them with a scale function, done. D3's superpower is animated transitions between data states. Use it for that, not for drawing five fixed bars.",
+    "code": null,
+    "link": null,
+    "likes": 488,
+    "reposts": 71,
+    "comments": [
+      {
+        "author": "transition_ease",
+        "content": "Agreed. I import d3-scale and d3-shape for the math and let React own the DOM. Best of both worlds for static dashboards.",
+        "likes": 112
+      },
+      {
+        "author": "bindData",
+        "content": "Fair, but the moment your data streams in live, hand-rolling enter/update/exit in React gets old fast.",
+        "likes": 54
+      }
+    ]
+  },
+  {
+    "id": "d3-g004",
+    "track": "d3",
+    "type": "spotBug",
+    "author": "transition_ease",
+    "time": "1d",
+    "content": "Spot the bug. This bar chart renders fine on first load, but when the data array shrinks, old bars stick around like ghosts.\n\nWhat is missing?",
+    "code": "const bars = svg.selectAll(\"rect\").data(data);\nbars.enter().append(\"rect\")\n  .attr(\"x\", (d,i) => i * 30)\n  .attr(\"height\", d => y(d));\n// ...no exit handling",
+    "link": null,
+    "likes": 423,
+    "reposts": 58,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "No exit().remove(). When data shrinks, the leftover elements have no bound datum, so they never get cleaned up. Add bars.exit().remove().",
+        "likes": 144
+      },
+      {
+        "author": "scaleLinear",
+        "content": "Also worth using .join(\"rect\") in modern D3 — it handles enter, update, and exit in one call so you stop forgetting this.",
+        "likes": 89
+      }
+    ]
+  },
+  {
+    "id": "d3-g005",
+    "track": "d3",
+    "type": "tip",
+    "author": "transition_ease",
+    "time": "1d",
+    "content": "A D3 transition is just CSS transitions, but driven by JavaScript instead of stylesheets.\n\nYou set a duration, then any attr you change animates from its current value to the new one. The difference: D3 can tween SVG attributes CSS cannot touch, like the `d` path string of a line.",
+    "code": "svg.selectAll(\"rect\")\n  .transition()\n  .duration(750)\n  .attr(\"height\", d => y(d));",
+    "link": { "url": "/d3/", "label": "Transitions" },
+    "likes": 396,
+    "reposts": 62,
+    "comments": [
+      {
+        "author": "geoProjection",
+        "content": "Add .ease(d3.easeCubicOut) to match the snappy feel of a good CSS cubic-bezier. The defaults are fine but tuning easing is where motion starts feeling intentional.",
+        "likes": 47
+      }
+    ]
+  },
+  {
+    "id": "d3-g006",
+    "track": "d3",
+    "type": "interview",
+    "author": "bindData",
+    "time": "2d",
+    "content": "Common interview question: what is the key function in a data-join and why does it matter?\n\nBy default D3 joins data to elements by index. Pass a key function and it joins by identity instead — so when your array reorders, each element follows its own datum instead of swapping values. Same problem React's key prop solves in lists.",
+    "code": "svg.selectAll(\"circle\")\n  .data(people, d => d.id);  // match by id, not position",
+    "link": { "url": "/d3/", "label": "Key functions" },
+    "likes": 357,
+    "reposts": 49,
+    "comments": [
+      {
+        "author": "transition_ease",
+        "content": "And this is exactly why transitions look right with a key function — an element keeps its identity, so it animates from its old spot to its new spot instead of teleporting values.",
+        "likes": 61
+      }
+    ]
+  },
+  {
+    "id": "d3-g007",
+    "track": "d3",
+    "type": "til",
+    "author": "svgArtist",
+    "time": "2d",
+    "content": "TIL the SVG coordinate system has y growing downward, just like CSS absolute positioning with top.\n\nThat is why a bar chart's y scale range is usually [height, 0] and not [0, height]. You are flipping the axis so larger data values map to smaller y pixels, which visually sit higher. It is the same gotcha as position: absolute; top: 0 being the top edge.",
+    "code": "const y = d3.scaleLinear().domain([0, max]).range([height, 0]);\n// rect y = y(value), rect height = height - y(value)",
+    "link": null,
+    "likes": 312,
+    "reposts": 38,
+    "comments": [
+      {
+        "author": "scaleLinear",
+        "content": "The height = baseline minus y(value) line is the other half people miss. The rect grows down from its top edge, so you compute both y and height.",
+        "likes": 55
+      }
+    ]
+  },
+  {
+    "id": "d3-g008",
+    "track": "d3",
+    "type": "mentalModel",
+    "author": "geoProjection",
+    "time": "3d",
+    "content": "A map projection is just a scale for two dimensions at once.\n\nA linear scale turns one number into one pixel. A projection turns a [longitude, latitude] pair into an [x, y] pixel pair, while bending the math so a sphere fits on a flat screen. Same input-to-output translator role, harder geometry under the hood.",
+    "code": "const projection = d3.geoMercator()\n  .scale(120)\n  .translate([width/2, height/2]);\nprojection([-86.5, 39.1]); // Bloomington -> [x, y]",
+    "link": { "url": "/d3/", "label": "Projections" },
+    "likes": 274,
+    "reposts": 44,
+    "comments": [
+      {
+        "author": "svgArtist",
+        "content": "And geoPath is the data-join's append step for maps — it turns each GeoJSON feature into the d attribute of a path. Projection does the where, geoPath does the draw.",
+        "likes": 63
+      }
+    ]
+  },
+  {
+    "id": "d3-g009",
+    "track": "d3",
+    "type": "thread",
+    "author": "svgArtist",
+    "time": "3d",
+    "content": "How a D3 line chart actually gets drawn, in three steps. A thread.\n\n1. Scales map your data to pixels (x for time, y for value).\n2. d3.line() reads those scales and builds one long SVG path string — the d attribute.\n3. You append a single `<path>` and set its d. One element, not one per point.\n\nThat last part surprises people coming from bar charts.",
+    "code": "const line = d3.line()\n  .x(d => x(d.date))\n  .y(d => y(d.value));\nsvg.append(\"path\")\n  .attr(\"d\", line(data))\n  .attr(\"fill\", \"none\")\n  .attr(\"stroke\", \"steelblue\");",
+    "link": { "url": "/d3/", "label": "Line charts" },
+    "likes": 358,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "transition_ease",
+        "content": "Because the whole line is one path string, animating it means tweening that string. That is the part CSS transitions literally cannot do, which is why D3 owns line animation.",
+        "likes": 72
+      },
+      {
+        "author": "geoProjection",
+        "content": "d3.line() and d3.geoPath() are cousins — both are path generators that turn data into a d attribute. Learn one and the other feels familiar.",
+        "likes": 40
+      }
+    ]
+  },
+  {
+    "id": "d3-g010",
+    "track": "d3",
+    "type": "tip",
+    "author": "scaleLinear",
+    "time": "4d",
+    "content": "Using D3 inside React? Let each library do what it is best at.\n\nReact owns the DOM and re-renders. D3 owns the math. Import d3-scale and d3-shape for scales and path generators, then return plain JSX. Skip selectAll and append entirely — those fight React for control of the same nodes.",
+    "code": "const x = d3.scaleLinear().domain([0, max]).range([0, w]);\nreturn data.map((d, i) => (\n  <rect key={d.id} x={x(d.v)} y={i*30} width={x(d.v)} height={24} />\n));",
+    "link": { "url": "/d3/", "label": "D3 + React" },
+    "likes": 467,
+    "reposts": 103,
+    "comments": [
+      {
+        "author": "bindData",
+        "content": "This is the pattern I default to now. Use a ref + raw D3 only when you need transitions React cannot express cleanly, like a tweened path morph.",
+        "likes": 88
+      },
+      {
+        "author": "geoProjection",
+        "content": "Same applies to maps: compute the projection and run features through geoPath, then render the resulting strings as JSX path elements. React stays the owner.",
+        "likes": 45
+      }
+    ]
+  }
+]

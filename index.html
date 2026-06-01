@@ -192,6 +192,18 @@
     .track[data-color="python"] .track-icon { background: rgba(75,139,190,0.12); color: #4b8bbe; }
     .track[data-color="python"] .track-tag { background: rgba(75,139,190,0.1); color: #4b8bbe; }
     .track[data-color="python"] .track-status { color: #4b8bbe; }
+    .track[data-color="jsts"]::after { background: linear-gradient(90deg, var(--accent-jsts), transparent); }
+    .track[data-color="jsts"] .track-icon { background: rgba(234,179,8,0.12); color: var(--accent-jsts); }
+    .track[data-color="jsts"] .track-tag { background: rgba(234,179,8,0.1); color: var(--accent-jsts); }
+    .track[data-color="jsts"] .track-status { color: var(--accent-jsts); }
+    .track[data-color="r"]::after { background: linear-gradient(90deg, #276dc3, transparent); }
+    .track[data-color="r"] .track-icon { background: rgba(39,109,195,0.12); color: #276dc3; }
+    .track[data-color="r"] .track-tag { background: rgba(39,109,195,0.1); color: #276dc3; }
+    .track[data-color="r"] .track-status { color: #276dc3; }
+    .track[data-color="css-design"]::after { background: linear-gradient(90deg, var(--accent-css), transparent); }
+    .track[data-color="css-design"] .track-icon { background: rgba(168,85,247,0.12); color: var(--accent-css); }
+    .track[data-color="css-design"] .track-tag { background: rgba(168,85,247,0.1); color: var(--accent-css); }
+    .track[data-color="css-design"] .track-status { color: var(--accent-css); }
     .track .track-port {
       font-family: var(--mono);
       font-size: 0.7rem;
@@ -233,6 +245,10 @@
     .planned-track[data-color="ai"] .plan-icon { background: rgba(244,114,182,0.1); color: var(--accent-ai); }
     .planned-track[data-color="pandas"] .plan-icon { background: rgba(231,4,136,0.1); color: #e70488; }
     .planned-track[data-color="r"] .plan-icon { background: rgba(39,109,195,0.1); color: #276dc3; }
+    .planned-track[data-color="python"] .plan-icon { background: rgba(75,139,190,0.1); color: #4b8bbe; }
+    .planned-track[data-color="django"] .plan-icon { background: rgba(34,197,94,0.1); color: var(--accent-django); }
+    .planned-track[data-color="sql"] .plan-icon { background: rgba(59,130,246,0.1); color: var(--accent-sql); }
+    .planned-track[data-color="d3"] .plan-icon { background: rgba(249,115,22,0.1); color: var(--accent-d3); }
     .planned-track h3 {
       font-family: var(--sans);
       font-size: 0.95rem;
@@ -399,112 +415,160 @@
     </div>
   </div>
 
-  <!-- ─── ACTIVE TRACKS ─── -->
+  <!-- ─── MAIN TRACKS ─── -->
   <section id="tracks">
     <div class="section-header reveal-on-scroll">
-      <h2>Active Tracks</h2>
-      <span class="count">4 platforms running</span>
+      <h2>Main Tracks</h2>
+      <span class="count">the core languages</span>
     </div>
 
     <div class="tracks reveal-on-scroll">
-      <a href="/d3/" class="track" data-color="d3">
-        <div class="track-icon">D3</div>
-        <h3>Learn D3.js</h3>
-        <p class="track-desc">Expert-level data visualization. SVG, scales, maps, transitions, and interactive graphics. Build broadcast-ready election dashboards.</p>
-        <div class="track-tags">
-          <span class="track-tag">12 Lessons</span>
-          <span class="track-tag">10 Games</span>
-          <span class="track-tag">AI Tutor</span>
-          <span class="track-tag">Workstation</span>
-        </div>
-        <div class="track-footer">
-          <span class="track-status">Active &middot; Complete</span>
-          <span class="track-port">/d3/</span>
-        </div>
-      </a>
-
       <a href="/python/" class="track" data-color="python">
         <div class="track-icon">Py</div>
-        <h3>Learn Python</h3>
-        <p class="track-desc">The language from scratch, taught through JavaScript analogies. Syntax, collections, functions, OOP, and working with data and files.</p>
+        <h3>Python</h3>
+        <p class="track-desc">The language from scratch, taught through JavaScript analogies. Syntax, collections, functions, OOP, and working with data.</p>
         <div class="track-tags">
           <span class="track-tag">5 Lessons</span>
           <span class="track-tag">AI Tutor</span>
           <span class="track-tag">JS &#8596; Py</span>
         </div>
         <div class="track-footer">
-          <span class="track-status">Active &middot; 5 lessons</span>
+          <span class="track-status">Active</span>
           <span class="track-port">/python/</span>
         </div>
       </a>
 
-      <a href="/django/" class="track" data-color="django">
-        <div class="track-icon">Dj</div>
-        <h3>Learn Django</h3>
-        <p class="track-desc">Take Python to the backend. Build full-stack web apps and REST APIs, mapped concept-for-concept to Next.js.</p>
+      <a href="/jsts/" class="track" data-color="jsts">
+        <div class="track-icon">JS</div>
+        <h3>JavaScript</h3>
+        <p class="track-desc">Relearn the language properly. Closures, scope, the event loop, prototypes, async, modules — the fundamentals you skipped building by doing.</p>
         <div class="track-tags">
-          <span class="track-tag">7 Lessons</span>
+          <span class="track-tag">13 Lessons</span>
           <span class="track-tag">AI Tutor</span>
-          <span class="track-tag">Next.js &#8596; Django</span>
+          <span class="track-tag">Engine Internals</span>
         </div>
         <div class="track-footer">
-          <span class="track-status">Active &middot; 7 lessons</span>
-          <span class="track-port">/django/</span>
+          <span class="track-status">Active</span>
+          <span class="track-port">/jsts/</span>
         </div>
       </a>
 
       <a href="/sql/" class="track" data-color="sql">
         <div class="track-icon">SQL</div>
-        <h3>Learn SQL + PostgreSQL</h3>
-        <p class="track-desc">Raw SQL mastery. SELECT to window functions, taught through Prisma ORM analogies. PostgreSQL-specific features and optimization.</p>
+        <h3>SQL</h3>
+        <p class="track-desc">Query data with confidence. SELECT to window functions, taught through JS array-method analogies (SELECT~map, WHERE~filter, JOIN~lookup).</p>
         <div class="track-tags">
           <span class="track-tag">12 Lessons</span>
           <span class="track-tag">AI Tutor</span>
-          <span class="track-tag">Prisma &#8596; SQL</span>
+          <span class="track-tag">SQL &#8596; JS</span>
         </div>
         <div class="track-footer">
-          <span class="track-status">Active &middot; 12 lessons</span>
+          <span class="track-status">Active</span>
           <span class="track-port">/sql/</span>
         </div>
       </a>
+
+      <a href="/css-design/" class="track" data-color="css-design">
+        <div class="track-icon">CSS</div>
+        <h3>HTML &amp; CSS</h3>
+        <p class="track-desc">The visual layer, properly understood. The box model, the cascade, specificity, Flexbox, Grid, custom properties, and modern CSS.</p>
+        <div class="track-tags">
+          <span class="track-tag">13 Lessons</span>
+          <span class="track-tag">AI Tutor</span>
+          <span class="track-tag">Flexbox + Grid</span>
+        </div>
+        <div class="track-footer">
+          <span class="track-status">Active</span>
+          <span class="track-port">/css-design/</span>
+        </div>
+      </a>
+
+      <a href="/r/" class="track" data-color="r">
+        <div class="track-icon">R</div>
+        <h3>R</h3>
+        <p class="track-desc">Data, statistics, and visualization. Vectors, data frames, the tidyverse, and ggplot2 — mapped to Python/Pandas and SQL. Tutor live; lessons in progress.</p>
+        <div class="track-tags">
+          <span class="track-tag">AI Tutor</span>
+          <span class="track-tag">R &#8596; Pandas</span>
+        </div>
+        <div class="track-footer">
+          <span class="track-status">In progress</span>
+          <span class="track-port">/r/</span>
+        </div>
+      </a>
     </div>
 
-    <!-- ─── MORE COURSES ─── -->
+    <!-- ─── ALL COURSES ─── -->
     <div class="section-header reveal-on-scroll">
-      <h2>More Courses</h2>
-      <span class="count">6 more</span>
+      <h2>All Courses</h2>
+      <span class="count">languages, frameworks &amp; libraries</span>
     </div>
 
     <div class="planned reveal-on-scroll">
+      <a href="/python/" class="planned-track" data-color="python" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">Py</div>
+        <h3>Python</h3>
+        <p>The language from scratch, through JavaScript analogies.</p>
+      </a>
       <a href="/jsts/" class="planned-track" data-color="jsts" style="text-decoration:none;color:inherit;cursor:pointer;">
         <div class="plan-icon">JS</div>
-        <h3>JavaScript + TypeScript</h3>
-        <p>Advanced ES2024+, TypeScript generics, Node.js internals, testing strategies.</p>
+        <h3>JavaScript</h3>
+        <p>Closures, scope, the event loop, prototypes, async, modules.</p>
+      </a>
+      <a href="/jsts/" class="planned-track" data-color="jsts" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">TS</div>
+        <h3>TypeScript</h3>
+        <p>Types, interfaces, and generics layered onto JavaScript.</p>
       </a>
       <a href="/react/" class="planned-track" data-color="react" style="text-decoration:none;color:inherit;cursor:pointer;">
         <div class="plan-icon">Rx</div>
-        <h3>React + Frameworks</h3>
-        <p>React 19, Next.js 15 App Router, Vite internals, Svelte comparison.</p>
+        <h3>React</h3>
+        <p>Components, hooks, state, and the Next.js App Router.</p>
       </a>
-      <a href="/css-design/" class="planned-track" data-color="css" style="text-decoration:none;color:inherit;cursor:pointer;">
-        <div class="plan-icon">CSS</div>
-        <h3>CSS + Design Systems</h3>
-        <p>Container queries, Tailwind v4, design tokens, broadcast TV graphics.</p>
-      </a>
-      <a href="/ai-llm/" class="planned-track" data-color="ai" style="text-decoration:none;color:inherit;cursor:pointer;">
-        <div class="plan-icon">AI</div>
-        <h3>AI + LLMs</h3>
-        <p>Claude API, prompt engineering, RAG, embeddings, and responsible AI.</p>
+      <a href="/django/" class="planned-track" data-color="django" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">Dj</div>
+        <h3>Django</h3>
+        <p>Python on the backend, mapped concept-for-concept to Next.js.</p>
       </a>
       <a href="/pandas/" class="planned-track" data-color="pandas" style="text-decoration:none;color:inherit;cursor:pointer;">
         <div class="plan-icon">Pd</div>
-        <h3>Pandas (Python)</h3>
-        <p>DataFrames, cleaning, grouping, and merging data — through SQL and JS analogies.</p>
+        <h3>Pandas</h3>
+        <p>DataFrames, cleaning, grouping, and merging — through SQL analogies.</p>
       </a>
       <a href="/r/" class="planned-track" data-color="r" style="text-decoration:none;color:inherit;cursor:pointer;">
         <div class="plan-icon">R</div>
         <h3>R + Tidyverse</h3>
-        <p>Data, statistics, and visualization. Vectors, data frames, dplyr, and ggplot2.</p>
+        <p>Vectors, data frames, dplyr, and ggplot2 for stats and viz.</p>
+      </a>
+      <a href="/sql/" class="planned-track" data-color="sql" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">SQL</div>
+        <h3>SQL</h3>
+        <p>SELECT to window functions, through JS array-method analogies.</p>
+      </a>
+      <a href="/sql/" class="planned-track" data-color="sql" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">Pg</div>
+        <h3>PostgreSQL</h3>
+        <p>Postgres-specific features, indexes, and query optimization.</p>
+      </a>
+      <a href="/css-design/" class="planned-track" data-color="css" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">CSS</div>
+        <h3>HTML &amp; CSS</h3>
+        <p>The box model, the cascade, Flexbox, Grid, and modern CSS.</p>
+      </a>
+      <a href="/css-design/" class="planned-track" data-color="css" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">Tw</div>
+        <h3>Tailwind</h3>
+        <p>Utility-first CSS and design tokens, built on the fundamentals.</p>
+      </a>
+      <a href="/d3/" class="planned-track" data-color="d3" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">D3</div>
+        <h3>D3.js</h3>
+        <p>Data-driven SVG: scales, the data-join, maps, and transitions.</p>
+      </a>
+      <a href="/ai-llm/" class="planned-track" data-color="ai" style="text-decoration:none;color:inherit;cursor:pointer;">
+        <div class="plan-icon">AI</div>
+        <h3>AI + LLMs</h3>
+        <p>Claude API, prompt engineering, RAG, embeddings, and tool use.</p>
       </a>
     </div>
   </section>

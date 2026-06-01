@@ -1,0 +1,202 @@
+[
+  {
+    "id": "pandas-g001",
+    "track": "pandas",
+    "type": "mentalModel",
+    "author": "dataframe",
+    "time": "2h",
+    "content": "If you know SQL, you already know pandas. Just map the verbs.\n\nGROUP BY is `df.groupby()`. JOIN is `pd.merge()`. WHERE is boolean indexing with `df[mask]`. SELECT col is `df['col']`.\n\nYou're not learning a new language, you're learning new syntax for queries you already write.",
+    "code": "# SQL: SELECT dept, AVG(salary) FROM staff WHERE active = 1 GROUP BY dept\ndf[df['active'] == 1].groupby('dept')['salary'].mean()",
+    "link": { "url": "/pandas/", "label": "pandas basics" },
+    "likes": 612,
+    "reposts": 134,
+    "comments": [
+      {
+        "author": "groupby_pd",
+        "content": "The one that tripped me up: SQL WHERE filters rows before grouping, HAVING filters after. In pandas that's a mask before groupby vs `.filter()` after. Same distinction, different spot.",
+        "likes": 88
+      }
+    ]
+  },
+  {
+    "id": "pandas-g002",
+    "track": "pandas",
+    "type": "tip",
+    "author": "groupby_pd",
+    "time": "4h",
+    "content": "Boolean indexing is just WHERE. The mask `df['age'] > 30` returns a column of True/False, and pandas keeps the True rows.\n\nCombine conditions with `&` and `|`, NOT `and`/`or`, and wrap each side in parentheses. The operator precedence will bite you otherwise.",
+    "code": "# WHERE age > 30 AND city = 'NYC'\ndf[(df['age'] > 30) & (df['city'] == 'NYC')]",
+    "link": null,
+    "likes": 421,
+    "reposts": 67,
+    "comments": [
+      {
+        "author": "na_dropper",
+        "content": "The parentheses thing is the #1 beginner error. `&` binds tighter than `>`, so without parens Python tries to evaluate `30 & df['city']` first and throws a confusing error.",
+        "likes": 102
+      }
+    ]
+  },
+  {
+    "id": "pandas-g003",
+    "track": "pandas",
+    "type": "interview",
+    "author": "na_dropper",
+    "time": "6h",
+    "content": "Common interview question: what's the difference between `merge`, `join`, and `concat`?\n\n`merge` is your SQL JOIN, matches on column values. `join` is the same thing but defaults to matching on the index. `concat` just stacks frames together, like UNION (rows) or putting columns side by side.\n\nIf you reach for the right one, you've already shown you think in sets.",
+    "code": "pd.merge(orders, customers, on='customer_id', how='left')",
+    "link": { "url": "/pandas/", "label": "joins explained" },
+    "likes": 538,
+    "reposts": 119,
+    "comments": [
+      {
+        "author": "dataframe",
+        "content": "Follow-up they love: what does `how='inner'` vs `'left'` vs `'outer'` mean? Identical to SQL. Inner keeps matches only, left keeps all left rows, outer keeps everything and fills gaps with NaN.",
+        "likes": 76
+      },
+      {
+        "author": "groupby_pd",
+        "content": "Bonus points if you mention `validate='one_to_many'` to catch duplicate keys that would silently fan out your row count.",
+        "likes": 54
+      }
+    ]
+  },
+  {
+    "id": "pandas-g004",
+    "track": "pandas",
+    "type": "hotTake",
+    "author": "dataframe",
+    "time": "8h",
+    "content": "Hot take: `iterrows()` should be the last tool you reach for, not the first.\n\nIf you're looping row by row in pandas, you're usually fighting the library. Vectorized operations run the loop in C and are often 100x faster.\n\nThink of it like JS: you wouldn't write a manual for-loop to double an array when `.map()` exists. Same instinct here.",
+    "code": "# slow\nfor i, row in df.iterrows():\n    df.at[i, 'total'] = row['qty'] * row['price']\n\n# fast\ndf['total'] = df['qty'] * df['price']",
+    "link": null,
+    "likes": 704,
+    "reposts": 188,
+    "comments": [
+      {
+        "author": "na_dropper",
+        "content": "Counterpoint that's still on your side: when you genuinely need row logic, `df.apply(func, axis=1)` reads cleaner than iterrows and is at least intentional. But vectorize first, always.",
+        "likes": 91
+      }
+    ]
+  },
+  {
+    "id": "pandas-g005",
+    "track": "pandas",
+    "type": "spotBug",
+    "author": "groupby_pd",
+    "time": "10h",
+    "content": "Spot the bug. This raises SettingWithCopyWarning and the assignment may silently not stick.\n\nThe problem: `df[df['x'] > 0]` returns a view/copy, and chaining another assignment on it is ambiguous. Pandas can't promise it edits the original.",
+    "code": "# buggy\ndf[df['x'] > 0]['y'] = 99\n\n# fix: one indexer with .loc\ndf.loc[df['x'] > 0, 'y'] = 99",
+    "link": { "url": "/pandas/", "label": "loc vs chained" },
+    "likes": 489,
+    "reposts": 96,
+    "comments": [
+      {
+        "author": "dataframe",
+        "content": "The mental model: chained indexing `[...][...]` is two separate operations, and pandas loses track between them. `.loc[rows, cols]` is one atomic operation, so it always targets the real frame.",
+        "likes": 83
+      }
+    ]
+  },
+  {
+    "id": "pandas-g006",
+    "track": "pandas",
+    "type": "eli5",
+    "author": "na_dropper",
+    "time": "12h",
+    "content": "What is NaN, explained simply: it's pandas saying \"I have no value here.\" Like an empty cell in a spreadsheet, or `null` in SQL, or `undefined` in JS.\n\nThe gotcha: NaN is never equal to anything, not even itself. So `df['x'] == NaN` always returns False. Use `df['x'].isna()` to find them instead.",
+    "code": "df['x'].isna().sum()   # count missing\ndf.dropna(subset=['x']) # drop rows missing x\ndf['x'].fillna(0)       # replace missing with 0",
+    "link": null,
+    "likes": 367,
+    "reposts": 58,
+    "comments": [
+      {
+        "author": "groupby_pd",
+        "content": "Same reason SQL makes you write `IS NULL` instead of `= NULL`. Missing is a state, not a value, so equality checks just don't apply to it.",
+        "likes": 64
+      }
+    ]
+  },
+  {
+    "id": "pandas-g007",
+    "track": "pandas",
+    "type": "til",
+    "author": "dataframe",
+    "time": "1d",
+    "content": "TIL `value_counts()` is just GROUP BY plus COUNT plus ORDER BY in one call.\n\nIt groups by unique values, counts each, and sorts descending by default. What would be three SQL clauses is one method.\n\nAdd `normalize=True` and you get percentages instead of raw counts, no extra math.",
+    "code": "df['status'].value_counts()\ndf['status'].value_counts(normalize=True)  # shares that sum to 1.0",
+    "link": null,
+    "likes": 445,
+    "reposts": 88,
+    "comments": [
+      {
+        "author": "na_dropper",
+        "content": "Watch out: `value_counts()` drops NaN by default. Pass `dropna=False` if you want missing values counted as their own category, which you usually do during data cleaning.",
+        "likes": 71
+      }
+    ]
+  },
+  {
+    "id": "pandas-g008",
+    "track": "pandas",
+    "type": "mentalModel",
+    "author": "groupby_pd",
+    "time": "1d",
+    "content": "groupby is split-apply-combine. Picture it as three steps.\n\nSplit the rows into buckets by key. Apply a function to each bucket. Combine the results back into one frame.\n\nIt's exactly SQL GROUP BY, but pandas lets you apply ANY function, not just SUM/AVG/COUNT. You can run custom logic per group, which SQL makes painful.",
+    "code": "df.groupby('region')['sales'].agg(['sum', 'mean', 'count'])",
+    "link": { "url": "/pandas/", "label": "groupby deep dive" },
+    "likes": 573,
+    "reposts": 121,
+    "comments": [
+      {
+        "author": "dataframe",
+        "content": "The combine step is where people get surprised: the group key becomes the index. If you want it back as a normal column, chain `.reset_index()` or pass `as_index=False` to groupby.",
+        "likes": 79
+      }
+    ]
+  },
+  {
+    "id": "pandas-g009",
+    "track": "pandas",
+    "type": "tip",
+    "author": "na_dropper",
+    "time": "2d",
+    "content": "`.assign()` is the pandas version of method chaining you know from JS arrays.\n\nInstead of mutating the frame line by line, it returns a new frame with the column added, so you can chain filter, assign, group, and sort in one readable pipeline. Reads top to bottom like `.filter().map().sort()`.",
+    "code": "(df\n  .query('active == 1')\n  .assign(margin=lambda d: d['revenue'] - d['cost'])\n  .sort_values('margin', ascending=False))",
+    "link": null,
+    "likes": 398,
+    "reposts": 72,
+    "comments": [
+      {
+        "author": "groupby_pd",
+        "content": "The lambda inside assign is key: it receives the in-progress frame, so you can reference columns created earlier in the same chain. That's what makes it composable instead of needing temp variables.",
+        "likes": 60
+      }
+    ]
+  },
+  {
+    "id": "pandas-g010",
+    "track": "pandas",
+    "type": "thread",
+    "author": "dataframe",
+    "time": "3d",
+    "content": "Thread: the 4 selectors you'll use 90% of the time, and when each one fits.\n\n1. `df['col']` grabs a column, like dot access on an object.\n2. `df[mask]` filters rows, this is your SQL WHERE.\n3. `df.loc[rows, cols]` selects by label, the workhorse for both reading and assigning.\n4. `df.iloc[i, j]` selects by integer position, like array indexing when you don't care about labels.\n\nLearn the difference between loc (labels) and iloc (positions) early and most confusion disappears.",
+    "code": "df.loc[df['age'] > 30, ['name', 'city']]  # labels + a condition\ndf.iloc[0:5, 0:2]                          # first 5 rows, first 2 cols",
+    "link": { "url": "/pandas/", "label": "selecting data" },
+    "likes": 661,
+    "reposts": 156,
+    "comments": [
+      {
+        "author": "na_dropper",
+        "content": "The trap: `df.loc[0:5]` is inclusive of 5 (it's a label range), but `df.iloc[0:5]` stops at 4 (Python slicing). Same-looking code, different row counts. Burned me more than once.",
+        "likes": 97
+      },
+      {
+        "author": "groupby_pd",
+        "content": "Rule of thumb I give juniors: if you're typing a column name or condition, use loc. If you're typing a number that means 'the Nth row', use iloc.",
+        "likes": 68
+      }
+    ]
+  }
+]

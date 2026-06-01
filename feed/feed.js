@@ -43,9 +43,12 @@ async function loadPosts() {
       'django-batch1', 'django-batch2', 'django-batch3',
       'sql-batch1', 'sql-batch2', 'sql-batch3',
     ].map(b => `/feed/content/generated/${b}.json`);
+    // Per-track generated batches (10 posts each), emphasizing cross-language connections.
+    const genFiles = ['d3', 'django', 'sql', 'jsts', 'react', 'css', 'ai', 'python', 'pandas', 'r']
+      .map(t => `/feed/content/${t}-gen.json`);
 
     const loaded = await Promise.all(
-      [...trackFiles, ...batchFiles].map(url =>
+      [...trackFiles, ...batchFiles, ...genFiles].map(url =>
         fetch(url).then(r => (r.ok ? r.json() : [])).catch(() => [])
       )
     );
