@@ -74,6 +74,9 @@
     .filter-tab[data-track="react"].active { background: var(--accent-react); border-color: var(--accent-react); color: #000; }
     .filter-tab[data-track="css"].active { background: var(--accent-css); border-color: var(--accent-css); color: #fff; }
     .filter-tab[data-track="ai"].active { background: var(--accent-ai); border-color: var(--accent-ai); color: #000; }
+    .filter-tab[data-track="python"].active { background: #4b8bbe; border-color: #4b8bbe; color: #fff; }
+    .filter-tab[data-track="pandas"].active { background: #e70488; border-color: #e70488; color: #fff; }
+    .filter-tab[data-track="r"].active { background: #276dc3; border-color: #276dc3; color: #fff; }
 
     .refresh-btn {
       margin-left: auto;
@@ -662,12 +665,15 @@
 
   <!-- ─── FILTER TOGGLES ─── -->
   <div class="feed-filters">
-    <button class="filter-tab active" data-track="d3">D3</button>
-    <button class="filter-tab active" data-track="django">Python</button>
+    <button class="filter-tab active" data-track="python">Python</button>
+    <button class="filter-tab active" data-track="pandas">Pandas</button>
+    <button class="filter-tab active" data-track="r">R</button>
+    <button class="filter-tab active" data-track="django">Django</button>
     <button class="filter-tab active" data-track="sql">SQL</button>
     <button class="filter-tab active" data-track="jsts">JS/TS</button>
     <button class="filter-tab active" data-track="react">React</button>
     <button class="filter-tab active" data-track="css">CSS</button>
+    <button class="filter-tab active" data-track="d3">D3</button>
     <button class="filter-tab active" data-track="ai">AI</button>
     <button class="refresh-btn" id="refresh-btn" aria-label="Shuffle feed">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>

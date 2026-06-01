@@ -3,7 +3,7 @@ import { PERSONAS_FLAT, POST_TYPES, TRACK_META, TRACK_COLORS } from './feed-data
 
 // ─── State ───
 let allPosts = [];
-let activeTracks = new Set(['d3', 'django', 'sql', 'jsts', 'react', 'css', 'ai']);
+let activeTracks = new Set(['d3', 'django', 'sql', 'jsts', 'react', 'css', 'ai', 'python', 'pandas', 'r']);
 let focusedIndex = -1;
 let likedPosts = JSON.parse(localStorage.getItem('scroll-likes') || '{}');
 let bookmarkedPosts = JSON.parse(localStorage.getItem('scroll-bookmarks') || '{}');
@@ -35,16 +35,29 @@ async function loadPosts() {
   container.innerHTML = '<div class="feed-loading"><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>';
 
   try {
-    const [d3, django, sql, jsts, react, css, ai] = await Promise.all([
-      fetch('/feed/content/d3.json').then(r => r.json()),
-      fetch('/feed/content/django.json').then(r => r.json()),
-      fetch('/feed/content/sql.json').then(r => r.json()),
-      fetch('/feed/content/jsts.json').then(r => r.json()).catch(() => []),
-      fetch('/feed/content/react.json').then(r => r.json()).catch(() => []),
-      fetch('/feed/content/css.json').then(r => r.json()).catch(() => []),
-      fetch('/feed/content/ai.json').then(r => r.json()).catch(() => []),
-    ]);
-    allPosts = resolvePosts([...d3, ...django, ...sql, ...jsts, ...react, ...css, ...ai]);
+    // Top-level curated files (one per track) + the larger generated batches.
+    const trackFiles = ['d3', 'django', 'sql', 'jsts', 'react', 'css', 'ai', 'python', 'pandas', 'r']
+      .map(t => `/feed/content/${t}.json`);
+    const batchFiles = [
+      'd3-batch1', 'd3-batch2', 'd3-batch3',
+      'django-batch1', 'django-batch2', 'django-batch3',
+      'sql-batch1', 'sql-batch2', 'sql-batch3',
+    ].map(b => `/feed/content/generated/${b}.json`);
+
+    const loaded = await Promise.all(
+      [...trackFiles, ...batchFiles].map(url =>
+        fetch(url).then(r => (r.ok ? r.json() : [])).catch(() => [])
+      )
+    );
+
+    // Merge, then dedupe by id (batches overlap the curated files).
+    const seen = new Set();
+    const merged = loaded.flat().filter(p => {
+      if (!p || !p.id || seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+    allPosts = resolvePosts(merged);
   } catch (err) {
     console.error('Failed to load feed:', err);
     container.innerHTML = '<div class="feed-empty">Failed to load the feed. Try refreshing.</div>';

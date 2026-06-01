@@ -51,6 +51,21 @@ export const PERSONAS = {
     embedder: { handle: 'embedder', name: 'Emma Bedding', avatar: '📍', bio: 'everything is a vector if you squint hard enough.' },
     ethicsBot: { handle: 'ethics_bot', name: 'Ethel Ethics', avatar: '⚖️', bio: 'AI ethics is not a feature. it is a constraint. and constraints are good.' },
   },
+  python: {
+    pythonic: { handle: 'pythonic', name: 'Pia Thonic', avatar: '🐍', bio: 'readability counts. import this.' },
+    listComp: { handle: 'list_comp', name: 'Lister Comp', avatar: '🧮', bio: '[x for x in life if x.worth_it]' },
+    duckTyper: { handle: 'duck_typer', name: 'Ducky T.', avatar: '🦆', bio: 'if it quacks, ship it. EAFP over LBYL.' },
+  },
+  pandas: {
+    dataFrame: { handle: 'dataframe', name: 'Daphne Frame', avatar: '🐼', bio: 'everything is a DataFrame if you believe.' },
+    groupByPd: { handle: 'groupby_pd', name: 'Greta Bye', avatar: '🧺', bio: 'split-apply-combine is a way of life.' },
+    naDropper: { handle: 'na_dropper', name: 'Nan Dropper', avatar: '🕳️', bio: 'NaN is not a number, but it is a problem.' },
+  },
+  r: {
+    tidyverse: { handle: 'tidyverse', name: 'Tidy Verse', avatar: '📊', bio: 'pipe it, mutate it, ggplot it.' },
+    vectorize: { handle: 'vectorize', name: 'Vic Torize', avatar: '➗', bio: 'loops are a code smell in R. vectorize everything.' },
+    dplyrFan: { handle: 'dplyr_fan', name: 'Dee Plier', avatar: '🔧', bio: 'filter, select, mutate, summarise. the four verbs.' },
+  },
 };
 
 // Flat lookup: handle string → persona object
@@ -87,10 +102,14 @@ export const TRACK_META = {
   jsts:   { name: 'The Runtime', subtitle: 'closures, types, and event loops' },
   react:  { name: 'The Fiber', subtitle: 'reconciliation is just diffing with opinions' },
   css:    { name: 'The Cascade', subtitle: 'specificity is a coordinate, not a score' },
-  ai:     { name: 'The Prompt', subtitle: 'teaching machines to think like journalists' },
+  ai:     { name: 'The Prompt', subtitle: 'teaching machines to think clearly' },
+  python: { name: 'The Snake Pit', subtitle: 'readability counts, import this' },
+  pandas: { name: 'The DataFrame', subtitle: 'split, apply, combine, repeat' },
+  r:      { name: 'The Tidyverse', subtitle: 'pipe it, mutate it, plot it' },
 };
 
 export const TRACK_COLORS = {
   d3: '#f97316', django: '#22c55e', sql: '#3b82f6',
   jsts: '#eab308', react: '#06b6d4', css: '#a855f7', ai: '#f472b6',
+  python: '#4b8bbe', pandas: '#e70488', r: '#276dc3',
 };

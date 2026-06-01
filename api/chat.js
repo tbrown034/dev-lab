@@ -1,33 +1,77 @@
 import Anthropic from '@anthropic-ai/sdk';
+import pg from 'pg';
 import { buildSystemPrompt } from '../lib/system-prompts.js';
 
 // Vercel serverless function backing /api/chat in production.
 // Mirrors the Vite dev-server proxy in server/api-proxy.js — both import the
 // shared prompts from lib/system-prompts.js so they never drift.
 //
-// Requires the ANTHROPIC_API_KEY environment variable to be set in the Vercel
-// project (the SDK reads it automatically).
+// Requires the ANTHROPIC_API_KEY and DATABASE_URL environment variables in the
+// Vercel project (the Anthropic SDK reads the key automatically).
 
 const client = new Anthropic();
 
-const MODEL = 'claude-sonnet-4-20250514';
+// One model for every AI feature — Haiku keeps cost low; the tutor, Explain It
+// Back, skill tests, and feed replies are all short-form and don't need a
+// larger model.
+const MODEL = 'claude-haiku-4-5-20251001';
+const MAX_TOKENS = 1024;
 const MAX_BODY_SIZE = 100_000; // 100KB
 
-// Best-effort, per-warm-instance rate limit. Serverless instances are
-// ephemeral and not shared, so this caps a hot instance rather than a user
-// globally — good enough to blunt abuse without external state.
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-const RATE_LIMIT_MAX = 30;
-const rateLimitMap = new Map();
+const RATE_LIMIT_MAX = 30; // requests per IP per rolling hour window
 
-function getRateLimitKey(req) {
-  const fwd = req.headers['x-forwarded-for'];
-  return (typeof fwd === 'string' && fwd.split(',')[0].trim())
-    || req.socket?.remoteAddress
-    || 'unknown';
+// ---------------------------------------------------------------------------
+// Rate limiting — Postgres-backed fixed window, shared across all serverless
+// instances (the previous in-memory limiter reset on every cold start). Falls
+// back to a per-instance in-memory limiter if the database is unavailable.
+// ---------------------------------------------------------------------------
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 2,
+});
+
+let schemaReady = null;
+function ensureSchema() {
+  if (!schemaReady) {
+    schemaReady = pool
+      .query(`
+        CREATE TABLE IF NOT EXISTS ai_rate_limit (
+          ip TEXT NOT NULL,
+          window_start TIMESTAMPTZ NOT NULL,
+          count INT NOT NULL DEFAULT 0,
+          PRIMARY KEY (ip, window_start)
+        )
+      `)
+      .then(() =>
+        // Best-effort cleanup of windows older than 2 hours; cheap and rare.
+        pool.query(`DELETE FROM ai_rate_limit WHERE window_start < now() - interval '2 hours'`).catch(() => {})
+      )
+      .catch(err => {
+        schemaReady = null; // allow a retry on the next request
+        throw err;
+      });
+  }
+  return schemaReady;
 }
 
-function checkRateLimit(ip) {
+async function checkRateLimitDb(ip) {
+  await ensureSchema();
+  const { rows } = await pool.query(
+    `INSERT INTO ai_rate_limit (ip, window_start, count)
+     VALUES ($1, date_trunc('hour', now()), 1)
+     ON CONFLICT (ip, window_start)
+     DO UPDATE SET count = ai_rate_limit.count + 1
+     RETURNING count`,
+    [ip]
+  );
+  return rows[0].count <= RATE_LIMIT_MAX;
+}
+
+// In-memory fallback (per warm instance) — only used if the DB check throws.
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
+const rateLimitMap = new Map();
+function checkRateLimitMemory(ip) {
   const now = Date.now();
   let entry = rateLimitMap.get(ip);
   if (!entry) {
@@ -40,8 +84,28 @@ function checkRateLimit(ip) {
   return true;
 }
 
-// Read and JSON-parse the request body. Vercel usually populates req.body for
-// JSON requests, but fall back to reading the raw stream if it doesn't.
+function getClientIp(req) {
+  const fwd = req.headers['x-forwarded-for'];
+  return (typeof fwd === 'string' && fwd.split(',')[0].trim())
+    || req.socket?.remoteAddress
+    || 'unknown';
+}
+
+// Reject requests that don't originate from our own site, which blunts the
+// most casual scripted abuse (curl/bots usually omit these headers).
+function isSameOrigin(req) {
+  const host = req.headers['host'];
+  const origin = req.headers['origin'];
+  const referer = req.headers['referer'];
+  if (origin) {
+    try { return new URL(origin).host === host; } catch { return false; }
+  }
+  if (referer) {
+    try { return new URL(referer).host === host; } catch { return false; }
+  }
+  return false;
+}
+
 async function readJsonBody(req) {
   if (req.body !== undefined && req.body !== null) {
     if (typeof req.body === 'object') return req.body;
@@ -65,8 +129,20 @@ export default async function handler(req, res) {
     return;
   }
 
-  const ip = getRateLimitKey(req);
-  if (!checkRateLimit(ip)) {
+  if (!isSameOrigin(req)) {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
+  }
+
+  const ip = getClientIp(req);
+  let allowed;
+  try {
+    allowed = await checkRateLimitDb(ip);
+  } catch (err) {
+    console.error('Rate-limit DB error, falling back to in-memory:', err.message);
+    allowed = checkRateLimitMemory(ip);
+  }
+  if (!allowed) {
     res.status(429).json({ error: 'Too many requests. Try again in a bit.' });
     return;
   }
@@ -92,7 +168,7 @@ export default async function handler(req, res) {
   try {
     const response = await client.messages.create({
       model: MODEL,
-      max_tokens: 1024,
+      max_tokens: MAX_TOKENS,
       system: buildSystemPrompt(platform, lessonContext),
       messages,
     });

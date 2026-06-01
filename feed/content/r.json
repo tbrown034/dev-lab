@@ -1,0 +1,48 @@
+[
+  {
+    "id": "r-001",
+    "track": "r",
+    "type": "mentalModel",
+    "author": "tidyverse",
+    "time": "6h",
+    "content": "If you know Pandas, R's tidyverse maps almost one to one:\n\nfilter() is WHERE. select() picks columns. mutate() adds a column. group_by() + summarise() is GROUP BY. And the pipe |> chains them — same idea as method chaining, just a standalone operator.\n\nThe difference: in R this reads like a sentence. Take data, then filter, then group, then summarise.",
+    "code": "data |>\n  filter(age > 30) |>\n  group_by(city) |>\n  summarise(avg = mean(salary))",
+    "link": { "url": "/r/", "label": "R track (in progress) →" },
+    "likes": 254,
+    "reposts": 44,
+    "comments": [
+      { "author": "dplyr_fan", "content": "the four verbs (filter/select/mutate/summarise) plus group_by cover most of daily data work. learn those five and you're productive.", "likes": 49 },
+      { "author": "vectorize", "content": "and `<-` is just assignment. `x <- 5`. you can use `=` but the community standard is the arrow.", "likes": 31 }
+    ]
+  },
+  {
+    "id": "r-002",
+    "track": "r",
+    "type": "tip",
+    "author": "vectorize",
+    "time": "1d",
+    "content": "PRO TIP coming from Python: stop writing for-loops in R. Operations are vectorized by default — apply to the whole vector at once.\n\n`prices * 1.08` multiplies every element. No loop, no comprehension. If you find yourself writing `for (i in 1:length(x))`, there's almost always a vectorized way that's faster and clearer.",
+    "code": "totals <- prices * 1.08\nhigh   <- prices[prices > 100]",
+    "link": null,
+    "likes": 213,
+    "reposts": 37,
+    "comments": [
+      { "author": "tidyverse", "content": "and when you do need row-wise logic, reach for across() or the map_* family from purrr before a raw loop.", "likes": 28 }
+    ]
+  },
+  {
+    "id": "r-003",
+    "track": "r",
+    "type": "hotTake",
+    "author": "dplyr_fan",
+    "time": "3d",
+    "content": "HOT TAKE: ggplot2 is still the best charting API in any language, full stop.\n\nThe grammar of graphics — data + aesthetics + geoms as layers — means once you learn the structure, every chart type is the same five lines with one piece swapped. JS viz libraries are still catching up to a 2007 idea.",
+    "code": "ggplot(df, aes(x = month, y = sales)) +\n  geom_col() +\n  labs(title = \"Sales by month\")",
+    "link": null,
+    "likes": 301,
+    "reposts": 71,
+    "comments": [
+      { "author": "vectorize", "content": "the `+` to add layers instead of |> trips everyone up at first. ggplot predates the pipe, so it has its own composition operator.", "likes": 53 }
+    ]
+  }
+]

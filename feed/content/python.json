@@ -1,0 +1,64 @@
+[
+  {
+    "id": "python-001",
+    "track": "python",
+    "type": "mentalModel",
+    "author": "pythonic",
+    "time": "3h",
+    "content": "Coming from JS? The single biggest mental shift in Python:\n\nThere is no `let`/`const`, no curly braces, no semicolons. Indentation IS the syntax. A block is whatever is indented under a colon.\n\nThat's not a style preference — bad indentation is a SyntaxError. The language is forcing the formatting your linter was nagging you about in JS.",
+    "code": "def greet(name):\n    if name:\n        return f\"hi {name}\"\n    return \"hi stranger\"",
+    "link": { "url": "/python/lessons/01-python-fundamentals/", "label": "more in Python Lesson 1 →" },
+    "likes": 412,
+    "reposts": 58,
+    "comments": [
+      { "author": "duck_typer", "content": "the colon-then-indent thing clicks fast. what got me was that whitespace mixing (tabs vs spaces) is a real error. pick 4 spaces and never look back.", "likes": 71 },
+      { "author": "list_comp", "content": "and `f\"{name}\"` is just a template literal with a different prefix. backtick → f-quote. same idea.", "likes": 44 }
+    ]
+  },
+  {
+    "id": "python-002",
+    "track": "python",
+    "type": "tip",
+    "author": "list_comp",
+    "time": "8h",
+    "content": "Stop writing `for` loops to build lists. The list comprehension is `.map()` and `.filter()` in one line, and it's the Pythonic default.\n\n`result = [transform(x) for x in items if keep(x)]`\n\nRead it left to right: what you keep, where it comes from, the condition. Once it clicks you'll see loops as the verbose option.",
+    "code": "squares = [n*n for n in range(10) if n % 2 == 0]\n# [0, 4, 16, 36, 64]",
+    "link": { "url": "/python/lessons/02-python-collections/", "label": "collections deep dive →" },
+    "likes": 533,
+    "reposts": 96,
+    "comments": [
+      { "author": "pythonic", "content": "just don't nest three of them. at that point a real loop is more readable and that matters more than looking clever.", "likes": 88 }
+    ]
+  },
+  {
+    "id": "python-003",
+    "track": "python",
+    "type": "hotTake",
+    "author": "duck_typer",
+    "time": "1d",
+    "content": "HOT TAKE: `try/except` is not error handling of last resort in Python — it's a normal control-flow tool.\n\nThe culture is EAFP: Easier to Ask Forgiveness than Permission. You try the thing and catch the failure, instead of checking a dozen conditions first (LBYL). It reads cleaner and avoids race conditions.",
+    "code": null,
+    "link": null,
+    "likes": 287,
+    "reposts": 41,
+    "comments": [
+      { "author": "list_comp", "content": "caveat: catch the SPECIFIC exception (except KeyError:), never a bare `except:`. bare except swallows your Ctrl-C and your bugs.", "likes": 62 }
+    ]
+  },
+  {
+    "id": "python-004",
+    "track": "python",
+    "type": "spotBug",
+    "author": "pythonic",
+    "time": "2d",
+    "content": "SPOT THE BUG: this function accumulates results across calls when it shouldn't. Why?",
+    "code": "def add_item(item, bucket=[]):\n    bucket.append(item)\n    return bucket\n\nadd_item(1)  # [1]\nadd_item(2)  # [1, 2]  <- ?!",
+    "link": { "url": "/python/lessons/03-python-functions/", "label": "functions & defaults →" },
+    "likes": 364,
+    "reposts": 73,
+    "comments": [
+      { "author": "duck_typer", "content": "mutable default argument. the `[]` is created ONCE when the function is defined, not per call. classic Python footgun.", "likes": 119 },
+      { "author": "list_comp", "content": "fix: default to None, then `bucket = bucket or []` inside. burn this into your memory.", "likes": 94 }
+    ]
+  }
+]

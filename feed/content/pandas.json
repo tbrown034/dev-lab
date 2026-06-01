@@ -1,0 +1,48 @@
+[
+  {
+    "id": "pandas-001",
+    "track": "pandas",
+    "type": "mentalModel",
+    "author": "dataframe",
+    "time": "5h",
+    "content": "The fastest way to understand Pandas if you know SQL:\n\nA DataFrame is a table. `df[df.age > 30]` is WHERE. `df.groupby('city')` is GROUP BY. `df.merge(other)` is JOIN. `df[['name','age']]` is SELECT.\n\nYou already know the operations. Pandas just gives you a table you can hold in a variable and chain on.",
+    "code": "df[df.age > 30].groupby('city')['salary'].mean()",
+    "link": { "url": "/pandas/", "label": "Pandas track (in progress) →" },
+    "likes": 298,
+    "reposts": 52,
+    "comments": [
+      { "author": "groupby_pd", "content": "the chaining is the whole game. filter → group → aggregate, all in one expression. once it clicks you stop reaching for loops.", "likes": 47 },
+      { "author": "na_dropper", "content": "just remember .copy() when you slice and plan to modify, or pandas yells SettingWithCopyWarning at you forever.", "likes": 39 }
+    ]
+  },
+  {
+    "id": "pandas-002",
+    "track": "pandas",
+    "type": "tip",
+    "author": "na_dropper",
+    "time": "1d",
+    "content": "PRO TIP: before you analyze anything, run these three lines. They answer 'what am I even looking at' faster than scrolling a spreadsheet ever could.",
+    "code": "df.shape        # (rows, cols)\ndf.info()       # types + null counts\ndf.describe()   # numeric summary",
+    "link": null,
+    "likes": 341,
+    "reposts": 67,
+    "comments": [
+      { "author": "dataframe", "content": "add df.head() and df['col'].value_counts() and that's 90% of exploratory analysis right there.", "likes": 58 }
+    ]
+  },
+  {
+    "id": "pandas-003",
+    "track": "pandas",
+    "type": "hotTake",
+    "author": "groupby_pd",
+    "time": "2d",
+    "content": "HOT TAKE: `iterrows()` is a trap. If you're looping over DataFrame rows by hand, you've left Pandas and gone back to writing slow Python.\n\nVectorize it. Operate on whole columns at once. It's faster, shorter, and it's what the library was built for.",
+    "code": "# slow:  for i, row in df.iterrows(): df.loc[i,'t'] = row.p * 1.08\n# fast:  df['t'] = df['p'] * 1.08",
+    "link": null,
+    "likes": 276,
+    "reposts": 48,
+    "comments": [
+      { "author": "na_dropper", "content": "the only time iterrows is fine is throwaway debugging on a tiny frame. in real pipelines it'll cost you minutes per run.", "likes": 51 }
+    ]
+  }
+]
