@@ -8,95 +8,63 @@
   <link rel="stylesheet" href="/assets/base.css">
   <link rel="stylesheet" href="/assets/shell.css">
   <style>
-    /* ─── HERO ─── */
+    /* ─── HERO (compact launchpad) ─── */
     .hero {
-      position: relative;
-      padding: 8rem 2rem 6rem;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -40%;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 900px;
-      height: 900px;
-      background: radial-gradient(ellipse at center,
-        rgba(249, 115, 22, 0.06) 0%,
-        rgba(74, 222, 128, 0.03) 40%,
-        transparent 70%
-      );
-      pointer-events: none;
-    }
-    .hero-inner {
-      max-width: 860px;
+      max-width: 1280px;
       margin: 0 auto;
-      position: relative;
-    }
-    .hero-kicker {
-      font-family: var(--mono);
-      font-size: 0.7rem;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 1.5rem;
-      animation: reveal 0.8s var(--ease-out-expo) both;
+      padding: 3rem 2rem 0.5rem;
     }
     .hero h1 {
       font-family: var(--serif);
-      font-size: clamp(3rem, 8vw, 5.5rem);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
       font-weight: 400;
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-      margin-bottom: 2rem;
-      animation: reveal 0.8s var(--ease-out-expo) 0.1s both;
+      line-height: 1.12;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.6rem;
     }
-    .hero h1 em {
-      font-style: italic;
-      color: var(--accent-d3);
-    }
-    .hero-body {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4rem;
-      animation: reveal 0.8s var(--ease-out-expo) 0.2s both;
-    }
-    .hero-body p {
-      font-size: 1.1rem;
-      line-height: 1.8;
+    .hero-lede {
+      font-size: 1rem;
+      line-height: 1.6;
       color: var(--text-dim);
+      max-width: 620px;
+      margin-bottom: 1.5rem;
     }
-    .hero-body p strong {
-      color: var(--text);
-      font-weight: 600;
+    .hero-jump {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
     }
-    .hero-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1px;
-      background: var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-      align-self: start;
-    }
-    .stat {
-      background: var(--surface);
-      padding: 1.25rem 1.5rem;
-    }
-    .stat .num {
-      font-family: var(--serif);
-      font-size: 2.2rem;
-      font-weight: 400;
-      line-height: 1;
-      margin-bottom: 0.25rem;
-    }
-    .stat .label {
+    .hero-jump .jump-label {
       font-family: var(--mono);
       font-size: 0.65rem;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--text-muted);
+      margin-right: 0.25rem;
+    }
+    .hero-jump a {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.03em;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: all 0.18s;
+    }
+    .hero-jump a:hover {
+      border-color: var(--text-dim);
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    /* Shared container so the hero and the track sections share a left edge */
+    #tracks {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 2rem;
     }
 
     /* ─── TRACK CARDS ─── */
@@ -386,32 +354,18 @@
     <a href="/about/">About</a>
   </div>
 
-  <!-- ─── HERO ─── -->
+  <!-- ─── HERO (compact launchpad) ─── -->
   <div class="hero">
-    <div class="hero-inner">
-      <div class="hero-kicker">Free learning platform &mdash; 10 tracks</div>
-      <h1>Concepts first.<br>Code second.</h1>
-      <div class="hero-body">
-        <div>
-          <p>
-            Ten tracks &mdash; <strong>Python</strong>, <strong>JavaScript</strong>, <strong>TypeScript</strong>,
-            <strong>React</strong>, <strong>CSS</strong>, <strong>SQL</strong>, <strong>Pandas</strong>,
-            <strong>R</strong>, <strong>D3.js</strong>, and <strong>AI</strong>
-            &mdash; each with interactive lessons, an AI tutor, skill tests, games, and real projects.
-          </p>
-          <p style="margin-top: 1rem;">
-            Every concept taught through analogies to things you already know.
-            Built from scratch by a developer who learned the hard way;
-            the lessons teach what stuck.
-          </p>
-        </div>
-        <div class="hero-stats">
-          <div class="stat"><div class="num">36</div><div class="label">Lessons</div></div>
-          <div class="stat"><div class="num">10</div><div class="label">Tracks</div></div>
-          <div class="stat"><div class="num">10</div><div class="label">Games</div></div>
-          <div class="stat"><div class="num">6</div><div class="label">AI Skills</div></div>
-        </div>
-      </div>
+    <h1>What do you want to work on?</h1>
+    <p class="hero-lede">Concepts first &mdash; and how they connect across languages. Pick a track, or scroll the feed.</p>
+    <div class="hero-jump">
+      <span class="jump-label">Jump in</span>
+      <a href="/python/">Python</a>
+      <a href="/jsts/">JavaScript</a>
+      <a href="/sql/">SQL</a>
+      <a href="/css-design/">HTML/CSS</a>
+      <a href="/r/">R</a>
+      <a href="/feed/">The Scroll</a>
     </div>
   </div>
 
@@ -573,61 +527,17 @@
     </div>
   </section>
 
-  <!-- ─── QUOTE ─── -->
-  <div class="quote-section reveal-on-scroll">
-    <div class="quote-block">
-      <blockquote>If you understand why something works, you can figure out the how on the fly.</blockquote>
-      <cite>&mdash; The approach behind every lesson</cite>
-    </div>
-  </div>
-
-  <!-- ─── FEATURES ─── -->
-  <section>
-    <div class="section-header reveal-on-scroll">
-      <h2>Learning Tools</h2>
-      <span class="count">built into every platform</span>
-    </div>
-
-    <div class="features reveal-on-scroll">
-      <div class="feature">
-        <div class="feat-icon">&#x2726;</div>
-        <h3>AI Tutor</h3>
-        <p>Context-aware Claude chatbot on every page. Knows the lesson, the concepts, and your progress.</p>
-      </div>
-      <div class="feature">
-        <div class="feat-icon">&#x21C4;</div>
-        <h3>Explain It Back</h3>
-        <p>Feynman technique. The AI asks you to explain concepts in your own words, then pushes deeper.</p>
-      </div>
-      <div class="feature">
-        <div class="feat-icon">&#x25CE;</div>
-        <h3>Skill Test</h3>
-        <p>AI-generated adaptive assessment. 10 questions, difficulty scaling, score history. Beat your best.</p>
-      </div>
-      <a href="/feed/" class="feature" style="text-decoration:none;color:inherit;cursor:pointer;">
-        <div class="feat-icon">&#x21F5;</div>
-        <h3>The Scroll</h3>
-        <p>Replace doomscrolling with learning. Interview Qs, hot takes, tips, and bugs from the dev timeline. Comment and the AI claps back.</p>
-      </a>
-      <a href="/pod/" class="feature" style="text-decoration:none;color:inherit;cursor:pointer;">
-        <div class="feat-icon">&#x266A;</div>
-        <h3>The Pod</h3>
-        <p>AI-generated podcast episodes that break down each lesson into conversational audio. Learn on the go, one topic at a time.</p>
-      </a>
-    </div>
-  </section>
 
   <!-- ─── FOOTER ─── -->
   <footer>
     <div class="footer-inner">
       <div class="footer-left">
-        <p>Built by <strong>Trevor Brown</strong> &mdash; journalist, developer</p>
-        <p>Powered by Vite, D3.js, and Claude API.</p>
-        <p>Also check out <a href="https://studdy-buddy-rho.vercel.app/" target="_blank" rel="noopener" style="color: var(--accent); text-decoration: underline;">Study Buddy</a> &mdash; AI-powered tutoring companion.</p>
+        <p>Built by <strong>Trevor Brown</strong>.</p>
+        <p>A personal learning lab &mdash; concepts first, and how they connect.</p>
       </div>
       <div class="footer-right">
         <div class="cmd">npm run dev</div>
-        <p>Each track runs its own dev server.</p>
+        <p>One site, all tracks.</p>
       </div>
     </div>
   </footer>
