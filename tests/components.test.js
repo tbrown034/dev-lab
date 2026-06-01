@@ -13,7 +13,6 @@ describe('Component file existence', () => {
     'tutor-chat.js',
     'explain-code.js',
     'section-nav.js',
-    'audio-reader.js',
     'podcast-player.js',
     'skill-test.js',
     'interactive-playground.js',
@@ -74,7 +73,6 @@ describe('init-tutor.js imports', () => {
     'tutor-chat.js',
     'explain-code.js',
     'section-nav.js',
-    'audio-reader.js',
     'podcast-player.js',
     'skill-test.js',
   ];
@@ -89,7 +87,6 @@ describe('init-tutor.js imports', () => {
     'initTutorChat',
     'initExplainButtons',
     'initSectionNav',
-    'initAudioReader',
     'initPodcastPlayer',
     'initSkillTest',
   ];

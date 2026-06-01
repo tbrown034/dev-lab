@@ -21,10 +21,8 @@ const TRACK_LESSONS = {
     '11-d3-react', '12-capstone',
   ],
   django: [
-    '01-python-fundamentals', '02-python-collections', '03-python-functions',
-    '04-python-oop', '05-python-data-files', '06-django-quickstart',
-    '07-models-orm', '08-views-urls', '09-templates-forms', '10-rest-api',
-    '11-auth-testing-deploy', '12-capstone',
+    '06-django-quickstart', '07-models-orm', '08-views-urls', '09-templates-forms',
+    '10-rest-api', '11-auth-testing-deploy', '12-capstone',
   ],
   sql: [
     '01-sql-fundamentals', '02-select-filtering', '03-joins', '04-aggregation',
@@ -88,6 +86,33 @@ describe('Course page existence', () => {
           expect(existsSync(resolve(ROOT, track, 'lessons', lesson, 'index.html'))).toBe(true);
         });
       }
+    });
+  }
+});
+
+// ─── 1b. Standalone Python track (hub + lessons, no games/projects/references) ───
+
+describe('Python track page existence', () => {
+  const PYTHON_LESSONS = [
+    '01-python-fundamentals', '02-python-collections', '03-python-functions',
+    '04-python-oop', '05-python-data-files',
+  ];
+  it('python/index.html (hub) exists', () => {
+    expect(existsSync(resolve(ROOT, 'python', 'index.html'))).toBe(true);
+  });
+  for (const lesson of PYTHON_LESSONS) {
+    it(`python/lessons/${lesson}/index.html exists`, () => {
+      expect(existsSync(resolve(ROOT, 'python', 'lessons', lesson, 'index.html'))).toBe(true);
+    });
+  }
+});
+
+// ─── 1c. In-progress tracks (landing only, lessons not yet authored) ───
+
+describe('In-progress track hubs exist', () => {
+  for (const track of ['pandas', 'r']) {
+    it(`${track}/index.html (hub) exists`, () => {
+      expect(existsSync(resolve(ROOT, track, 'index.html'))).toBe(true);
     });
   }
 });

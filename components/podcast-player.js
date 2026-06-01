@@ -157,14 +157,7 @@ export function initPodcastPlayer() {
     const title = h1 ? h1.textContent.trim() : document.title;
     label.textContent = title;
 
-    // If audio-reader button exists, reposition both
-    const readerBtn = document.getElementById('audio-reader-btn');
-    if (readerBtn) {
-      readerBtn.style.transform = 'translateX(calc(-50% - 70px))';
-      btn.classList.remove('solo');
-    } else {
-      btn.classList.add('solo');
-    }
+    btn.classList.add('solo');
   });
 
   audio.addEventListener('error', () => {
@@ -175,8 +168,6 @@ export function initPodcastPlayer() {
   // Playback state
   function showBar() {
     btn.style.display = 'none';
-    const readerBtn = document.getElementById('audio-reader-btn');
-    if (readerBtn) readerBtn.style.display = 'none';
     bar.style.display = 'flex';
     requestAnimationFrame(() => bar.classList.add('visible'));
   }
@@ -186,8 +177,6 @@ export function initPodcastPlayer() {
     setTimeout(() => {
       bar.style.display = 'none';
       btn.style.display = 'flex';
-      const readerBtn = document.getElementById('audio-reader-btn');
-      if (readerBtn) readerBtn.style.display = 'flex';
     }, 300);
   }
 
