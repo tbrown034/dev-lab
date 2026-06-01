@@ -71,10 +71,7 @@
     .tracks {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border-radius: 8px;
-      overflow: hidden;
+      gap: 1rem;
       margin-bottom: 3rem;
     }
     .track {
@@ -83,9 +80,12 @@
       text-decoration: none;
       color: inherit;
       position: relative;
-      transition: background 0.3s, transform 0.3s;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: background 0.3s, transform 0.3s, border-color 0.3s;
     }
-    .track:hover { background: var(--surface-2); }
+    .track:hover { background: var(--surface-2); transform: translateY(-3px); }
     .track::after {
       content: '';
       position: absolute;
@@ -182,19 +182,18 @@
     .planned {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border-radius: 8px;
-      overflow: hidden;
+      gap: 0.75rem;
       margin-bottom: 4rem;
     }
     .planned-track {
       background: var(--surface);
       padding: 1.75rem;
-      opacity: 0.6;
-      transition: opacity 0.3s;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s, background 0.2s;
     }
-    .planned-track:hover { opacity: 0.85; }
+    .planned-track:hover { transform: translateY(-2px); background: var(--surface-2); }
     .planned-track .plan-icon {
       font-family: var(--mono);
       font-weight: 600;
