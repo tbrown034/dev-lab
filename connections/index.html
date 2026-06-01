@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connections — Dev Lab</title>
+  <meta name="description" content="The same idea in every language. Variables, maps, filters, functions, grouping, joins, and more — shown side by side across JavaScript, Python, SQL, R, and Pandas.">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/shell.css">
+  <style>
+    .conn-wrap { max-width: 1280px; margin: 0 auto; padding: 3rem 2rem 5rem; }
+    .conn-hero h1 { font-family: var(--serif); font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 400; line-height: 1.12; letter-spacing: -0.01em; margin-bottom: 0.6rem; }
+    .conn-hero p { font-size: 1rem; line-height: 1.6; color: var(--text-dim); max-width: 640px; }
+    .conn-toc { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.75rem 0 1rem; }
+    .conn-toc a { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.03em; padding: 0.35rem 0.7rem; border: 1px solid var(--border); border-radius: 6px; color: var(--text-dim); text-decoration: none; transition: all 0.18s; }
+    .conn-toc a:hover { border-color: var(--text-dim); color: var(--text); background: var(--surface); }
+    .conn-concept { padding-top: 3rem; border-top: 1px solid var(--border); margin-top: 2.5rem; scroll-margin-top: 80px; }
+    .conn-concept:first-of-type { border-top: none; margin-top: 1.5rem; }
+    .conn-concept h2 { font-family: var(--serif); font-size: 1.6rem; font-weight: 400; margin-bottom: 0.35rem; }
+    .conn-blurb { font-size: 0.92rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 1.5rem; max-width: 720px; }
+    .conn-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+    .conn-col { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+    .conn-lang { display: flex; align-items: center; gap: 0.45rem; font-family: var(--mono); font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); }
+    .conn-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .conn-code { margin: 0; padding: 1rem; font-family: var(--mono); font-size: 0.78rem; line-height: 1.65; color: var(--text); overflow-x: auto; background: var(--bg); }
+    .conn-code code { font-family: inherit; white-space: pre; }
+    .conn-insight { margin-top: 1.25rem; font-size: 0.88rem; line-height: 1.6; color: var(--text-dim); border-left: 3px solid var(--accent-d3, #f97316); padding: 0.6rem 0 0.6rem 1rem; }
+    .conn-insight span { font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.2rem; }
+    @media (max-width: 768px) { .conn-wrap { padding: 2rem 1.5rem 3rem; } .conn-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="/" class="logo">&larr; <span class="accent">Dev Lab</span></a>
+      <div class="header-right">
+        <button class="theme-toggle" aria-label="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="conn-wrap">
+    <div class="conn-hero">
+      <h1>The same idea, in every language.</h1>
+      <p>The fastest way to learn a new language is to see a concept you already know, written the other way. Here is the same small task across JavaScript, Python, SQL, R, and Pandas.</p>
+      <nav class="conn-toc">
+      <a href="#variables">Variables &amp; assignment</a>
+      <a href="#collections">Lists, arrays, dicts &amp; objects</a>
+      <a href="#map">Transform every item (map)</a>
+      <a href="#filter">Keep some items (filter / WHERE)</a>
+      <a href="#functions">Defining functions</a>
+      <a href="#loops">Looping &amp; iteration</a>
+      <a href="#conditionals">Conditionals &amp; truthiness</a>
+      <a href="#strings">String formatting / interpolation</a>
+      <a href="#aggregation">Grouping &amp; aggregation</a>
+      <a href="#joins">Combining datasets (JOIN / merge)</a>
+      <a href="#async">Async &amp; concurrency</a>
+      <a href="#nullish">Missing &amp; null values</a>
+      </nav>
+    </div>
+
+    <section class="conn-concept" id="variables">
+      <h2>Variables &amp; assignment</h2>
+      <p class="conn-blurb">Binding a name to a value so it can be reused later.</p>
+      <div class="conn-grid">
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#eab308"><span class="conn-dot" style="background:#eab308"></span>JavaScript</div>
+          <pre class="conn-code"><code>const x = 5;
+let y = x + 1;</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#4b8bbe"><span class="conn-dot" style="background:#4b8bbe"></span>Python</div>
+          <pre class="conn-code"><code>x = 5
+y = x + 1</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#276dc3"><span class="conn-dot" style="background:#276dc3"></span>R</div>
+          <pre class="conn-code"><code>x &lt;- 5
+y &lt;- x + 1</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#3b82f6"><span class="conn-dot" style="background:#3b82f6"></span>SQL</div>
+          <pre class="conn-code"><code>DECLARE @x INT = 5;
+DECLARE @y INT = @x + 1;</code></pre>
+        </div>
+      </div>
+      <p class="conn-insight"><span>Connection</span> Python and R just bind a name to a value, while JavaScript forces you to pick const vs let and SQL has no general-purpose variable at all (the DECLARE form is a procedural extension, not standard SQL). The R gotcha is the &lt;- arrow where every other language uses =.</p>
+    </section>
+
+    <section class="conn-concept" id="collections">
+      <h2>Lists, arrays, dicts &amp; objects</h2>
+      <p class="conn-blurb">Ways to store an ordered sequence of values and to store key-to-value mappings.</p>
+      <div class="conn-grid">
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#eab308"><span class="conn-dot" style="background:#eab308"></span>JavaScript</div>
+          <pre class="conn-code"><code>const nums = [1, 2, 3];
+const person = { name: "Ada", age: 36 };
+console.log(nums[0], person.name);</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#4b8bbe"><span class="conn-dot" style="background:#4b8bbe"></span>Python</div>
+          <pre class="conn-code"><code>nums = [1, 2, 3]
+person = {"name": "Ada", "age": 36}
+print(nums[0], person["name"])</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#276dc3"><span class="conn-dot" style="background:#276dc3"></span>R</div>
+          <pre class="conn-code"><code>nums &lt;- c(1, 2, 3)
+person &lt;- list(name = "Ada", age = 36)
+print(c(nums[1], person$name))</code></pre>
+        </div>
+      </div>
+      <p class="conn-insight"><span>Connection</span> The sequence/map split is the same everywhere, but indexing differs: JavaScript and Python start at 0 while R starts at 1, and R's c() coerces to one type whereas a Python list or JS array can mix types.</p>
+    </section>
+
+    <section class="conn-concept" id="map">
+      <h2>Transform every item (map)</h2>
+      <p class="conn-blurb">Apply the same function to each element of a collection, producing a new collection of the results.</p>
+      <div class="conn-grid">
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#eab308"><span class="conn-dot" style="background:#eab308"></span>JavaScript</div>
+          <pre class="conn-code"><code>const nums = [1, 2, 3];
+const doubled = nums.map(n =&gt; n * 2);</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#4b8bbe"><span class="conn-dot" style="background:#4b8bbe"></span>Python</div>
+          <pre class="conn-code"><code>nums = [1, 2, 3]
+doubled = [n * 2 for n in nums]</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#276dc3"><span class="conn-dot" style="background:#276dc3"></span>R</div>
+          <pre class="conn-code"><code>nums &lt;- c(1, 2, 3)
+doubled &lt;- nums * 2</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#e70488"><span class="conn-dot" style="background:#e70488"></span>Pandas</div>
+          <pre class="conn-code"><code>doubled = df["nums"] * 2</code></pre>
+        </div>
+      </div>
+      <p class="conn-insight"><span>Connection</span> JavaScript and Python apply the function element-by-element, while R and Pandas vectorize: the operation broadcasts over the whole vector or column at once, so you usually skip the explicit loop entirely.</p>
+    </section>
+
+    <section class="conn-concept" id="filter">
+      <h2>Keep some items (filter / WHERE)</h2>
+      <p class="conn-blurb">Produce a subset of a collection by keeping only the items that satisfy a condition.</p>
+      <div class="conn-grid">
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#eab308"><span class="conn-dot" style="background:#eab308"></span>JavaScript</div>
+          <pre class="conn-code"><code>const adults = users.filter(u =&gt; u.age &gt;= 18);</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#4b8bbe"><span class="conn-dot" style="background:#4b8bbe"></span>Python</div>
+          <pre class="conn-code"><code>adults = [u for u in users if u["age"] &gt;= 18]</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#3b82f6"><span class="conn-dot" style="background:#3b82f6"></span>SQL</div>
+          <pre class="conn-code"><code>SELECT * FROM users
+WHERE age &gt;= 18;</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#e70488"><span class="conn-dot" style="background:#e70488"></span>Pandas</div>
+          <pre class="conn-code"><code>adults = df[df["age"] &gt;= 18]</code></pre>
+        </div>
+      </div>
+      <p class="conn-insight"><span>Connection</span> JavaScript and Python evaluate a per-item predicate (a function or expression), while SQL's WHERE and Pandas' boolean indexing describe the whole condition at once. The classic gotcha is Pandas: you must use &amp; / | with parentheses around each comparison, not Python's and / or, because it operates element-wise on the column.</p>
+    </section>
+
+    <section class="conn-concept" id="functions">
+      <h2>Defining functions</h2>
+      <p class="conn-blurb">Naming a reusable block of code that takes inputs and returns a result.</p>
+      <div class="conn-grid">
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#eab308"><span class="conn-dot" style="background:#eab308"></span>JavaScript</div>
+          <pre class="conn-code"><code>function square(x) {
+  return x * x;
+}</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#4b8bbe"><span class="conn-dot" style="background:#4b8bbe"></span>Python</div>
+          <pre class="conn-code"><code>def square(x):
+    return x * x</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#276dc3"><span class="conn-dot" style="background:#276dc3"></span>R</div>
+          <pre class="conn-code"><code>square &lt;- function(x) {
+  x * x
+}</code></pre>
+        </div>
+      </div>
+      <p class="conn-insight"><span>Connection</span> All three name a function and take a parameter, but R has no return keyword in idiomatic code (the last expression is returned automatically) and assigns the function to a name with &lt;-, while JavaScript and Python use explicit return.</p>
+    </section>
+
+    <section class="conn-concept" id="loops">
+      <h2>Looping &amp; iteration</h2>
+      <p class="conn-blurb">Repeatedly running a block of code, once for each value in a sequence.</p>
+      <div class="conn-grid">
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#eab308"><span class="conn-dot" style="background:#eab308"></span>JavaScript</div>
+          <pre class="conn-code"><code>for (let i = 1; i &lt;= 3; i++) {
+  console.log(i);
+}</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#4b8bbe"><span class="conn-dot" style="background:#4b8bbe"></span>Python</div>
+          <pre class="conn-code"><code>for i in range(1, 4):
+    print(i)</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#276dc3"><span class="conn-dot" style="background:#276dc3"></span>R</div>
+          <pre class="conn-code"><code>for (i in 1:3) {
+  print(i)
+}</code></pre>
+        </div>
+      </div>
+      <p class="conn-insight"><span>Connection</span> All three iterate over a range, but the bounds differ: Python's range(1, 4) and JavaScript's i &lt;= 3 both stop before/at the limit you must reason about, while R's 1:3 is inclusive on both ends. The bigger gotcha in R is that explicit for loops are often discouraged in favor of vectorized operations.</p>
+    </section>
+
+    <section class="conn-concept" id="conditionals">
+      <h2>Conditionals &amp; truthiness</h2>
+      <p class="conn-blurb">Branch the program down different paths depending on whether a condition evaluates to true or false.</p>
+      <div class="conn-grid">
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#eab308"><span class="conn-dot" style="background:#eab308"></span>JavaScript</div>
+          <pre class="conn-code"><code>if (x &gt; 0) {
+  console.log("positive");
+} else {
+  console.log("non-positive");
+}</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#4b8bbe"><span class="conn-dot" style="background:#4b8bbe"></span>Python</div>
+          <pre class="conn-code"><code>if x &gt; 0:
+    print("positive")
+else:
+    print("non-positive")</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#276dc3"><span class="conn-dot" style="background:#276dc3"></span>R</div>
+          <pre class="conn-code"><code>if (x &gt; 0) {
+  print("positive")
+} else {
+  print("non-positive")
+}</code></pre>
+        </div>
+      </div>
+      <p class="conn-insight"><span>Connection</span> All three branch the same way, but truthiness differs: JavaScript treats 0, "", null, undefined, and NaN as falsy, Python treats 0, "", and empty containers as falsy, while R's if() demands a single logical value and errors (or warns) on a multi-element vector or NA.</p>
+    </section>
+
+    <section class="conn-concept" id="strings">
+      <h2>String formatting / interpolation</h2>
+      <p class="conn-blurb">Building a string by embedding the values of variables directly inside it.</p>
+      <div class="conn-grid">
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#eab308"><span class="conn-dot" style="background:#eab308"></span>JavaScript</div>
+          <pre class="conn-code"><code>const name = "Ada";
+const age = 36;
+console.log(`${name} is ${age}`);</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#4b8bbe"><span class="conn-dot" style="background:#4b8bbe"></span>Python</div>
+          <pre class="conn-code"><code>name = "Ada"
+age = 36
+print(f"{name} is {age}")</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#276dc3"><span class="conn-dot" style="background:#276dc3"></span>R</div>
+          <pre class="conn-code"><code>name &lt;- "Ada"
+age &lt;- 36
+cat(sprintf("%s is %d", name, age))</code></pre>
+        </div>
+      </div>
+      <p class="conn-insight"><span>Connection</span> JavaScript and Python both inline the variable inside the literal (backtick `${}` vs the f-string `{}` prefix), so the names live in the string. R's idiomatic sprintf instead uses positional placeholders (%s, %d) with the values passed as separate arguments, which trips people up because order, not name, decides what goes where.</p>
+    </section>
+
+    <section class="conn-concept" id="aggregation">
+      <h2>Grouping &amp; aggregation</h2>
+      <p class="conn-blurb">Split rows into groups by a key column, then compute one summary value per group.</p>
+      <div class="conn-grid">
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#3b82f6"><span class="conn-dot" style="background:#3b82f6"></span>SQL</div>
+          <pre class="conn-code"><code>SELECT dept, AVG(salary)
+FROM employees
+GROUP BY dept;</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#e70488"><span class="conn-dot" style="background:#e70488"></span>Pandas</div>
+          <pre class="conn-code"><code>df.groupby("dept")["salary"].mean()</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#276dc3"><span class="conn-dot" style="background:#276dc3"></span>R</div>
+          <pre class="conn-code"><code>aggregate(salary ~ dept, data = employees, FUN = mean)</code></pre>
+        </div>
+      </div>
+      <p class="conn-insight"><span>Connection</span> All three split-apply-combine the same way, but the result shape differs: SQL returns flat rows, Pandas returns a Series indexed by the group key (call .reset_index() to get a flat DataFrame), and R's aggregate already gives you a plain data frame.</p>
+    </section>
+
+    <section class="conn-concept" id="joins">
+      <h2>Combining datasets (JOIN / merge)</h2>
+      <p class="conn-blurb">Stitch two datasets together side by side by matching rows on a shared key.</p>
+      <div class="conn-grid">
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#3b82f6"><span class="conn-dot" style="background:#3b82f6"></span>SQL</div>
+          <pre class="conn-code"><code>SELECT *
+FROM orders o
+INNER JOIN customers c
+  ON o.customer_id = c.id;</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#e70488"><span class="conn-dot" style="background:#e70488"></span>Pandas</div>
+          <pre class="conn-code"><code>merged = orders.merge(
+    customers, left_on="customer_id", right_on="id", how="inner"
+)</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#276dc3"><span class="conn-dot" style="background:#276dc3"></span>R</div>
+          <pre class="conn-code"><code>merged &lt;- merge(orders, customers,
+  by.x = "customer_id", by.y = "id")</code></pre>
+        </div>
+      </div>
+      <p class="conn-insight"><span>Connection</span> All three default differently: a bare SQL JOIN is an inner join, pandas merge also defaults to inner, but base R merge() defaults to an inner join only when all.x/all.y are FALSE (its default) yet silently does a full cross join if you forget the by argument. Always name your keys and join type explicitly.</p>
+    </section>
+
+    <section class="conn-concept" id="async">
+      <h2>Async &amp; concurrency</h2>
+      <p class="conn-blurb">Running work that waits on I/O without blocking, so other tasks can proceed while a result is pending.</p>
+      <div class="conn-grid">
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#eab308"><span class="conn-dot" style="background:#eab308"></span>JavaScript</div>
+          <pre class="conn-code"><code>async function main() {
+  const res = await fetch("https://api.example.com/data");
+  const data = await res.json();
+}</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#4b8bbe"><span class="conn-dot" style="background:#4b8bbe"></span>Python</div>
+          <pre class="conn-code"><code>import aiohttp, asyncio
+async def main():
+    async with aiohttp.ClientSession() as s:
+        async with s.get("https://api.example.com/data") as res:
+            data = await res.json()</code></pre>
+        </div>
+      </div>
+      <p class="conn-insight"><span>Connection</span> Both use async/await and an event loop, but JavaScript runs its loop automatically while Python must explicitly start one with asyncio.run(main()) — forgetting that leaves your coroutine unawaited and never executed.</p>
+    </section>
+
+    <section class="conn-concept" id="nullish">
+      <h2>Missing &amp; null values</h2>
+      <p class="conn-blurb">A way to represent the absence of a value, and to substitute a fallback when one is missing.</p>
+      <div class="conn-grid">
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#eab308"><span class="conn-dot" style="background:#eab308"></span>JavaScript</div>
+          <pre class="conn-code"><code>const name = user.name ?? "Anonymous";</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#4b8bbe"><span class="conn-dot" style="background:#4b8bbe"></span>Python</div>
+          <pre class="conn-code"><code>name = user.get("name") or "Anonymous"</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#3b82f6"><span class="conn-dot" style="background:#3b82f6"></span>SQL</div>
+          <pre class="conn-code"><code>SELECT COALESCE(name, 'Anonymous') AS name
+FROM users;</code></pre>
+        </div>
+        <div class="conn-col">
+          <div class="conn-lang" style="color:#e70488"><span class="conn-dot" style="background:#e70488"></span>Pandas</div>
+          <pre class="conn-code"><code>df["name"] = df["name"].fillna("Anonymous")</code></pre>
+        </div>
+      </div>
+      <p class="conn-insight"><span>Connection</span> Each language has its own "missing" token (JS null/undefined, Python None, SQL NULL, Pandas NaN/NA), and the gotcha is that they don't compare or coerce the same way: SQL NULL is never equal to anything (use IS NULL), Pandas NaN != NaN, and JS ?? only catches null/undefined while Python's or also swallows falsy values like 0 and "".</p>
+    </section>
+  </div>
+
+  <script>
+    const toggle = document.querySelector('.theme-toggle');
+    const saved = localStorage.getItem('theme');
+    if (saved) document.documentElement.setAttribute('data-theme', saved);
+    else if (window.matchMedia('(prefers-color-scheme: light)').matches) document.documentElement.setAttribute('data-theme', 'light');
+    toggle.addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
+  </script>
+</body>
+</html>
