@@ -7,6 +7,7 @@
  */
 
 import { detectPlatform, PLATFORM_CONFIG } from './platform-config.js';
+import { authClient } from '/lib/auth-client.js';
 
 function buildChatStyles(config) {
   const c = config.color;
@@ -110,6 +111,13 @@ function buildChatStyles(config) {
   }
   #tutor-send:hover { background: ${cHover}; }
   #tutor-send:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+  .tutor-signin-btn {
+    flex: 1; text-align: center; text-decoration: none;
+    background: ${c}; color: ${txtColor}; font-weight: 600; font-size: 13px;
+    padding: 10px 14px; border-radius: 8px; transition: background 0.2s;
+  }
+  .tutor-signin-btn:hover { background: ${cHover}; }
 
   .tutor-loading { display: flex; gap: 4px; padding: 8px 14px; }
   .tutor-loading span {
@@ -563,12 +571,34 @@ export function initTutorChat() {
     panel.classList.toggle('open', isOpen);
     toggle.classList.toggle('open', isOpen);
     toggle.innerHTML = isOpen ? '&times;' : '?';
-    if (isOpen) document.getElementById('tutor-input').focus();
+    if (isOpen && isSignedIn) document.getElementById('tutor-input')?.focus();
   });
+
+  // Gate the tutor behind sign-in — the model costs Anthropic credits, so only
+  // authenticated users can send messages. The server enforces this too (401);
+  // this just gives a clean signed-out UI instead of a failed request.
+  let isSignedIn = null;
+  function applySignedOutUI() {
+    const messagesEl = document.getElementById('tutor-messages');
+    const suggestionsEl = document.getElementById('tutor-suggestions');
+    const chipsEl = document.getElementById('tutor-action-chips');
+    const inputArea = document.getElementById('tutor-input-area');
+    if (suggestionsEl) suggestionsEl.style.display = 'none';
+    if (chipsEl) chipsEl.style.display = 'none';
+    if (messagesEl) messagesEl.innerHTML = '<div class="tutor-msg system">Sign in to chat with the AI tutor.</div>';
+    if (inputArea) inputArea.innerHTML = '<a href="/login/" class="tutor-signin-btn">Sign in to use the tutor</a>';
+  }
+  authClient.getSession()
+    .then(({ data }) => {
+      isSignedIn = !!data;
+      if (!isSignedIn) applySignedOutUI();
+    })
+    .catch(() => { isSignedIn = false; applySignedOutUI(); });
 
   // Send message
   async function sendMessage(text) {
     if (!text.trim() || isLoading) return;
+    if (isSignedIn === false) { applySignedOutUI(); return; }
 
     const messagesEl = document.getElementById('tutor-messages');
     const suggestionsEl = document.getElementById('tutor-suggestions');
@@ -601,7 +631,16 @@ export function initTutorChat() {
         throw new Error('Server returned an invalid response. Try again.');
       }
 
-      if (data.error) throw new Error(data.error);
+      if (data.error) {
+        // Session expired or signed out mid-session — switch to the signed-out UI.
+        if (res.status === 401 || data.authRequired) {
+          isSignedIn = false;
+          const authErr = new Error('auth-required');
+          authErr.authRequired = true;
+          throw authErr;
+        }
+        throw new Error(data.error);
+      }
 
       messages.push({ role: 'assistant', content: data.content });
 
@@ -618,6 +657,13 @@ export function initTutorChat() {
       document.getElementById('tutor-loading')?.remove();
       // Pop the user message from history so they can retry
       messages.pop();
+      // Signed out — swap to the sign-in prompt and stop (the composer is gone,
+      // so skip the shared tail that touches #tutor-input).
+      if (err.authRequired) {
+        applySignedOutUI();
+        isLoading = false;
+        return;
+      }
       let errMsg;
       if (err.message.includes('ANTHROPIC_API_KEY') || err.message.includes('Invalid API key')) {
         errMsg = 'API key issue. Make sure ANTHROPIC_API_KEY is set in your .env file and restart the dev server.';

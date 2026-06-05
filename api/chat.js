@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import pg from 'pg';
 import { buildSystemPrompt } from '../lib/system-prompts.js';
+import { auth } from '../lib/auth.js';
 
 // Vercel serverless function backing /api/chat in production.
 // Mirrors the Vite dev-server proxy in server/api-proxy.js — both import the
@@ -91,6 +92,27 @@ function getClientIp(req) {
     || 'unknown';
 }
 
+// Convert Node's plain headers object into a Fetch Headers instance so
+// Better Auth can read the session cookie.
+function toHeaders(nodeHeaders) {
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(nodeHeaders)) {
+    if (Array.isArray(value)) value.forEach(v => headers.append(key, v));
+    else if (value != null) headers.set(key, value);
+  }
+  return headers;
+}
+
+// Returns the Better Auth session for this request, or null if signed out.
+async function getSession(req) {
+  try {
+    return await auth.api.getSession({ headers: toHeaders(req.headers) });
+  } catch (err) {
+    console.error('Session check failed:', err.message);
+    return null;
+  }
+}
+
 // Reject requests that don't originate from our own site, which blunts the
 // most casual scripted abuse (curl/bots usually omit these headers).
 function isSameOrigin(req) {
@@ -134,16 +156,26 @@ export default async function handler(req, res) {
     return;
   }
 
-  const ip = getClientIp(req);
+  // Require sign-in. The tutor costs Anthropic credits, so only authenticated
+  // users can reach the model.
+  const session = await getSession(req);
+  if (!session) {
+    res.status(401).json({ error: 'Please sign in to use the AI tutor.', authRequired: true });
+    return;
+  }
+
+  // Rate limit per authenticated user (not per IP) so it can't be bypassed by
+  // switching networks. Falls back to IP only if the user id is somehow absent.
+  const rlKey = `u:${session.user?.id || getClientIp(req)}`;
   let allowed;
   try {
-    allowed = await checkRateLimitDb(ip);
+    allowed = await checkRateLimitDb(rlKey);
   } catch (err) {
     console.error('Rate-limit DB error, falling back to in-memory:', err.message);
-    allowed = checkRateLimitMemory(ip);
+    allowed = checkRateLimitMemory(rlKey);
   }
   if (!allowed) {
-    res.status(429).json({ error: 'Too many requests. Try again in a bit.' });
+    res.status(429).json({ error: 'You\'ve hit the hourly limit. Try again in a bit.' });
     return;
   }
 

@@ -41,6 +41,17 @@ function getRateLimitKey(req) {
     || 'unknown';
 }
 
+// Convert Node's plain headers object into a Fetch Headers instance so
+// Better Auth can read the session cookie.
+function toHeaders(nodeHeaders) {
+  const headers = new Headers();
+  for (const [key, value] of Object.entries(nodeHeaders)) {
+    if (Array.isArray(value)) value.forEach(v => headers.append(key, v));
+    else if (value != null) headers.set(key, value);
+  }
+  return headers;
+}
+
 function checkRateLimit(ip) {
   const now = Date.now();
   let entry = rateLimitMap.get(ip);
@@ -84,17 +95,27 @@ export function createApiProxy() {
       });
 
       server.middlewares.use('/api/chat', async (req, res) => {
-        // Rate limit check
-        const ip = getRateLimitKey(req);
-        if (!checkRateLimit(ip)) {
-          res.statusCode = 429;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'Too many requests. Try again in a bit.' }));
-          return;
-        }
         if (req.method !== 'POST') {
           res.statusCode = 405;
           res.end('Method not allowed');
+          return;
+        }
+
+        // Require sign-in — same enforcement as the production function.
+        const session = await auth.api.getSession({ headers: toHeaders(req.headers) }).catch(() => null);
+        if (!session) {
+          res.statusCode = 401;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Please sign in to use the AI tutor.', authRequired: true }));
+          return;
+        }
+
+        // Rate limit per authenticated user, not per IP.
+        const rlKey = `u:${session.user?.id || getRateLimitKey(req)}`;
+        if (!checkRateLimit(rlKey)) {
+          res.statusCode = 429;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'You\'ve hit the hourly limit. Try again in a bit.' }));
           return;
         }
 
