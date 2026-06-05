@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 02 - Filtering &amp; Selecting</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #e70488; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>02</span> Filtering &amp; Selecting</h1>
+    <a href="/pandas/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #e70488;">Filtering a DataFrame is just a SQL WHERE clause wearing different syntax.</strong> If you can write <code>SELECT * FROM users WHERE age &gt; 30</code> or <code>users.filter(u =&gt; u.age &gt; 30)</code>, you already understand boolean indexing &mdash; this lesson maps both of those mental models onto pandas and warns you about the two gotchas that bite everyone.</p>
+
+    <!-- ============================================ -->
+    <!-- BOOLEAN INDEXING                             -->
+    <!-- ============================================ -->
+
+    <h2>Boolean Indexing &mdash; The WHERE Clause of Pandas</h2>
+
+    <p>The core idea: you build a column of <code>True</code>/<code>False</code> values, then hand it back to the DataFrame to keep only the <code>True</code> rows. SQL hides this behind <code>WHERE</code>; JavaScript hides it behind a callback. Pandas makes the boolean mask visible.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT *
+FROM   df
+WHERE  age &gt; 30;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># df["age"] &gt; 30 is a Series of True/False</span>
+mask = df["age"] &gt; 30
+df[mask]
+
+<span class="comment"># or inline, the idiom you'll see everywhere:</span>
+df[df["age"] &gt; 30]</code></pre>
+      </div>
+    </div>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code>const rows = data.filter(
+  row =&gt; row.age &gt; 30
+);</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>rows = df[df["age"] &gt; 30]</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>df["age"] &gt; 30</code> does not return rows. It returns a <em>boolean Series</em> &mdash; one <code>True</code> or <code>False</code> per row. When you put that Series inside <code>df[...]</code>, pandas keeps every row where the value is <code>True</code>. Think of it as a stencil laid over the DataFrame. SQL's <code>WHERE</code> and JS's <code>.filter()</code> do the same thing, they just never show you the mask.</p>
+    </div>
+
+    <p>The comparison is vectorized: the <code>&gt;</code> runs against all rows at once, no loop required. This is why pandas is fast &mdash; the comparison happens in compiled C, not a Python <code>for</code> loop.</p>
+
+    <pre><code><span class="comment"># All the usual comparisons produce masks</span>
+df[df["status"] == "active"]
+df[df["price"] &lt;= 100]
+df[df["country"] != "US"]
+df[df["name"].str.startswith("A")]   <span class="comment"># string methods via .str</span>
+df[df["category"].isin(["A", "B"])]  <span class="comment"># like SQL IN (...)</span>
+df[df["email"].isna()]               <span class="comment"># like SQL IS NULL</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Two handy SQL translations:</strong> SQL's <code>IN (...)</code> becomes <code>.isin([...])</code>, and SQL's <code>IS NULL</code> becomes <code>.isna()</code> (with <code>.notna()</code> for <code>IS NOT NULL</code>). Both return boolean Series, so they drop straight into <code>df[...]</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- COMBINING CONDITIONS                         -->
+    <!-- ============================================ -->
+
+    <h2>Combining Conditions &mdash; &amp;, |, and Parentheses</h2>
+
+    <p>Multiple conditions are where pandas diverges sharply from both SQL and JavaScript. You do <strong>not</strong> use <code>and</code>/<code>or</code>. You use <code>&amp;</code>, <code>|</code>, and <code>~</code> &mdash; and every condition must be wrapped in its own parentheses.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT *
+FROM   df
+WHERE  age &gt; 30
+  AND  country = 'US';</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>df[(df["age"] &gt; 30) &amp; (df["country"] == "US")]
+<span class="comment">#   ^------------^   ^---------------------^</span>
+<span class="comment">#   each condition wrapped in parentheses</span></code></pre>
+      </div>
+    </div>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code>data.filter(
+  row =&gt; row.age &gt; 30 || row.country === "US"
+);</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>df[(df["age"] &gt; 30) | (df["country"] == "US")]</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>AND</code> / <code>&amp;&amp;</code> &rarr; <code>&amp;</code>. <code>OR</code> / <code>||</code> &rarr; <code>|</code>. <code>NOT</code> / <code>!</code> &rarr; <code>~</code>. These are bitwise operators applied element-by-element across the two boolean Series, which is exactly what you want here. The plain English <code>and</code>/<code>or</code> keywords do <em>not</em> work on Series &mdash; they raise an error.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong>The parentheses gotcha that bites everyone.</strong> Write <code>df[(df["age"] &gt; 30) &amp; (df["country"] == "US")]</code>, never <code>df[df["age"] &gt; 30 &amp; df["country"] == "US"]</code>. In Python, <code>&amp;</code> binds <em>tighter</em> than <code>&gt;</code> and <code>==</code>, so without parentheses Python tries to evaluate <code>30 &amp; df["country"]</code> first and throws a confusing <code>TypeError</code>. Operator precedence, not pandas, is the culprit. Wrap every condition.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong>Why <code>and</code>/<code>or</code> fail.</strong> Python's <code>and</code> and <code>or</code> need a single <code>True</code>/<code>False</code>, but a boolean Series has many values, so pandas raises <em>"The truth value of a Series is ambiguous."</em> That error message almost always means: you typed <code>and</code> where you needed <code>&amp;</code>, or you forgot a pair of parentheses.</p>
+    </div>
+
+    <pre><code><span class="comment"># Negation with ~ (the NOT operator)</span>
+df[~df["status"].isin(["closed", "archived"])]
+
+<span class="comment"># Three conditions: still parenthesize each one</span>
+df[
+    (df["age"] &gt; 30)
+    &amp; (df["country"] == "US")
+    &amp; (df["active"])
+]</code></pre>
+
+    <!-- ============================================ -->
+    <!-- LOC VS ILOC                                  -->
+    <!-- ============================================ -->
+
+    <h2>.loc vs .iloc &mdash; Label vs Position</h2>
+
+    <p>Pandas gives you two selectors, and the difference is one of the most important things in the library. <code>.loc</code> selects by <strong>label</strong> (the index value and column name). <code>.iloc</code> selects by <strong>integer position</strong> (like a normal array).</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript (position)</h5>
+        <pre><code><span class="comment">// arrays are position-only</span>
+data[0];        <span class="comment">// first row</span>
+data[2];        <span class="comment">// third row</span>
+data.slice(0, 5);   <span class="comment">// first five</span></code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># .iloc = position, like a JS array</span>
+df.iloc[0]        <span class="comment"># first row</span>
+df.iloc[2]        <span class="comment"># third row</span>
+df.iloc[0:5]      <span class="comment"># first five rows</span>
+
+<span class="comment"># .loc = label, the index value itself</span>
+df.loc[0]         <span class="comment"># row whose index label IS 0</span>
+df.loc["alice"]   <span class="comment"># row whose index label is "alice"</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> the <code>i</code> in <code>.iloc</code> stands for <em>integer position</em> &mdash; it always counts <code>0, 1, 2 ...</code> no matter what the index looks like. <code>.loc</code> uses the actual index labels and column names, which is closer to SQL: you ask for a primary-key value and a named column. If your DataFrame uses the default integer index, the two look identical &mdash; but the moment you set a custom index, they diverge.</p>
+    </div>
+
+    <h3>Selecting Rows and Columns Together</h3>
+
+    <p>The real power of <code>.loc</code> and <code>.iloc</code> is selecting rows and columns in one shot: <code>df.loc[rows, columns]</code>. This is the pandas answer to <code>SELECT col1, col2 FROM df WHERE ...</code>.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT name, age
+FROM   df
+WHERE  age &gt; 30;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># rows by condition, columns by label</span>
+df.loc[df["age"] &gt; 30, ["name", "age"]]</code></pre>
+      </div>
+    </div>
+
+    <pre><code><span class="comment"># .loc takes [row selector, column selector]</span>
+df.loc[df["active"], "email"]          <span class="comment"># one column, filtered rows</span>
+df.loc[5:10, "name":"email"]           <span class="comment"># label slice INCLUDES 10 and "email"</span>
+df.loc[:, ["name", "age"]]             <span class="comment"># all rows, two columns</span>
+
+<span class="comment"># .iloc takes [row positions, column positions]</span>
+df.iloc[0:3, 0:2]                      <span class="comment"># first 3 rows, first 2 cols</span>
+df.iloc[0:3, 0:2]                      <span class="comment"># position slice EXCLUDES 3 and 2</span>
+df.iloc[-1]                            <span class="comment"># last row, like data.at(-1)</span></code></pre>
+
+    <div class="warning">
+      <p><strong>Label slices are inclusive; position slices are not.</strong> This is the subtle one. <code>df.loc[5:10]</code> includes the row labeled <code>10</code>. But <code>df.iloc[5:10]</code> stops <em>before</em> position <code>10</code> &mdash; exactly like Python list slicing and JS <code>.slice()</code>. Same numbers, different last row. When in doubt, remember: <code>.loc</code> is labels (inclusive), <code>.iloc</code> is positions (exclusive end).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SELECTING COLUMNS                            -->
+    <!-- ============================================ -->
+
+    <h2>Selecting Columns &mdash; The SELECT List</h2>
+
+    <p>Picking columns is the pandas version of choosing which fields to <code>SELECT</code>. There are two shapes, and the difference matters.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- one column</span>
+SELECT name FROM df;
+
+<span class="comment">-- several columns</span>
+SELECT name, age, email FROM df;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># one column -&gt; a Series (1-D)</span>
+df["name"]
+
+<span class="comment"># several columns -&gt; a DataFrame (2-D)</span>
+df[["name", "age", "email"]]</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Single brackets vs double brackets.</strong> <code>df["name"]</code> (single) returns a one-dimensional <em>Series</em>. <code>df[["name"]]</code> (double) returns a <em>DataFrame</em> with one column. The inner <code>[...]</code> is just a Python list of column names &mdash; that is why selecting many columns is <code>df[["a", "b", "c"]]</code>. If you want a table back, use double brackets.</p>
+    </div>
+
+    <pre><code><span class="comment"># Drop columns instead of listing the ones you keep</span>
+df.drop(columns=["internal_id", "raw_blob"])
+
+<span class="comment"># Select by data type</span>
+df.select_dtypes(include="number")     <span class="comment"># numeric columns only</span>
+
+<span class="comment"># Rename while selecting (chain it)</span>
+df[["name", "age"]].rename(columns={"name": "full_name"})</code></pre>
+
+    <!-- ============================================ -->
+    <!-- QUERY                                        -->
+    <!-- ============================================ -->
+
+    <h2>.query() &mdash; Filtering That Reads Like SQL</h2>
+
+    <p>If the parentheses and <code>&amp;</code> symbols feel noisy, <code>.query()</code> lets you write the filter as a string that looks remarkably like a <code>WHERE</code> clause. You pass a condition, and you can use plain <code>and</code>/<code>or</code> inside it.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT *
+FROM   df
+WHERE  age &gt; 30
+  AND  country = 'US';</code></pre>
+      </div>
+      <div>
+        <h5>Pandas (.query)</h5>
+        <pre><code>df.query("age &gt; 30 and country == 'US'")
+
+<span class="comment"># compare to the bracket version:</span>
+df[(df["age"] &gt; 30) &amp; (df["country"] == "US")]</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Inside <code>.query()</code>, the gotchas relax.</strong> You write column names bare (no <code>df["..."]</code>), and you can use <code>and</code>/<code>or</code>/<code>not</code> as words. Pandas parses the string, so the operator-precedence trap from earlier does not apply here. It is often the most readable choice for long filters.</p>
+    </div>
+
+    <pre><code><span class="comment"># Reference a Python variable with @</span>
+threshold = 30
+df.query("age &gt; @threshold")
+
+<span class="comment"># IN-style membership</span>
+df.query("category in ['A', 'B']")
+
+<span class="comment"># Column names with spaces need backticks</span>
+df.query("`sign up date` &gt; '2024-01-01'")</code></pre>
+
+    <div class="warning">
+      <p><strong><code>.query()</code> trades safety for readability.</strong> Because the condition is a string, typos in column names surface only at runtime, and your editor cannot autocomplete or type-check them. For one-off exploration it is lovely; inside production code, the explicit <code>df[mask]</code> form is easier to lint and refactor.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SETTINGWITHCOPY                              -->
+    <!-- ============================================ -->
+
+    <h2>The SettingWithCopyWarning Trap</h2>
+
+    <p>This is the warning every pandas beginner hits, and it is genuinely confusing the first time. It appears when you filter a DataFrame and then try to assign into the result &mdash; pandas cannot tell whether you are editing a copy or the original, so it warns you.</p>
+
+    <pre><code><span class="comment"># The trap: chained indexing then assignment</span>
+df[df["age"] &gt; 30]["bonus"] = 1000
+<span class="comment"># SettingWithCopyWarning! The change may silently vanish.</span></code></pre>
+
+    <div class="aha">
+      <p><strong>Why it happens.</strong> <code>df[df["age"] &gt; 30]</code> may return a <em>copy</em> of the matching rows, not a view into <code>df</code>. So <code>["bonus"] = 1000</code> writes into that throwaway copy, and your real DataFrame is untouched. The two square-bracket operations in a row &mdash; "chained indexing" &mdash; are the root cause. Pandas warns because the outcome is undefined.</p>
+    </div>
+
+    <p>The fix is to do the row selection and the column assignment in a single <code>.loc</code> call, so pandas knows you mean the original DataFrame.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Wrong (chained)</h5>
+        <pre><code>df[df["age"] &gt; 30]["bonus"] = 1000
+
+<span class="comment"># two [] in a row = chained indexing</span>
+<span class="comment"># warns, and often does nothing</span></code></pre>
+      </div>
+      <div>
+        <h5>Right (single .loc)</h5>
+        <pre><code>df.loc[df["age"] &gt; 30, "bonus"] = 1000
+
+<span class="comment"># one call, rows AND column together</span>
+<span class="comment"># pandas edits df in place, no warning</span></code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>The other safe fix: make a real copy.</strong> If you actually want a separate filtered DataFrame to work on, say so explicitly: <code>seniors = df[df["age"] &gt; 30].copy()</code>. Now <code>seniors["bonus"] = 1000</code> is unambiguous &mdash; you are editing <code>seniors</code>, never <code>df</code>, and no warning appears. Use <code>.loc</code> to edit the original; use <code>.copy()</code> to branch off a new one.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- REFERENCE TABLE                              -->
+    <!-- ============================================ -->
+
+    <h2>The Translation Table</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Goal</th>
+          <th>SQL</th>
+          <th>JavaScript</th>
+          <th>Pandas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Filter rows</td>
+          <td><code>WHERE age &gt; 30</code></td>
+          <td><code>.filter(r =&gt; r.age &gt; 30)</code></td>
+          <td><code>df[df["age"] &gt; 30]</code></td>
+        </tr>
+        <tr>
+          <td>AND</td>
+          <td><code>AND</code></td>
+          <td><code>&amp;&amp;</code></td>
+          <td><code>&amp;</code> (parenthesize!)</td>
+        </tr>
+        <tr>
+          <td>OR</td>
+          <td><code>OR</code></td>
+          <td><code>||</code></td>
+          <td><code>|</code> (parenthesize!)</td>
+        </tr>
+        <tr>
+          <td>NOT</td>
+          <td><code>NOT</code></td>
+          <td><code>!</code></td>
+          <td><code>~</code></td>
+        </tr>
+        <tr>
+          <td>Membership</td>
+          <td><code>IN (...)</code></td>
+          <td><code>.includes()</code></td>
+          <td><code>.isin([...])</code></td>
+        </tr>
+        <tr>
+          <td>Null check</td>
+          <td><code>IS NULL</code></td>
+          <td><code>== null</code></td>
+          <td><code>.isna()</code></td>
+        </tr>
+        <tr>
+          <td>Pick columns</td>
+          <td><code>SELECT a, b</code></td>
+          <td><code>.map(r =&gt; ...)</code></td>
+          <td><code>df[["a", "b"]]</code></td>
+        </tr>
+        <tr>
+          <td>Row by position</td>
+          <td>N/A</td>
+          <td><code>data[0]</code></td>
+          <td><code>df.iloc[0]</code></td>
+        </tr>
+        <tr>
+          <td>Row by key/label</td>
+          <td><code>WHERE id = 5</code></td>
+          <td><code>find(r =&gt; r.id===5)</code></td>
+          <td><code>df.loc[5]</code></td>
+        </tr>
+        <tr>
+          <td>Rows + columns</td>
+          <td><code>SELECT a WHERE ...</code></td>
+          <td><code>.filter().map()</code></td>
+          <td><code>df.loc[mask, "a"]</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- PUTTING IT TOGETHER                          -->
+    <!-- ============================================ -->
+
+    <h2>Putting It All Together</h2>
+
+    <p>A realistic slice of analysis: load a customer table, filter it the way you would in SQL, pick the columns you care about, and safely add a derived column. This is the daily-driver workflow.</p>
+
+    <pre><code>import pandas as pd
+
+df = pd.read_csv("customers.csv")
+
+<span class="comment"># 1. Filter: active US customers who spent over $500</span>
+<span class="comment">#    SQL: WHERE active = 1 AND country = 'US' AND total &gt; 500</span>
+high_value = df[
+    (df["active"])
+    &amp; (df["country"] == "US")
+    &amp; (df["total_spend"] &gt; 500)
+]
+
+<span class="comment"># 2. Select just the columns we want to report on</span>
+<span class="comment">#    SQL: SELECT name, email, total_spend</span>
+report = high_value[["name", "email", "total_spend"]].copy()
+
+<span class="comment"># 3. Add a derived column safely with .loc (no warning)</span>
+report.loc[report["total_spend"] &gt; 1000, "tier"] = "platinum"
+report.loc[report["total_spend"] &lt;= 1000, "tier"] = "gold"
+
+<span class="comment"># 4. The same filter, written with .query() for readability</span>
+high_value_q = df.query(
+    "active and country == 'US' and total_spend &gt; 500"
+)
+
+<span class="comment"># 5. Position-based peek at the result</span>
+print(report.iloc[0:5])          <span class="comment"># first five rows</span>
+print(report.loc[:, "name"])     <span class="comment"># just the name column</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Notice the discipline:</strong> every condition is parenthesized, the new DataFrame is created with <code>.copy()</code>, and the derived column is written through <code>.loc</code>. Those three habits eliminate the two warnings and the one <code>TypeError</code> that account for most beginner pandas pain.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. What does <code>df["age"] &gt; 30</code> actually return, and what makes <code>df[df["age"] &gt; 30]</code> work?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It returns a boolean Series &mdash; one <code>True</code>/<code>False</code> per row. Passing that Series back into <code>df[...]</code> (boolean indexing) keeps only the rows where the value is <code>True</code>, exactly like a SQL <code>WHERE</code> clause or JS <code>.filter()</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why does <code>df[df["age"] &gt; 30 &amp; df["country"] == "US"]</code> throw an error?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Operator precedence. In Python, <code>&amp;</code> binds tighter than <code>&gt;</code> and <code>==</code>, so Python tries to evaluate <code>30 &amp; df["country"]</code> first. Wrap each condition in its own parentheses: <code>df[(df["age"] &gt; 30) &amp; (df["country"] == "US")]</code>. Also remember to use <code>&amp;</code> not <code>and</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What is the difference between <code>.loc</code> and <code>.iloc</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>.loc</code> selects by label (the index value and column name); its slices are inclusive of the end. <code>.iloc</code> selects by integer position (counting <code>0, 1, 2...</code> like a JS array); its slices exclude the end, like normal Python/JS slicing. The <code>i</code> stands for integer position.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What is the difference between <code>df["name"]</code> and <code>df[["name"]]</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Single brackets return a one-dimensional Series. Double brackets (a list of column names) return a DataFrame. Use double brackets when you want a table back or are selecting more than one column: <code>df[["name", "age"]]</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>5. How do you avoid a <code>SettingWithCopyWarning</code> when assigning to filtered rows?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Do the row selection and column assignment in one <code>.loc</code> call: <code>df.loc[df["age"] &gt; 30, "bonus"] = 1000</code> instead of the chained <code>df[df["age"] &gt; 30]["bonus"] = 1000</code>. If you want a separate DataFrame, branch off with <code>.copy()</code> first.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/pandas/lessons/01-dataframes-series/">&larr; Previous: DataFrames &amp; Series</a>
+      <a href="/pandas/lessons/03-cleaning-data/">Next: Cleaning Data &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

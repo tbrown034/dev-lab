@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 03 - The Tidyverse: dplyr</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #276dc3; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>03</span> The Tidyverse: dplyr</h1>
+    <a href="/r/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #276dc3;">If you know SQL, you already know dplyr.</strong> dplyr is R's grammar of data manipulation: a handful of verbs that map almost one-to-one onto SQL clauses and Pandas methods. This lesson covers the pipe, the five core verbs &mdash; <code>filter()</code>, <code>select()</code>, <code>mutate()</code>, <code>arrange()</code>, <code>summarise()</code> &mdash; plus <code>group_by()</code> and <code>count()</code>, all shown beside the SQL and Pandas you already use.</p>
+
+    <!-- ============================================ -->
+    <!-- SETUP                                        -->
+    <!-- ============================================ -->
+
+    <h2>Loading the Tidyverse</h2>
+
+    <p>dplyr ships inside the tidyverse, a collection of packages that share a common design. You load it once per session. Throughout this lesson, assume <code>library(dplyr)</code> is already run and we have a tibble called <code>employees</code>.</p>
+
+    <pre><code><span class="comment"># Install once, ever</span>
+install.packages("tidyverse")
+
+<span class="comment"># Load every session (like Python's import)</span>
+library(dplyr)
+
+<span class="comment"># A small tibble to work with</span>
+employees &lt;- tibble(
+  name   = c("Alice", "Bob", "Carol", "Dan", "Eve"),
+  dept   = c("Eng", "Eng", "Sales", "Sales", "Eng"),
+  salary = c(120, 95, 80, 70, 130),
+  years  = c(5, 2, 4, 1, 8)
+)</code></pre>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>library(dplyr)</code> is R's version of <code>import pandas as pd</code> &mdash; it brings the verbs into scope. The difference: after <code>library()</code>, the functions are bare (<code>filter()</code>, not <code>pd.filter()</code>). R dumps the package's functions straight into your namespace.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE PIPE                                     -->
+    <!-- ============================================ -->
+
+    <h2>The Pipe &mdash; <code>|&gt;</code> and <code>%&gt;%</code></h2>
+
+    <p>The pipe takes the thing on its left and feeds it as the first argument to the function on its right. It turns nested calls inside-out into a top-to-bottom reading order &mdash; exactly like method chaining in JavaScript or Pandas.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript (method chaining)</h5>
+        <pre><code>const result = employees
+  .filter(e =&gt; e.dept === "Eng")
+  .map(e =&gt; ({ ...e, raise: e.salary * 1.1 }))
+  .sort((a, b) =&gt; b.salary - a.salary);
+
+<span class="comment">// Read top to bottom, left to right</span></code></pre>
+      </div>
+      <div>
+        <h5>R (the pipe)</h5>
+        <pre><code>result &lt;- employees |&gt;
+  filter(dept == "Eng") |&gt;
+  mutate(raise = salary * 1.1) |&gt;
+  arrange(desc(salary))
+
+<span class="comment"># Read top to bottom, same as JS chaining</span></code></pre>
+      </div>
+    </div>
+
+    <p>There are two pipes in the wild. The native pipe <code>|&gt;</code> has been built into base R since version 4.1 (2021). The older magrittr pipe <code>%&gt;%</code> comes from the tidyverse and is still everywhere in existing code.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>magrittr pipe (older)</h5>
+        <pre><code>employees %&gt;%
+  filter(dept == "Eng") %&gt;%
+  summarise(avg = mean(salary))
+
+<span class="comment"># Needs library(dplyr) or library(magrittr)</span>
+<span class="comment"># Supports the . placeholder:</span>
+employees %&gt;% lm(salary ~ years, data = .)</code></pre>
+      </div>
+      <div>
+        <h5>native pipe (modern)</h5>
+        <pre><code>employees |&gt;
+  filter(dept == "Eng") |&gt;
+  summarise(avg = mean(salary))
+
+<span class="comment"># Built into R itself, no package needed</span>
+<span class="comment"># Placeholder is _ and needs a named arg:</span>
+employees |&gt; lm(salary ~ years, data = _)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>x |&gt; f(y)</code> is just <code>f(x, y)</code>. The pipe moves the left side into the first slot of the call. So <code>employees |&gt; filter(dept == "Eng")</code> is literally <code>filter(employees, dept == "Eng")</code>. Every dplyr verb takes the data frame as its first argument precisely so the pipe works.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>Which pipe should you use?</strong> Prefer the native <code>|&gt;</code> for new code &mdash; no dependency, and it is now the default RStudio inserts with Ctrl+Shift+M. Reach for <code>%&gt;%</code> only when you need its <code>.</code> placeholder in arbitrary positions, which the native pipe handles more strictly.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FILTER                                       -->
+    <!-- ============================================ -->
+
+    <h2><code>filter()</code> &mdash; Keep Rows (SQL WHERE)</h2>
+
+    <p><code>filter()</code> keeps the rows where a condition is true. It is the WHERE clause, and the Pandas boolean mask.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL / Pandas</h5>
+        <pre><code><span class="comment">-- SQL</span>
+SELECT *
+FROM employees
+WHERE dept = 'Eng' AND salary &gt; 100;</code><span class="comment"></span></pre>
+        <pre><code><span class="comment"># Pandas</span>
+employees[
+    (employees["dept"] == "Eng") &amp;
+    (employees["salary"] &gt; 100)
+]</code></pre>
+      </div>
+      <div>
+        <h5>R (dplyr)</h5>
+        <pre><code>employees |&gt;
+  filter(dept == "Eng", salary &gt; 100)
+
+<span class="comment"># Commas mean AND. Or be explicit:</span>
+employees |&gt;
+  filter(dept == "Eng" &amp; salary &gt; 100)
+
+<span class="comment"># OR uses a single |</span>
+employees |&gt;
+  filter(dept == "Eng" | salary &gt; 100)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> SQL's <code>WHERE</code> and Pandas' boolean mask both become <code>filter()</code>. Inside <code>filter()</code> you write column names bare &mdash; no <code>employees["dept"]</code>, no quotes around the column. dplyr knows to look those names up inside the data frame. Multiple comma-separated conditions are combined with AND.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong>Use <code>==</code> for equality, not <code>=</code>.</strong> A single <code>=</code> means assignment to a function argument. <code>filter(dept = "Eng")</code> throws an error; you want <code>filter(dept == "Eng")</code>. Same trap as C or JavaScript &mdash; double equals to compare.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SELECT                                       -->
+    <!-- ============================================ -->
+
+    <h2><code>select()</code> &mdash; Pick Columns (SQL SELECT)</h2>
+
+    <p><code>select()</code> chooses which columns to keep, drop, or reorder. It is the column list in a SQL SELECT.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL / Pandas</h5>
+        <pre><code><span class="comment">-- SQL</span>
+SELECT name, salary FROM employees;</code></pre>
+        <pre><code><span class="comment"># Pandas</span>
+employees[["name", "salary"]]
+
+<span class="comment"># Drop a column</span>
+employees.drop(columns=["years"])</code></pre>
+      </div>
+      <div>
+        <h5>R (dplyr)</h5>
+        <pre><code>employees |&gt; select(name, salary)
+
+<span class="comment"># Drop a column with a minus sign</span>
+employees |&gt; select(-years)
+
+<span class="comment"># Rename while selecting</span>
+employees |&gt; select(employee = name, salary)</code></pre>
+      </div>
+    </div>
+
+    <p><code>select()</code> also understands helper functions for matching column names by pattern, which is handy on wide tables.</p>
+
+    <pre><code>employees |&gt; select(starts_with("s"))     <span class="comment"># salary</span>
+employees |&gt; select(ends_with("e"))       <span class="comment"># name</span>
+employees |&gt; select(where(is.numeric))    <span class="comment"># salary, years</span>
+employees |&gt; select(name:salary)          <span class="comment"># a range of columns</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Tip:</strong> a leading minus drops columns. <code>select(-years)</code> keeps everything except <code>years</code> &mdash; cleaner than Pandas' <code>.drop(columns=...)</code> when you want most columns. To rename a column without dropping anything, use the dedicated <code>rename(new = old)</code> verb.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MUTATE                                       -->
+    <!-- ============================================ -->
+
+    <h2><code>mutate()</code> &mdash; Add or Change Columns</h2>
+
+    <p><code>mutate()</code> creates new columns or overwrites existing ones. SQL expresses this as a computed column in the SELECT list; Pandas uses <code>assign()</code> or bracket assignment.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL / Pandas</h5>
+        <pre><code><span class="comment">-- SQL</span>
+SELECT *,
+       salary * 1000      AS annual,
+       salary / years     AS per_year
+FROM employees;</code></pre>
+        <pre><code><span class="comment"># Pandas</span>
+employees.assign(
+    annual=employees["salary"] * 1000,
+    per_year=employees["salary"] / employees["years"],
+)</code></pre>
+      </div>
+      <div>
+        <h5>R (dplyr)</h5>
+        <pre><code>employees |&gt;
+  mutate(
+    annual   = salary * 1000,
+    per_year = salary / years
+  )</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>mutate()</code> is vectorized, just like a Pandas Series or a SQL computed column. <code>salary * 1000</code> runs against the whole column at once &mdash; no loop. You can also reference a column you just created earlier in the same <code>mutate()</code> call, top to bottom.</p>
+    </div>
+
+    <pre><code>employees |&gt;
+  mutate(
+    raise    = salary * 0.1,        <span class="comment"># new column</span>
+    new_pay  = salary + raise,      <span class="comment"># reuses raise above</span>
+    senior   = years &gt;= 5,          <span class="comment"># logical column</span>
+    band     = if_else(salary &gt; 100, "high", "low")
+  )</code></pre>
+
+    <div class="warning">
+      <p><strong><code>mutate()</code> does not change the original.</strong> Like every dplyr verb, it returns a new tibble. <code>employees |&gt; mutate(...)</code> leaves <code>employees</code> untouched unless you reassign with <code>employees &lt;- employees |&gt; mutate(...)</code>. dplyr is functional, not in-place &mdash; the opposite of Pandas' <code>inplace=True</code> habit.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ARRANGE                                      -->
+    <!-- ============================================ -->
+
+    <h2><code>arrange()</code> &mdash; Sort Rows (SQL ORDER BY)</h2>
+
+    <p><code>arrange()</code> sorts rows. Ascending by default; wrap a column in <code>desc()</code> for descending.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL / Pandas</h5>
+        <pre><code><span class="comment">-- SQL</span>
+SELECT * FROM employees
+ORDER BY dept ASC, salary DESC;</code></pre>
+        <pre><code><span class="comment"># Pandas</span>
+employees.sort_values(
+    ["dept", "salary"],
+    ascending=[True, False],
+)</code></pre>
+      </div>
+      <div>
+        <h5>R (dplyr)</h5>
+        <pre><code>employees |&gt;
+  arrange(dept, desc(salary))
+
+<span class="comment"># dept ascending, salary descending</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>ORDER BY col DESC</code> &rarr; <code>arrange(desc(col))</code>. Pandas needs a parallel <code>ascending=[True, False]</code> list; dplyr puts the direction right on each column with <code>desc()</code>, which reads more clearly when you mix directions.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SUMMARISE + GROUP_BY                         -->
+    <!-- ============================================ -->
+
+    <h2><code>summarise()</code> + <code>group_by()</code> &mdash; Aggregate (SQL GROUP BY)</h2>
+
+    <p>This pairing is the heart of analysis. <code>group_by()</code> splits the data into groups; <code>summarise()</code> collapses each group to a single row. Together they are SQL's GROUP BY plus aggregate functions, and Pandas' <code>groupby().agg()</code>.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL / Pandas</h5>
+        <pre><code><span class="comment">-- SQL</span>
+SELECT dept,
+       COUNT(*)      AS n,
+       AVG(salary)   AS avg_salary
+FROM employees
+GROUP BY dept;</code></pre>
+        <pre><code><span class="comment"># Pandas</span>
+(employees
+    .groupby("dept")
+    .agg(n=("salary", "size"),
+         avg_salary=("salary", "mean"))
+    .reset_index())</code></pre>
+      </div>
+      <div>
+        <h5>R (dplyr)</h5>
+        <pre><code>employees |&gt;
+  group_by(dept) |&gt;
+  summarise(
+    n          = n(),
+    avg_salary = mean(salary)
+  )</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>group_by()</code> alone changes nothing visible &mdash; it just tags the tibble with grouping. The next <code>summarise()</code> then runs once per group. <code>n()</code> is dplyr's <code>COUNT(*)</code>: it counts rows in the current group. Inside <code>summarise()</code>, ordinary functions like <code>mean()</code>, <code>sum()</code>, <code>min()</code>, and <code>max()</code> become aggregates.</p>
+    </div>
+
+    <p>Both spellings work: <code>summarise()</code> (British) and <code>summarize()</code> (American) are identical functions. The tidyverse accepts either.</p>
+
+    <div class="warning">
+      <p><strong>Groups linger after <code>summarise()</code>.</strong> By default <code>summarise()</code> drops the last grouping level but may leave others in place, which can surprise later steps. Add <code>.groups = "drop"</code> to end ungrouped, or call <code>ungroup()</code> explicitly: <code>summarise(n = n(), .groups = "drop")</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- COUNT                                        -->
+    <!-- ============================================ -->
+
+    <h2><code>count()</code> &mdash; The Shortcut for Tallies</h2>
+
+    <p>Counting rows per group is so common it gets its own verb. <code>count(dept)</code> is shorthand for <code>group_by(dept) |&gt; summarise(n = n())</code> &mdash; the equivalent of Pandas' <code>value_counts()</code>.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL / Pandas</h5>
+        <pre><code><span class="comment">-- SQL</span>
+SELECT dept, COUNT(*) AS n
+FROM employees
+GROUP BY dept
+ORDER BY n DESC;</code></pre>
+        <pre><code><span class="comment"># Pandas</span>
+employees["dept"].value_counts()</code></pre>
+      </div>
+      <div>
+        <h5>R (dplyr)</h5>
+        <pre><code>employees |&gt; count(dept)
+
+<span class="comment"># Sort the tally by size, largest first</span>
+employees |&gt; count(dept, sort = TRUE)</code></pre>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- VERB MAP TABLE                               -->
+    <!-- ============================================ -->
+
+    <h2>The Verb Map</h2>
+
+    <p>Keep this table next to you while the verbs sink in. Read across: same idea, three dialects.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>dplyr verb</th>
+          <th>SQL clause</th>
+          <th>Pandas equivalent</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>filter()</code></td>
+          <td><code>WHERE</code></td>
+          <td>boolean mask <code>df[df.x &gt; 1]</code></td>
+        </tr>
+        <tr>
+          <td><code>select()</code></td>
+          <td><code>SELECT col1, col2</code></td>
+          <td><code>df[["a", "b"]]</code></td>
+        </tr>
+        <tr>
+          <td><code>mutate()</code></td>
+          <td><code>SELECT expr AS new</code></td>
+          <td><code>df.assign(new=...)</code></td>
+        </tr>
+        <tr>
+          <td><code>arrange()</code></td>
+          <td><code>ORDER BY</code></td>
+          <td><code>df.sort_values(...)</code></td>
+        </tr>
+        <tr>
+          <td><code>summarise()</code></td>
+          <td>aggregate fns (<code>AVG</code>, <code>SUM</code>)</td>
+          <td><code>df.agg(...)</code></td>
+        </tr>
+        <tr>
+          <td><code>group_by()</code></td>
+          <td><code>GROUP BY</code></td>
+          <td><code>df.groupby(...)</code></td>
+        </tr>
+        <tr>
+          <td><code>count()</code></td>
+          <td><code>GROUP BY ... COUNT(*)</code></td>
+          <td><code>df["x"].value_counts()</code></td>
+        </tr>
+        <tr>
+          <td><code>rename()</code></td>
+          <td><code>AS</code> alias</td>
+          <td><code>df.rename(columns=...)</code></td>
+        </tr>
+        <tr>
+          <td><code>distinct()</code></td>
+          <td><code>SELECT DISTINCT</code></td>
+          <td><code>df.drop_duplicates()</code></td>
+        </tr>
+        <tr>
+          <td><code>slice_head(n)</code></td>
+          <td><code>LIMIT n</code></td>
+          <td><code>df.head(n)</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>The order of operations is the same too.</strong> SQL is written <code>SELECT &hellip; FROM &hellip; WHERE &hellip; GROUP BY &hellip; ORDER BY</code> but <em>executed</em> roughly FROM &rarr; WHERE &rarr; GROUP BY &rarr; SELECT &rarr; ORDER BY. A dplyr pipeline simply writes the steps in execution order, top to bottom. That is why dplyr often feels more honest than SQL about what actually happens.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WORKED EXAMPLE                               -->
+    <!-- ============================================ -->
+
+    <h2>Putting It All Together</h2>
+
+    <p>A realistic multi-step pipeline. The question: for each department, among employees with at least two years of tenure, what is the headcount and average salary &mdash; sorted from highest-paid department down? Here it is in SQL first, then dplyr.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT
+    dept,
+    COUNT(*)              AS headcount,
+    ROUND(AVG(salary), 1) AS avg_salary
+FROM employees
+WHERE years &gt;= 2
+GROUP BY dept
+HAVING COUNT(*) &gt; 1
+ORDER BY avg_salary DESC;</code></pre>
+      </div>
+      <div>
+        <h5>R (dplyr)</h5>
+        <pre><code>employees |&gt;
+  filter(years &gt;= 2) |&gt;
+  group_by(dept) |&gt;
+  summarise(
+    headcount  = n(),
+    avg_salary = round(mean(salary), 1),
+    .groups    = "drop"
+  ) |&gt;
+  filter(headcount &gt; 1) |&gt;
+  arrange(desc(avg_salary))</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Notice the two filters.</strong> The first <code>filter()</code> runs before grouping &mdash; that is SQL's <code>WHERE</code>. The second runs after <code>summarise()</code> on the aggregated result &mdash; that is SQL's <code>HAVING</code>. dplyr does not need a separate keyword: a <code>filter()</code> after <code>summarise()</code> simply filters the grouped output. One verb, two roles, decided by position.</p>
+    </div>
+
+    <p>The same pipeline can be wrapped in a function so you can reuse it across data sets. dplyr verbs all take the data frame as their first argument, so a function that pipes is trivial to write.</p>
+
+    <pre><code>library(dplyr)
+
+dept_summary &lt;- function(data, min_years = 2) {
+  data |&gt;
+    filter(years &gt;= min_years) |&gt;
+    group_by(dept) |&gt;
+    summarise(
+      headcount  = n(),
+      avg_salary = round(mean(salary), 1),
+      top_earner = max(salary),
+      .groups    = "drop"
+    ) |&gt;
+    arrange(desc(avg_salary))
+}
+
+<span class="comment"># Call it on any tibble with dept, years, salary columns</span>
+dept_summary(employees)
+dept_summary(employees, min_years = 5)
+
+<span class="comment"># Result (min_years = 2):</span>
+<span class="comment"># dept   headcount  avg_salary  top_earner</span>
+<span class="comment"># Eng            3       115.0         130</span>
+<span class="comment"># Sales          1        80.0          80</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Why this reads well:</strong> each line is one verb, one transformation. You can comment out a single step to debug, or paste the pipeline up to any <code>|&gt;</code> to inspect the intermediate result. That incremental, top-to-bottom workflow is the whole reason analysts reach for dplyr over base R or raw SQL strings.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. What does the pipe <code>x |&gt; f(y)</code> actually do?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It rewrites the call as <code>f(x, y)</code> &mdash; the left side becomes the first argument of the function on the right. That is why every dplyr verb takes the data frame as its first argument: it makes the pipe chain cleanly, like method chaining in JavaScript or Pandas.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Which dplyr verb maps to SQL's <code>WHERE</code>, and which maps to <code>SELECT col1, col2</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>filter()</code> keeps rows (SQL <code>WHERE</code>). <code>select()</code> keeps columns (the SQL column list). The names feel backwards if you think of Pandas, where <code>.filter()</code> works on labels &mdash; in dplyr, filter is always about rows.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why does <code>employees |&gt; mutate(raise = salary * 0.1)</code> not change <code>employees</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">dplyr is functional: every verb returns a new tibble and leaves the input untouched. To keep the result you must reassign: <code>employees &lt;- employees |&gt; mutate(...)</code>. There is no <code>inplace=True</code> as in Pandas.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What is the difference between a <code>filter()</code> before <code>group_by()</code> and a <code>filter()</code> after <code>summarise()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A <code>filter()</code> before grouping is SQL's <code>WHERE</code> &mdash; it screens individual rows. A <code>filter()</code> after <code>summarise()</code> is SQL's <code>HAVING</code> &mdash; it screens the aggregated groups. dplyr uses the same verb for both; position decides the role.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What is <code>count(dept)</code> shorthand for, and what is the Pandas equivalent?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>count(dept)</code> is shorthand for <code>group_by(dept) |&gt; summarise(n = n())</code>. It tallies rows per group. The Pandas equivalent is <code>df["dept"].value_counts()</code>. Add <code>sort = TRUE</code> to order the tally largest-first.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/r/lessons/02-data-frames-tibbles/">&larr; Previous: Data Frames &amp; Tibbles</a>
+      <a href="/r/lessons/04-ggplot2-visualization/">Next: Visualization with ggplot2 &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 01 - DataFrames &amp; Series</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #e70488; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>01</span> DataFrames &amp; Series</h1>
+    <a href="/pandas/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #e70488;">A DataFrame is a SQL result set you can hold in a variable.</strong> If you already think in SQL queries and arrays of objects, pandas is mostly new names for ideas you know. This lesson maps the two core types &mdash; Series and DataFrame &mdash; onto a SQL table and a JavaScript array of objects, then covers loading a CSV and inspecting what you got. Assume <code>import pandas as pd</code> everywhere.</p>
+
+    <!-- ============================================ -->
+    <!-- THE TWO TYPES                                -->
+    <!-- ============================================ -->
+
+    <h2>The Two Types You'll Use All Day</h2>
+
+    <p>Pandas has exactly two data structures you need to learn first. A <code>Series</code> is one column. A <code>DataFrame</code> is a whole table. Everything else builds on these two.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- A DataFrame is the result of:</span>
+SELECT * FROM users;
+
+<span class="comment">-- name  | age | city</span>
+<span class="comment">-- Alice |  30 | NYC</span>
+<span class="comment">-- Bob   |  25 | LA</span>
+
+<span class="comment">-- A Series is a single column:</span>
+SELECT age FROM users;
+
+<span class="comment">-- 30</span>
+<span class="comment">-- 25</span></code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>import pandas as pd
+
+<span class="comment"># A DataFrame: the whole table</span>
+df = pd.DataFrame({
+    "name": ["Alice", "Bob"],
+    "age": [30, 25],
+    "city": ["NYC", "LA"],
+})
+
+<span class="comment"># A Series: one column</span>
+df["age"]
+<span class="comment"># 0    30</span>
+<span class="comment"># 1    25</span>
+<span class="comment"># Name: age, dtype: int64</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> A <code>DataFrame</code> is a SQL table or a JavaScript array of objects. A <code>Series</code> is one column of that table &mdash; a labeled, typed array. Pull a single column out of a DataFrame and you get a Series. Stack several Series side by side and you get a DataFrame. That's the whole relationship.</p>
+    </div>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// A DataFrame is like this array</span>
+const users = [
+  { name: "Alice", age: 30, city: "NYC" },
+  { name: "Bob",   age: 25, city: "LA"  },
+];
+
+<span class="comment">// A Series is like one field</span>
+<span class="comment">// pulled across every row:</span>
+const ages = users.map(u =&gt; u.age);
+<span class="comment">// [30, 25]</span></code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>df = pd.DataFrame([
+    {"name": "Alice", "age": 30, "city": "NYC"},
+    {"name": "Bob",   "age": 25, "city": "LA"},
+])
+
+<span class="comment"># Same column, far less ceremony</span>
+ages = df["age"]
+<span class="comment"># 0    30</span>
+<span class="comment"># 1    25</span>
+<span class="comment"># Name: age, dtype: int64</span></code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>You can build a DataFrame from either shape.</strong> Pass a dict of columns (<code>{"age": [30, 25]}</code>) or a list of row dicts (<code>[{"age": 30}, {"age": 25}]</code>). Pandas figures out the rest. The column-dict form maps to how a database stores data; the row-list form maps to JSON you'd get from an API.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- READ CSV                                      -->
+    <!-- ============================================ -->
+
+    <h2>Loading Data &mdash; pd.read_csv</h2>
+
+    <p>You'll rarely type data by hand. In practice you load a file, and the file is almost always a CSV. One function does it.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL / shell</h5>
+        <pre><code><span class="comment">-- Postgres: load CSV into a table</span>
+COPY users
+FROM 'users.csv'
+WITH (FORMAT csv, HEADER true);
+
+<span class="comment">-- Then query it</span>
+SELECT * FROM users;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>import pandas as pd
+
+<span class="comment"># Load CSV straight into a DataFrame</span>
+df = pd.read_csv("users.csv")
+
+<span class="comment"># The header row becomes column names</span>
+<span class="comment"># automatically. No schema to declare.</span></code></pre>
+      </div>
+    </div>
+
+    <p>The CSV's first row becomes your column names, and pandas guesses a type for each column. There are arguments for the messy real world too.</p>
+
+    <pre><code><span class="comment"># Common read_csv arguments you'll actually use</span>
+pd.read_csv("data.csv")                     <span class="comment"># the 90% case</span>
+pd.read_csv("data.tsv", sep="\t")           <span class="comment"># tab-separated</span>
+pd.read_csv("data.csv", header=None)        <span class="comment"># file has no header row</span>
+pd.read_csv("data.csv", index_col="id")     <span class="comment"># use a column as the index</span>
+pd.read_csv("data.csv", usecols=["name", "age"])  <span class="comment"># only these columns</span>
+pd.read_csv("data.csv", nrows=100)          <span class="comment"># just the first 100 rows</span>
+pd.read_csv("data.csv", parse_dates=["created_at"])  <span class="comment"># parse a date column</span></code></pre>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>fetch().then(r =&gt; r.json())</code> or <code>COPY ... FROM</code> &rarr; <code>pd.read_csv(path)</code>. You don't loop, you don't declare a schema, and you don't write a parser. One call returns a DataFrame ready to query. There are siblings for other formats too: <code>pd.read_json</code>, <code>pd.read_excel</code>, <code>pd.read_sql</code>, and <code>pd.read_parquet</code>.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong>read_csv guesses types, and it can guess wrong.</strong> A ZIP code column like <code>07105</code> may load as the integer <code>7105</code>, dropping the leading zero. An ID column may become a float if it has any blanks. Always check <code>df.dtypes</code> after loading, and force a type with <code>dtype={"zip": str}</code> when it matters.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- INSPECTING                                   -->
+    <!-- ============================================ -->
+
+    <h2>First Five Things You Do After Loading</h2>
+
+    <p>Once you have a DataFrame, you look at it before you touch it. These five calls are muscle memory for anyone who works with data. Each one answers a question you'd otherwise write a query for.</p>
+
+    <h3>head() and tail() &mdash; peek at the rows</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- Postgres / SQLite</span>
+SELECT * FROM users LIMIT 5;
+
+<span class="comment">-- Last rows is awkward in SQL:</span>
+SELECT * FROM users
+ORDER BY id DESC LIMIT 5;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>df.head()      <span class="comment"># first 5 rows (default)</span>
+df.head(10)    <span class="comment"># first 10 rows</span>
+
+df.tail()      <span class="comment"># last 5 rows</span>
+df.tail(3)     <span class="comment"># last 3 rows</span></code></pre>
+      </div>
+    </div>
+
+    <h3>shape &mdash; how big is it</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- Row count</span>
+SELECT COUNT(*) FROM users;
+
+<span class="comment">-- Column count means querying</span>
+<span class="comment">-- information_schema. Annoying.</span></code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>df.shape       <span class="comment"># (rows, columns) e.g. (1000, 4)</span>
+df.shape[0]    <span class="comment"># row count: 1000</span>
+df.shape[1]    <span class="comment"># column count: 4</span>
+len(df)        <span class="comment"># also row count: 1000</span></code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong><code>shape</code> is an attribute, not a method.</strong> No parentheses: it's <code>df.shape</code>, not <code>df.shape()</code>. Same with <code>df.columns</code>, <code>df.index</code>, and <code>df.dtypes</code>. The things that <em>compute</em> something &mdash; <code>head()</code>, <code>info()</code>, <code>describe()</code> &mdash; are methods and need the parentheses.</p>
+    </div>
+
+    <h3>info() &mdash; the schema and the nulls</h3>
+
+    <p><code>df.info()</code> is the closest thing to <code>DESCRIBE users</code> in SQL. It prints every column, its type, and how many non-null values it holds &mdash; your fastest read on data quality.</p>
+
+    <pre><code>df.info()
+
+<span class="comment"># &lt;class 'pandas.core.frame.DataFrame'&gt;</span>
+<span class="comment"># RangeIndex: 1000 entries, 0 to 999</span>
+<span class="comment"># Data columns (total 4 columns):</span>
+<span class="comment">#  #   Column  Non-Null Count  Dtype</span>
+<span class="comment"># ---  ------  --------------  -----</span>
+<span class="comment">#  0   name    1000 non-null   object</span>
+<span class="comment">#  1   age     987 non-null    float64  &lt;- 13 missing!</span>
+<span class="comment">#  2   city    1000 non-null   object</span>
+<span class="comment">#  3   signup  1000 non-null   object</span></code></pre>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>info()</code> answers "what columns exist, what type is each, and where are the holes?" The "Non-Null Count" column is the one to watch. If a column says <code>987 non-null</code> out of 1000 rows, you have 13 missing values to deal with before you trust any math on it.</p>
+    </div>
+
+    <h3>describe() &mdash; the summary stats</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT
+  COUNT(age),
+  AVG(age),
+  MIN(age),
+  MAX(age),
+  STDDEV(age)
+FROM users;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>df.describe()
+
+<span class="comment"># All of that, for every numeric</span>
+<span class="comment"># column at once:</span>
+<span class="comment">#        age</span>
+<span class="comment"># count  987.0</span>
+<span class="comment"># mean    34.2</span>
+<span class="comment"># std      9.1</span>
+<span class="comment"># min     18.0</span>
+<span class="comment"># 25%     27.0</span>
+<span class="comment"># 50%     33.0   &lt;- the median</span>
+<span class="comment"># 75%     41.0</span>
+<span class="comment"># max     65.0</span></code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong><code>describe()</code> skips text columns by default.</strong> It only summarizes numeric columns. To summarize text (object) columns instead &mdash; getting count, unique values, top value, and frequency &mdash; pass <code>df.describe(include="object")</code>, or <code>df.describe(include="all")</code> for everything.</p>
+    </div>
+
+    <h3>dtypes &mdash; what type is each column</h3>
+
+    <pre><code>df.dtypes
+
+<span class="comment"># name      object   &lt;- text (and anything mixed)</span>
+<span class="comment"># age        int64</span>
+<span class="comment"># height   float64</span>
+<span class="comment"># active      bool</span>
+<span class="comment"># signup    object   &lt;- a date stored as text!</span>
+<span class="comment"># dtype: object</span></code></pre>
+
+    <div class="warning">
+      <p><strong><code>object</code> almost always means "text," but really means "Python object."</strong> When pandas can't pick a clean numeric type, it falls back to <code>object</code>. A date column read from CSV shows up as <code>object</code> until you parse it. A number column with stray commas or a "N/A" string also lands as <code>object</code> &mdash; and then math silently breaks. Seeing <code>object</code> where you expected a number is a red flag.</p>
+    </div>
+
+    <h3>The inspection toolkit at a glance</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>You want&hellip;</th>
+          <th>SQL</th>
+          <th>Pandas</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>First few rows</td>
+          <td><code>LIMIT 5</code></td>
+          <td><code>df.head()</code></td>
+        </tr>
+        <tr>
+          <td>Row count</td>
+          <td><code>COUNT(*)</code></td>
+          <td><code>len(df)</code> / <code>df.shape[0]</code></td>
+        </tr>
+        <tr>
+          <td>Columns and types</td>
+          <td><code>DESCRIBE table</code></td>
+          <td><code>df.info()</code> / <code>df.dtypes</code></td>
+        </tr>
+        <tr>
+          <td>Summary statistics</td>
+          <td><code>AVG</code>, <code>MIN</code>, <code>MAX</code>&hellip;</td>
+          <td><code>df.describe()</code></td>
+        </tr>
+        <tr>
+          <td>Column names</td>
+          <td>query <code>information_schema</code></td>
+          <td><code>df.columns</code></td>
+        </tr>
+        <tr>
+          <td>Distinct values in a column</td>
+          <td><code>SELECT DISTINCT col</code></td>
+          <td><code>df["col"].unique()</code></td>
+        </tr>
+        <tr>
+          <td>Counts per value</td>
+          <td><code>GROUP BY col</code> + <code>COUNT</code></td>
+          <td><code>df["col"].value_counts()</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- SELECTING COLUMNS                            -->
+    <!-- ============================================ -->
+
+    <h2>Selecting Columns &mdash; One Bracket vs Two</h2>
+
+    <p>This is the single most important syntax detail in this lesson, and it trips up everyone once. The number of brackets decides whether you get back a Series or a DataFrame.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- One column</span>
+SELECT age FROM users;
+
+<span class="comment">-- Several columns</span>
+SELECT name, age FROM users;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># One column -&gt; a Series (single brackets)</span>
+df["age"]
+
+<span class="comment"># Several columns -&gt; a DataFrame (double!)</span>
+df[["name", "age"]]</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The translation rule that matters most:</strong> single brackets with one name (<code>df["age"]</code>) return a <strong>Series</strong> &mdash; one column, flattened. Double brackets with a <strong>list</strong> of names (<code>df[["name", "age"]]</code>) return a <strong>DataFrame</strong> &mdash; even if that list has only one name. The inner <code>[ ]</code> is a Python list; the outer <code>[ ]</code> is the selection. <code>df[["age"]]</code> is a one-column DataFrame, not a Series.</p>
+    </div>
+
+    <pre><code><span class="comment"># Prove it to yourself with type()</span>
+type(df["age"])        <span class="comment"># pandas.core.series.Series</span>
+type(df[["age"]])      <span class="comment"># pandas.core.frame.DataFrame</span>
+
+<span class="comment"># Why it matters: a Series has different methods</span>
+df["age"].mean()       <span class="comment"># 34.2  (a single number)</span>
+df["age"].max()        <span class="comment"># 65</span>
+df["age"].value_counts()
+
+<span class="comment"># Selecting multiple columns keeps the table shape</span>
+df[["name", "age", "city"]].head()</code></pre>
+
+    <div class="warning">
+      <p><strong>Dot access works, until it doesn't.</strong> You can also write <code>df.age</code> instead of <code>df["age"]</code>, and you'll see it in tutorials. Avoid it. It breaks on column names with spaces (<code>df.first name</code> is a syntax error), on names that collide with pandas methods (a column called <code>count</code> or <code>shape</code>), and you can never use it to <em>create</em> a column. Bracket access (<code>df["age"]</code>) always works. Use it.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE INDEX                                    -->
+    <!-- ============================================ -->
+
+    <h2>The Index &mdash; The Part SQL Doesn't Have</h2>
+
+    <p>Here is the one concept with no clean SQL equivalent: every DataFrame and every Series has an <strong>index</strong>, a label for each row. By default it's just integers <code>0, 1, 2, &hellip;</code> like array positions, but it can be anything &mdash; a user ID, a date, a country name.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// An array has positions 0, 1, 2...</span>
+const users = [
+  { name: "Alice", age: 30 },
+  { name: "Bob",   age: 25 },
+];
+users[0];  <span class="comment">// { name: "Alice", age: 30 }</span>
+
+<span class="comment">// But positions are all you get.</span>
+<span class="comment">// You can't make "alice" a key</span>
+<span class="comment">// without converting to an object.</span></code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># Default index is positions: 0, 1, 2...</span>
+df.index        <span class="comment"># RangeIndex(start=0, stop=2, step=1)</span>
+
+<span class="comment"># But you can set a meaningful index</span>
+df = df.set_index("name")
+
+<span class="comment"># Now rows are labeled by name</span>
+df.loc["Alice"]   <span class="comment"># the whole Alice row</span>
+
+<span class="comment"># Go back to integer positions</span>
+df = df.reset_index()</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> the index is a row label that travels with the data. Think of it as a permanent <code>PRIMARY KEY</code> that pandas keeps attached to every row, even after you filter or sort. When you pull out a Series with <code>df["age"]</code>, it carries the same index, so you always know which row each value came from. This is why alignment "just works" later when you combine columns &mdash; pandas matches on the index, not on position.</p>
+    </div>
+
+    <pre><code><span class="comment"># The index shows up everywhere you print a Series</span>
+df["age"]
+<span class="comment"># name             &lt;- the index name</span>
+<span class="comment"># Alice    30</span>
+<span class="comment"># Bob      25</span>
+<span class="comment"># Name: age, dtype: int64</span>
+
+<span class="comment"># Useful index operations</span>
+df.index                 <span class="comment"># the row labels</span>
+df.set_index("id")       <span class="comment"># promote a column to the index</span>
+df.reset_index()         <span class="comment"># demote the index back to a column</span>
+df.reset_index(drop=True)  <span class="comment"># drop it entirely, renumber 0..n</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Setting the index returns a new DataFrame.</strong> Most pandas methods don't modify in place &mdash; <code>df.set_index("id")</code> hands you a new DataFrame and leaves the original alone. So you reassign: <code>df = df.set_index("id")</code>. This is the same idea as <code>arr.map(...)</code> in JavaScript returning a new array rather than mutating the old one.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WORKED EXAMPLE                               -->
+    <!-- ============================================ -->
+
+    <h2>Putting It All Together</h2>
+
+    <p>A realistic first pass at a dataset &mdash; the exact sequence you'd run the moment a CSV lands on your desk. The goal is not to analyze anything yet, just to understand what you're holding.</p>
+
+    <pre><code>import pandas as pd
+
+<span class="comment"># 1. Load it. Force the zip column to stay a string</span>
+<span class="comment">#    so leading zeros survive.</span>
+df = pd.read_csv("subscribers.csv", dtype={"zip": str})
+
+<span class="comment"># 2. How big is it?</span>
+print(df.shape)          <span class="comment"># (12450, 6)</span>
+
+<span class="comment"># 3. What do the rows look like?</span>
+print(df.head())
+
+<span class="comment"># 4. What are the columns, types, and missing values?</span>
+df.info()
+<span class="comment">#  0   email      12450 non-null  object</span>
+<span class="comment">#  1   name       12450 non-null  object</span>
+<span class="comment">#  2   age        11203 non-null  float64   &lt;- 1247 missing</span>
+<span class="comment">#  3   zip        12450 non-null  object</span>
+<span class="comment">#  4   plan       12450 non-null  object</span>
+<span class="comment">#  5   signup     12450 non-null  object    &lt;- a date as text</span>
+
+<span class="comment"># 5. Summary stats on the numbers</span>
+print(df.describe())     <span class="comment"># count/mean/min/max for age</span>
+
+<span class="comment"># 6. Look at one column (a Series) and its spread</span>
+print(df["plan"].value_counts())
+<span class="comment"># free       8120</span>
+<span class="comment"># pro        3890</span>
+<span class="comment"># team        440</span>
+
+<span class="comment"># 7. Grab just the columns you care about (a DataFrame)</span>
+core = df[["email", "plan", "age"]]
+print(core.head())
+
+<span class="comment"># 8. Make email the row label, since it's unique</span>
+df = df.set_index("email")
+print(df.loc["alice@example.com"])  <span class="comment"># that one row</span></code></pre>
+
+    <div class="callout">
+      <p><strong>This eight-step pass is the habit to build.</strong> Load, check shape, peek with head, run info, run describe, eyeball a key column with value_counts. You do it before every analysis. It takes thirty seconds and it catches the wrong-dtype, missing-data, and leading-zero problems that would otherwise corrupt everything downstream.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. What's the difference between a Series and a DataFrame?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A <code>DataFrame</code> is the whole table &mdash; like a SQL result set or a JS array of objects. A <code>Series</code> is a single column of that table: a labeled, typed array. Pull one column out of a DataFrame and you get a Series.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What does <code>df["age"]</code> return, and how is it different from <code>df[["age"]]</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>df["age"]</code> (single brackets, one name) returns a <strong>Series</strong>. <code>df[["age"]]</code> (double brackets &mdash; a list of names) returns a one-column <strong>DataFrame</strong>. The inner brackets are a Python list, so any time you pass a list of column names you get a DataFrame back, even with just one name in it.</div>
+      </div>
+
+      <div class="question">
+        <p>3. You loaded a CSV and a column you expected to be numeric shows <code>object</code> in <code>df.dtypes</code>. What likely happened?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>object</code> means "text / mixed Python object." The column probably has non-numeric junk in it &mdash; stray commas, a "N/A" string, currency symbols &mdash; so pandas couldn't pick a clean numeric type. Math on it will silently break. Clean it, then convert with something like <code>pd.to_numeric</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>4. Which of these need parentheses: <code>shape</code>, <code>info</code>, <code>describe</code>, <code>dtypes</code>, <code>head</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Methods need parentheses: <code>info()</code>, <code>describe()</code>, <code>head()</code>. Attributes do not: <code>shape</code>, <code>dtypes</code> (also <code>columns</code>, <code>index</code>). Rule of thumb: if it computes something it's a method; if it's a property of the object it's an attribute.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What is the index, and why does SQL not really have an equivalent?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">The index is a label for each row that travels with the data &mdash; like a permanent primary key pandas keeps attached even after filtering or sorting. SQL rows have no inherent order or persistent label you carry around; you re-derive identity each query. In pandas the index lets pandas align data by label rather than position. By default it's the integers <code>0, 1, 2&hellip;</code>, but you can set it to any column with <code>df.set_index(...)</code>.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/pandas/">&larr; Back to Pandas Overview</a>
+      <a href="/pandas/lessons/02-filtering-selecting/">Next: Filtering &amp; Selecting &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

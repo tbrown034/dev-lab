@@ -81,6 +81,9 @@
       color: var(--text-muted);
       white-space: nowrap;
     }
+    a.roadmap-row { text-decoration: none; color: inherit; transition: background 0.15s; }
+    a.roadmap-row:hover { background: var(--surface-2); }
+    a.roadmap-row:hover .tag { background: var(--accent); color: #fff; }
     .start-note {
       margin-top: 1.5rem;
       font-size: 0.82rem;
@@ -112,7 +115,7 @@
   </header>
 
   <section class="track-hero">
-    <div class="kicker">Data &amp; Statistics &middot; Track in progress</div>
+    <div class="kicker">Data &amp; Statistics &middot; 5 lessons</div>
     <h1>Learn R</h1>
     <p>
       R is the language built for data and statistics — strong at analysis, modeling, and
@@ -120,41 +123,41 @@
       mental model; R just has its own dialect, plus the tidyverse (dplyr, ggplot2).
     </p>
     <p>
-      Lessons are being written. In the meantime, the <strong>AI tutor on this page is
-      live</strong> — ask it anything about vectors, data frames, dplyr verbs, or ggplot2,
-      and it will explain through Python, SQL, and JS analogies.
+      Five lessons take you from vectors to regression, each one taught through Python, SQL,
+      and JavaScript analogies. An <strong>AI tutor lives on every page</strong> — ask it to
+      explain anything in terms of a language you already know.
     </p>
   </section>
 
   <section class="roadmap">
-    <h2>Planned lessons</h2>
-    <div class="sub">The shape of the track — subject to change as it is built.</div>
+    <h2>The Curriculum</h2>
+    <div class="sub">Five lessons, vectors to statistics &mdash; each taught through Python, SQL, and JS analogies.</div>
     <div class="roadmap-list">
-      <div class="roadmap-row">
+      <a href="/r/lessons/01-r-basics-vectors/" class="roadmap-row">
         <div class="num">01</div>
         <div><h3>R Basics &amp; Vectors</h3><div class="desc">Assignment, vectors, the R console and RStudio. Where R differs from Python.</div></div>
-        <span class="tag">Planned</span>
-      </div>
-      <div class="roadmap-row">
+        <span class="tag">R</span>
+      </a>
+      <a href="/r/lessons/02-data-frames-tibbles/" class="roadmap-row">
         <div class="num">02</div>
         <div><h3>Data Frames &amp; Tibbles</h3><div class="desc">Tabular data in R. Like a Pandas DataFrame or a SQL table, with R's own quirks.</div></div>
-        <span class="tag">Planned</span>
-      </div>
-      <div class="roadmap-row">
+        <span class="tag">R</span>
+      </a>
+      <a href="/r/lessons/03-tidyverse-dplyr/" class="roadmap-row">
         <div class="num">03</div>
         <div><h3>The Tidyverse: dplyr</h3><div class="desc">filter, select, mutate, group_by, summarise — verbs for reshaping data, and the pipe.</div></div>
-        <span class="tag">Planned</span>
-      </div>
-      <div class="roadmap-row">
+        <span class="tag">R</span>
+      </a>
+      <a href="/r/lessons/04-ggplot2-visualization/" class="roadmap-row">
         <div class="num">04</div>
         <div><h3>Visualization: ggplot2</h3><div class="desc">The grammar of graphics. Building charts layer by layer.</div></div>
-        <span class="tag">Planned</span>
-      </div>
-      <div class="roadmap-row">
+        <span class="tag">R</span>
+      </a>
+      <a href="/r/lessons/05-statistics-in-r/" class="roadmap-row">
         <div class="num">05</div>
         <div><h3>Statistics in R</h3><div class="desc">Summaries, distributions, regression, and the tests R was built for.</div></div>
-        <span class="tag">Planned</span>
-      </div>
+        <span class="tag">R</span>
+      </a>
     </div>
     <p class="start-note">
       Coming from Python? The <a href="/pandas/">Pandas track</a> covers the same data work

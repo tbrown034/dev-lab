@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 05 - Merging &amp; Reshaping</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #e70488; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>05</span> Merging &amp; Reshaping</h1>
+    <a href="/pandas/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #e70488;">Real analysis almost never lives in one table.</strong> You pull customers from one place, orders from another, and you need them side by side. This lesson covers combining DataFrames with <code>pd.merge</code> and <code>pd.concat</code>, then reshaping between wide and long with <code>melt</code> and <code>pivot</code> &mdash; all mapped directly to the SQL JOINs you already know.</p>
+
+    <!-- ============================================ -->
+    <!-- MERGE = JOIN                                 -->
+    <!-- ============================================ -->
+
+    <h2>pd.merge &mdash; It's Just a SQL JOIN</h2>
+
+    <p>If you can write a SQL JOIN, you can already merge in pandas. The mental model is identical: take two tables, line up rows where a key matches, and stitch the columns together.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- Join customers to their orders</span>
+SELECT *
+FROM customers c
+INNER JOIN orders o
+  ON c.customer_id = o.customer_id;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>import pandas as pd
+
+<span class="comment"># Join customers to their orders</span>
+result = pd.merge(
+    customers,
+    orders,
+    on="customer_id",
+    how="inner",
+)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>FROM a JOIN b ON a.key = b.key</code> &rarr; <code>pd.merge(a, b, on="key", how=...)</code>. The first DataFrame is the <em>left</em> table, the second is the <em>right</em>. The <code>on</code> argument is your <code>ON</code> clause, and <code>how</code> picks the join type. That's the whole API.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- JOIN TYPES                                   -->
+    <!-- ============================================ -->
+
+    <h2>The Four Join Types</h2>
+
+    <p>The <code>how</code> argument maps one-to-one onto SQL join types. Same names, same behavior, same edge cases with unmatched rows turning into nulls.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>SQL</th>
+          <th>Pandas <code>how=</code></th>
+          <th>Keeps</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>INNER JOIN</code></td>
+          <td><code>"inner"</code> (default)</td>
+          <td>Only rows matched in both tables</td>
+        </tr>
+        <tr>
+          <td><code>LEFT JOIN</code></td>
+          <td><code>"left"</code></td>
+          <td>All left rows; right cols null if no match</td>
+        </tr>
+        <tr>
+          <td><code>RIGHT JOIN</code></td>
+          <td><code>"right"</code></td>
+          <td>All right rows; left cols null if no match</td>
+        </tr>
+        <tr>
+          <td><code>FULL OUTER JOIN</code></td>
+          <td><code>"outer"</code></td>
+          <td>All rows from both; nulls where no match</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- Every customer, even with no orders</span>
+SELECT *
+FROM customers c
+LEFT JOIN orders o
+  ON c.customer_id = o.customer_id;
+
+<span class="comment">-- Everyone from both sides</span>
+SELECT *
+FROM customers c
+FULL OUTER JOIN orders o
+  ON c.customer_id = o.customer_id;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># Every customer, even with no orders</span>
+pd.merge(
+    customers, orders,
+    on="customer_id",
+    how="left",
+)
+
+<span class="comment"># Everyone from both sides</span>
+pd.merge(
+    customers, orders,
+    on="customer_id",
+    how="outer",
+)</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>SQLite has no <code>RIGHT</code> or <code>FULL OUTER JOIN</code></strong> &mdash; you fake them by flipping the tables or using <code>UNION</code>. Pandas supports all four directly with <code>how=</code>. If you came up on SQLite, <code>how="right"</code> and <code>how="outer"</code> will feel like new tools.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- KEYS: on / left_on / right_on               -->
+    <!-- ============================================ -->
+
+    <h2>Join Keys &mdash; on, left_on, right_on</h2>
+
+    <p>When both tables share a column name, use <code>on</code>. When the key columns are named differently, you spell out each side &mdash; exactly like writing <code>a.id = b.user_id</code> in SQL.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- Same column name on both sides</span>
+... ON c.customer_id = o.customer_id
+
+<span class="comment">-- Different names per table</span>
+SELECT *
+FROM customers c
+JOIN orders o
+  ON c.id = o.cust_id;
+
+<span class="comment">-- Composite key (two columns)</span>
+... ON a.region = b.region
+   AND a.year = b.year;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># Same column name on both sides</span>
+pd.merge(c, o, on="customer_id")
+
+<span class="comment"># Different names per table</span>
+pd.merge(
+    customers, orders,
+    left_on="id",
+    right_on="cust_id",
+)
+
+<span class="comment"># Composite key (list of columns)</span>
+pd.merge(
+    a, b,
+    on=["region", "year"],
+)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>on=</code> is shorthand for "the key column has the same name in both tables." If the names differ, switch to <code>left_on=</code> and <code>right_on=</code>. A composite key is just a list: <code>on=["region", "year"]</code>. There is no separate <code>AND</code> keyword &mdash; the list <em>is</em> the AND.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong>Overlapping non-key columns get suffixed.</strong> If both tables have a <code>name</code> column that isn't a join key, pandas keeps both and renames them <code>name_x</code> and <code>name_y</code>. Control this with <code>suffixes=("_cust", "_order")</code> so you don't end up debugging mystery <code>_x</code> columns later.</p>
+    </div>
+
+    <h3>Index Joins and the .join() Shortcut</h3>
+
+    <p>DataFrames also have a <code>.join()</code> method that merges on the <em>index</em> by default. It is handy when your key already lives in the index, but for column keys, plain <code>pd.merge</code> is clearer.</p>
+
+    <pre><code><span class="comment"># Merge on a column from the index of the right frame</span>
+customers.merge(orders, left_on="customer_id", right_index=True)
+
+<span class="comment"># .join() defaults to index-on-index, left join</span>
+left_df.join(right_df, how="left")    <span class="comment"># aligns on the index</span></code></pre>
+
+    <!-- ============================================ -->
+    <!-- VALIDATE + INDICATOR                         -->
+    <!-- ============================================ -->
+
+    <h2>Guarding Against Bad Joins</h2>
+
+    <p>The classic JOIN bug is duplicate keys silently fanning out your rows &mdash; a one-to-one join that quietly becomes one-to-many. Pandas gives you two safety rails that SQL makes you check by hand.</p>
+
+    <pre><code><span class="comment"># Assert the relationship you expect; raises if it's wrong</span>
+pd.merge(customers, orders, on="customer_id", validate="one_to_many")
+
+<span class="comment"># Add a column showing where each row came from</span>
+merged = pd.merge(
+    customers, orders,
+    on="customer_id",
+    how="outer",
+    indicator=True,
+)
+merged["_merge"]   <span class="comment"># "left_only", "right_only", or "both"</span></code></pre>
+
+    <div class="callout">
+      <p><strong><code>validate=</code> is your seatbelt.</strong> Options are <code>"one_to_one"</code>, <code>"one_to_many"</code>, <code>"many_to_one"</code>, and <code>"many_to_many"</code>. If the data violates your assumption, the merge raises instead of silently producing a bloated table. SQL has no equivalent &mdash; you find out from a wrong row count.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CONCAT = UNION / STACKING                    -->
+    <!-- ============================================ -->
+
+    <h2>pd.concat &mdash; Stacking, Not Joining</h2>
+
+    <p>Merging combines tables <em>side by side</em> on a key. Concatenating glues them <em>end to end</em>. If <code>merge</code> is a JOIN, then <code>concat</code> is a SQL <code>UNION ALL</code> &mdash; or, going the other way, gluing columns together.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- Stack rows from two tables</span>
+SELECT * FROM sales_jan
+UNION ALL
+SELECT * FROM sales_feb;
+
+<span class="comment">-- UNION (not ALL) dedupes;</span>
+<span class="comment">-- concat keeps everything by default</span></code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># Stack rows (axis=0 is the default)</span>
+all_sales = pd.concat([sales_jan, sales_feb])
+
+<span class="comment"># Reset the index so rows are 0..n again</span>
+all_sales = pd.concat(
+    [sales_jan, sales_feb],
+    ignore_index=True,
+)
+
+<span class="comment"># Glue columns side by side instead</span>
+wide = pd.concat([df_a, df_b], axis=1)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>pd.concat</code> takes a <em>list</em> of DataFrames, not two positional ones. <code>axis=0</code> (default) stacks rows like <code>UNION ALL</code>; <code>axis=1</code> stacks columns side by side. Columns line up by name when stacking rows; missing columns become <code>NaN</code> rather than an error.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong>concat keeps the original index by default.</strong> Stack two 100-row frames and you get index labels 0&ndash;99 twice over. That breaks <code>.loc</code> lookups and confuses joins downstream. Pass <code>ignore_index=True</code> unless you have a deliberate reason to preserve the old index.</p>
+    </div>
+
+    <h3>merge vs concat at a glance</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>You want to...</th>
+          <th>Tool</th>
+          <th>SQL analogy</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Match rows on a key, combine columns</td>
+          <td><code>pd.merge</code></td>
+          <td><code>JOIN</code></td>
+        </tr>
+        <tr>
+          <td>Stack rows from same-shaped tables</td>
+          <td><code>pd.concat(axis=0)</code></td>
+          <td><code>UNION ALL</code></td>
+        </tr>
+        <tr>
+          <td>Glue columns by position/index</td>
+          <td><code>pd.concat(axis=1)</code></td>
+          <td>(no clean SQL analogy)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- RESHAPING: WIDE VS LONG                      -->
+    <!-- ============================================ -->
+
+    <h2>Reshaping &mdash; Wide vs Long</h2>
+
+    <p>Two layouts hold the same data. <strong>Wide</strong> spreads a variable across columns; <strong>long</strong> (tidy) stacks it into rows. You reshape constantly &mdash; long is great for grouping and plotting, wide is great for human reading and side-by-side comparison.</p>
+
+    <pre><code><span class="comment"># WIDE: one row per city, a column per year</span>
+   city    2022   2023   2024
+0  Austin   840    910    975
+1  Denver   720    760    810
+
+<span class="comment"># LONG: one row per city-year observation</span>
+   city    year   pop
+0  Austin  2022   840
+1  Austin  2023   910
+2  Austin  2024   975
+3  Denver  2022   720
+...</code></pre>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> if you find yourself naming columns <code>2022</code>, <code>2023</code>, <code>2024</code> &mdash; values masquerading as column names &mdash; you are in wide format. <code>melt</code> turns those headers back into data (wide &rarr; long). <code>pivot</code> does the reverse, promoting a column's values into headers (long &rarr; wide).</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MELT                                         -->
+    <!-- ============================================ -->
+
+    <h2>melt &mdash; Wide to Long</h2>
+
+    <p><code>melt</code> takes columns you want to keep fixed (<code>id_vars</code>) and unpivots the rest into two columns: one for the old header names, one for the values.</p>
+
+    <pre><code>wide = pd.DataFrame({
+    "city": ["Austin", "Denver"],
+    "2022": [840, 720],
+    "2023": [910, 760],
+    "2024": [975, 810],
+})
+
+long = wide.melt(
+    id_vars="city",            <span class="comment"># columns to keep as-is</span>
+    var_name="year",           <span class="comment"># name for the old headers</span>
+    value_name="pop",          <span class="comment"># name for the values</span>
+)
+<span class="comment"># -> columns: city, year, pop  (6 rows)</span></code></pre>
+
+    <p>There is a JavaScript parallel here too. Reshaping wide to long is the same instinct as <code>flatMap</code>-ing each object into one record per measured value.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code>const wide = [
+  { city: "Austin", 2022: 840, 2023: 910 },
+  { city: "Denver", 2022: 720, 2023: 760 },
+];
+
+const years = ["2022", "2023"];
+
+const long = wide.flatMap((row) =&gt;
+  years.map((y) =&gt; ({
+    city: row.city,
+    year: y,
+    pop: row[y],
+  }))
+);</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>wide = pd.DataFrame({
+    "city": ["Austin", "Denver"],
+    "2022": [840, 720],
+    "2023": [910, 760],
+})
+
+long = wide.melt(
+    id_vars="city",
+    var_name="year",
+    value_name="pop",
+)
+<span class="comment"># one line vs a nested map</span></code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Tidy data rule of thumb:</strong> each variable is a column, each observation is a row. Long format is "tidy," and it is what <code>groupby</code>, <code>seaborn</code>, and most plotting libraries expect. When a function complains it cannot find your "year" column, you are probably handing it wide data &mdash; <code>melt</code> first.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PIVOT                                        -->
+    <!-- ============================================ -->
+
+    <h2>pivot &mdash; Long to Wide</h2>
+
+    <p><code>pivot</code> is the inverse of <code>melt</code>. You pick which column supplies the new row labels (<code>index</code>), which supplies the new column headers (<code>columns</code>), and which fills the cells (<code>values</code>).</p>
+
+    <pre><code>wide_again = long.pivot(
+    index="city",        <span class="comment"># becomes the row labels</span>
+    columns="year",      <span class="comment"># its values become headers</span>
+    values="pop",        <span class="comment"># fills the cells</span>
+)
+<span class="comment"># columns are now 2022, 2023, 2024; index is city</span></code></pre>
+
+    <div class="warning">
+      <p><strong><code>pivot</code> fails on duplicate index/column pairs.</strong> If two rows share the same city and year, pandas does not know which value to place in that one cell and raises an error. When duplicates exist and you want them aggregated (summed, averaged), use <code>pivot_table</code> with an <code>aggfunc</code> instead.</p>
+    </div>
+
+    <div class="side-by-side">
+      <div>
+        <h5>pivot (no aggregation)</h5>
+        <pre><code><span class="comment"># Requires unique index/column pairs</span>
+long.pivot(
+    index="city",
+    columns="year",
+    values="pop",
+)</code></pre>
+      </div>
+      <div>
+        <h5>pivot_table (aggregates dupes)</h5>
+        <pre><code><span class="comment"># Collapses duplicates with aggfunc</span>
+long.pivot_table(
+    index="city",
+    columns="year",
+    values="pop",
+    aggfunc="sum",
+)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>pivot_table</code> is essentially a <code>GROUP BY</code> rendered as a grid. <code>index</code> and <code>columns</code> are your grouping keys, <code>values</code> is the measure, and <code>aggfunc</code> is the aggregate (<code>SUM</code>, <code>AVG</code>, <code>COUNT</code>). Anyone who has built a pivot table in a spreadsheet already knows the muscle.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WORKED EXAMPLE                               -->
+    <!-- ============================================ -->
+
+    <h2>Putting It All Together</h2>
+
+    <p>A realistic flow &mdash; combine two datasets, then reshape the result for analysis. Say you have customers in one frame and their monthly orders in another, and you want a wide grid of revenue per customer per month.</p>
+
+    <pre><code>import pandas as pd
+
+<span class="comment"># --- Two source datasets ---</span>
+customers = pd.DataFrame({
+    "customer_id": [1, 2, 3],
+    "name": ["Ada", "Lin", "Omar"],
+    "region": ["West", "East", "West"],
+})
+
+orders = pd.DataFrame({
+    "customer_id": [1, 1, 2, 2, 3],
+    "month": ["Jan", "Feb", "Jan", "Feb", "Jan"],
+    "revenue": [120, 90, 200, 150, 75],
+})
+
+<span class="comment"># --- 1. MERGE: attach customer info to each order (LEFT JOIN) ---</span>
+df = pd.merge(
+    orders,
+    customers,
+    on="customer_id",
+    how="left",
+    validate="many_to_one",   <span class="comment"># many orders, one customer</span>
+)
+<span class="comment"># df now has: customer_id, month, revenue, name, region</span>
+
+<span class="comment"># --- 2. PIVOT: revenue grid, one row per customer, a column per month ---</span>
+grid = df.pivot_table(
+    index="name",
+    columns="month",
+    values="revenue",
+    aggfunc="sum",
+    fill_value=0,             <span class="comment"># no order that month -> 0</span>
+)
+<span class="comment">#         Feb  Jan</span>
+<span class="comment"># name</span>
+<span class="comment"># Ada      90  120</span>
+<span class="comment"># Lin     150  200</span>
+<span class="comment"># Omar      0   75</span>
+
+<span class="comment"># --- 3. MELT: flatten the grid back to tidy rows for plotting ---</span>
+tidy = grid.reset_index().melt(
+    id_vars="name",
+    var_name="month",
+    value_name="revenue",
+)
+<span class="comment"># tidy: one row per name-month, ready for groupby or seaborn</span>
+
+<span class="comment"># --- 4. CONCAT: append a new month of data later ---</span>
+march = pd.DataFrame({
+    "name": ["Ada", "Lin", "Omar"],
+    "month": ["Mar", "Mar", "Mar"],
+    "revenue": [110, 175, 60],
+})
+tidy = pd.concat([tidy, march], ignore_index=True)</code></pre>
+
+    <div class="callout">
+      <p><strong>Notice the round trip.</strong> You merge to enrich, pivot to make a human-readable report, then melt back to tidy form for the next computation. Wide for eyes, long for code. Moving fluidly between the two is most of what day-to-day pandas reshaping actually is.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. What is the pandas equivalent of <code>SELECT * FROM a LEFT JOIN b ON a.id = b.id</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>pd.merge(a, b, on="id", how="left")</code>. The first argument is the left table, <code>on</code> is the join key, and <code>how="left"</code> keeps every left row, filling right-side columns with <code>NaN</code> where there is no match.</div>
+      </div>
+
+      <div class="question">
+        <p>2. The two tables use different names for the join key &mdash; <code>id</code> on the left, <code>cust_id</code> on the right. How do you merge them?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use <code>left_on</code> and <code>right_on</code>: <code>pd.merge(left, right, left_on="id", right_on="cust_id")</code>. The <code>on</code> shortcut only works when the key column has the same name on both sides.</div>
+      </div>
+
+      <div class="question">
+        <p>3. When would you use <code>pd.concat</code> instead of <code>pd.merge</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">When you are stacking, not matching. <code>pd.concat</code> glues frames end to end &mdash; rows with <code>axis=0</code> (like SQL <code>UNION ALL</code>), or columns with <code>axis=1</code>. <code>merge</code> is for combining columns by matching a key. Remember <code>ignore_index=True</code> when stacking rows.</div>
+      </div>
+
+      <div class="question">
+        <p>4. You have columns named <code>2022</code>, <code>2023</code>, <code>2024</code> and need one row per year instead. Which function, and what direction?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>melt</code> &mdash; it goes wide to long. Use <code>df.melt(id_vars="city", var_name="year", value_name="pop")</code>. The year headers become data in a new <code>year</code> column, and the cell values land in <code>pop</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>5. Why might <code>pivot</code> raise an error where <code>pivot_table</code> succeeds?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>pivot</code> requires unique index/column pairs &mdash; one value per cell. If duplicates exist, it cannot decide which value to use and raises. <code>pivot_table</code> handles duplicates by collapsing them with an <code>aggfunc</code> like <code>"sum"</code> or <code>"mean"</code>.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/pandas/lessons/04-grouping-aggregation/">&larr; Previous: Grouping &amp; Aggregation</a>
+      <a href="/sql/">Next: SQL track &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

@@ -81,6 +81,9 @@
       color: var(--text-muted);
       white-space: nowrap;
     }
+    a.roadmap-row { text-decoration: none; color: inherit; transition: background 0.15s; }
+    a.roadmap-row:hover { background: var(--surface-2); }
+    a.roadmap-row:hover .tag { background: var(--accent); color: #fff; }
     .start-note {
       margin-top: 1.5rem;
       font-size: 0.82rem;
@@ -112,7 +115,7 @@
   </header>
 
   <section class="track-hero">
-    <div class="kicker">Data Analysis &middot; Track in progress</div>
+    <div class="kicker">Data Analysis &middot; 5 lessons</div>
     <h1>Learn Pandas</h1>
     <p>
       Pandas is how Python works with tabular data — the spreadsheet, the CSV, the SQL
@@ -120,41 +123,41 @@
       JavaScript array methods, most of it will feel familiar fast.
     </p>
     <p>
-      Lessons are being written. In the meantime, the <strong>AI tutor on this page is
-      live</strong> — ask it anything about DataFrames, cleaning data, grouping, or
-      merging, and it will explain through SQL and JS analogies.
+      Five lessons take you from loading a DataFrame to merging and reshaping datasets, each
+      one mapped to the SQL and JavaScript you already know. An <strong>AI tutor lives on
+      every page</strong> to translate any concept back to familiar ground.
     </p>
   </section>
 
   <section class="roadmap">
-    <h2>Planned lessons</h2>
-    <div class="sub">The shape of the track — subject to change as it is built.</div>
+    <h2>The Curriculum</h2>
+    <div class="sub">Five lessons, loading data to merging and reshaping &mdash; each mapped to SQL and JS.</div>
     <div class="roadmap-list">
-      <div class="roadmap-row">
+      <a href="/pandas/lessons/01-dataframes-series/" class="roadmap-row">
         <div class="num">01</div>
         <div><h3>DataFrames &amp; Series</h3><div class="desc">Loading data, inspecting it, selecting rows and columns. The spreadsheet, in code.</div></div>
-        <span class="tag">Planned</span>
-      </div>
-      <div class="roadmap-row">
+        <span class="tag">Pandas</span>
+      </a>
+      <a href="/pandas/lessons/02-filtering-selecting/" class="roadmap-row">
         <div class="num">02</div>
         <div><h3>Filtering &amp; Selecting</h3><div class="desc">Boolean indexing, loc/iloc, query — the Pandas version of WHERE and .filter().</div></div>
-        <span class="tag">Planned</span>
-      </div>
-      <div class="roadmap-row">
+        <span class="tag">Pandas</span>
+      </a>
+      <a href="/pandas/lessons/03-cleaning-data/" class="roadmap-row">
         <div class="num">03</div>
         <div><h3>Cleaning Data</h3><div class="desc">Missing values, types, duplicates, renaming. The unglamorous 80% of real work.</div></div>
-        <span class="tag">Planned</span>
-      </div>
-      <div class="roadmap-row">
+        <span class="tag">Pandas</span>
+      </a>
+      <a href="/pandas/lessons/04-grouping-aggregation/" class="roadmap-row">
         <div class="num">04</div>
         <div><h3>Grouping &amp; Aggregation</h3><div class="desc">groupby + agg — SQL GROUP BY, the Pandas way. Pivot tables and summaries.</div></div>
-        <span class="tag">Planned</span>
-      </div>
-      <div class="roadmap-row">
+        <span class="tag">Pandas</span>
+      </a>
+      <a href="/pandas/lessons/05-merging-reshaping/" class="roadmap-row">
         <div class="num">05</div>
         <div><h3>Merging &amp; Reshaping</h3><div class="desc">merge (JOINs), concat, melt, pivot. Combining and reshaping datasets.</div></div>
-        <span class="tag">Planned</span>
-      </div>
+        <span class="tag">Pandas</span>
+      </a>
     </div>
     <p class="start-note">
       New to Python itself? Start with the <a href="/python/">Python track</a> first.

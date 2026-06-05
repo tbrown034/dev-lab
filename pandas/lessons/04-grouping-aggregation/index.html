@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 04 - Grouping &amp; Aggregation</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #e70488; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>04</span> Grouping &amp; Aggregation</h1>
+    <a href="/pandas/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #e70488;">GROUP BY is the question you ask of almost every dataset.</strong> Total sales per region, average score per student, count of orders per customer &mdash; all of it is "split the rows into buckets, then summarize each bucket." If you know SQL's <code>GROUP BY</code>, you already understand the idea. This lesson maps that idea onto Pandas <code>groupby</code> and <code>agg</code>, beside the SQL you already write.</p>
+
+    <!-- ============================================ -->
+    <!-- SPLIT-APPLY-COMBINE                          -->
+    <!-- ============================================ -->
+
+    <h2>The Mental Model &mdash; Split, Apply, Combine</h2>
+
+    <p>Every grouped summary follows the same three steps. SQL hides them inside one statement. Pandas exposes them, which is confusing at first and powerful later.</p>
+
+    <div class="aha">
+      <p><strong>Split, apply, combine.</strong> First <em>split</em> the rows into groups by some key. Then <em>apply</em> a function to each group (sum, mean, count). Then <em>combine</em> the per-group results into one new table. SQL does all three in <code>SELECT region, SUM(sales) ... GROUP BY region</code>. Pandas does the same with <code>df.groupby("region")["sales"].sum()</code>.</p>
+    </div>
+
+    <p>Here is the most basic version &mdash; one group key, one aggregation &mdash; side by side.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- Total sales per region</span>
+SELECT region, SUM(sales) AS total
+FROM orders
+GROUP BY region;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># Total sales per region</span>
+df.groupby("region")["sales"].sum()
+
+<span class="comment"># region</span>
+<span class="comment"># East     1200</span>
+<span class="comment"># West      950</span>
+<span class="comment"># Name: sales, dtype: int64</span></code></pre>
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong>The result is indexed by the group key, not numbered.</strong> SQL hands you a flat table with a <code>region</code> column. Pandas hands you a Series whose <em>index</em> is the region. If you want a normal column back, add <code>.reset_index()</code> &mdash; you will do this constantly. More on that below.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- GROUPBY BASICS                               -->
+    <!-- ============================================ -->
+
+    <h2>groupby &mdash; The Core Verb</h2>
+
+    <p><code>df.groupby("col")</code> by itself does almost nothing &mdash; it just defines the buckets. The work happens when you select columns and call an aggregation. Think of <code>groupby</code> as the SQL <code>GROUP BY</code> clause and the method after it as the function inside <code>SELECT</code>.</p>
+
+    <pre><code><span class="comment"># A GroupBy object — no computation yet</span>
+g = df.groupby("region")
+
+<span class="comment"># Now apply an aggregation</span>
+g["sales"].sum()       <span class="comment"># SUM(sales) per region</span>
+g["sales"].mean()      <span class="comment"># AVG(sales) per region</span>
+g["sales"].count()     <span class="comment"># COUNT(sales) — non-null only</span>
+g["sales"].size()      <span class="comment"># COUNT(*) — all rows incl. nulls</span>
+g["sales"].max()       <span class="comment"># MAX(sales) per region</span>
+g["sales"].median()    <span class="comment"># no direct SQL equivalent</span>
+
+<span class="comment"># Group by multiple keys (composite GROUP BY)</span>
+df.groupby(["region", "product"])["sales"].sum()</code></pre>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>GROUP BY region</code> &rarr; <code>.groupby("region")</code>. The aggregate function in your <code>SELECT</code> &rarr; the method you chain after selecting a column. <code>SUM(x)</code> &rarr; <code>["x"].sum()</code>. <code>COUNT(*)</code> &rarr; <code>.size()</code>. <code>COUNT(x)</code> &rarr; <code>["x"].count()</code>. The order is flipped: SQL writes the function first, Pandas writes the grouping first.</p>
+    </div>
+
+    <h3>JavaScript Has No Real Equivalent</h3>
+
+    <p>If you have grouped data in plain JavaScript, you know it is a chore. There is no <code>GROUP BY</code> &mdash; you build a lookup object by hand. Seeing it makes you appreciate what Pandas gives you for free.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// Total sales per region — manual reduce</span>
+const totals = {};
+for (const row of orders) {
+  totals[row.region] =
+    (totals[row.region] || 0) + row.sales;
+}
+<span class="comment">// { East: 1200, West: 950 }</span>
+
+<span class="comment">// Object.groupBy (newer runtimes) helps split,</span>
+<span class="comment">// but you still reduce each bucket yourself</span>
+const groups = Object.groupBy(
+  orders, (o) =&gt; o.region
+);</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># One line does split + apply + combine</span>
+df.groupby("region")["sales"].sum()
+
+
+
+<span class="comment"># And multiple stats just as easily</span>
+df.groupby("region")["sales"].agg(
+    ["sum", "mean", "count"]
+)</code></pre>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MULTIPLE AGGREGATIONS WITH AGG              -->
+    <!-- ============================================ -->
+
+    <h2>agg &mdash; Multiple Aggregations at Once</h2>
+
+    <p>In SQL you list several aggregate functions in one <code>SELECT</code>. In Pandas, <code>.agg()</code> is how you do the same &mdash; pass it a list of function names and you get one column per function.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT
+  region,
+  SUM(sales)   AS total,
+  AVG(sales)   AS avg,
+  COUNT(*)     AS n,
+  MAX(sales)   AS biggest
+FROM orders
+GROUP BY region;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>df.groupby("region")["sales"].agg(
+    ["sum", "mean", "count", "max"]
+)
+
+<span class="comment">#          sum   mean  count  max</span>
+<span class="comment"># region</span>
+<span class="comment"># East    1200  400.0      3  600</span>
+<span class="comment"># West     950  475.0      2  500</span></code></pre>
+      </div>
+    </div>
+
+    <p>You can also aggregate several columns at once by passing a dict &mdash; "this function on that column." This is the close cousin of writing different aggregates on different columns in SQL.</p>
+
+    <pre><code><span class="comment"># Different aggregation per column</span>
+df.groupby("region").agg({
+    "sales": "sum",        <span class="comment"># SUM(sales)</span>
+    "units": "mean",       <span class="comment"># AVG(units)</span>
+    "order_id": "count",   <span class="comment"># COUNT(order_id)</span>
+})
+
+<span class="comment"># Multiple functions on the same column</span>
+df.groupby("region").agg({
+    "sales": ["sum", "mean", "max"]
+})</code></pre>
+
+    <div class="warning">
+      <p><strong>Passing a dict to <code>agg</code> can give you messy column names.</strong> When you ask for several functions on one column, you get a <em>MultiIndex</em> on the columns &mdash; tuples like <code>("sales", "sum")</code>. That is awkward to work with. The clean fix is <strong>named aggregation</strong>, covered next, which lets you name every output column directly.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAMED AGGREGATION                           -->
+    <!-- ============================================ -->
+
+    <h2>Named Aggregation &mdash; Clean Output Columns</h2>
+
+    <p>This is the modern, preferred way to aggregate. It maps almost perfectly onto SQL's <code>AS</code> aliases: you say "this output column equals this function applied to that input column."</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT
+  region,
+  SUM(sales)  AS total_sales,
+  AVG(sales)  AS avg_sales,
+  COUNT(*)    AS order_count
+FROM orders
+GROUP BY region;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas (named agg)</h5>
+        <pre><code>df.groupby("region").agg(
+    total_sales=("sales", "sum"),
+    avg_sales=("sales", "mean"),
+    order_count=("sales", "count"),
+)
+
+<span class="comment">#         total_sales  avg_sales  order_count</span>
+<span class="comment"># region</span>
+<span class="comment"># East           1200      400.0            3</span>
+<span class="comment"># West            950      475.0            2</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> SQL's <code>SUM(sales) AS total_sales</code> becomes <code>total_sales=("sales", "sum")</code>. The output name is on the left of the <code>=</code>; the tuple is <code>(input_column, function)</code>. This is the cleanest way to write multi-column aggregations and the one to reach for by default. Each keyword becomes a flat, well-named column &mdash; no MultiIndex mess.</p>
+    </div>
+
+    <p>You can pass your own function too, not just string names &mdash; useful for things SQL cannot express in one call.</p>
+
+    <pre><code><span class="comment"># Custom function: range of sales within each group</span>
+df.groupby("region").agg(
+    spread=("sales", lambda s: s.max() - s.min()),
+    total=("sales", "sum"),
+)</code></pre>
+
+    <!-- ============================================ -->
+    <!-- RESET_INDEX                                  -->
+    <!-- ============================================ -->
+
+    <h2>Getting a Flat Table Back &mdash; reset_index</h2>
+
+    <p>The single biggest surprise coming from SQL: the group key ends up as the <em>index</em>, not a column. SQL always returns a flat result set. Pandas does not, unless you ask.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Indexed result (default)</h5>
+        <pre><code>g = df.groupby("region").agg(
+    total=("sales", "sum")
+)
+
+<span class="comment">#         total</span>
+<span class="comment"># region        &lt;- region is the INDEX</span>
+<span class="comment"># East     1200</span>
+<span class="comment"># West      950</span>
+
+g["region"]   <span class="comment"># KeyError! It's the index</span></code></pre>
+      </div>
+      <div>
+        <h5>Flat result (like SQL)</h5>
+        <pre><code>g = df.groupby("region").agg(
+    total=("sales", "sum")
+).reset_index()
+
+<span class="comment">#   region  total   &lt;- region is a COLUMN</span>
+<span class="comment"># 0   East   1200</span>
+<span class="comment"># 1   West    950</span>
+
+g["region"]   <span class="comment"># works now</span></code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Shortcut:</strong> pass <code>as_index=False</code> to <code>groupby</code> to skip the <code>reset_index()</code> step: <code>df.groupby("region", as_index=False)["sales"].sum()</code>. Same flat result, one fewer call. Use whichever reads more clearly &mdash; both are common in real code.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- HAVING / FILTER                             -->
+    <!-- ============================================ -->
+
+    <h2>Filtering Groups &mdash; The HAVING Equivalent</h2>
+
+    <p>SQL's <code>HAVING</code> filters <em>after</em> grouping &mdash; "keep only the regions whose total exceeds 1000." There are two ways to do this in Pandas, and which you pick depends on whether you want to filter on the aggregated result or on the raw groups.</p>
+
+    <p>The most common path: aggregate first, then filter the result with normal boolean indexing &mdash; exactly the filtering you learned in Lesson 02.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL (HAVING)</h5>
+        <pre><code>SELECT region, SUM(sales) AS total
+FROM orders
+GROUP BY region
+HAVING SUM(sales) &gt; 1000;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas (aggregate, then filter)</h5>
+        <pre><code>summary = (
+    df.groupby("region", as_index=False)
+      .agg(total=("sales", "sum"))
+)
+
+summary[summary["total"] &gt; 1000]
+
+<span class="comment">#   region  total</span>
+<span class="comment"># 0   East   1200</span></code></pre>
+      </div>
+    </div>
+
+    <p>The second path keeps the original rows. <code>.filter()</code> on a GroupBy returns the full rows of the groups that pass a test &mdash; not an aggregated table. Handy when you want every row belonging to a qualifying group.</p>
+
+    <pre><code><span class="comment"># Keep all rows from regions whose total sales &gt; 1000</span>
+df.groupby("region").filter(lambda g: g["sales"].sum() &gt; 1000)
+
+<span class="comment"># Returns original-shape rows, only from qualifying groups</span></code></pre>
+
+    <div class="warning">
+      <p><strong><code>WHERE</code> vs <code>HAVING</code> still matters in Pandas.</strong> Filter the DataFrame <em>before</em> <code>groupby</code> to drop rows (that is <code>WHERE</code>). Filter the aggregated summary <em>after</em> to drop whole groups (that is <code>HAVING</code>). Mixing them up gives wrong numbers in both SQL and Pandas.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TRANSFORM VS AGGREGATE                      -->
+    <!-- ============================================ -->
+
+    <h2>transform vs aggregate &mdash; The One That Confuses Everyone</h2>
+
+    <p>This distinction has no clean SQL-92 equivalent, which is why it trips people up. The closest analogy is a SQL <strong>window function</strong> (<code>SUM(...) OVER (PARTITION BY ...)</code>).</p>
+
+    <p><code>.agg()</code> <em>collapses</em> each group to one row. <code>.transform()</code> <em>keeps every row</em> but fills it with its group's aggregate value. Use <code>transform</code> when you want to compare each row to its group &mdash; "what fraction of my region's total is this order?"</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>aggregate (collapses)</h5>
+        <pre><code>df.groupby("region")["sales"].sum()
+
+<span class="comment"># One row per region:</span>
+<span class="comment"># East    1200</span>
+<span class="comment"># West     950</span>
+
+<span class="comment"># Fewer rows than you started with</span></code></pre>
+      </div>
+      <div>
+        <h5>transform (keeps shape)</h5>
+        <pre><code>df["region_total"] = (
+    df.groupby("region")["sales"]
+      .transform("sum")
+)
+
+<span class="comment"># Same number of rows as df. Each row</span>
+<span class="comment"># now carries its region's total, so you</span>
+<span class="comment"># can compute a share:</span>
+df["share"] = df["sales"] / df["region_total"]</code></pre>
+      </div>
+    </div>
+
+    <p>Here is the SQL window function that does the same thing &mdash; the value is attached to every row without collapsing them.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL (window function)</h5>
+        <pre><code>SELECT
+  *,
+  SUM(sales) OVER (
+    PARTITION BY region
+  ) AS region_total
+FROM orders;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas (transform)</h5>
+        <pre><code>df["region_total"] = (
+    df.groupby("region")["sales"]
+      .transform("sum")
+)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The rule of thumb:</strong> if the answer should have <em>one row per group</em>, use <code>agg</code>. If the answer should have <em>the same rows you started with</em> plus a per-group value, use <code>transform</code>. <code>agg</code> is <code>GROUP BY</code>; <code>transform</code> is <code>OVER (PARTITION BY ...)</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- VALUE_COUNTS                                 -->
+    <!-- ============================================ -->
+
+    <h2>value_counts &mdash; The Quick COUNT GROUP BY</h2>
+
+    <p>So often you just want "how many of each?" &mdash; <code>value_counts()</code> is the shorthand. It is a grouped count, sorted, in one call. It maps to the most common reporting query there is.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code>SELECT region, COUNT(*) AS n
+FROM orders
+GROUP BY region
+ORDER BY n DESC;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>df["region"].value_counts()
+
+<span class="comment"># region</span>
+<span class="comment"># East    3</span>
+<span class="comment"># West    2</span>
+<span class="comment"># Name: count, dtype: int64</span>
+
+<span class="comment"># As proportions instead of counts</span>
+df["region"].value_counts(normalize=True)
+
+<span class="comment"># Count across two columns</span>
+df.value_counts(["region", "product"])</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Useful flags:</strong> <code>normalize=True</code> gives proportions instead of raw counts (each value's share of the total). <code>dropna=False</code> counts missing values too, instead of silently skipping them &mdash; handy when nulls are exactly what you are hunting for.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PIVOT_TABLE                                  -->
+    <!-- ============================================ -->
+
+    <h2>pivot_table &mdash; Grouping in Two Dimensions</h2>
+
+    <p>Sometimes you want the group result laid out as a grid: one variable down the rows, another across the columns. That is a pivot table &mdash; the same thing spreadsheets do, and the same thing you would get from a <code>GROUP BY</code> on two keys followed by reshaping.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL (long form)</h5>
+        <pre><code><span class="comment">-- Sales by region AND product,</span>
+<span class="comment">-- as a long two-key GROUP BY</span>
+SELECT region, product, SUM(sales) AS total
+FROM orders
+GROUP BY region, product;
+<span class="comment">-- You'd reshape this in the app layer</span>
+<span class="comment">-- to get a grid.</span></code></pre>
+      </div>
+      <div>
+        <h5>Pandas (grid form)</h5>
+        <pre><code>df.pivot_table(
+    index="region",      <span class="comment"># rows</span>
+    columns="product",   <span class="comment"># columns</span>
+    values="sales",      <span class="comment"># cells</span>
+    aggfunc="sum",       <span class="comment"># how to combine</span>
+)
+
+<span class="comment"># product  Widget  Gadget</span>
+<span class="comment"># region</span>
+<span class="comment"># East        700     500</span>
+<span class="comment"># West        950     NaN</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>pivot_table</code> is a two-dimensional <code>groupby</code>. <code>index=</code> and <code>columns=</code> together are your <code>GROUP BY</code> keys; <code>values=</code> and <code>aggfunc=</code> are your aggregate. The difference is purely shape: the second key spreads across columns instead of stacking into rows. <code>NaN</code> appears wherever a combination has no data.</p>
+    </div>
+
+    <pre><code><span class="comment"># Fill empty cells, add row/column totals</span>
+df.pivot_table(
+    index="region",
+    columns="product",
+    values="sales",
+    aggfunc="sum",
+    fill_value=0,      <span class="comment"># replace NaN with 0</span>
+    margins=True,      <span class="comment"># adds an "All" total row + column</span>
+)
+
+<span class="comment"># Multiple aggregations at once</span>
+df.pivot_table(
+    index="region",
+    values="sales",
+    aggfunc=["sum", "mean", "count"],
+)</code></pre>
+
+    <!-- ============================================ -->
+    <!-- CHEAT SHEET TABLE                            -->
+    <!-- ============================================ -->
+
+    <h2>Translation Cheat Sheet</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>SQL</th>
+          <th>Pandas</th>
+          <th>What it does</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>GROUP BY region</code></td>
+          <td><code>.groupby("region")</code></td>
+          <td>Split rows into buckets</td>
+        </tr>
+        <tr>
+          <td><code>SUM(sales)</code></td>
+          <td><code>["sales"].sum()</code></td>
+          <td>Total per group</td>
+        </tr>
+        <tr>
+          <td><code>AVG(sales)</code></td>
+          <td><code>["sales"].mean()</code></td>
+          <td>Average per group</td>
+        </tr>
+        <tr>
+          <td><code>COUNT(*)</code></td>
+          <td><code>.size()</code></td>
+          <td>Rows per group (incl. nulls)</td>
+        </tr>
+        <tr>
+          <td><code>COUNT(sales)</code></td>
+          <td><code>["sales"].count()</code></td>
+          <td>Non-null rows per group</td>
+        </tr>
+        <tr>
+          <td><code>SUM(x) AS total</code></td>
+          <td><code>total=("x", "sum")</code></td>
+          <td>Named aggregation</td>
+        </tr>
+        <tr>
+          <td><code>HAVING SUM(x) &gt; n</code></td>
+          <td><code>summary[summary["total"] &gt; n]</code></td>
+          <td>Filter groups after aggregating</td>
+        </tr>
+        <tr>
+          <td><code>COUNT(*) ... GROUP BY x ORDER BY n DESC</code></td>
+          <td><code>df["x"].value_counts()</code></td>
+          <td>Quick sorted counts</td>
+        </tr>
+        <tr>
+          <td><code>SUM(x) OVER (PARTITION BY g)</code></td>
+          <td><code>.groupby("g")["x"].transform("sum")</code></td>
+          <td>Per-group value on every row</td>
+        </tr>
+        <tr>
+          <td>two-key <code>GROUP BY</code> + reshape</td>
+          <td><code>df.pivot_table(...)</code></td>
+          <td>Grouped grid (rows &times; columns)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- WORKED EXAMPLE                               -->
+    <!-- ============================================ -->
+
+    <h2>Worked Example &mdash; Analyzing a Sales Dataset</h2>
+
+    <p>Let us put it together on a small dataset and actually read the answers out loud, the way you would in a real analysis. Assume <code>import pandas as pd</code> is already done.</p>
+
+    <pre><code>import pandas as pd
+
+df = pd.DataFrame({
+    "region":  ["East", "East", "East", "West", "West"],
+    "product": ["Widget", "Widget", "Gadget", "Widget", "Gadget"],
+    "sales":   [300, 400, 500, 950, 0],
+    "units":   [3, 4, 5, 9, 0],
+})</code></pre>
+
+    <p><strong>Question 1: How much did each region sell, and how many orders did each place?</strong> Named aggregation, flat output.</p>
+
+    <pre><code>summary = (
+    df.groupby("region", as_index=False)
+      .agg(
+          total_sales=("sales", "sum"),
+          avg_sales=("sales", "mean"),
+          orders=("sales", "count"),
+      )
+)
+
+<span class="comment">#   region  total_sales  avg_sales  orders</span>
+<span class="comment"># 0   East         1200      400.0       3</span>
+<span class="comment"># 1   West          950      475.0       2</span></code></pre>
+
+    <p><em>Reading it:</em> East sold more in total (1200 vs 950) across more orders (3 vs 2), but West has the higher average order value (475 vs 400). Volume lives in the East; bigger individual deals live in the West.</p>
+
+    <p><strong>Question 2: Which regions cleared 1000 in total sales?</strong> This is <code>HAVING</code> &mdash; filter the summary.</p>
+
+    <pre><code>summary[summary["total_sales"] &gt; 1000]
+
+<span class="comment">#   region  total_sales  avg_sales  orders</span>
+<span class="comment"># 0   East         1200      400.0       3</span></code></pre>
+
+    <p><em>Reading it:</em> only East clears the bar. West, despite its strong average, falls short on total.</p>
+
+    <p><strong>Question 3: What share of its region's total does each order represent?</strong> This needs <code>transform</code>, because the answer has one value per original row.</p>
+
+    <pre><code>df["region_total"] = (
+    df.groupby("region")["sales"].transform("sum")
+)
+df["share"] = (df["sales"] / df["region_total"]).round(2)
+
+<span class="comment">#   region product  sales  units  region_total  share</span>
+<span class="comment"># 0   East  Widget    300      3          1200   0.25</span>
+<span class="comment"># 1   East  Widget    400      4          1200   0.33</span>
+<span class="comment"># 2   East  Gadget    500      5          1200   0.42</span>
+<span class="comment"># 3   West  Widget    950      9           950   1.00</span>
+<span class="comment"># 4   West  Gadget      0      0           950   0.00</span></code></pre>
+
+    <p><em>Reading it:</em> in the East the three orders are reasonably balanced, with the Gadget order the largest at 42 percent. The West is lopsided &mdash; one Widget order is the entire region.</p>
+
+    <p><strong>Question 4: Lay sales out as a region-by-product grid.</strong> A pivot table.</p>
+
+    <pre><code>df.pivot_table(
+    index="region",
+    columns="product",
+    values="sales",
+    aggfunc="sum",
+    fill_value=0,
+)
+
+<span class="comment"># product  Gadget  Widget</span>
+<span class="comment"># region</span>
+<span class="comment"># East        500     700</span>
+<span class="comment"># West          0     950</span></code></pre>
+
+    <p><em>Reading it:</em> the grid makes the gap obvious. West sells Widgets and effectively no Gadgets; East has a real mix. If you were deciding where to push Gadget marketing, the West is the open territory.</p>
+
+    <div class="callout">
+      <p><strong>This is the whole loop of exploratory analysis.</strong> Aggregate to see the totals, filter to find the standouts, transform to compare each row to its group, pivot to see two dimensions at once. Four moves answer most "what is going on in this data?" questions &mdash; and every one of them has a SQL twin you already knew.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. Write the Pandas equivalent of <code>SELECT region, SUM(sales) AS total FROM orders GROUP BY region</code>, returning a flat table.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>df.groupby("region", as_index=False).agg(total=("sales", "sum"))</code>. The <code>as_index=False</code> keeps <code>region</code> as a column instead of moving it to the index (otherwise you would add <code>.reset_index()</code>). Named aggregation gives you the <code>total</code> alias cleanly.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What is the difference between <code>.agg("sum")</code> and <code>.transform("sum")</code> on a GroupBy?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>.agg("sum")</code> collapses each group to a single row &mdash; the result has one row per group (like <code>GROUP BY</code>). <code>.transform("sum")</code> keeps every original row and fills each with its group's sum &mdash; the result has the same number of rows as the input (like a SQL window function, <code>SUM(...) OVER (PARTITION BY ...)</code>).</div>
+      </div>
+
+      <div class="question">
+        <p>3. SQL's <code>HAVING SUM(sales) &gt; 1000</code> &mdash; how do you express it in Pandas?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Aggregate first, then filter the result with boolean indexing: <code>s = df.groupby("region", as_index=False).agg(total=("sales", "sum")); s[s["total"] &gt; 1000]</code>. <code>HAVING</code> filters groups after aggregating, so you filter the summary &mdash; not the original rows (that would be <code>WHERE</code>).</div>
+      </div>
+
+      <div class="question">
+        <p>4. Why does <code>df.groupby("region")["sales"].sum()</code> not let you write <code>result["region"]</code> afterward?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because the group key becomes the <em>index</em> of the result, not a column. SQL always returns flat tables, but Pandas puts the grouping key in the index by default. Call <code>.reset_index()</code> (or use <code>as_index=False</code>) to turn <code>region</code> back into a normal column.</div>
+      </div>
+
+      <div class="question">
+        <p>5. When would you reach for <code>pivot_table</code> instead of a plain <code>groupby</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">When you want the result laid out as a two-dimensional grid &mdash; one variable down the rows (<code>index=</code>), another across the columns (<code>columns=</code>). It is a two-key <code>groupby</code> reshaped into a matrix. A plain <code>groupby(["a", "b"])</code> gives the same numbers stacked in a long format; <code>pivot_table</code> spreads the second key across columns for readability.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/pandas/lessons/03-cleaning-data/">&larr; Previous: Cleaning Data</a>
+      <a href="/pandas/lessons/05-merging-reshaping/">Next: Merging &amp; Reshaping &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

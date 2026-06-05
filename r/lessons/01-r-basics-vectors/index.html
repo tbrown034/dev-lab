@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 01 - R Basics &amp; Vectors</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #276dc3; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>01</span> R Basics &amp; Vectors</h1>
+    <a href="/r/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #276dc3;">R thinks in vectors, not loops, and counts from one, not zero.</strong> If you know Python lists or JavaScript arrays, most of R will feel familiar &mdash; but two things will trip you up early: everything is vectorized by default, and indexing starts at 1. This lesson translates R's core data type from the languages you already use.</p>
+
+    <!-- ============================================ -->
+    <!-- ASSIGNMENT                                   -->
+    <!-- ============================================ -->
+
+    <h2>Assignment &mdash; <code>&lt;-</code> vs <code>=</code></h2>
+
+    <p>The first thing that looks strange in R is the arrow. Where Python and JavaScript use <code>=</code>, idiomatic R uses <code>&lt;-</code>. Both work for assignment, but the arrow is the convention you'll see everywhere.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># Assignment with =</span>
+name = "Trevor"
+age = 38
+is_admin = True
+
+<span class="comment"># Reassign freely</span>
+age = age + 1</code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code><span class="comment"># Idiomatic assignment with &lt;-</span>
+name &lt;- "Trevor"
+age &lt;- 38
+is_admin &lt;- TRUE
+
+<span class="comment"># = also works, but &lt;- is the convention</span>
+age = 38
+
+<span class="comment"># Reassign freely</span>
+age &lt;- age + 1</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Why two operators?</strong> In R, <code>=</code> is reserved for passing arguments inside function calls, like <code>plot(x = 1, y = 2)</code>. Using <code>&lt;-</code> for assignment keeps the two ideas visually distinct. The arrow even points in the direction the value flows: <code>x &lt;- 5</code> means "5 goes into x". There is a rightward version too: <code>5 -&gt; x</code>, though almost nobody uses it.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>RStudio shortcut:</strong> press <kbd>Alt</kbd> + <kbd>-</kbd> (minus) and RStudio types <code>&lt;-</code> with spaces around it. You'll use it thousands of times, so learn it on day one.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- CONSOLE AND RSTUDIO                          -->
+    <!-- ============================================ -->
+
+    <h2>The Console and RStudio</h2>
+
+    <p>R ships with a plain console, but almost everyone works in RStudio &mdash; an IDE built specifically for R. Think of it the way you think of a Python REPL plus VS Code fused into one window.</p>
+
+    <p>The console evaluates expressions immediately and prints the result. There is no <code>print()</code> needed at the top level &mdash; just type an expression and R echoes the answer back.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (REPL)</h5>
+        <pre><code>&gt;&gt;&gt; 2 + 2
+4
+&gt;&gt;&gt; x = 10
+&gt;&gt;&gt; x          <span class="comment"># bare name prints in REPL</span>
+10
+&gt;&gt;&gt; print(x)   <span class="comment"># explicit print</span>
+10</code></pre>
+      </div>
+      <div>
+        <h5>R (console)</h5>
+        <pre><code>&gt; 2 + 2
+[1] 4
+&gt; x &lt;- 10
+&gt; x            <span class="comment"># bare name prints</span>
+[1] 10
+&gt; print(x)     <span class="comment"># explicit print</span>
+[1] 10</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>What is that <code>[1]</code>?</strong> R prints a position marker before output because R has no scalars &mdash; a single number is really a vector of length one. The <code>[1]</code> tells you the first value shown is element one of the vector. When a vector wraps across lines, each new line starts with the index of its first element. Once you accept "everything is a vector," R stops feeling weird.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>RStudio layout:</strong> four panes &mdash; the script editor (top left), the console (bottom left), environment and history (top right), and files, plots, packages, and help (bottom right). Write code in the editor, send a line to the console with <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd>. Comments use <code>#</code>, the same as Python.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- VECTORS WITH c()                             -->
+    <!-- ============================================ -->
+
+    <h2>Vectors &mdash; the <code>c()</code> Function</h2>
+
+    <p>The vector is R's fundamental data structure. It is an ordered collection of values, all of the same type. You build one with <code>c()</code>, which stands for "combine".</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// Arrays with brackets</span>
+const nums = [10, 20, 30, 40];
+const names = ["Alice", "Bob"];
+const flags = [true, false, true];
+
+<span class="comment">// Length</span>
+nums.length;   <span class="comment">// 4</span>
+
+<span class="comment">// Mixed types allowed</span>
+const mixed = [1, "two", true];</code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code><span class="comment"># Vectors with c()</span>
+nums &lt;- c(10, 20, 30, 40)
+names &lt;- c("Alice", "Bob")
+flags &lt;- c(TRUE, FALSE, TRUE)
+
+<span class="comment"># Length</span>
+length(nums)   <span class="comment"># 4</span>
+
+<span class="comment"># Mixed types? No — R coerces (see below)</span>
+mixed &lt;- c(1, "two", TRUE)
+<span class="comment"># becomes c("1", "two", "TRUE")</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> a JavaScript array or Python list is a generic container that holds anything. An R vector is closer to a typed column in a spreadsheet or a SQL column &mdash; every element shares one type. If you need a true mixed bag, R has <code>list()</code>, which behaves like a Python list. But the workhorse is the atomic vector built with <code>c()</code>.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong><code>c()</code> flattens.</strong> Combining vectors does not nest them: <code>c(c(1, 2), c(3, 4))</code> gives <code>c(1, 2, 3, 4)</code>, not a nested structure. To nest, use <code>list()</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- VECTORIZED ARITHMETIC                        -->
+    <!-- ============================================ -->
+
+    <h2>Vectorized Arithmetic</h2>
+
+    <p>This is the single biggest mindset shift coming from Python or JavaScript. In R, math operators apply to <em>every element at once</em>. You almost never write a loop to transform a vector.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python</h5>
+        <pre><code>prices = [10, 20, 30]
+
+<span class="comment"># Add tax with a loop or comprehension</span>
+with_tax = [p * 1.07 for p in prices]
+<span class="comment"># [10.7, 21.4, 32.1]</span>
+
+<span class="comment"># Element-wise add of two lists</span>
+a = [1, 2, 3]
+b = [10, 20, 30]
+sums = [x + y for x, y in zip(a, b)]
+<span class="comment"># [11, 22, 33]</span></code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code>prices &lt;- c(10, 20, 30)
+
+<span class="comment"># Add tax — operates on the whole vector</span>
+with_tax &lt;- prices * 1.07
+<span class="comment"># c(10.7, 21.4, 32.1)</span>
+
+<span class="comment"># Element-wise add of two vectors</span>
+a &lt;- c(1, 2, 3)
+b &lt;- c(10, 20, 30)
+sums &lt;- a + b
+<span class="comment"># c(11, 22, 33)</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The translation rule:</strong> in Python you reach for a list comprehension or <code>map()</code>; in R you just apply the operator to the vector. <code>prices * 1.07</code>, <code>nums &gt; 20</code>, <code>sqrt(nums)</code> &mdash; all run element by element automatically. This is faster than a manual loop because the work happens in compiled C under the hood.</p>
+    </div>
+
+    <h3>Recycling &mdash; the Helpful Trap</h3>
+
+    <p>When two vectors differ in length, R "recycles" the shorter one to match the longer. A scalar (length-one vector) recycles to every element, which is exactly why <code>prices * 1.07</code> works.</p>
+
+    <pre><code>c(1, 2, 3, 4) + c(10, 20)
+<span class="comment"># c(11, 22, 13, 24)  — 10,20 recycled to 10,20,10,20</span>
+
+c(1, 2, 3) + c(10, 20)
+<span class="comment"># c(11, 22, 13) with a WARNING:</span>
+<span class="comment"># longer object length is not a multiple of</span>
+<span class="comment"># shorter object length</span></code></pre>
+
+    <div class="warning">
+      <p><strong>Recycling can hide bugs.</strong> If lengths divide evenly, R recycles silently and you may not notice the two vectors were the wrong sizes. If they do not divide evenly, you get a warning but still get a result. Always check <code>length()</code> when results look off &mdash; this has no equivalent in Python or JavaScript, so it surprises everyone.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ATOMIC TYPES                                 -->
+    <!-- ============================================ -->
+
+    <h2>Atomic Types</h2>
+
+    <p>R has a handful of atomic vector types. The three you will use constantly are <strong>numeric</strong>, <strong>character</strong>, and <strong>logical</strong>. Check a type with <code>class()</code> or <code>typeof()</code>.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>R type</th>
+          <th>Python</th>
+          <th>JavaScript</th>
+          <th>Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>numeric</code> (double)</td>
+          <td><code>float</code></td>
+          <td><code>number</code></td>
+          <td><code>3.14</code>, <code>42</code></td>
+        </tr>
+        <tr>
+          <td><code>integer</code></td>
+          <td><code>int</code></td>
+          <td><code>number</code></td>
+          <td><code>42L</code> (the L suffix)</td>
+        </tr>
+        <tr>
+          <td><code>character</code></td>
+          <td><code>str</code></td>
+          <td><code>string</code></td>
+          <td><code>"hello"</code></td>
+        </tr>
+        <tr>
+          <td><code>logical</code></td>
+          <td><code>bool</code></td>
+          <td><code>boolean</code></td>
+          <td><code>TRUE</code>, <code>FALSE</code></td>
+        </tr>
+        <tr>
+          <td><code>complex</code></td>
+          <td><code>complex</code></td>
+          <td>N/A</td>
+          <td><code>2+3i</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python</h5>
+        <pre><code>type(42)        <span class="comment"># int</span>
+type(3.14)      <span class="comment"># float</span>
+type("hi")      <span class="comment"># str</span>
+type(True)      <span class="comment"># bool</span>
+
+<span class="comment"># Booleans are True / False</span>
+flag = True</code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code>class(42)       <span class="comment"># "numeric"</span>
+class(42L)      <span class="comment"># "integer" (L = integer)</span>
+class("hi")     <span class="comment"># "character"</span>
+class(TRUE)     <span class="comment"># "logical"</span>
+
+<span class="comment"># Booleans are TRUE / FALSE (all caps)</span>
+flag &lt;- TRUE
+<span class="comment"># T and F are shortcuts, but avoid them</span></code></pre>
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong>Numbers are doubles by default.</strong> In R, <code>42</code> is numeric (a double), not an integer. You only get an integer with the <code>L</code> suffix: <code>42L</code>. Coming from Python, where <code>42</code> is an <code>int</code>, this catches people. For most analysis work it does not matter &mdash; R does the math the same way either way.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- INDEXING                                     -->
+    <!-- ============================================ -->
+
+    <h2>Indexing &mdash; R Counts from 1</h2>
+
+    <p>Here is the surprise that bites every developer arriving from Python or JavaScript: <strong>R indexes from 1, not 0</strong>. The first element is <code>[1]</code>, not <code>[0]</code>. SQL counts from 1 too (think <code>SUBSTR</code>), so if you know SQL this feels less alien.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (0-based)</h5>
+        <pre><code>nums = [10, 20, 30, 40]
+
+nums[0]      <span class="comment"># 10  (first)</span>
+nums[1]      <span class="comment"># 20</span>
+nums[-1]     <span class="comment"># 40  (last)</span>
+nums[1:3]    <span class="comment"># [20, 30]  (slice)</span>
+
+<span class="comment"># Index out of range raises IndexError</span>
+nums[99]     <span class="comment"># IndexError</span></code></pre>
+      </div>
+      <div>
+        <h5>R (1-based)</h5>
+        <pre><code>nums &lt;- c(10, 20, 30, 40)
+
+nums[1]      <span class="comment"># 10  (first!)</span>
+nums[2]      <span class="comment"># 20</span>
+nums[length(nums)]  <span class="comment"># 40  (last)</span>
+nums[2:3]    <span class="comment"># c(20, 30)  (range)</span>
+
+<span class="comment"># Out of range returns NA, no error</span>
+nums[99]     <span class="comment"># NA</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The translation rule:</strong> take any Python index and add one. Python's <code>nums[0]</code> becomes R's <code>nums[1]</code>. Python's <code>nums[2]</code> becomes R's <code>nums[3]</code>. Slicing also shifts: Python's half-open <code>nums[1:3]</code> (stops before 3) becomes R's inclusive <code>nums[2:3]</code> (includes 3). R ranges include both endpoints.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong>Out of bounds gives <code>NA</code>, not an error.</strong> Where Python raises <code>IndexError</code> and JavaScript returns <code>undefined</code>, R hands back <code>NA</code> (missing value) and keeps going. That is convenient but dangerous &mdash; a typo in an index produces a silent <code>NA</code> instead of a loud crash. Check your lengths.</p>
+    </div>
+
+    <h3>Negative Indexing Means "Drop"</h3>
+
+    <p>This is a real gotcha. In Python, a negative index counts from the end. In R, a negative index <em>removes</em> that element.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python</h5>
+        <pre><code>nums = [10, 20, 30, 40]
+
+nums[-1]    <span class="comment"># 40  (last element)</span>
+nums[-2]    <span class="comment"># 30  (second to last)</span>
+
+<span class="comment"># To drop the first element:</span>
+nums[1:]    <span class="comment"># [20, 30, 40]</span></code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code>nums &lt;- c(10, 20, 30, 40)
+
+nums[-1]    <span class="comment"># c(20, 30, 40)  — drops element 1!</span>
+nums[-2]    <span class="comment"># c(10, 30, 40)  — drops element 2</span>
+
+<span class="comment"># Drop multiple at once</span>
+nums[-c(1, 2)]   <span class="comment"># c(30, 40)</span>
+nums[c(-1, -4)]  <span class="comment"># c(20, 30)</span></code></pre>
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong>Negative index = exclusion in R.</strong> <code>nums[-1]</code> does not get the last element &mdash; it returns everything <em>except</em> the first. To grab the last element, use <code>nums[length(nums)]</code> or <code>tail(nums, 1)</code>. This is the index difference most likely to produce wrong results that still run.</p>
+    </div>
+
+    <h3>Logical and Named Indexing</h3>
+
+    <p>R can also subset with a logical vector &mdash; keep every position that is <code>TRUE</code>. This pairs perfectly with vectorized comparisons and is how filtering works throughout R.</p>
+
+    <pre><code>nums &lt;- c(10, 20, 30, 40)
+
+<span class="comment"># Comparison returns a logical vector</span>
+nums &gt; 20            <span class="comment"># c(FALSE, FALSE, TRUE, TRUE)</span>
+
+<span class="comment"># Use it to filter — like SQL WHERE</span>
+nums[nums &gt; 20]      <span class="comment"># c(30, 40)</span>
+
+<span class="comment"># Combine conditions with &amp; (and) and | (or)</span>
+nums[nums &gt; 10 &amp; nums &lt; 40]   <span class="comment"># c(20, 30)</span></code></pre>
+
+    <div class="aha">
+      <p><strong>Think SQL <code>WHERE</code>.</strong> <code>nums[nums &gt; 20]</code> reads like "select from nums where value &gt; 20". This logical-subsetting pattern is the foundation of filtering data frames in the next lesson, so it is worth getting comfortable now. Note R uses single <code>&amp;</code> and <code>|</code> for element-wise logic on vectors.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAMED VECTORS                                -->
+    <!-- ============================================ -->
+
+    <h2>Named Vectors</h2>
+
+    <p>Vector elements can carry names, letting you index by label instead of position. A named vector sits halfway between a Python list and a Python dict.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (dict)</h5>
+        <pre><code>scores = {
+    "alice": 90,
+    "bob": 85,
+    "carol": 95,
+}
+
+scores["alice"]      <span class="comment"># 90</span>
+list(scores.keys())  <span class="comment"># ['alice','bob','carol']</span>
+list(scores.values())</code></pre>
+      </div>
+      <div>
+        <h5>R (named vector)</h5>
+        <pre><code>scores &lt;- c(alice = 90, bob = 85, carol = 95)
+
+scores["alice"]   <span class="comment"># alice: 90</span>
+names(scores)     <span class="comment"># c("alice","bob","carol")</span>
+unname(scores)    <span class="comment"># c(90, 85, 95)</span>
+
+<span class="comment"># Still vectorized — names come along</span>
+scores * 2        <span class="comment"># alice 180, bob 170, ...</span></code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Add names after the fact</strong> with <code>names(x) &lt;- c(...)</code>. That assigning-into-a-function syntax looks odd at first, but it is common in R: <code>names(scores) &lt;- c("a", "b", "c")</code> renames the elements in place.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SEQ AND REP                                  -->
+    <!-- ============================================ -->
+
+    <h2>Generating Vectors &mdash; <code>seq()</code> and <code>rep()</code></h2>
+
+    <p>You rarely type long vectors by hand. R has compact tools for building sequences and repeated patterns. The colon <code>:</code> is the quickest way to make a run of integers.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># Range (0-based, stop exclusive)</span>
+list(range(1, 6))      <span class="comment"># [1, 2, 3, 4, 5]</span>
+list(range(0, 10, 2))  <span class="comment"># [0, 2, 4, 6, 8]</span>
+
+<span class="comment"># Repeat</span>
+[0] * 5                <span class="comment"># [0,0,0,0,0]</span>
+["a", "b"] * 3         <span class="comment"># a,b,a,b,a,b</span></code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code><span class="comment"># Colon — inclusive on both ends</span>
+1:5                    <span class="comment"># c(1, 2, 3, 4, 5)</span>
+seq(0, 8, by = 2)      <span class="comment"># c(0, 2, 4, 6, 8)</span>
+seq(0, 1, length.out = 5)  <span class="comment"># 0, .25, .5, .75, 1</span>
+
+<span class="comment"># Repeat</span>
+rep(0, 5)              <span class="comment"># c(0,0,0,0,0)</span>
+rep(c("a", "b"), times = 3)   <span class="comment"># a,b,a,b,a,b</span>
+rep(c("a", "b"), each = 3)    <span class="comment"># a,a,a,b,b,b</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Key difference:</strong> Python's <code>range(1, 6)</code> stops <em>before</em> 6, giving 1 through 5. R's <code>1:6</code> is <em>inclusive</em>, giving 1 through 6. The colon is the everyday tool; reach for <code>seq()</code> when you need a step size (<code>by</code>) or a fixed count of points (<code>length.out</code>). <code>rep()</code>'s <code>times</code> repeats the whole vector, while <code>each</code> repeats each element in place.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NA AND NULL                                  -->
+    <!-- ============================================ -->
+
+    <h2>Missing Values &mdash; <code>NA</code> and <code>NULL</code></h2>
+
+    <p>R has first-class support for missing data, which is a big reason statisticians love it. <code>NA</code> means "a value exists but is unknown". <code>NULL</code> means "nothing is here at all".</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python / SQL</h5>
+        <pre><code><span class="comment"># Python's stand-ins</span>
+missing = None       <span class="comment"># absence of value</span>
+import math
+nan = math.nan       <span class="comment"># not-a-number</span>
+
+<span class="comment"># SQL has a true missing marker</span>
+<span class="comment">-- SELECT * FROM t WHERE col IS NULL</span></code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code>x &lt;- c(10, NA, 30)    <span class="comment"># NA = missing, like SQL NULL</span>
+
+is.na(x)             <span class="comment"># c(FALSE, TRUE, FALSE)</span>
+
+<span class="comment"># NA is contagious in math</span>
+sum(x)               <span class="comment"># NA</span>
+sum(x, na.rm = TRUE) <span class="comment"># 40 — drop the NAs</span>
+
+<span class="comment"># NULL = truly nothing, drops out</span>
+c(1, NULL, 3)        <span class="comment"># c(1, 3) — NULL vanishes</span>
+length(NULL)         <span class="comment"># 0</span></code></pre>
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong><code>NA</code> spreads through calculations.</strong> Any arithmetic touching an <code>NA</code> returns <code>NA</code> &mdash; <code>10 + NA</code> is <code>NA</code>, and <code>mean(x)</code> on a vector with one <code>NA</code> is <code>NA</code>. This is intentional: R refuses to silently guess. Pass <code>na.rm = TRUE</code> to functions like <code>sum()</code>, <code>mean()</code>, and <code>max()</code> to ignore missing values. And never test with <code>x == NA</code> &mdash; that returns <code>NA</code>; always use <code>is.na(x)</code>.</p>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>NA</code> is SQL's <code>NULL</code> &mdash; a known-unknown that propagates and must be handled explicitly. R's <code>NULL</code> is different: it is the empty object, closer to deleting a thing entirely. You will reach for <code>NA</code> constantly and <code>NULL</code> rarely.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- COERCION                                     -->
+    <!-- ============================================ -->
+
+    <h2>Coercion &mdash; One Type Wins</h2>
+
+    <p>Because a vector must be a single type, mixing types forces R to coerce everything to the most flexible common type. The hierarchy runs: logical &rarr; integer &rarr; numeric &rarr; character. Character always wins.</p>
+
+    <pre><code><span class="comment"># Mix logical and numeric — logical becomes numeric</span>
+c(TRUE, FALSE, 3)     <span class="comment"># c(1, 0, 3)</span>
+
+<span class="comment"># Mix numeric and character — all become character</span>
+c(1, 2, "three")      <span class="comment"># c("1", "2", "three")</span>
+
+<span class="comment"># Explicit conversion functions</span>
+as.numeric("42")      <span class="comment"># 42</span>
+as.character(42)      <span class="comment"># "42"</span>
+as.logical(0)         <span class="comment"># FALSE</span>
+as.logical("yes")     <span class="comment"># NA — can't parse (no warning)</span>
+
+<span class="comment"># Logicals act as 0/1 in math — handy</span>
+sum(c(TRUE, TRUE, FALSE, TRUE))   <span class="comment"># 3 — counts TRUEs</span></code></pre>
+
+    <div class="aha">
+      <p><strong>That last trick is everywhere in R.</strong> Because <code>TRUE</code> is 1 and <code>FALSE</code> is 0, summing a logical vector counts how many conditions are true: <code>sum(nums &gt; 20)</code> tells you how many values exceed 20, and <code>mean(nums &gt; 20)</code> gives the proportion. It is R's idiom for "count rows matching a condition," much like <code>COUNT(*) ... WHERE</code> in SQL.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong>Failed numeric conversion gives <code>NA</code>, not an error.</strong> <code>as.numeric("abc")</code> returns <code>NA</code> with a warning rather than throwing, unlike Python's <code>int("abc")</code> which raises <code>ValueError</code>. After converting user input, check for <code>NA</code> before trusting the result.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WORKED EXAMPLE                               -->
+    <!-- ============================================ -->
+
+    <h2>Putting It All Together</h2>
+
+    <p>A realistic snippet &mdash; the kind of quick analysis you would type into the console to summarize a small dataset, using only the tools from this lesson.</p>
+
+    <pre><code><span class="comment"># Daily site visitors for one week (one NA: tracker was down)</span>
+visitors &lt;- c(mon = 120, tue = 135, wed = NA,
+              thu = 150, fri = 142, sat = 98, sun = 110)
+
+<span class="comment"># How many days did we actually record?</span>
+recorded &lt;- sum(!is.na(visitors))      <span class="comment"># 6</span>
+
+<span class="comment"># Average daily visitors, ignoring the missing day</span>
+avg &lt;- mean(visitors, na.rm = TRUE)    <span class="comment"># 125.83...</span>
+
+<span class="comment"># Which days beat the average? (logical subsetting)</span>
+<span class="comment"># Comparison keeps NA positions, so exclude them with !is.na</span>
+busy &lt;- visitors[visitors &gt; avg &amp; !is.na(visitors)]
+busy                                    <span class="comment"># tue 135, thu 150, fri 142</span>
+names(busy)                             <span class="comment"># c("tue","thu","fri")</span>
+
+<span class="comment"># Count busy days — sum a logical vector</span>
+sum(visitors &gt; avg, na.rm = TRUE)       <span class="comment"># 3</span>
+
+<span class="comment"># Project 10% growth across the whole week (vectorized)</span>
+next_week &lt;- round(visitors * 1.10)
+next_week                               <span class="comment"># mon 132, tue 148, wed NA, ...</span>
+
+<span class="comment"># Drop the weekend with negative indexing</span>
+weekdays_only &lt;- visitors[-c(6, 7)]
+length(weekdays_only)                   <span class="comment"># 5</span></code></pre>
+
+    <p>No loops, no comprehensions &mdash; just vectors, named subsetting, and built-in functions that handle missing data. That is R's whole personality in one block.</p>
+
+    <!-- ============================================ -->
+    <!-- TRANSLATION TABLE                            -->
+    <!-- ============================================ -->
+
+    <h2>Quick Reference</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Python</th>
+          <th>R</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Assign</td>
+          <td><code>x = 5</code></td>
+          <td><code>x &lt;- 5</code></td>
+        </tr>
+        <tr>
+          <td>Build a collection</td>
+          <td><code>[1, 2, 3]</code></td>
+          <td><code>c(1, 2, 3)</code></td>
+        </tr>
+        <tr>
+          <td>Length</td>
+          <td><code>len(x)</code></td>
+          <td><code>length(x)</code></td>
+        </tr>
+        <tr>
+          <td>First element</td>
+          <td><code>x[0]</code></td>
+          <td><code>x[1]</code></td>
+        </tr>
+        <tr>
+          <td>Drop first element</td>
+          <td><code>x[1:]</code></td>
+          <td><code>x[-1]</code></td>
+        </tr>
+        <tr>
+          <td>Range 1 to 5</td>
+          <td><code>range(1, 6)</code></td>
+          <td><code>1:5</code></td>
+        </tr>
+        <tr>
+          <td>Filter</td>
+          <td><code>[v for v in x if v &gt; 20]</code></td>
+          <td><code>x[x &gt; 20]</code></td>
+        </tr>
+        <tr>
+          <td>Transform all</td>
+          <td><code>[v * 2 for v in x]</code></td>
+          <td><code>x * 2</code></td>
+        </tr>
+        <tr>
+          <td>Missing value</td>
+          <td><code>None</code> / <code>nan</code></td>
+          <td><code>NA</code></td>
+        </tr>
+        <tr>
+          <td>Test missing</td>
+          <td><code>v is None</code></td>
+          <td><code>is.na(v)</code></td>
+        </tr>
+        <tr>
+          <td>Boolean literals</td>
+          <td><code>True</code> / <code>False</code></td>
+          <td><code>TRUE</code> / <code>FALSE</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. Coming from Python's <code>nums[0]</code>, how do you get the first element of an R vector?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use <code>nums[1]</code>. R indexes from 1, not 0. The translation rule is to add one to any Python index: Python's <code>nums[0]</code> becomes R's <code>nums[1]</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What does <code>nums[-1]</code> do in R, and how is it different from Python?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">In R, <code>nums[-1]</code> returns everything <em>except</em> the first element &mdash; a negative index removes that position. In Python, <code>nums[-1]</code> returns the last element. To get the last element in R, use <code>nums[length(nums)]</code> or <code>tail(nums, 1)</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>3. Why does <code>c(1, 2, "three")</code> become <code>c("1", "2", "three")</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A vector must hold one type. When you mix types, R coerces everything to the most flexible common type. Character wins over numeric, so the numbers become strings. Use <code>list()</code> if you truly need mixed types.</div>
+      </div>
+
+      <div class="question">
+        <p>4. How do you compute the mean of <code>c(10, NA, 30)</code> without getting <code>NA</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Pass <code>na.rm = TRUE</code>: <code>mean(c(10, NA, 30), na.rm = TRUE)</code> gives 20. By default <code>NA</code> is contagious and the result would be <code>NA</code>. Also never test with <code>x == NA</code> &mdash; use <code>is.na(x)</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>5. In R, how would you double every value in a vector without writing a loop?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Just multiply the vector: <code>x * 2</code>. R is vectorized, so the operator applies to every element automatically. Where Python uses a list comprehension <code>[v * 2 for v in x]</code>, R applies the math directly to the whole vector.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/r/">&larr; Back to R Overview</a>
+      <a href="/r/lessons/02-data-frames-tibbles/">Next: Data Frames &amp; Tibbles &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 05 - Statistics in R</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #276dc3; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>05</span> Statistics in R</h1>
+    <a href="/r/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #276dc3;">R was built by statisticians, for statisticians.</strong> Where Python and JavaScript bolt statistics on through libraries, R bakes them into the language itself. This lesson covers the everyday tools &mdash; summary statistics, distributions, correlation, t-tests, and linear regression &mdash; translated from the Python, SQL, and JavaScript you already know.</p>
+
+    <!-- ============================================ -->
+    <!-- WHY R                                        -->
+    <!-- ============================================ -->
+
+    <h2>Why R Was Built for This</h2>
+
+    <p>In Python you reach for NumPy, SciPy, and statsmodels. In JavaScript you hunt for an npm package and hope it's maintained. In SQL you can manage <code>AVG</code> and <code>STDDEV</code> but little more. In R, the statistics are the standard library.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python</h5>
+        <pre><code><span class="comment"># Import everything you need first</span>
+import numpy as np
+from scipy import stats
+
+x = [4, 8, 15, 16, 23, 42]
+
+np.mean(x)        <span class="comment"># 18.0</span>
+np.median(x)
+np.std(x, ddof=1) <span class="comment"># sample sd</span>
+stats.ttest_1samp(x, 0)</code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code><span class="comment"># No imports needed — it's all built in</span>
+
+x &lt;- c(4, 8, 15, 16, 23, 42)
+
+mean(x)       <span class="comment"># 18</span>
+median(x)
+sd(x)         <span class="comment"># sample sd by default</span>
+t.test(x, mu = 0)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> in R, statistical functions are global and assume you mean the <em>sample</em>, not the population. <code>sd()</code> and <code>var()</code> divide by <code>n - 1</code> by default &mdash; the same as NumPy's <code>ddof=1</code>. There's no separate import, no flag to remember. That default reflects R's origin: it expects you're analyzing a sample of data, which is what statisticians do all day.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SUMMARY STATISTICS                           -->
+    <!-- ============================================ -->
+
+    <h2>Summary Statistics</h2>
+
+    <p>The core descriptive functions are named exactly what you'd guess. They're vectorized, so they operate on a whole vector at once &mdash; no loops.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (NumPy)</h5>
+        <pre><code>import numpy as np
+
+x = np.array([12, 7, 9, 15, 22, 7, 30])
+
+np.mean(x)              <span class="comment"># average</span>
+np.median(x)            <span class="comment"># middle value</span>
+np.std(x, ddof=1)       <span class="comment"># sample sd</span>
+np.var(x, ddof=1)       <span class="comment"># sample variance</span>
+x.min(); x.max()
+np.percentile(x, [25, 50, 75])
+
+<span class="comment"># Mode is not in NumPy core</span>
+from scipy import stats
+stats.mode(x)</code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code>x &lt;- c(12, 7, 9, 15, 22, 7, 30)
+
+mean(x)                 <span class="comment"># average</span>
+median(x)               <span class="comment"># middle value</span>
+sd(x)                   <span class="comment"># sample sd</span>
+var(x)                  <span class="comment"># sample variance</span>
+min(x); max(x)
+range(x)                <span class="comment"># c(min, max) together</span>
+quantile(x, c(.25, .5, .75))
+
+<span class="comment"># No built-in mode() for stats —</span>
+<span class="comment"># (mode() returns the data TYPE)</span></code></pre>
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong>Gotcha: <code>mode()</code> in R is not the statistical mode.</strong> <code>mode(x)</code> returns the storage type of an object (like <code>"numeric"</code> or <code>"character"</code>), not the most common value. To get the statistical mode you compute it yourself: <code>names(which.max(table(x)))</code>. This surprises everyone coming from other languages.</p>
+    </div>
+
+    <h3>The <code>summary()</code> Function</h3>
+
+    <p>R's <code>summary()</code> is the closest thing to Pandas' <code>df.describe()</code>. Call it on a vector for a five-number summary plus the mean. Call it on a whole data frame for a column-by-column breakdown.</p>
+
+    <pre><code>x &lt;- c(12, 7, 9, 15, 22, 7, 30)
+summary(x)
+
+<span class="comment">#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.</span>
+<span class="comment">#   7.000   8.000  12.000  14.571  18.500  30.000</span>
+
+<span class="comment"># On a data frame, summarizes every column at once</span>
+summary(mtcars)   <span class="comment"># mtcars is a built-in dataset</span></code></pre>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> Pandas <code>df.describe()</code> &rarr; R <code>summary(df)</code>. Pandas gives count, mean, std, and quartiles in a tidy table; R's <code>summary()</code> gives min, quartiles, median, mean, and max per column. R also reports counts of levels for categorical (factor) columns &mdash; something <code>describe()</code> skips by default.</p>
+    </div>
+
+    <h3>Quantiles and Percentiles</h3>
+
+    <pre><code>scores &lt;- c(55, 62, 71, 78, 84, 88, 91, 95, 99)
+
+quantile(scores)                 <span class="comment"># 0%, 25%, 50%, 75%, 100%</span>
+quantile(scores, 0.9)            <span class="comment"># 90th percentile</span>
+quantile(scores, c(0.1, 0.5, 0.9))
+
+IQR(scores)                      <span class="comment"># interquartile range (Q3 - Q1)</span></code></pre>
+
+    <div class="callout">
+      <p><strong>SQL parallel:</strong> R's <code>quantile(x, 0.5)</code> is the same idea as SQL's <code>PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY x)</code>. R just makes it a one-liner. And unlike <code>AVG()</code> in SQL, R's <code>mean()</code> propagates missing values &mdash; see the next warning.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MISSING VALUES                               -->
+    <!-- ============================================ -->
+
+    <h2>Missing Values &mdash; <code>NA</code> Is Contagious</h2>
+
+    <p>One missing value poisons the whole calculation unless you tell R to ignore it. This is by design: R refuses to silently hide gaps in your data.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- NULLs are silently skipped</span>
+SELECT AVG(salary) FROM employees;
+
+<span class="comment">-- Returns the average of</span>
+<span class="comment">-- the non-NULL rows only</span></code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code>salary &lt;- c(50000, 62000, NA, 71000)
+
+mean(salary)            <span class="comment"># NA — one gap ruins it</span>
+mean(salary, na.rm = TRUE)   <span class="comment"># 61000</span>
+
+sd(salary, na.rm = TRUE)
+sum(is.na(salary))      <span class="comment"># 1 — count the gaps</span></code></pre>
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong>Remember <code>na.rm = TRUE</code>.</strong> Unlike SQL's aggregate functions, which skip NULLs automatically, R's <code>mean()</code>, <code>sd()</code>, <code>median()</code>, and friends return <code>NA</code> if any value is missing. Add <code>na.rm = TRUE</code> to remove the gaps before computing. Forgetting this is the single most common beginner mistake in R.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DISTRIBUTIONS & SAMPLING                     -->
+    <!-- ============================================ -->
+
+    <h2>Distributions and Random Sampling</h2>
+
+    <p>R ships with a consistent naming scheme for probability distributions. Every distribution has four functions, prefixed by a letter: <code>r</code> for random draws, <code>d</code> for density, <code>p</code> for cumulative probability, and <code>q</code> for quantiles.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Prefix</th>
+          <th>Meaning</th>
+          <th>Normal example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>r</code></td>
+          <td>Random draws</td>
+          <td><code>rnorm(100)</code></td>
+        </tr>
+        <tr>
+          <td><code>d</code></td>
+          <td>Density (PDF height)</td>
+          <td><code>dnorm(0)</code></td>
+        </tr>
+        <tr>
+          <td><code>p</code></td>
+          <td>Cumulative probability (CDF)</td>
+          <td><code>pnorm(1.96)</code></td>
+        </tr>
+        <tr>
+          <td><code>q</code></td>
+          <td>Quantile (inverse CDF)</td>
+          <td><code>qnorm(0.975)</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (NumPy / SciPy)</h5>
+        <pre><code>import numpy as np
+from scipy import stats
+
+rng = np.random.default_rng(42)
+
+<span class="comment"># 100 draws from Normal(mean=10, sd=2)</span>
+rng.normal(10, 2, size=100)
+
+<span class="comment"># Uniform, Poisson, binomial</span>
+rng.uniform(0, 1, 100)
+rng.poisson(3, 100)
+rng.binomial(10, 0.5, 100)
+
+<span class="comment"># CDF and inverse CDF</span>
+stats.norm.cdf(1.96)
+stats.norm.ppf(0.975)</code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code>set.seed(42)
+
+<span class="comment"># 100 draws from Normal(mean=10, sd=2)</span>
+rnorm(100, mean = 10, sd = 2)
+
+<span class="comment"># Uniform, Poisson, binomial</span>
+runif(100, 0, 1)
+rpois(100, lambda = 3)
+rbinom(100, size = 10, prob = 0.5)
+
+<span class="comment"># CDF and inverse CDF</span>
+pnorm(1.96)       <span class="comment"># ~0.975</span>
+qnorm(0.975)      <span class="comment"># ~1.96</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> NumPy's <code>rng.normal(mean, sd, size)</code> &rarr; R's <code>rnorm(size, mean, sd)</code> &mdash; note the size comes first in R. SciPy's <code>stats.norm.cdf()</code> &rarr; R's <code>pnorm()</code>, and <code>stats.norm.ppf()</code> &rarr; R's <code>qnorm()</code>. Once you learn the <code>r/d/p/q</code> prefix system, every distribution works the same way: <code>rpois</code>, <code>dpois</code>, <code>ppois</code>, <code>qpois</code>, and so on.</p>
+    </div>
+
+    <h3>Reproducibility with <code>set.seed()</code></h3>
+
+    <pre><code><span class="comment"># Without a seed, results change every run</span>
+rnorm(3)   <span class="comment"># different numbers each time</span>
+
+<span class="comment"># With a seed, results are reproducible</span>
+set.seed(123)
+rnorm(3)   <span class="comment"># -0.5605 -0.2302  1.5587</span>
+set.seed(123)
+rnorm(3)   <span class="comment"># exactly the same again</span></code></pre>
+
+    <div class="callout">
+      <p><strong><code>set.seed()</code> is R's <code>np.random.seed()</code>.</strong> Call it before any random operation so your analysis is reproducible. Anyone who runs your script with the same seed gets the same numbers &mdash; essential for sharing results and debugging.</p>
+    </div>
+
+    <h3>Sampling from Existing Data</h3>
+
+    <pre><code>deck &lt;- 1:52
+
+sample(deck, 5)              <span class="comment"># 5 cards, no replacement</span>
+sample(deck, 5, replace = TRUE)   <span class="comment"># with replacement</span>
+sample(deck)                <span class="comment"># shuffle the whole deck</span>
+
+<span class="comment"># Bootstrap: resample your data with replacement</span>
+data &lt;- c(4.1, 5.2, 3.8, 6.0, 4.9)
+sample(data, length(data), replace = TRUE)</code></pre>
+
+    <!-- ============================================ -->
+    <!-- CORRELATION                                  -->
+    <!-- ============================================ -->
+
+    <h2>Correlation</h2>
+
+    <p>Correlation measures how two variables move together, on a scale from <code>-1</code> to <code>1</code>. R's <code>cor()</code> handles a pair of vectors or an entire data frame at once.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (NumPy)</h5>
+        <pre><code>import numpy as np
+
+hours = [1, 2, 3, 4, 5]
+score = [52, 58, 67, 71, 79]
+
+<span class="comment"># Returns a correlation matrix</span>
+np.corrcoef(hours, score)[0, 1]
+<span class="comment"># 0.995...</span>
+
+<span class="comment"># Spearman needs SciPy</span>
+from scipy import stats
+stats.spearmanr(hours, score)</code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code>hours &lt;- c(1, 2, 3, 4, 5)
+score &lt;- c(52, 58, 67, 71, 79)
+
+<span class="comment"># Returns a single number directly</span>
+cor(hours, score)
+<span class="comment"># 0.9952...</span>
+
+<span class="comment"># Spearman is just an argument</span>
+cor(hours, score, method = "spearman")
+
+<span class="comment"># Correlation matrix of a whole frame</span>
+cor(mtcars)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>cor(x, y)</code> gives you Pearson correlation by default. Switch to <code>method = "spearman"</code> for rank correlation, or <code>"kendall"</code> for Kendall's tau &mdash; no extra library. Pass a data frame and you get the full correlation matrix, like <code>df.corr()</code> in Pandas. And <code>cor.test(x, y)</code> adds a p-value and confidence interval to the estimate.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong>Correlation is not causation, and it only catches straight-line relationships.</strong> A correlation near zero does not mean two variables are unrelated &mdash; it means they're not <em>linearly</em> related. A perfect parabola can have a Pearson correlation of zero. Always plot the data before trusting a single number.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- T-TEST                                        -->
+    <!-- ============================================ -->
+
+    <h2>Hypothesis Testing with <code>t.test()</code></h2>
+
+    <p>A t-test asks whether a difference in means is likely real or just noise. R's <code>t.test()</code> covers the common cases through one function and prints a full, readable report.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (SciPy)</h5>
+        <pre><code>from scipy import stats
+
+control = [4.1, 3.8, 4.5, 4.0, 3.9]
+treat   = [5.2, 4.9, 5.5, 5.1, 5.0]
+
+<span class="comment"># Two-sample t-test</span>
+t, p = stats.ttest_ind(
+    control, treat, equal_var=False
+)
+print(t, p)
+
+<span class="comment"># One-sample against a value</span>
+stats.ttest_1samp(control, 4.0)</code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code>control &lt;- c(4.1, 3.8, 4.5, 4.0, 3.9)
+treat   &lt;- c(5.2, 4.9, 5.5, 5.1, 5.0)
+
+<span class="comment"># Two-sample t-test (Welch by default)</span>
+t.test(control, treat)
+
+
+<span class="comment"># One-sample against a value</span>
+t.test(control, mu = 4.0)
+
+<span class="comment"># Paired test for before/after data</span>
+t.test(before, after, paired = TRUE)</code></pre>
+      </div>
+    </div>
+
+    <p>The output of <code>t.test()</code> is a printed report, not a bare number:</p>
+
+    <pre><code>	Welch Two Sample t-test
+
+data:  control and treat
+t = -6.8034, df = 7.8034, p-value = 0.0001541
+alternative hypothesis: true difference in means is not equal to 0
+95 percent confidence interval:
+ -1.4476785 -0.7123215
+sample estimates:
+mean of x mean of y
+     4.06      5.14</code></pre>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> SciPy's <code>ttest_ind(a, b, equal_var=False)</code> &rarr; R's <code>t.test(a, b)</code> &mdash; R defaults to the Welch test (unequal variances), which is the safer choice. SciPy's <code>ttest_1samp(a, value)</code> &rarr; R's <code>t.test(a, mu = value)</code>. Where SciPy returns a tuple you unpack, R prints a labeled report and also returns a list you can index: <code>t.test(...)$p.value</code>.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>Pull values out of the result.</strong> Save the test to a variable and grab pieces by name: <code>result &lt;- t.test(control, treat)</code>, then <code>result$p.value</code>, <code>result$estimate</code>, or <code>result$conf.int</code>. Almost every R modeling function returns a structured list like this.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LINEAR REGRESSION                            -->
+    <!-- ============================================ -->
+
+    <h2>Linear Regression with <code>lm()</code></h2>
+
+    <p>This is where R feels purpose-built. Fitting a model is one line, and the <em>formula syntax</em> &mdash; <code>y ~ x</code> &mdash; is a first-class part of the language, not a string you pass to a library.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (statsmodels)</h5>
+        <pre><code>import statsmodels.formula.api as smf
+
+<span class="comment"># Formula lives inside a string</span>
+model = smf.ols(
+    "mpg ~ wt + hp",
+    data=df
+).fit()
+
+print(model.summary())
+model.params        <span class="comment"># coefficients</span>
+model.predict(new_df)</code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code><span class="comment"># Formula is real R syntax, not a string</span>
+model &lt;- lm(mpg ~ wt + hp, data = mtcars)
+
+
+
+
+summary(model)
+coef(model)         <span class="comment"># coefficients</span>
+predict(model, newdata = new_df)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The formula mini-language:</strong> <code>y ~ x</code> means "model <code>y</code> as a function of <code>x</code>." Add predictors with <code>+</code>: <code>y ~ x1 + x2</code>. Include an interaction with <code>*</code>: <code>y ~ x1 * x2</code> expands to both main effects plus their interaction. Use every other column with <code>y ~ .</code>. Remove the intercept with <code>y ~ x - 1</code>. This same syntax powers <code>glm()</code>, <code>aov()</code>, and most modeling functions in R.</p>
+    </div>
+
+    <h3>Reading <code>summary(model)</code></h3>
+
+    <p>The summary is dense but every piece earns its place. Here's a fitted model and how to read it.</p>
+
+    <pre><code>model &lt;- lm(mpg ~ wt + hp, data = mtcars)
+summary(model)
+
+<span class="comment">#</span>
+<span class="comment"># Call:</span>
+<span class="comment"># lm(formula = mpg ~ wt + hp, data = mtcars)</span>
+<span class="comment">#</span>
+<span class="comment"># Residuals:</span>
+<span class="comment">#     Min      1Q  Median      3Q     Max</span>
+<span class="comment"># -3.941  -1.600  -0.182   1.050   5.854</span>
+<span class="comment">#</span>
+<span class="comment"># Coefficients:</span>
+<span class="comment">#              Estimate Std. Error t value Pr(&gt;|t|)</span>
+<span class="comment"># (Intercept) 37.22727    1.59879  23.285  &lt; 2e-16 ***</span>
+<span class="comment"># wt          -3.87783    0.63273  -6.129 1.12e-06 ***</span>
+<span class="comment"># hp          -0.03177    0.00903  -3.519  0.00145 **</span>
+<span class="comment"># ---</span>
+<span class="comment"># Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span>
+<span class="comment">#</span>
+<span class="comment"># Residual standard error: 2.593 on 29 degrees of freedom</span>
+<span class="comment"># Multiple R-squared:  0.8268, Adjusted R-squared:  0.8148</span>
+<span class="comment"># F-statistic: 69.21 on 2 and 29 DF,  p-value: 9.109e-12</span></code></pre>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Section</th>
+          <th>What it tells you</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>Estimate</code></td>
+          <td>The coefficient. Each 1-unit rise in <code>wt</code> drops <code>mpg</code> by ~3.88, holding <code>hp</code> fixed.</td>
+        </tr>
+        <tr>
+          <td><code>Std. Error</code></td>
+          <td>Uncertainty on that estimate. Smaller is more precise.</td>
+        </tr>
+        <tr>
+          <td><code>t value</code></td>
+          <td>Estimate divided by its standard error.</td>
+        </tr>
+        <tr>
+          <td><code>Pr(&gt;|t|)</code></td>
+          <td>The p-value for that predictor. The stars are a quick visual flag.</td>
+        </tr>
+        <tr>
+          <td><code>R-squared</code></td>
+          <td>Share of variance explained. 0.83 means the model captures 83% of the variation in <code>mpg</code>.</td>
+        </tr>
+        <tr>
+          <td><code>Adjusted R-squared</code></td>
+          <td>R-squared penalized for adding predictors. Use this when comparing models.</td>
+        </tr>
+        <tr>
+          <td><code>F-statistic</code></td>
+          <td>Tests whether the model as a whole beats an intercept-only model.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>Useful follow-ups after fitting:</strong> <code>coef(model)</code> for just the coefficients, <code>confint(model)</code> for their confidence intervals, <code>fitted(model)</code> for predictions on the training data, <code>residuals(model)</code> for the errors, and <code>plot(model)</code> for four diagnostic charts that check the model's assumptions.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong>A high R-squared does not mean the model is good.</strong> R will happily fit a line through anything, including data that violates every assumption behind linear regression. Check the residual plots from <code>plot(model)</code> for patterns, watch for influential outliers, and never extrapolate far beyond the range of your data. The math runs regardless of whether it should.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WORKED EXAMPLE                               -->
+    <!-- ============================================ -->
+
+    <h2>Putting It All Together</h2>
+
+    <p>A realistic mini-analysis using R's built-in <code>mtcars</code> dataset &mdash; the kind of quick exploration you'd run before reporting anything.</p>
+
+    <pre><code><span class="comment"># mtcars ships with R: 32 cars, fuel economy and specs</span>
+set.seed(7)
+
+<span class="comment"># 1. Describe the outcome we care about</span>
+summary(mtcars$mpg)
+sd(mtcars$mpg)          <span class="comment"># spread of fuel economy</span>
+
+<span class="comment"># 2. Which specs move with mpg? (correlation matrix)</span>
+cor(mtcars[, c("mpg", "wt", "hp", "disp")])
+
+<span class="comment"># 3. Do manual cars (am == 1) get better mpg than automatics?</span>
+manual    &lt;- mtcars$mpg[mtcars$am == 1]
+automatic &lt;- mtcars$mpg[mtcars$am == 0]
+
+t.test(manual, automatic)
+<span class="comment"># p-value &lt; 0.05 means the gap is unlikely to be noise</span>
+
+<span class="comment"># 4. Model mpg from weight and horsepower</span>
+model &lt;- lm(mpg ~ wt + hp, data = mtcars)
+summary(model)
+
+<span class="comment"># 5. Predict mpg for a hypothetical car</span>
+new_car &lt;- data.frame(wt = 3.0, hp = 120)
+predict(model, newdata = new_car)   <span class="comment"># ~ 21.8 mpg</span>
+
+<span class="comment"># 6. Sanity-check the model's assumptions visually</span>
+plot(model)             <span class="comment"># residuals, Q-Q, leverage, etc.</span></code></pre>
+
+    <div class="aha">
+      <p><strong>The whole workflow stayed in base R.</strong> Describe, correlate, test, model, predict, diagnose &mdash; no imports, no installs. That density is exactly why R remains the default in academic statistics, clinical trials, and econometrics, even as Python wins the broader programming world.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WHEN TO CALL A STATISTICIAN                  -->
+    <!-- ============================================ -->
+
+    <h2>When to Reach for a Statistician</h2>
+
+    <p>The honest part. Running <code>t.test()</code> or <code>lm()</code> is easy. Knowing whether the result means anything is the hard part, and that's a separate skill from writing R.</p>
+
+    <div class="warning">
+      <p><strong>Get a real statistician involved when the stakes are high.</strong> If you're designing a clinical trial, sizing a study, choosing between competing models, dealing with messy missing-data mechanisms, or making a decision that affects health, money, or policy &mdash; the cost of a subtle error far outweighs the cost of a consult. Tools like R lower the barrier to <em>running</em> a test. They don't lower the barrier to <em>interpreting</em> one correctly.</p>
+    </div>
+
+    <p>Some honest limits worth internalizing early:</p>
+
+    <ul>
+      <li><strong>p-values are widely misread.</strong> A p-value is not the probability your hypothesis is true, and <code>0.05</code> is an arbitrary line. A "significant" result can still be tiny and meaningless.</li>
+      <li><strong>Multiple comparisons inflate false positives.</strong> Run twenty tests and one will likely look significant by chance alone. There are corrections for this; know they exist.</li>
+      <li><strong>Assumptions matter.</strong> Linear regression assumes roughly linear relationships, independent errors, and constant variance. Violate them and the numbers still print &mdash; they're just wrong.</li>
+      <li><strong>Garbage in, garbage out.</strong> No test rescues biased sampling or a poorly designed study. The hardest statistical problems are upstream of any code.</li>
+    </ul>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. Why does <code>mean(x)</code> return <code>NA</code>, and how do you fix it?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because <code>x</code> contains at least one <code>NA</code>, and R refuses to silently ignore missing values. Add <code>na.rm = TRUE</code>: <code>mean(x, na.rm = TRUE)</code>. The same applies to <code>sd()</code>, <code>median()</code>, <code>var()</code>, and other summary functions. This differs from SQL, where aggregates skip NULLs automatically.</div>
+      </div>
+
+      <div class="question">
+        <p>2. What do the <code>r</code>, <code>d</code>, <code>p</code>, and <code>q</code> prefixes mean in functions like <code>rnorm</code> and <code>qnorm</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>r</code> = random draws (<code>rnorm</code>), <code>d</code> = density / PDF height (<code>dnorm</code>), <code>p</code> = cumulative probability / CDF (<code>pnorm</code>), <code>q</code> = quantile / inverse CDF (<code>qnorm</code>). The system is consistent across distributions: <code>rpois</code>, <code>dbinom</code>, <code>punif</code>, and so on. <code>pnorm</code> is SciPy's <code>norm.cdf</code>; <code>qnorm</code> is <code>norm.ppf</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>3. How is R's formula syntax different from passing a model spec in Python's statsmodels?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">In R, <code>mpg ~ wt + hp</code> is real language syntax you pass directly to <code>lm()</code>. In statsmodels you pass the same idea as a <em>string</em>: <code>"mpg ~ wt + hp"</code>. R's formulas are first-class objects, so <code>+</code> adds predictors, <code>*</code> adds an interaction, <code>.</code> means all other columns, and <code>- 1</code> drops the intercept.</div>
+      </div>
+
+      <div class="question">
+        <p>4. In <code>summary(model)</code>, what does the R-squared value tell you, and why prefer adjusted R-squared when comparing models?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">R-squared is the share of variance in the outcome the model explains (0 to 1). Adding any predictor &mdash; even a useless one &mdash; can only raise plain R-squared, so it's misleading for comparison. Adjusted R-squared penalizes extra predictors, so it can drop when you add a variable that doesn't earn its place. Use adjusted R-squared to compare models with different numbers of predictors.</div>
+      </div>
+
+      <div class="question">
+        <p>5. Why does R default to the Welch t-test, and how do you run a paired test?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">R's <code>t.test(a, b)</code> defaults to Welch's test, which does not assume the two groups have equal variances &mdash; the safer, more robust default (SciPy needs <code>equal_var=False</code> to match it). For before/after data on the same subjects, add <code>paired = TRUE</code>: <code>t.test(before, after, paired = TRUE)</code>.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/r/lessons/04-ggplot2-visualization/">&larr; Previous: Visualization with ggplot2</a>
+      <a href="/pandas/">Next: Pandas track &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 02 - Data Frames &amp; Tibbles</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #276dc3; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>02</span> Data Frames &amp; Tibbles</h1>
+    <a href="/r/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #276dc3;">A data frame is a table, and tables are where R earns its living.</strong> If you know a Pandas DataFrame or a SQL table, you already understand the shape of the thing: rows of observations, columns of variables. This lesson maps the R data frame &mdash; and its modern cousin, the tibble &mdash; onto the tools you already use, then walks through reading, inspecting, and reshaping real data.</p>
+
+    <!-- ============================================ -->
+    <!-- WHAT IS A DATA FRAME                         -->
+    <!-- ============================================ -->
+
+    <h2>What a Data Frame Actually Is</h2>
+
+    <p>A data frame is a list of columns of equal length. Each column is a vector with a single type; different columns can have different types. That is the whole idea &mdash; a spreadsheet where every column is internally consistent.</p>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> a data frame is a Pandas <code>DataFrame</code> and a SQL table at the same time. Columns are typed like SQL columns and addressable by name like Pandas Series. The difference from a matrix: a matrix is one type all the way through, while a data frame mixes types column by column.</p>
+    </div>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (Pandas)</h5>
+        <pre><code>import pandas as pd
+
+df = pd.DataFrame({
+    "name": ["Ada", "Linus", "Grace"],
+    "age": [36, 28, 45],
+    "active": [True, False, True],
+})
+
+df.shape   <span class="comment"># (3, 3)</span>
+df.columns <span class="comment"># Index(['name','age','active'])</span></code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code>df &lt;- data.frame(
+  name   = c("Ada", "Linus", "Grace"),
+  age    = c(36, 28, 45),
+  active = c(TRUE, FALSE, TRUE)
+)
+
+dim(df)    <span class="comment"># 3 3</span>
+names(df)  <span class="comment"># "name" "age" "active"</span>
+nrow(df)   <span class="comment"># 3</span>
+ncol(df)   <span class="comment"># 3</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>pd.DataFrame({...})</code> &rarr; <code>data.frame(...)</code>. Pandas uses a dict of column name to list; R uses named arguments where each argument is a <code>c()</code> vector. <code>df.shape</code> &rarr; <code>dim(df)</code>. <code>df.columns</code> &rarr; <code>names(df)</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- TIBBLES                                      -->
+    <!-- ============================================ -->
+
+    <h2>The Tibble &mdash; A Modern Data Frame</h2>
+
+    <p>A tibble is the tidyverse's data frame. It behaves like a <code>data.frame</code> but fixes a handful of old annoyances: it prints cleanly, never silently converts strings to factors, and never partial-matches column names.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>R (base data.frame)</h5>
+        <pre><code>df &lt;- data.frame(
+  name = c("Ada", "Linus"),
+  age  = c(36, 28)
+)
+
+<span class="comment"># Prints all rows, no type hints</span>
+df</code></pre>
+      </div>
+      <div>
+        <h5>R (tibble)</h5>
+        <pre><code>library(tibble)  <span class="comment"># or library(tidyverse)</span>
+
+tb &lt;- tibble(
+  name = c("Ada", "Linus"),
+  age  = c(36, 28)
+)
+
+<span class="comment"># Prints first 10 rows + column types</span>
+tb
+<span class="comment"># # A tibble: 2 x 2</span>
+<span class="comment">#   name    age</span>
+<span class="comment">#   &lt;chr&gt; &lt;dbl&gt;</span>
+<span class="comment"># 1 Ada      36</span>
+<span class="comment"># 2 Linus    28</span></code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Why people prefer tibbles:</strong> the printout tells you the column type (<code>&lt;chr&gt;</code>, <code>&lt;dbl&gt;</code>, <code>&lt;int&gt;</code>, <code>&lt;lgl&gt;</code>) right under each name, and it shows only the first 10 rows so a big table will not flood your console. Under the hood a tibble <em>is</em> a data frame &mdash; <code>class(tb)</code> includes <code>"data.frame"</code> &mdash; so anything that takes a data frame will take a tibble.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- READING DATA                                 -->
+    <!-- ============================================ -->
+
+    <h2>Reading Data &mdash; read.csv vs read_csv</h2>
+
+    <p>Base R ships with <code>read.csv()</code>. The tidyverse <code>readr</code> package adds <code>read_csv()</code> &mdash; note the underscore. They look almost identical but differ in defaults and output.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (Pandas)</h5>
+        <pre><code>import pandas as pd
+
+df = pd.read_csv("people.csv")
+
+<span class="comment"># Common options</span>
+df = pd.read_csv(
+    "people.csv",
+    na_values=["NA", ""],
+    dtype={"id": "Int64"},
+)</code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code><span class="comment"># Base R, returns a data.frame</span>
+df &lt;- read.csv("people.csv")
+
+<span class="comment"># readr, returns a tibble (preferred)</span>
+library(readr)
+df &lt;- read_csv("people.csv")
+
+<span class="comment"># read_csv guesses column types and</span>
+<span class="comment"># prints a one-line spec of what it found</span></code></pre>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Concern</th>
+          <th><code>read.csv()</code> (base)</th>
+          <th><code>read_csv()</code> (readr)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Returns</td>
+          <td><code>data.frame</code></td>
+          <td><code>tibble</code></td>
+        </tr>
+        <tr>
+          <td>Strings to factors</td>
+          <td>No (since R 4.0)</td>
+          <td>Never</td>
+        </tr>
+        <tr>
+          <td>Speed on big files</td>
+          <td>Slower</td>
+          <td>Much faster</td>
+        </tr>
+        <tr>
+          <td>Column name cleanup</td>
+          <td>Mangles spaces to dots</td>
+          <td>Keeps names as-is</td>
+        </tr>
+        <tr>
+          <td>Type guessing</td>
+          <td>Basic</td>
+          <td>Reports a column spec</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="warning">
+      <p><strong>Watch the dot versus the underscore.</strong> <code>read.csv</code> is base R; <code>read_csv</code> is readr. They are different functions with different defaults. The underscore version is the tidyverse one and is what most modern R code uses. Picking the wrong one is a common copy-paste error.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- INSPECTING                                   -->
+    <!-- ============================================ -->
+
+    <h2>Inspecting a Data Frame</h2>
+
+    <p>Before you touch a dataset, you look at it. R gives you several lenses: a peek at the top rows, a structural summary, descriptive statistics, and the tidyverse <code>glimpse()</code>.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (Pandas)</h5>
+        <pre><code>df.head()        <span class="comment"># first 5 rows</span>
+df.head(3)       <span class="comment"># first 3 rows</span>
+df.tail()        <span class="comment"># last 5 rows</span>
+
+df.info()        <span class="comment"># types + non-null counts</span>
+df.describe()    <span class="comment"># numeric summary</span>
+df.dtypes        <span class="comment"># type per column</span></code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code>head(df)         <span class="comment"># first 6 rows</span>
+head(df, 3)      <span class="comment"># first 3 rows</span>
+tail(df)         <span class="comment"># last 6 rows</span>
+
+str(df)          <span class="comment"># structure: types + samples</span>
+summary(df)      <span class="comment"># per-column summary</span>
+glimpse(df)      <span class="comment"># tidyverse: transposed view</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>df.head()</code> &rarr; <code>head(df)</code> (R defaults to 6 rows, not 5). <code>df.info()</code> &rarr; <code>str(df)</code> for a structural look, or <code>glimpse(df)</code> for the cleaner tidyverse version. <code>df.describe()</code> &rarr; <code>summary(df)</code>. R puts the data frame <em>inside</em> the function call; Pandas calls a method <em>on</em> it.</p>
+    </div>
+
+    <h3>What Each One Shows You</h3>
+
+    <pre><code><span class="comment"># str() reports type and first few values per column</span>
+str(df)
+<span class="comment"># 'data.frame': 3 obs. of 3 variables:</span>
+<span class="comment">#  $ name  : chr  "Ada" "Linus" "Grace"</span>
+<span class="comment">#  $ age   : num  36 28 45</span>
+<span class="comment">#  $ active: logi  TRUE FALSE TRUE</span>
+
+<span class="comment"># summary() gives stats: min/median/mean for numbers,</span>
+<span class="comment"># counts for factors, lengths for character</span>
+summary(df)
+
+<span class="comment"># glimpse() is str() reimagined: one row per column,</span>
+<span class="comment"># type in angle brackets, values running across</span>
+library(dplyr)
+glimpse(df)
+<span class="comment"># Rows: 3</span>
+<span class="comment"># Columns: 3</span>
+<span class="comment"># $ name   &lt;chr&gt; "Ada", "Linus", "Grace"</span>
+<span class="comment"># $ age    &lt;dbl&gt; 36, 28, 45</span>
+<span class="comment"># $ active &lt;lgl&gt; TRUE, FALSE, TRUE</span></code></pre>
+
+    <div class="callout">
+      <p><strong>Use <code>glimpse()</code> on wide tables.</strong> When a data frame has 30 columns, <code>head()</code> wraps and becomes unreadable. <code>glimpse()</code> lists one column per line, so you can scan every column and its type at a glance &mdash; the closest thing R has to Pandas <code>df.info()</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- COLUMN ACCESS                                -->
+    <!-- ============================================ -->
+
+    <h2>Column Access &mdash; $, [[ ]], and [ ]</h2>
+
+    <p>This is where R diverges most from the languages you know. There are three bracket idioms and each returns something slightly different.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (Pandas)</h5>
+        <pre><code><span class="comment"># A single column as a Series</span>
+df["age"]
+df.age          <span class="comment"># attribute access</span>
+
+<span class="comment"># A one-column DataFrame</span>
+df[["age"]]
+
+<span class="comment"># Multiple columns</span>
+df[["name", "age"]]
+
+<span class="comment"># Single cell</span>
+df.loc[0, "age"]</code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code><span class="comment"># A single column as a vector</span>
+df$age
+df[["age"]]
+
+<span class="comment"># A one-column data frame</span>
+df["age"]
+
+<span class="comment"># Multiple columns (still a data frame)</span>
+df[c("name", "age")]
+
+<span class="comment"># Single cell: [row, column]</span>
+df[1, "age"]</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> single brackets <code>[ ]</code> keep the data frame wrapper and return a data frame; double brackets <code>[[ ]]</code> and <code>$</code> reach inside and pull out the bare column vector. It mirrors Pandas exactly: <code>df["age"]</code> in Pandas gives a Series (a bare column), and in R the equivalent bare column comes from <code>df$age</code> or <code>df[["age"]]</code>. R's <em>single</em>-bracket <code>df["age"]</code> is the analog of Pandas <code>df[["age"]]</code> &mdash; it keeps the table shape.</p>
+    </div>
+
+    <h3>Row, Column, and Cell Selection</h3>
+
+    <pre><code><span class="comment"># df[rows, columns] — leave a side blank to keep all</span>
+df[1, ]            <span class="comment"># first row, all columns</span>
+df[, "age"]        <span class="comment"># all rows, age column (drops to vector)</span>
+df[1:2, c("name", "age")]  <span class="comment"># rows 1-2, two columns</span>
+
+<span class="comment"># Logical filtering — like Pandas boolean indexing</span>
+df[df$age &gt; 30, ]          <span class="comment"># rows where age &gt; 30</span>
+df[df$active, "name"]      <span class="comment"># names of active people</span></code></pre>
+
+    <div class="warning">
+      <p><strong>R is 1-based, and the comma matters.</strong> <code>df[1, ]</code> is the first row (R counts from 1, not 0). The comma separates rows from columns: <code>df[rows, cols]</code>. Forgetting the comma changes the meaning entirely &mdash; <code>df[1]</code> selects the first <em>column</em>, while <code>df[1, ]</code> selects the first <em>row</em>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- ADDING / REMOVING COLUMNS                    -->
+    <!-- ============================================ -->
+
+    <h2>Adding and Removing Columns</h2>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (Pandas)</h5>
+        <pre><code><span class="comment"># Add a column</span>
+df["age_months"] = df["age"] * 12
+
+<span class="comment"># Add a constant column</span>
+df["source"] = "import"
+
+<span class="comment"># Remove a column</span>
+df = df.drop(columns=["source"])
+
+<span class="comment"># Rename</span>
+df = df.rename(columns={"name": "full_name"})</code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code><span class="comment"># Add a column</span>
+df$age_months &lt;- df$age * 12
+
+<span class="comment"># Add a constant column (recycled)</span>
+df$source &lt;- "import"
+
+<span class="comment"># Remove a column (assign NULL)</span>
+df$source &lt;- NULL
+
+<span class="comment"># Rename via names()</span>
+names(df)[names(df) == "name"] &lt;- "full_name"</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> assigning to a new <code>df$col</code> adds or overwrites a column, exactly like <code>df["col"] = ...</code> in Pandas. The R surprise is deletion: there is no <code>drop</code> in base R &mdash; you assign <code>NULL</code> to the column and it disappears. A scalar like <code>"import"</code> is recycled to fill every row, the same as broadcasting in Pandas.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>The tidyverse way is cleaner.</strong> With dplyr you would write <code>mutate(df, age_months = age * 12)</code> to add a column and <code>select(df, -source)</code> to drop one, and <code>rename(df, full_name = name)</code> to rename. That is the subject of the next lesson; here we are staying in base R so you can see the machinery underneath.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FACTORS                                      -->
+    <!-- ============================================ -->
+
+    <h2>Factors &mdash; R's Categorical Type</h2>
+
+    <p>A factor stores categorical data: a fixed set of allowed values called levels. It is R's version of a Pandas <code>Categorical</code> or a SQL <code>ENUM</code>. Under the hood a factor is an integer vector plus a lookup table of labels.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (Pandas)</h5>
+        <pre><code>sizes = pd.Categorical(
+    ["S", "L", "M", "S"],
+    categories=["S", "M", "L"],
+    ordered=True,
+)
+
+sizes.categories  <span class="comment"># ['S','M','L']</span>
+sizes &gt; "S"       <span class="comment"># comparable when ordered</span></code></pre>
+      </div>
+      <div>
+        <h5>R</h5>
+        <pre><code>sizes &lt;- factor(
+  c("S", "L", "M", "S"),
+  levels = c("S", "M", "L"),
+  ordered = TRUE
+)
+
+levels(sizes)    <span class="comment"># "S" "M" "L"</span>
+sizes &gt; "S"      <span class="comment"># comparable when ordered</span>
+as.integer(sizes) <span class="comment"># 1 3 2 1 (the codes)</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> a factor is two things glued together &mdash; an integer code per value and a vector of level labels. <code>levels()</code> shows the labels in their defined order, which also sets sort and plot order. Set <code>ordered = TRUE</code> when the categories have a rank (small/medium/large); leave it off for plain categories (red/green/blue).</p>
+    </div>
+
+    <h3>The stringsAsFactors History</h3>
+
+    <p>For most of R's life, <code>data.frame()</code> and <code>read.csv()</code> silently turned every character column into a factor. That default was <code>stringsAsFactors = TRUE</code>, and it surprised generations of beginners whose text columns behaved like locked-down categories.</p>
+
+    <pre><code><span class="comment"># Before R 4.0 (old default, no longer the case):</span>
+df &lt;- data.frame(name = c("Ada", "Linus"))
+<span class="comment"># name was a FACTOR, not character — surprise!</span>
+
+<span class="comment"># R 4.0 (April 2020) flipped the default to FALSE.</span>
+<span class="comment"># Now character columns stay character:</span>
+df &lt;- data.frame(name = c("Ada", "Linus"))
+class(df$name)  <span class="comment"># "character"</span>
+
+<span class="comment"># You can still opt in explicitly:</span>
+df &lt;- data.frame(
+  size = c("S", "M", "L"),
+  stringsAsFactors = TRUE
+)</code></pre>
+
+    <div class="warning">
+      <p><strong>This is the classic R gotcha in old code.</strong> Scripts written before April 2020 may rely on the old <code>stringsAsFactors = TRUE</code> default and break subtly under modern R. Tibbles never did this &mdash; <code>read_csv()</code> and <code>tibble()</code> have always left strings as strings. When in doubt, check a column with <code>class()</code> and convert deliberately with <code>factor()</code> or <code>as.character()</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE BIG PICTURE TABLE                        -->
+    <!-- ============================================ -->
+
+    <h2>Concept Map Across Languages</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Concept</th>
+          <th>Python / Pandas</th>
+          <th>SQL</th>
+          <th>R</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>The table</td>
+          <td><code>DataFrame</code></td>
+          <td>table</td>
+          <td><code>data.frame</code> / <code>tibble</code></td>
+        </tr>
+        <tr>
+          <td>One column</td>
+          <td><code>Series</code></td>
+          <td>column</td>
+          <td>vector (via <code>$</code>)</td>
+        </tr>
+        <tr>
+          <td>Row count</td>
+          <td><code>len(df)</code></td>
+          <td><code>COUNT(*)</code></td>
+          <td><code>nrow(df)</code></td>
+        </tr>
+        <tr>
+          <td>Column names</td>
+          <td><code>df.columns</code></td>
+          <td><code>information_schema</code></td>
+          <td><code>names(df)</code></td>
+        </tr>
+        <tr>
+          <td>Pick columns</td>
+          <td><code>df[["a","b"]]</code></td>
+          <td><code>SELECT a, b</code></td>
+          <td><code>df[c("a","b")]</code></td>
+        </tr>
+        <tr>
+          <td>Filter rows</td>
+          <td><code>df[df.x &gt; 5]</code></td>
+          <td><code>WHERE x &gt; 5</code></td>
+          <td><code>df[df$x &gt; 5, ]</code></td>
+        </tr>
+        <tr>
+          <td>Categorical type</td>
+          <td><code>Categorical</code></td>
+          <td><code>ENUM</code></td>
+          <td><code>factor</code></td>
+        </tr>
+        <tr>
+          <td>Quick summary</td>
+          <td><code>df.describe()</code></td>
+          <td>&mdash;</td>
+          <td><code>summary(df)</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- WORKED EXAMPLE                               -->
+    <!-- ============================================ -->
+
+    <h2>Putting It All Together</h2>
+
+    <p>A realistic walk-through: load a CSV of survey responses, inspect it, clean a column into a factor, derive a new column, and pull out a slice &mdash; the everyday loop of working with tabular data in R.</p>
+
+    <pre><code>library(readr)
+library(dplyr)
+
+<span class="comment"># 1. Read the file as a tibble (types are guessed)</span>
+survey &lt;- read_csv("survey.csv")
+
+<span class="comment"># 2. Look before you leap</span>
+glimpse(survey)
+<span class="comment"># Rows: 250</span>
+<span class="comment"># Columns: 4</span>
+<span class="comment"># $ id       &lt;dbl&gt; 1, 2, 3, ...</span>
+<span class="comment"># $ age      &lt;dbl&gt; 34, 51, 22, ...</span>
+<span class="comment"># $ size     &lt;chr&gt; "M", "L", "S", ...</span>
+<span class="comment"># $ rating   &lt;dbl&gt; 4, 5, 2, ...</span>
+
+summary(survey$rating)   <span class="comment"># min/median/mean/max</span>
+
+<span class="comment"># 3. Turn the size text into an ordered factor</span>
+survey$size &lt;- factor(
+  survey$size,
+  levels = c("S", "M", "L"),
+  ordered = TRUE
+)
+levels(survey$size)      <span class="comment"># "S" "M" "L"</span>
+
+<span class="comment"># 4. Derive a new column (recycled comparison)</span>
+survey$is_fan &lt;- survey$rating &gt;= 4
+
+<span class="comment"># 5. Slice: ids of large-size fans, base-R style</span>
+big_fans &lt;- survey[survey$size == "L" &amp; survey$is_fan,
+                   c("id", "rating")]
+
+<span class="comment"># 6. Confirm the result</span>
+nrow(big_fans)
+head(big_fans)
+
+<span class="comment"># Drop a working column when done</span>
+survey$is_fan &lt;- NULL</code></pre>
+
+    <div class="callout">
+      <p><strong>Notice the rhythm:</strong> read, inspect, clean, derive, slice, confirm. It is the same loop you run in Pandas or SQL &mdash; only the syntax changes. The next lesson swaps this base-R machinery for dplyr verbs (<code>filter</code>, <code>select</code>, <code>mutate</code>) chained with the pipe, which reads far closer to a SQL query.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. What is the difference between <code>df$age</code> and <code>df["age"]</code> in R?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>df$age</code> (like <code>df[["age"]]</code>) reaches inside and returns the bare column as a vector. <code>df["age"]</code> with single brackets keeps the data frame wrapper and returns a one-column data frame. The Pandas parallel: <code>df$age</code> is like <code>df["age"]</code> (a Series), while R's <code>df["age"]</code> is like Pandas <code>df[["age"]]</code> (a DataFrame).</div>
+      </div>
+
+      <div class="question">
+        <p>2. How do you select the first row of a data frame, and why is the comma important?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>df[1, ]</code>. R is 1-based, so index 1 is the first row. The comma separates rows from columns in <code>df[rows, cols]</code>; leaving the column side blank keeps all columns. Without the comma, <code>df[1]</code> selects the first <em>column</em> instead.</div>
+      </div>
+
+      <div class="question">
+        <p>3. What is the difference between <code>read.csv()</code> and <code>read_csv()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>read.csv()</code> is base R and returns a <code>data.frame</code>. <code>read_csv()</code> (with an underscore) is from the readr package, returns a tibble, is faster on large files, never converts strings to factors, and prints a column-type spec. Modern R code generally uses <code>read_csv()</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>4. How do you remove a column from a base R data frame?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Assign <code>NULL</code> to it: <code>df$source &lt;- NULL</code>. There is no <code>drop</code> method in base R. The dplyr alternative is <code>select(df, -source)</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>5. What was <code>stringsAsFactors</code>, and what changed in R 4.0?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It was a default that made <code>data.frame()</code> and <code>read.csv()</code> turn character columns into factors automatically. Until R 4.0 (April 2020) the default was <code>TRUE</code>, which surprised beginners; R 4.0 flipped it to <code>FALSE</code> so strings stay strings. Tibbles never did this conversion at all.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/r/lessons/01-r-basics-vectors/">&larr; Previous: R Basics &amp; Vectors</a>
+      <a href="/r/lessons/03-tidyverse-dplyr/">Next: The Tidyverse: dplyr &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

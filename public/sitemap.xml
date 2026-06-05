@@ -93,6 +93,11 @@
   <url><loc>https://learn-coding-iota.vercel.app/jsts/projects/</loc></url>
   <url><loc>https://learn-coding-iota.vercel.app/jsts/references/use-cases/</loc></url>
   <url><loc>https://learn-coding-iota.vercel.app/pandas/</loc></url>
+  <url><loc>https://learn-coding-iota.vercel.app/pandas/lessons/01-dataframes-series/</loc></url>
+  <url><loc>https://learn-coding-iota.vercel.app/pandas/lessons/02-filtering-selecting/</loc></url>
+  <url><loc>https://learn-coding-iota.vercel.app/pandas/lessons/03-cleaning-data/</loc></url>
+  <url><loc>https://learn-coding-iota.vercel.app/pandas/lessons/04-grouping-aggregation/</loc></url>
+  <url><loc>https://learn-coding-iota.vercel.app/pandas/lessons/05-merging-reshaping/</loc></url>
   <url><loc>https://learn-coding-iota.vercel.app/pod/</loc></url>
   <url><loc>https://learn-coding-iota.vercel.app/pod/ai/01-how-llms-work/</loc></url>
   <url><loc>https://learn-coding-iota.vercel.app/pod/ai/02-prompt-engineering/</loc></url>
@@ -119,6 +124,11 @@
   <url><loc>https://learn-coding-iota.vercel.app/python/lessons/04-python-oop/</loc></url>
   <url><loc>https://learn-coding-iota.vercel.app/python/lessons/05-python-data-files/</loc></url>
   <url><loc>https://learn-coding-iota.vercel.app/r/</loc></url>
+  <url><loc>https://learn-coding-iota.vercel.app/r/lessons/01-r-basics-vectors/</loc></url>
+  <url><loc>https://learn-coding-iota.vercel.app/r/lessons/02-data-frames-tibbles/</loc></url>
+  <url><loc>https://learn-coding-iota.vercel.app/r/lessons/03-tidyverse-dplyr/</loc></url>
+  <url><loc>https://learn-coding-iota.vercel.app/r/lessons/04-ggplot2-visualization/</loc></url>
+  <url><loc>https://learn-coding-iota.vercel.app/r/lessons/05-statistics-in-r/</loc></url>
   <url><loc>https://learn-coding-iota.vercel.app/react/</loc></url>
   <url><loc>https://learn-coding-iota.vercel.app/react/games/</loc></url>
   <url><loc>https://learn-coding-iota.vercel.app/react/lessons/00-syllabus/</loc></url>

@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 04 - Visualization with ggplot2</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #276dc3; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>04</span> Visualization with ggplot2</h1>
+    <a href="/r/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #276dc3;">A ggplot2 chart is a sentence you build word by word.</strong> Instead of calling one big "make a chart" function with a wall of arguments, you start with data, declare which columns map to which visual properties, then add geometry, scales, labels, and themes as layers joined by <code>+</code>. If you have ever chained methods in pandas or stacked layers in D3, the grammar will feel familiar &mdash; just cleaner.</p>
+
+    <!-- ============================================ -->
+    <!-- THE GRAMMAR                                  -->
+    <!-- ============================================ -->
+
+    <h2>The Grammar of Graphics</h2>
+
+    <p>Most plotting libraries are <em>imperative</em>: you issue commands one after another &mdash; draw axes, add bars, set a title. ggplot2 is <em>declarative</em>: you describe the chart as a structured object, and it figures out the drawing. Every plot is the same three ingredients.</p>
+
+    <pre><code>ggplot(data = penguins) +                       <span class="comment"># 1. the data frame</span>
+  aes(x = flipper_length_mm, y = body_mass_g) +  <span class="comment"># 2. mapping: columns -&gt; visuals</span>
+  geom_point()                                   <span class="comment"># 3. geometry: how to draw it</span></code></pre>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>ggplot(data)</code> is the canvas, <code>aes(mapping)</code> says "this column controls the x position, that one controls color," and each <code>geom_*()</code> is a layer of marks drawn from that mapping. You join the pieces with <code>+</code>, not the pipe. The same grammar produces a scatter plot, a bar chart, or a histogram &mdash; you just swap the geom.</p>
+    </div>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (matplotlib, imperative)</h5>
+        <pre><code>import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+ax.scatter(df["flipper_length_mm"],
+           df["body_mass_g"])
+ax.set_xlabel("Flipper length (mm)")
+ax.set_ylabel("Body mass (g)")
+ax.set_title("Penguins")
+plt.show()
+<span class="comment"># Each line mutates the figure in place.</span></code></pre>
+      </div>
+      <div>
+        <h5>R (ggplot2, declarative)</h5>
+        <pre><code>library(ggplot2)
+
+ggplot(penguins,
+       aes(x = flipper_length_mm,
+           y = body_mass_g)) +
+  geom_point() +
+  labs(x = "Flipper length (mm)",
+       y = "Body mass (g)",
+       title = "Penguins")
+<span class="comment"># You describe the chart; ggplot draws it.</span></code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Where ggplot2 comes from.</strong> It is the most-used package in the tidyverse for charts, written by Hadley Wickham and built directly on Leland Wilkinson's book <em>The Grammar of Graphics</em>. The "gg" in the name is literally those two words. Load it with <code>library(ggplot2)</code>, or get it for free with <code>library(tidyverse)</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- AES                                          -->
+    <!-- ============================================ -->
+
+    <h2>aes() &mdash; Mapping Data to Visuals</h2>
+
+    <p>The single idea that unlocks ggplot2: <code>aes()</code> connects a <em>column</em> in your data to a <em>visual property</em> (an "aesthetic") &mdash; position, color, size, shape, transparency. You never set those properties row by row. You declare the mapping once, and ggplot applies it across every row.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL (the columns you have)</h5>
+        <pre><code>SELECT
+  flipper_length_mm,   <span class="comment">-- goes on x</span>
+  body_mass_g,         <span class="comment">-- goes on y</span>
+  species              <span class="comment">-- becomes color</span>
+FROM penguins;</code></pre>
+      </div>
+      <div>
+        <h5>R (the mapping in aes)</h5>
+        <pre><code>ggplot(penguins,
+  aes(
+    x     = flipper_length_mm,
+    y     = body_mass_g,
+    color = species   <span class="comment"># one color per species</span>
+  )) +
+  geom_point()</code></pre>
+      </div>
+    </div>
+
+    <p>Note what you did <em>not</em> write: no loop, no "if species == Adelie use blue." You said "color is driven by species," and ggplot assigned a distinct color to each value and drew a legend automatically.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Aesthetic</th>
+          <th>What it controls</th>
+          <th>Typical column type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>x</code>, <code>y</code></td>
+          <td>Position on the axes</td>
+          <td>Numeric, or categorical</td>
+        </tr>
+        <tr>
+          <td><code>color</code> / <code>colour</code></td>
+          <td>Outline / point / line color</td>
+          <td>Categorical or numeric</td>
+        </tr>
+        <tr>
+          <td><code>fill</code></td>
+          <td>Interior fill (bars, areas)</td>
+          <td>Categorical or numeric</td>
+        </tr>
+        <tr>
+          <td><code>size</code></td>
+          <td>Point size, line width</td>
+          <td>Numeric</td>
+        </tr>
+        <tr>
+          <td><code>shape</code></td>
+          <td>Point marker shape</td>
+          <td>Categorical</td>
+        </tr>
+        <tr>
+          <td><code>alpha</code></td>
+          <td>Transparency (0&ndash;1)</td>
+          <td>Numeric</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>Both spellings work.</strong> ggplot2 accepts <code>color</code> and <code>colour</code> as aliases &mdash; a nod to its New Zealand author. Pick one and stay consistent. This lesson uses <code>color</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- MAPPING VS SETTING                           -->
+    <!-- ============================================ -->
+
+    <h2>Mapping vs Setting &mdash; The Single Biggest Gotcha</h2>
+
+    <p>This trips up everyone once. There are two completely different ways to give a geom a color, and putting things in the wrong place is the most common ggplot2 bug.</p>
+
+    <ul>
+      <li><strong>Mapping</strong> (inside <code>aes()</code>): the property comes from a <em>column</em>. ggplot reads each row and picks the color/size/shape from the data.</li>
+      <li><strong>Setting</strong> (outside <code>aes()</code>, as a plain geom argument): the property is a <em>constant</em> you choose for every mark.</li>
+    </ul>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Mapping &mdash; color from a column</h5>
+        <pre><code><span class="comment"># color is INSIDE aes(): driven by data.</span>
+ggplot(penguins,
+  aes(x = flipper_length_mm,
+      y = body_mass_g)) +
+  geom_point(aes(color = species))
+
+<span class="comment"># Result: each species gets its own</span>
+<span class="comment"># color + a legend appears.</span></code></pre>
+      </div>
+      <div>
+        <h5>Setting &mdash; a fixed color</h5>
+        <pre><code><span class="comment"># color is OUTSIDE aes(): a constant.</span>
+ggplot(penguins,
+  aes(x = flipper_length_mm,
+      y = body_mass_g)) +
+  geom_point(color = "steelblue")
+
+<span class="comment"># Result: every point is the same</span>
+<span class="comment"># blue. No legend.</span></code></pre>
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong>The classic mistake:</strong> <code>geom_point(color = "blue")</code> inside <code>aes()</code> &mdash; as in <code>aes(color = "blue")</code> &mdash; does <em>not</em> make your points blue. ggplot treats <code>"blue"</code> as a one-level categorical column named "blue," maps it through the color scale, and you get a salmon-red point with a legend labeled "blue." If you want a literal color, set it <em>outside</em> <code>aes()</code>. If you want color to depend on data, map it <em>inside</em> <code>aes()</code>.</p>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> "this visual depends on the data" &rarr; put it inside <code>aes()</code>. "this visual is a fixed style choice" &rarr; put it as a bare argument to the geom. In matplotlib you would write <code>ax.scatter(..., c=df["species"])</code> for the first and <code>ax.scatter(..., color="steelblue")</code> for the second &mdash; ggplot makes the distinction explicit with the <code>aes()</code> wrapper.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THE GEOMS                                    -->
+    <!-- ============================================ -->
+
+    <h2>geom_*() &mdash; The Layer Vocabulary</h2>
+
+    <p>The geom decides what kind of mark gets drawn from your mapping. Same data, same <code>aes()</code>, different geom, different chart. Here are the four you will reach for constantly.</p>
+
+    <h3>geom_point &mdash; scatter plots</h3>
+
+    <pre><code>ggplot(penguins, aes(x = flipper_length_mm, y = body_mass_g)) +
+  geom_point()
+<span class="comment"># Two numeric columns -&gt; a dot per row. The workhorse for correlations.</span></code></pre>
+
+    <h3>geom_line &mdash; trends over an ordered x</h3>
+
+    <pre><code>ggplot(stocks, aes(x = date, y = price)) +
+  geom_line()
+<span class="comment"># Connects points in x order. Use for time series, not unordered categories.</span></code></pre>
+
+    <h3>geom_col and geom_bar &mdash; bars</h3>
+
+    <div class="side-by-side">
+      <div>
+        <h5>geom_col &mdash; you give the height</h5>
+        <pre><code><span class="comment"># Data already has a y value per category.</span>
+ggplot(sales,
+  aes(x = region, y = total)) +
+  geom_col()
+<span class="comment"># Draws bar of height = total. Like</span>
+<span class="comment"># SELECT region, SUM(total) ... already done.</span></code></pre>
+      </div>
+      <div>
+        <h5>geom_bar &mdash; ggplot counts for you</h5>
+        <pre><code><span class="comment"># No y: it counts rows per category.</span>
+ggplot(penguins,
+  aes(x = species)) +
+  geom_bar()
+<span class="comment"># Equivalent to a GROUP BY species,</span>
+<span class="comment"># COUNT(*) under the hood.</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>geom_col vs geom_bar:</strong> <code>geom_col()</code> uses the y value you supply (you already aggregated). <code>geom_bar()</code> ignores y and counts rows itself (<code>stat = "count"</code>). If your data frame already has one row per bar with a total, use <code>geom_col()</code>. If you have raw rows and want a frequency count, use <code>geom_bar()</code>.</p>
+    </div>
+
+    <h3>geom_histogram &mdash; distribution of one numeric column</h3>
+
+    <pre><code>ggplot(penguins, aes(x = body_mass_g)) +
+  geom_histogram(bins = 30)
+<span class="comment"># Buckets a numeric column and counts how many rows fall in each bin.</span>
+<span class="comment"># Set bins (count) or binwidth (size). Always tune one of them.</span></code></pre>
+
+    <div class="warning">
+      <p><strong>The default 30 bins is rarely right.</strong> ggplot2 warns: "stat_bin() using bins = 30. Pick better value with binwidth." Always set <code>bins =</code> or <code>binwidth =</code> deliberately so the shape of your distribution is honest, not an artifact of the default.</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Goal</th>
+          <th>Geom</th>
+          <th>Pandas / matplotlib analogue</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Two numerics, relationship</td>
+          <td><code>geom_point()</code></td>
+          <td><code>df.plot.scatter(x, y)</code></td>
+        </tr>
+        <tr>
+          <td>Trend over ordered x</td>
+          <td><code>geom_line()</code></td>
+          <td><code>df.plot.line(x, y)</code></td>
+        </tr>
+        <tr>
+          <td>Pre-aggregated bars</td>
+          <td><code>geom_col()</code></td>
+          <td><code>df.plot.bar()</code></td>
+        </tr>
+        <tr>
+          <td>Count rows per category</td>
+          <td><code>geom_bar()</code></td>
+          <td><code>df["c"].value_counts().plot.bar()</code></td>
+        </tr>
+        <tr>
+          <td>Distribution of one numeric</td>
+          <td><code>geom_histogram()</code></td>
+          <td><code>df["x"].plot.hist()</code></td>
+        </tr>
+        <tr>
+          <td>Smoothed trend / fit line</td>
+          <td><code>geom_smooth()</code></td>
+          <td>seaborn <code>regplot</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ============================================ -->
+    <!-- LAYERING                                     -->
+    <!-- ============================================ -->
+
+    <h2>Stacking Layers with +</h2>
+
+    <p>The real payoff of the grammar: a plot can carry several geoms at once, and they share the same data and mapping. Want raw points <em>and</em> a trend line? Add both layers.</p>
+
+    <pre><code>ggplot(penguins, aes(x = flipper_length_mm, y = body_mass_g)) +
+  geom_point(aes(color = species)) +       <span class="comment"># layer 1: the dots, colored by species</span>
+  geom_smooth(method = "lm", se = FALSE)   <span class="comment"># layer 2: a linear fit line on top</span></code></pre>
+
+    <div class="aha">
+      <p><strong>If you know D3, this is the same idea.</strong> In D3 you select a layer, bind data, and append marks &mdash; then do it again for the next layer. ggplot2 hides the SVG plumbing: each <code>+ geom_*()</code> is one more <code>.append()</code> of marks bound to the same data. The difference is you describe <em>what</em> the layer is, not how to draw every element.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>Order matters for overlap.</strong> Layers draw bottom to top in the order you write them. Put <code>geom_point()</code> before <code>geom_smooth()</code> and the line sits on top of the dots; flip them and the dots cover the line. It is z-order, controlled by source order.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- SCALES                                       -->
+    <!-- ============================================ -->
+
+    <h2>Scales &mdash; Controlling How Mappings Render</h2>
+
+    <p>A scale governs how a mapped column turns into pixels, colors, or tick marks. ggplot picks sensible defaults, but <code>scale_*()</code> functions let you override them. The naming is regular: <code>scale_</code> + the aesthetic + how it varies.</p>
+
+    <pre><code>ggplot(penguins, aes(x = flipper_length_mm, y = body_mass_g, color = species)) +
+  geom_point() +
+  scale_x_continuous(limits = c(170, 240)) +        <span class="comment"># zoom the x axis</span>
+  scale_y_continuous(labels = scales::comma) +      <span class="comment"># 6,000 not 6000</span>
+  scale_color_brewer(palette = "Set2")              <span class="comment"># swap the color palette</span></code></pre>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Function</th>
+          <th>What it does</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>scale_x_continuous()</code></td>
+          <td>Numeric x axis: limits, breaks, label format</td>
+        </tr>
+        <tr>
+          <td><code>scale_y_log10()</code></td>
+          <td>Log-transform the y axis</td>
+        </tr>
+        <tr>
+          <td><code>scale_color_manual(values = ...)</code></td>
+          <td>Pick exact colors by hand</td>
+        </tr>
+        <tr>
+          <td><code>scale_color_brewer(palette = ...)</code></td>
+          <td>Use a ColorBrewer palette</td>
+        </tr>
+        <tr>
+          <td><code>scale_fill_viridis_c()</code></td>
+          <td>Perceptually uniform fill for a continuous variable</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>The <code>scales::comma</code> trick</strong> formats axis labels. The <code>scales</code> package (a ggplot2 companion) gives you <code>comma</code>, <code>dollar</code>, and <code>percent</code> &mdash; so a y axis can read <code>$1,500</code> or <code>25%</code> instead of raw numbers. The <code>scales::</code> prefix calls a function without attaching the whole package.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- LABS                                         -->
+    <!-- ============================================ -->
+
+    <h2>labs() &mdash; Titles and Labels</h2>
+
+    <p>One function sets every text label on the plot: title, subtitle, axis names, legend names, and a caption. The legend label comes from the aesthetic it is tied to.</p>
+
+    <pre><code>ggplot(penguins, aes(x = flipper_length_mm, y = body_mass_g, color = species)) +
+  geom_point() +
+  labs(
+    title    = "Bigger flippers, heavier penguins",
+    subtitle = "Palmer Archipelago, 2007 to 2009",
+    x        = "Flipper length (mm)",
+    y        = "Body mass (g)",
+    color    = "Species",            <span class="comment"># renames the legend title</span>
+    caption  = "Source: palmerpenguins"
+  )</code></pre>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> matplotlib spreads labels across <code>set_title</code>, <code>set_xlabel</code>, <code>set_ylabel</code>, <code>legend(title=...)</code>. ggplot folds them all into one <code>labs()</code> call where the argument name is the aesthetic. Want to rename the color legend? Set <code>color = "Species"</code> inside <code>labs()</code> &mdash; the same name you used in <code>aes()</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- FACETS                                       -->
+    <!-- ============================================ -->
+
+    <h2>facet_wrap() &mdash; Small Multiples</h2>
+
+    <p>Faceting splits one plot into a grid of sub-plots, one per group, all sharing the same axes. It is the "small multiples" technique: instead of cramming three species into one cluttered scatter, give each its own panel for honest comparison.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL (the grouping idea)</h5>
+        <pre><code><span class="comment">-- One result set per species,</span>
+<span class="comment">-- then you would chart each.</span>
+SELECT * FROM penguins
+ORDER BY species;
+<span class="comment"># You'd loop and plot per group by hand.</span></code></pre>
+      </div>
+      <div>
+        <h5>R (one line does it)</h5>
+        <pre><code>ggplot(penguins,
+  aes(x = flipper_length_mm,
+      y = body_mass_g)) +
+  geom_point() +
+  facet_wrap(~ species)
+<span class="comment"># One panel per species, shared axes.</span></code></pre>
+      </div>
+    </div>
+
+    <p>The <code>~ species</code> is a <em>formula</em>: the tilde means "by." For a grid split across two variables, use <code>facet_grid(rows ~ cols)</code>.</p>
+
+    <pre><code>facet_wrap(~ species)              <span class="comment"># one variable, panels wrap onto multiple rows</span>
+facet_wrap(~ species, ncol = 1)   <span class="comment"># force a single column</span>
+facet_grid(island ~ species)      <span class="comment"># 2D grid: islands down, species across</span>
+facet_wrap(~ year, scales = "free_y")  <span class="comment"># let each panel scale its own y axis</span></code></pre>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> faceting in ggplot2 is <code>df.groupby(...)</code> followed by drawing the same chart per group &mdash; but as one declaration instead of a loop. In pandas you would iterate groups and call <code>subplots</code>; here <code>facet_wrap(~ col)</code> does the split, the layout, and the matching axes for you.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- THEMES                                       -->
+    <!-- ============================================ -->
+
+    <h2>Themes &mdash; The Non-Data Look</h2>
+
+    <p>Themes control everything that is not the data: background, gridlines, fonts, legend position, tick marks. Swapping a complete theme is one layer; tweaking a single element is <code>theme()</code>.</p>
+
+    <pre><code>ggplot(penguins, aes(x = flipper_length_mm, y = body_mass_g, color = species)) +
+  geom_point() +
+  theme_minimal() +                       <span class="comment"># a clean, full preset theme</span>
+  theme(legend.position = "bottom")        <span class="comment"># then override one detail</span></code></pre>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Theme</th>
+          <th>Look</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>theme_gray()</code></td>
+          <td>Default: gray panel, white gridlines</td>
+        </tr>
+        <tr>
+          <td><code>theme_minimal()</code></td>
+          <td>No panel border, light gridlines</td>
+        </tr>
+        <tr>
+          <td><code>theme_bw()</code></td>
+          <td>White background, thin black border</td>
+        </tr>
+        <tr>
+          <td><code>theme_classic()</code></td>
+          <td>Axis lines only, no gridlines</td>
+        </tr>
+        <tr>
+          <td><code>theme_void()</code></td>
+          <td>Nothing but the data (good for maps)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="warning">
+      <p><strong>Apply the preset theme before your tweaks.</strong> A full theme like <code>theme_minimal()</code> resets every element, so it overwrites earlier <code>theme()</code> calls. Order it <em>before</em> a custom <code>theme(...)</code>, or your one-off adjustments get wiped out.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DPLYR + GGPLOT                               -->
+    <!-- ============================================ -->
+
+    <h2>Piping dplyr into ggplot</h2>
+
+    <p>In real work you rarely chart raw data. You filter, group, and summarise first &mdash; then plot. dplyr uses the pipe (<code>|&gt;</code> in base R, <code>%&gt;%</code> from magrittr); ggplot2 layers use <code>+</code>. They meet at exactly one spot: the pipe hands the cleaned data frame into <code>ggplot()</code>, and from there you switch to <code>+</code>.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>Python (pandas, then plot)</h5>
+        <pre><code>(df
+  .query("body_mass_g.notna()")
+  .groupby("species", as_index=False)
+  .agg(avg_mass=("body_mass_g", "mean"))
+  .plot.bar(x="species", y="avg_mass"))</code></pre>
+      </div>
+      <div>
+        <h5>R (dplyr pipe, then ggplot)</h5>
+        <pre><code>penguins |&gt;
+  filter(!is.na(body_mass_g)) |&gt;
+  group_by(species) |&gt;
+  summarise(avg_mass = mean(body_mass_g)) |&gt;
+  ggplot(aes(x = species, y = avg_mass)) +
+    geom_col()</code></pre>
+      </div>
+    </div>
+
+    <div class="warning">
+      <p><strong>Watch the operator switch.</strong> Use <code>|&gt;</code> to chain dplyr verbs, but the moment you reach <code>ggplot()</code>, every following layer joins with <code>+</code>. Writing <code>ggplot(...) |&gt; geom_col()</code> fails, and <code>filter(...) + group_by(...)</code> fails. The pipe carries data; the plus stacks plot layers. Note that when data arrives via the pipe, you skip the first <code>ggplot()</code> argument and pass <code>aes()</code> directly.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WORKED EXAMPLE                               -->
+    <!-- ============================================ -->
+
+    <h2>Putting It All Together</h2>
+
+    <p>A realistic chart that uses the whole grammar &mdash; clean the data, map several aesthetics, stack two geoms, format the scales, label everything, facet, and theme. This is the shape of a publication-ready figure.</p>
+
+    <pre><code>library(tidyverse)   <span class="comment"># dplyr + ggplot2 + scales, all at once</span>
+
+penguins |&gt;
+  <span class="comment"># 1. Clean: drop rows missing the columns we plot</span>
+  filter(!is.na(flipper_length_mm), !is.na(body_mass_g)) |&gt;
+
+  <span class="comment"># 2. Canvas + base mapping</span>
+  ggplot(aes(x = flipper_length_mm, y = body_mass_g)) +
+
+  <span class="comment"># 3. Layer one: the points, colored by sex (mapped inside aes)</span>
+  geom_point(aes(color = sex), alpha = 0.7) +   <span class="comment"># alpha set, not mapped</span>
+
+  <span class="comment"># 4. Layer two: a linear trend line per panel</span>
+  geom_smooth(method = "lm", se = FALSE, color = "grey30") +
+
+  <span class="comment"># 5. Small multiples: one panel per species</span>
+  facet_wrap(~ species) +
+
+  <span class="comment"># 6. Scales: comma-format the mass axis, choose a palette</span>
+  scale_y_continuous(labels = scales::comma) +
+  scale_color_brewer(palette = "Dark2", na.translate = FALSE) +
+
+  <span class="comment"># 7. Every label in one place</span>
+  labs(
+    title    = "Flipper length predicts body mass across species",
+    subtitle = "Palmer penguins, split by species, trend line fitted per panel",
+    x        = "Flipper length (mm)",
+    y        = "Body mass (g)",
+    color    = "Sex",
+    caption  = "Source: palmerpenguins"
+  ) +
+
+  <span class="comment"># 8. Look and feel last, so it does not get overwritten</span>
+  theme_minimal() +
+  theme(legend.position = "bottom")</code></pre>
+
+    <div class="aha">
+      <p><strong>Read it top to bottom and it reads like a recipe:</strong> take the data, keep complete rows, set up the axes, drop the colored points, add a fit line, split into panels, format the numbers, write the labels, polish the theme. No single function had a dozen arguments. Each line did one job. That is the grammar of graphics paying off &mdash; the same eight moves describe almost any chart you will ever build in R.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. What are the three core ingredients of every ggplot2 chart, and what joins them?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">A data frame in <code>ggplot(data)</code>, a mapping in <code>aes(...)</code> that ties columns to visual properties, and one or more <code>geom_*()</code> layers that draw the marks. They are joined with <code>+</code>, not the pipe.</div>
+      </div>
+
+      <div class="question">
+        <p>2. Why does <code>geom_point(aes(color = "blue"))</code> not produce blue points?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Because it is inside <code>aes()</code>, ggplot treats <code>"blue"</code> as a categorical column with one value, maps it through the color scale, and draws the default first color with a legend labeled "blue." For a literal color, set it <em>outside</em> <code>aes()</code>: <code>geom_point(color = "blue")</code>. Mapping = from data; setting = a constant.</div>
+      </div>
+
+      <div class="question">
+        <p>3. When would you use <code>geom_col()</code> instead of <code>geom_bar()</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use <code>geom_col()</code> when your data already has a y value per bar (you aggregated, e.g. one row per region with a total). Use <code>geom_bar()</code> when you have raw rows and want ggplot to count them per category &mdash; it is a built-in <code>GROUP BY</code> with <code>COUNT(*)</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What does <code>facet_wrap(~ species)</code> do, and what is the pandas equivalent?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">It splits the plot into small multiples &mdash; one panel per species, all sharing the same axes. The tilde formula means "by species." In pandas you would <code>groupby("species")</code> and draw the same chart per group in a loop; faceting does the split, layout, and matching axes in one declaration.</div>
+      </div>
+
+      <div class="question">
+        <p>5. You chain dplyr verbs with the pipe, then want to plot. What operator change do you make, and why?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Keep using <code>|&gt;</code> (or <code>%&gt;%</code>) to pipe data through <code>filter</code>, <code>group_by</code>, <code>summarise</code> and into <code>ggplot()</code>. From <code>ggplot()</code> onward, switch to <code>+</code> to stack layers. The pipe carries the data frame forward; the plus adds plot layers. Mixing them up is an error.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/r/lessons/03-tidyverse-dplyr/">&larr; Previous: The Tidyverse: dplyr</a>
+      <a href="/r/lessons/05-statistics-in-r/">Next: Statistics in R &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>

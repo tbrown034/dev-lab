@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 03 - Cleaning Data</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/lesson.css">
+  <style>:root { --track-color: #e70488; }</style>
+</head>
+<body>
+  <div class="header">
+    <h1><span>03</span> Cleaning Data</h1>
+    <a href="/pandas/">&larr; Back to lessons</a>
+  </div>
+
+  <div class="content">
+
+    <p style="color: #888; font-size: 1rem; margin-bottom: 1rem;"><strong style="color: #e70488;">Real data is filthy, and cleaning it is the job.</strong> Nobody tells you this in tutorials, but roughly 80% of analysis work is fixing missing values, wrong types, bad dates, duplicate rows, and inconsistent strings. This lesson is the unglamorous craft &mdash; the same defensive thinking you already do with SQL <code>NULL</code>s and sloppy JSON, translated into pandas.</p>
+
+    <!-- ============================================ -->
+    <!-- MISSING DATA                                 -->
+    <!-- ============================================ -->
+
+    <h2>Missing Data &mdash; NaN, isna, notna</h2>
+
+    <p>Every dataset has holes. In SQL it's <code>NULL</code>. In JavaScript it's <code>null</code> or <code>undefined</code>. In pandas it's <code>NaN</code> (a special float) or <code>None</code>, and pandas treats them as the same thing when you ask "is this missing?"</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- Find rows with a missing email</span>
+SELECT *
+FROM users
+WHERE email IS NULL;
+
+<span class="comment">-- Find rows that DO have one</span>
+SELECT *
+FROM users
+WHERE email IS NOT NULL;
+
+<span class="comment">-- Count the gaps</span>
+SELECT COUNT(*) - COUNT(email)
+FROM users;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code>import pandas as pd
+
+<span class="comment"># Boolean mask of missing values</span>
+df["email"].isna()      <span class="comment"># True where NaN/None</span>
+
+<span class="comment"># Rows that DO have an email</span>
+df[df["email"].notna()]
+
+<span class="comment"># Count the gaps per column</span>
+df.isna().sum()         <span class="comment"># a count for every column</span></code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>IS NULL</code> &rarr; <code>.isna()</code> and <code>IS NOT NULL</code> &rarr; <code>.notna()</code>. The big difference from SQL: <code>.isna()</code> returns a whole column of <code>True</code>/<code>False</code> (a boolean mask), not a filter you bolt onto a query. You then feed that mask back into <code>df[...]</code> to select rows, exactly like the filtering you saw in the last lesson.</p>
+    </div>
+
+    <div class="warning">
+      <p><strong><code>NaN</code> is not equal to anything &mdash; not even itself.</strong> Just like SQL's <code>NULL = NULL</code> is never true, <code>df["x"] == None</code> does <em>not</em> work in pandas. <code>NaN == NaN</code> is <code>False</code>. Always use <code>.isna()</code> / <code>.notna()</code> to test for missing values, never <code>==</code> or <code>!=</code>.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DROPNA / FILLNA                              -->
+    <!-- ============================================ -->
+
+    <h2>Dropping and Filling &mdash; dropna, fillna</h2>
+
+    <p>Once you can find the holes, you decide: throw the rows away, or patch them. SQL handles this with <code>WHERE</code> filters and <code>COALESCE</code>. Pandas gives you two purpose-built methods.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- Drop rows missing a key field</span>
+SELECT *
+FROM orders
+WHERE customer_id IS NOT NULL;
+
+<span class="comment">-- Patch missing values with a default</span>
+SELECT
+  name,
+  COALESCE(country, 'Unknown') AS country
+FROM users;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># Drop rows where ANY column is missing</span>
+df.dropna()
+
+<span class="comment"># Drop only rows missing a specific column</span>
+df.dropna(subset=["customer_id"])
+
+<span class="comment"># Patch one column (COALESCE equivalent)</span>
+df["country"] = df["country"].fillna("Unknown")
+
+<span class="comment"># Patch with a computed value</span>
+df["age"] = df["age"].fillna(df["age"].median())</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>The arguments worth knowing:</strong> <code>dropna(how="all")</code> drops a row only if <em>every</em> cell is missing (the default <code>how="any"</code> drops if one is). <code>dropna(axis=1)</code> drops missing <em>columns</em> instead of rows. <code>dropna(thresh=3)</code> keeps rows with at least 3 non-missing values. Reach for <code>subset</code> most often &mdash; blanket <code>dropna()</code> quietly deletes more than you expect.</p>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>.fillna()</code> is pandas <code>COALESCE</code>. You can fill with a constant, with a per-column dict (<code>df.fillna({"age": 0, "country": "Unknown"})</code>), or with a strategy like forward-fill (<code>df.ffill()</code>, which carries the last seen value down &mdash; handy for time series). Filling with the median or mean is the analyst's default for numeric gaps.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DTYPES / ASTYPE                              -->
+    <!-- ============================================ -->
+
+    <h2>Types &mdash; dtypes and astype</h2>
+
+    <p>Here is the bug that bites every newcomer: a CSV column of numbers that pandas reads as <em>text</em>, so <code>"10" + "2"</code> gives <code>"102"</code> instead of <code>12</code>. Columns have types (<code>dtypes</code>), and you fix them with <code>astype</code>. JavaScript devs know this pain &mdash; it's the same as <code>"5" * 1</code> coercion games.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code><span class="comment">// Coerce a string to a number</span>
+const n = Number("42");        <span class="comment">// 42</span>
+const f = parseFloat("3.14");  <span class="comment">// 3.14</span>
+
+<span class="comment">// Check the type of a value</span>
+typeof n;                      <span class="comment">// "number"</span>
+
+<span class="comment">// To string</span>
+String(42);                    <span class="comment">// "42"</span></code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># See the type of every column</span>
+df.dtypes
+
+<span class="comment"># Coerce a whole column to int / float</span>
+df["age"] = df["age"].astype(int)
+df["price"] = df["price"].astype(float)
+
+<span class="comment"># Coerce to string</span>
+df["zip"] = df["zip"].astype(str)</code></pre>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Pandas dtype</th>
+          <th>SQL type</th>
+          <th>What it holds</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>int64</code></td>
+          <td><code>INTEGER</code></td>
+          <td>Whole numbers (cannot hold <code>NaN</code>)</td>
+        </tr>
+        <tr>
+          <td><code>float64</code></td>
+          <td><code>FLOAT</code> / <code>REAL</code></td>
+          <td>Decimals, and the only numeric type that holds <code>NaN</code></td>
+        </tr>
+        <tr>
+          <td><code>object</code></td>
+          <td><code>VARCHAR</code> / <code>TEXT</code></td>
+          <td>Usually strings (the catch-all type)</td>
+        </tr>
+        <tr>
+          <td><code>bool</code></td>
+          <td><code>BOOLEAN</code></td>
+          <td><code>True</code> / <code>False</code></td>
+        </tr>
+        <tr>
+          <td><code>datetime64[ns]</code></td>
+          <td><code>TIMESTAMP</code></td>
+          <td>Real dates and times</td>
+        </tr>
+        <tr>
+          <td><code>category</code></td>
+          <td><code>ENUM</code></td>
+          <td>Repeated labels stored efficiently</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="warning">
+      <p><strong>A numeric column with one missing value becomes <code>float64</code>, not <code>int64</code>.</strong> Integers in pandas cannot hold <code>NaN</code>, so the moment a gap appears, the column is promoted to float and your <code>5</code> shows as <code>5.0</code>. If you truly need nullable integers, use the modern dtype: <code>df["age"].astype("Int64")</code> (capital I). That's the pandas extension type that does support missing values.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>When <code>astype(int)</code> throws on dirty data,</strong> reach for <code>pd.to_numeric(df["x"], errors="coerce")</code>. It turns anything unparseable into <code>NaN</code> instead of crashing the whole conversion &mdash; the pandas equivalent of wrapping <code>Number()</code> in a try/catch and defaulting to null.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- PARSING DATES                                -->
+    <!-- ============================================ -->
+
+    <h2>Parsing Dates &mdash; to_datetime</h2>
+
+    <p>Dates arrive as strings: <code>"2024-03-14"</code>, <code>"03/14/2024"</code>, <code>"March 14, 2024"</code>. Until you parse them, they are just text and you cannot sort, subtract, or extract the month. This is <code>new Date()</code> in JavaScript and <code>CAST(... AS DATE)</code> in SQL.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL / JavaScript</h5>
+        <pre><code><span class="comment">-- SQL: cast text to a real date</span>
+SELECT CAST(signup AS DATE)
+FROM users;
+
+<span class="comment">-- SQL: pull out a part</span>
+SELECT EXTRACT(YEAR FROM signup)
+FROM users;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># Parse a string column into real dates</span>
+df["signup"] = pd.to_datetime(df["signup"])
+
+<span class="comment"># Now the .dt accessor unlocks date parts</span>
+df["signup"].dt.year     <span class="comment"># 2024</span>
+df["signup"].dt.month    <span class="comment"># 3</span>
+df["signup"].dt.day_name()  <span class="comment"># "Thursday"</span>
+
+<span class="comment"># Subtract dates to get a duration</span>
+df["age_days"] = (pd.Timestamp.now() - df["signup"]).dt.days</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> once a column is <code>datetime64</code>, the <code>.dt</code> accessor is your toolbox &mdash; <code>.dt.year</code>, <code>.dt.month</code>, <code>.dt.dayofweek</code>, <code>.dt.date</code>, and more. It mirrors JavaScript's <code>date.getFullYear()</code> and SQL's <code>EXTRACT</code>, but it runs across the whole column at once.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>Ambiguous formats:</strong> is <code>03/04/2024</code> March 4th or April 3rd? Pass <code>format=</code> to be explicit: <code>pd.to_datetime(df["d"], format="%m/%d/%Y")</code>. For messy real-world columns, add <code>errors="coerce"</code> so unparseable values become <code>NaT</code> (the datetime version of <code>NaN</code>) instead of raising.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- DUPLICATES                                   -->
+    <!-- ============================================ -->
+
+    <h2>Duplicates &mdash; duplicated, drop_duplicates</h2>
+
+    <p>Double-counted rows quietly inflate every total you compute. In SQL you'd use <code>SELECT DISTINCT</code> or a <code>GROUP BY</code>. Pandas gives you two precise tools: one to <em>find</em> dupes, one to <em>remove</em> them.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- Get unique rows</span>
+SELECT DISTINCT *
+FROM events;
+
+<span class="comment">-- Unique by a specific key</span>
+SELECT DISTINCT user_id, day
+FROM logins;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># Boolean mask: True for repeat rows</span>
+df.duplicated()
+
+<span class="comment"># Drop exact duplicate rows</span>
+df.drop_duplicates()
+
+<span class="comment"># Dedupe on specific columns, keep the first seen</span>
+df.drop_duplicates(subset=["user_id", "day"], keep="first")</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>SELECT DISTINCT</code> &rarr; <code>.drop_duplicates()</code>. The pandas version is more flexible: <code>subset=</code> picks which columns define a duplicate, and <code>keep=</code> chooses which copy survives &mdash; <code>"first"</code> (default), <code>"last"</code>, or <code>False</code> (drop every copy of any duplicated row). Run <code>df.duplicated().sum()</code> first to see how many you'd lose before you delete anything.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- RENAMING COLUMNS                             -->
+    <!-- ============================================ -->
+
+    <h2>Renaming Columns</h2>
+
+    <p>Source data ships with column names like <code>"Customer Name "</code> (trailing space) or <code>"DOB"</code>. Clean names make the rest of your code readable. This is SQL's <code>AS</code> alias and a JavaScript object key rename rolled together.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>SQL</h5>
+        <pre><code><span class="comment">-- Alias a column on the way out</span>
+SELECT
+  cust_nm  AS customer_name,
+  dob      AS birth_date
+FROM customers;</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># Rename specific columns by mapping old to new</span>
+df = df.rename(columns={
+    "cust_nm": "customer_name",
+    "dob": "birth_date",
+})
+
+<span class="comment"># Bulk clean: lowercase, strip, snake_case all columns</span>
+df.columns = (
+    df.columns.str.strip().str.lower().str.replace(" ", "_")
+)</code></pre>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>That bulk-clean line is worth memorizing.</strong> <code>df.columns.str.strip().str.lower().str.replace(" ", "_")</code> standardizes every header in one pass &mdash; no trailing spaces, no capitals, no spaces in names. It's the first thing many analysts run after loading a CSV.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- STR ACCESSOR                                 -->
+    <!-- ============================================ -->
+
+    <h2>String Cleaning &mdash; the .str Accessor</h2>
+
+    <p>Text columns are where the real mess lives: stray whitespace, mixed case, "N/A" typed by hand, dollar signs glued to numbers. The <code>.str</code> accessor applies a string method to every cell at once. If you know JavaScript string methods, you already know these &mdash; they just run vectorized over the column.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript (one value)</h5>
+        <pre><code>const s = "  Hello, World!  ";
+
+s.trim();                  <span class="comment">// "Hello, World!"</span>
+s.toLowerCase();
+s.includes("World");       <span class="comment">// true</span>
+s.replace("World", "JS");
+s.startsWith("  H");
+s.split(", ");</code></pre>
+      </div>
+      <div>
+        <h5>Pandas (whole column)</h5>
+        <pre><code>col = df["title"]
+
+col.str.strip()                  <span class="comment"># trim every cell</span>
+col.str.lower()
+col.str.contains("World")        <span class="comment"># boolean mask</span>
+col.str.replace("World", "PD")
+col.str.startswith("  H")
+col.str.split(", ")</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>The mental model:</strong> <code>.str</code> turns a single-value string method into a column-wide one. <code>"x".lower()</code> lowercases one string; <code>df["c"].str.lower()</code> lowercases ten thousand. The method names match Python's built-in string methods almost exactly, so there is little new to learn &mdash; just remember the <code>.str</code> prefix.</p>
+    </div>
+
+    <h3>A Realistic String Cleanup</h3>
+
+    <pre><code><span class="comment"># A price column read in as text: "$1,299.00"</span>
+df["price"] = (
+    df["price"]
+      .str.replace("$", "", regex=False)
+      .str.replace(",", "", regex=False)
+      .astype(float)            <span class="comment"># now a real number: 1299.0</span>
+)
+
+<span class="comment"># Normalize a category column riddled with inconsistency</span>
+df["state"] = df["state"].str.strip().str.upper()
+<span class="comment"># "  ny ", "Ny", "NY " all become "NY"</span>
+
+<span class="comment"># Treat hand-typed "N/A" and "" as real missing values</span>
+df["notes"] = df["notes"].replace(["N/A", "", "null"], pd.NA)</code></pre>
+
+    <div class="warning">
+      <p><strong>Watch the <code>regex=</code> flag on <code>.str.replace()</code>.</strong> By default pandas treats the pattern as a regular expression, so characters like <code>$</code>, <code>.</code>, and <code>(</code> have special meaning. When you mean them literally &mdash; stripping a real dollar sign &mdash; pass <code>regex=False</code>, or escape them. Forgetting this is a classic silent bug.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- APPLY / MAP                                  -->
+    <!-- ============================================ -->
+
+    <h2>Custom Logic &mdash; apply and map</h2>
+
+    <p>When the built-in methods can't express your rule, you write a function and run it over the data. This is exactly JavaScript's <code>Array.map()</code>. Pandas has two flavors: <code>.map()</code> for a single column (a Series), and <code>.apply()</code> for a column or across rows.</p>
+
+    <div class="side-by-side">
+      <div>
+        <h5>JavaScript</h5>
+        <pre><code>const prices = [10, 20, 30];
+
+<span class="comment">// Transform each value</span>
+const withTax = prices.map(p =&gt; p * 1.07);
+
+<span class="comment">// Bucket each value with a function</span>
+const tiers = prices.map(p =&gt;
+  p &gt;= 25 ? "high" : "low"
+);
+
+<span class="comment">// Look up via a mapping object</span>
+const codes = { US: "United States" };
+rows.map(r =&gt; codes[r.country]);</code></pre>
+      </div>
+      <div>
+        <h5>Pandas</h5>
+        <pre><code><span class="comment"># Transform each value in a column</span>
+df["with_tax"] = df["price"].map(lambda p: p * 1.07)
+
+<span class="comment"># Bucket each value with a function</span>
+def tier(p):
+    return "high" if p &gt;= 25 else "low"
+
+df["tier"] = df["price"].apply(tier)
+
+<span class="comment"># Look up via a mapping dict (map shines here)</span>
+codes = {"US": "United States"}
+df["country_name"] = df["country"].map(codes)</code></pre>
+      </div>
+    </div>
+
+    <div class="aha">
+      <p><strong>Translation rule:</strong> <code>array.map(fn)</code> &rarr; <code>series.apply(fn)</code> or <code>series.map(fn)</code>. The quirk: <code>.map()</code> also accepts a plain dict for lookups (like indexing a JS object), while <code>.apply()</code> only takes a function. For whole-row logic that touches several columns, use <code>df.apply(fn, axis=1)</code>, where <code>fn</code> receives one row at a time.</p>
+    </div>
+
+    <div class="callout">
+      <p><strong>Prefer vectorized methods over <code>apply</code> when you can.</strong> <code>df["price"] * 1.07</code> is far faster than <code>df["price"].apply(lambda p: p * 1.07)</code> because it runs in compiled code, not a Python loop. Use <code>apply</code> for genuinely custom logic; use plain arithmetic and <code>.str</code> methods for everything they already cover.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- WORKED EXAMPLE                               -->
+    <!-- ============================================ -->
+
+    <h2>Putting It All Together</h2>
+
+    <p>A realistic cleanup pipeline &mdash; the kind you'd write the moment a messy CSV lands on your desk. It standardizes headers, fixes types, parses dates, patches gaps, normalizes strings, and drops duplicates, in the order you'd actually do them.</p>
+
+    <pre><code>import pandas as pd
+
+def clean_signups(path):
+    """Load a raw signups CSV and return a tidy DataFrame."""
+    df = pd.read_csv(path)
+
+    <span class="comment"># 1. Standardize column names</span>
+    df.columns = (
+        df.columns.str.strip().str.lower().str.replace(" ", "_")
+    )
+
+    <span class="comment"># 2. Treat hand-typed blanks as real missing values</span>
+    df = df.replace(["N/A", "", "null", "-"], pd.NA)
+
+    <span class="comment"># 3. Fix types — strip the "$" and commas off price, then to float</span>
+    df["price"] = (
+        df["price"].str.replace(r"[$,]", "", regex=True)
+                   .pipe(pd.to_numeric, errors="coerce")
+    )
+
+    <span class="comment"># 4. Parse the signup date; bad dates become NaT, not crashes</span>
+    df["signup_date"] = pd.to_datetime(
+        df["signup_date"], errors="coerce"
+    )
+
+    <span class="comment"># 5. Normalize the state column: trim + uppercase</span>
+    df["state"] = df["state"].str.strip().str.upper()
+
+    <span class="comment"># 6. Patch missing values sensibly</span>
+    df["country"] = df["country"].fillna("Unknown")
+    df["price"] = df["price"].fillna(df["price"].median())
+
+    <span class="comment"># 7. Drop rows with no usable identity, then exact duplicates</span>
+    df = df.dropna(subset=["email"])
+    df = df.drop_duplicates(subset=["email"], keep="last")
+
+    <span class="comment"># 8. Add a derived column for downstream analysis</span>
+    df["signup_year"] = df["signup_date"].dt.year
+
+    return df
+
+if __name__ == "__main__":
+    clean = clean_signups("data/raw_signups.csv")
+    print(clean.dtypes)
+    print(f"{len(clean)} clean rows ready")</code></pre>
+
+    <div class="callout">
+      <p><strong>Note <code>.pipe()</code> in step 3.</strong> It threads the Series into a function that isn't a method &mdash; <code>x.pipe(pd.to_numeric, errors="coerce")</code> reads left to right like the rest of the chain, instead of wrapping it as <code>pd.to_numeric(x, ...)</code>. It's the pandas answer to a pipe operator, keeping long cleanups readable top to bottom.</p>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- QUIZ                                         -->
+    <!-- ============================================ -->
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz">
+      <h4>Quick Quiz</h4>
+
+      <div class="question">
+        <p>1. SQL uses <code>IS NULL</code> to find missing values. What's the pandas equivalent, and why can't you use <code>== None</code>?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use <code>.isna()</code> (and <code>.notna()</code> for the inverse). You can't use <code>== None</code> because <code>NaN</code> is never equal to anything, not even itself &mdash; exactly like SQL's <code>NULL = NULL</code> never being true. <code>.isna()</code> returns a boolean mask you can feed back into <code>df[...]</code>.</div>
+      </div>
+
+      <div class="question">
+        <p>2. You read a CSV and a numeric column shows up with dtype <code>object</code>. What happened, and how do you fix it?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Pandas read the numbers as text (often because of stray characters like <code>$</code> or commas, or hand-typed values like "N/A"). Clean the strings with <code>.str.replace()</code>, then convert with <code>.astype(float)</code> or, more safely, <code>pd.to_numeric(col, errors="coerce")</code> which turns anything unparseable into <code>NaN</code> instead of raising.</div>
+      </div>
+
+      <div class="question">
+        <p>3. After parsing a column with <code>pd.to_datetime()</code>, how do you pull out just the year? How does this compare to SQL and JavaScript?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Use the <code>.dt</code> accessor: <code>df["signup"].dt.year</code>. It's the column-wide version of SQL's <code>EXTRACT(YEAR FROM signup)</code> and JavaScript's <code>date.getFullYear()</code>. The <code>.dt</code> accessor only works once the column is a real <code>datetime64</code> dtype, not while it's still text.</div>
+      </div>
+
+      <div class="question">
+        <p>4. What's the difference between <code>.map()</code> and <code>.apply()</code> on a column, and when would you avoid both?</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer">Both transform values like JavaScript's <code>Array.map()</code>. <code>.map()</code> works on a single Series and also accepts a plain dict for lookups; <code>.apply()</code> takes a function and can run across rows with <code>axis=1</code>. Avoid both when a vectorized operation will do &mdash; <code>df["price"] * 1.07</code> is much faster than <code>.apply(lambda p: p * 1.07)</code> because it skips the Python loop.</div>
+      </div>
+
+      <div class="question">
+        <p>5. <code>SELECT DISTINCT user_id, day</code> dedupes in SQL. Write the pandas equivalent and explain the <code>keep</code> argument.</p>
+        <button onclick="this.nextElementSibling.style.display='block'">Show Answer</button>
+        <div class="answer"><code>df.drop_duplicates(subset=["user_id", "day"])</code>. The <code>keep</code> argument chooses which copy survives: <code>"first"</code> (default) keeps the earliest, <code>"last"</code> keeps the most recent, and <code>False</code> drops every copy of any duplicated row entirely. Run <code>df.duplicated().sum()</code> first to see how many rows you'd remove.</div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- NAV FOOTER                                   -->
+    <!-- ============================================ -->
+
+    <div class="nav-footer">
+      <a href="/pandas/lessons/02-filtering-selecting/">&larr; Previous: Filtering &amp; Selecting</a>
+      <a href="/pandas/lessons/04-grouping-aggregation/">Next: Grouping &amp; Aggregation &rarr;</a>
+    </div>
+
+  </div>
+
+  <script type="module" src="/components/init-tutor.js"></script>
+</body>
+</html>
