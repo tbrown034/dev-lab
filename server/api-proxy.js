@@ -148,15 +148,20 @@ export function createApiProxy() {
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ content }));
           } catch (error) {
-            console.error('API error:', error.message);
-            const statusCode = error.status || 500;
+            console.error('API error:', error.status, error.message);
+            // Dev parity with api/chat.js: in dev, surface the key-config hint
+            // since that's the common local failure; never leak raw API text.
             const userMessage = error.status === 401
               ? 'Invalid API key. Check your ANTHROPIC_API_KEY in .env'
               : error.status === 429
                 ? 'Rate limited. Wait a moment and try again.'
-                : error.message || 'API request failed';
+                : error.status === 529 || /overloaded/i.test(error.message || '')
+                  ? 'The AI is busy right now. Try again in a moment.'
+                  : error.status === 400 && /credit balance|billing|quota/i.test(error.message || '')
+                    ? 'The AI tutor is temporarily unavailable. Please check back soon.'
+                    : 'The AI tutor hit an error. Please try again.';
 
-            res.statusCode = statusCode;
+            res.statusCode = error.status || 500;
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ error: userMessage }));
           }

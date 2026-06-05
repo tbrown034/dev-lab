@@ -179,13 +179,23 @@ export default async function handler(req, res) {
 
     res.status(200).json({ content });
   } catch (error) {
-    console.error('API error:', error.message);
-    const statusCode = error.status || 500;
-    const userMessage = error.status === 401
-      ? 'AI is not configured. The ANTHROPIC_API_KEY is missing or invalid.'
-      : error.status === 429
-        ? 'Rate limited. Wait a moment and try again.'
-        : error.message || 'API request failed';
-    res.status(statusCode).json({ error: userMessage });
+    // Log the real error server-side; never surface raw API text (which can
+    // include billing/credit details) to students in the chat UI.
+    console.error('API error:', error.status, error.message);
+    res.status(error.status || 500).json({ error: friendlyAiError(error) });
   }
+}
+
+// Map an Anthropic SDK error to a safe, student-facing message. The raw
+// message is logged, not returned — e.g. a 400 "credit balance is too low"
+// would otherwise leak billing state into the public chat.
+function friendlyAiError(error) {
+  const msg = error?.message || '';
+  if (error?.status === 401) return 'The AI tutor isn\'t configured right now.';
+  if (error?.status === 429) return 'Rate limited. Wait a moment and try again.';
+  if (error?.status === 529 || /overloaded/i.test(msg)) return 'The AI is busy right now. Try again in a moment.';
+  if (error?.status === 400 && /credit balance|billing|quota/i.test(msg)) {
+    return 'The AI tutor is temporarily unavailable. Please check back soon.';
+  }
+  return 'The AI tutor hit an error. Please try again.';
 }

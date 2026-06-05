@@ -624,9 +624,10 @@ export function initTutorChat() {
       } else if (err.message.includes('Rate limited')) {
         errMsg = 'Rate limited \u2014 wait a few seconds and try again.';
       } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-        errMsg = 'Network error. Is the dev server running? (npm run dev)';
+        errMsg = 'Network error. Check your connection and try again.';
       } else {
-        errMsg = `Error: ${err.message}`;
+        // Server already returns a friendly, student-safe message — show it as-is.
+        errMsg = err.message;
       }
       messagesEl.innerHTML += `<div class="tutor-msg system" style="color: #f472b6;">${escapeHtml(errMsg)}</div>`;
     }

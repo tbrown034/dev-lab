@@ -54,6 +54,26 @@ function findHtmlFiles(dir, base = '') {
   return entries;
 }
 
+/**
+ * Inject Vercel Web Analytics into every built page. This is a static Vite
+ * multi-page app (not Next.js), so we add the script Vercel serves at
+ * /_vercel/insights/script.js rather than the @vercel/analytics/next component.
+ * Build-only: the endpoint 404s locally, so we skip it in `vite dev`.
+ */
+function vercelAnalytics() {
+  return {
+    name: 'vercel-analytics',
+    apply: 'build',
+    transformIndexHtml() {
+      return [{
+        tag: 'script',
+        attrs: { defer: true, src: '/_vercel/insights/script.js' },
+        injectTo: 'head',
+      }];
+    },
+  };
+}
+
 export default defineConfig(async ({ command }) => ({
   root: '.',
   server: {
@@ -62,7 +82,7 @@ export default defineConfig(async ({ command }) => ({
   },
   plugins: command === 'serve'
     ? [(await import('./server/api-proxy.js')).createApiProxy()]
-    : [],
+    : [vercelAnalytics()],
   build: {
     target: 'esnext',
     rollupOptions: {
