@@ -58,7 +58,7 @@ export ANTHROPIC_API_KEY="sk-ant-..."</code></pre>
 const client = new Anthropic();
 
 const response = await client.messages.create({
-  model: "claude-sonnet-4-20250514",
+  model: "claude-sonnet-4-6",
   max_tokens: 1024,
   system: "You are a fact-checking assistant for journalists. Be concise and cite sources.",
   messages: [
@@ -100,7 +100,7 @@ console.log(response.content[0].text);</code></pre>
 ];
 
 const response = await client.messages.create({
-  model: "claude-sonnet-4-20250514",
+  model: "claude-sonnet-4-6",
   max_tokens: 512,
   system: "You are a political research assistant. Be precise about dates and sourcing.",
   messages
@@ -121,7 +121,7 @@ const response = await client.messages.create({
     <p>Without streaming, you wait for the entire response before seeing anything. With streaming, tokens appear as they're generated &mdash; like watching someone type.</p>
 
     <pre><code>const stream = client.messages.stream({
-  model: "claude-sonnet-4-20250514",
+  model: "claude-sonnet-4-6",
   max_tokens: 1024,
   system: "You are a newsroom assistant.",
   messages: [
@@ -147,7 +147,7 @@ console.log("\n\nTotal tokens:", finalMessage.usage.input_tokens + finalMessage.
     <h2>Important Optional Parameters</h2>
 
     <pre><code>const response = await client.messages.create({
-  model: "claude-sonnet-4-20250514",
+  model: "claude-sonnet-4-6",
   max_tokens: 2048,
   system: "You are a research assistant.",
   messages: [{ role: "user", content: "..." }],
@@ -193,7 +193,7 @@ const client = new Anthropic();
 
 try {
   const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 1024,
     messages: [{ role: "user", content: "Hello" }]
   });
@@ -225,7 +225,7 @@ try {
     <pre><code>console.log(response.usage);
 <span class="comment">// { input_tokens: 142, output_tokens: 387 }</span>
 
-<span class="comment">// Claude Sonnet pricing (as of 2025):
+<span class="comment">// Claude Sonnet pricing (as of 2026):
 // Input:  $3 / million tokens
 // Output: $15 / million tokens
 // This call: (142 * 3 + 387 * 15) / 1_000_000 = $0.006

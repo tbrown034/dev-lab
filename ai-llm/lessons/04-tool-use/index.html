@@ -144,7 +144,7 @@ async function chat(userMessage) {
 
   while (true) {
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 1024,
       system: "You are a research assistant for investigative journalists. Use the available tools to find and cite specific articles.",
       tools,

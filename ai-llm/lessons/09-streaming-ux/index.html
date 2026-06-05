@@ -43,7 +43,7 @@ const client = new Anthropic();
 
 <span class="comment">// Method 1: Event-based streaming</span>
 const stream = client.messages.stream({
-  model: "claude-sonnet-4-20250514",
+  model: "claude-sonnet-4-6",
   max_tokens: 1024,
   messages: [{ role: "user", content: "Summarize the key issues in local journalism." }]
 });
@@ -58,7 +58,7 @@ stream.on("message", (message) =&gt; {
 
 <span class="comment">// Method 2: Async iterator (cleaner for some patterns)</span>
 const stream2 = await client.messages.create({
-  model: "claude-sonnet-4-20250514",
+  model: "claude-sonnet-4-6",
   max_tokens: 1024,
   messages: [{ role: "user", content: "..." }],
   stream: true
@@ -92,7 +92,7 @@ app.post("/api/chat", async (req, res) =&gt; {
   res.setHeader("Connection", "keep-alive");
 
   const stream = client.messages.stream({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 1024,
     system: "You are a helpful newsroom assistant.",
     messages: req.body.messages
@@ -226,7 +226,7 @@ streamChat(messages,
     <p>When streaming, tool use events come through as special event types:</p>
 
     <pre><code>const stream = client.messages.stream({
-  model: "claude-sonnet-4-20250514",
+  model: "claude-sonnet-4-6",
   max_tokens: 1024,
   tools: [...],
   messages: [{ role: "user", content: "..." }]

@@ -76,7 +76,7 @@ async function runAgent(task) {
 
   while (steps &lt; MAX_STEPS) {
     const response = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 2048,
       system,
       tools,
@@ -154,7 +154,7 @@ When given a task:
 async function reflectiveAgent(task) {
   <span class="comment">// First pass: generate</span>
   const draft = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 2048,
     system: "You are a research assistant. Generate a thorough answer.",
     messages: [{ role: "user", content: task }]
@@ -162,7 +162,7 @@ async function reflectiveAgent(task) {
 
   <span class="comment">// Second pass: critique and improve</span>
   const improved = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 2048,
     system: `You are a critical editor. Review this draft for:
 - Unsupported claims (flag them)
@@ -182,7 +182,7 @@ Then rewrite an improved version.`,
     <pre><code><span class="comment">// Orchestrator: one model coordinates, specialized models execute</span>
 async function orchestrator(task) {
   const plan = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 1024,
     system: `Break this task into subtasks. Return JSON:
 { "subtasks": [{ "type": "research|analysis|writing", "description": "..." }] }`,
@@ -201,7 +201,7 @@ async function orchestrator(task) {
     };
 
     const result = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 1024,
       system: systemPrompts[subtask.type],
       messages: [{ role: "user", content: subtask.description + "\n\nContext: " + results.join("\n") }]

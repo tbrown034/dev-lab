@@ -234,7 +234,7 @@ export async function searchArticles({ query, n_results = 5 }) {
 
 export async function extractClaims({ text }) {
   const response = await claude.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 1024,
     tools: [{
       name: "save_claims",
@@ -266,7 +266,7 @@ export async function verifyClaim({ claim }) {
   }
 
   const response = await claude.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 512,
     system: "You verify claims against source material. Be precise. If the evidence doesn't clearly support or contradict the claim, say so.",
     messages: [{
@@ -324,7 +324,7 @@ export async function runResearchAgent(task, onStep) {
 
   while (steps &lt; MAX_STEPS) {
     const response = await claude.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 2048,
       system: SYSTEM,
       tools,

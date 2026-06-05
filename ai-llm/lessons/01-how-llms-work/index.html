@@ -45,12 +45,12 @@
 
     <ul>
       <li><strong>Pricing</strong> &mdash; you pay per token (input + output). Knowing token count helps you estimate costs.</li>
-      <li><strong>Context limits</strong> &mdash; models have a maximum token window (Claude: 200K tokens). That's how much text fits in one conversation.</li>
+      <li><strong>Context limits</strong> &mdash; models have a maximum token window (Claude: 200K tokens standard, up to 1M on current models). That's how much text fits in one conversation.</li>
       <li><strong>Speed</strong> &mdash; output is generated one token at a time. Longer responses = more time.</li>
     </ul>
 
     <div class="callout">
-      <p><strong>Rule of thumb:</strong> 1 token is roughly 3/4 of a word. 100 tokens is roughly 75 words. A full page of text is about 300&ndash;400 tokens. Claude's 200K context window fits roughly a 500-page book.</p>
+      <p><strong>Rule of thumb:</strong> 1 token is roughly 3/4 of a word. 100 tokens is roughly 75 words. A full page of text is about 300&ndash;400 tokens. Claude's 200K context window fits roughly a 500-page book &mdash; and the 1M-token window on current models fits several.</p>
     </div>
 
     <h3>Tokenization in practice</h3>
@@ -145,7 +145,7 @@
 
     <p>The <strong>context window</strong> is the total amount of text (in tokens) the model can "see" at once. It includes your system prompt, the conversation history, any documents you've pasted in, AND the model's own response so far.</p>
 
-    <pre><code><span class="comment">// Claude's context window: ~200,000 tokens</span>
+    <pre><code><span class="comment">// Claude's context window: 200K tokens standard, up to 1M on current models (example uses 200K)</span>
 
 [System prompt]           ~500 tokens
 [Conversation history]    ~2,000 tokens
@@ -240,16 +240,18 @@ Remaining:                ~146,500 tokens</code></pre>
     <!-- MODELS LANDSCAPE                             -->
     <!-- ============================================ -->
 
-    <h2>The Model Landscape (2025)</h2>
+    <h2>The Model Landscape (2026)</h2>
 
     <table>
       <tr><th>Model</th><th>Provider</th><th>Key Strength</th></tr>
-      <tr><td>Claude</td><td>Anthropic</td><td>Long context (200K), tool use, safety, coding</td></tr>
-      <tr><td>GPT-4o</td><td>OpenAI</td><td>Multimodal, fast, broad capabilities</td></tr>
+      <tr><td>Claude (Opus, Sonnet, Haiku)</td><td>Anthropic</td><td>Long context (up to 1M), tool use, agents, safety, coding</td></tr>
+      <tr><td>GPT-5</td><td>OpenAI</td><td>Multimodal, fast, broad capabilities</td></tr>
       <tr><td>Gemini</td><td>Google</td><td>Very long context (1M+), multimodal</td></tr>
       <tr><td>Llama</td><td>Meta</td><td>Open weights, self-hostable, fine-tunable</td></tr>
       <tr><td>Mistral</td><td>Mistral AI</td><td>Efficient, open models, EU-based</td></tr>
     </table>
+
+    <p class="muted" style="font-size: 0.9rem;">Model versions move fast. As of mid-2026 the current Claude tiers are Opus 4.8, Sonnet 4.6, and Haiku 4.5 &mdash; always check the provider's docs for the latest model IDs before shipping.</p>
 
     <p>This course uses the <strong>Anthropic/Claude API</strong> for all code examples. The concepts (prompting, tool use, RAG, agents) transfer to any provider.</p>
 
