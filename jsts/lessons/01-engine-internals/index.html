@@ -157,11 +157,12 @@ MutationObserver</code></pre>
         <pre><code>setTimeout()
 setInterval()
 setImmediate() (Node)
-requestAnimationFrame()
 I/O callbacks
 UI rendering</code></pre>
       </div>
     </div>
+
+    <p><strong>Where does <code>requestAnimationFrame</code> fit?</strong> It is not a macrotask. Its callbacks run in the browser's render step &mdash; just before the next paint &mdash; which is a separate phase from both the macrotask and microtask queues. The browser fires rAF callbacks when it is about to repaint, so they are tied to the display refresh rather than scheduled like a timer.</p>
 
     <h3>The Classic Interview Question</h3>
 

@@ -823,7 +823,8 @@ class Circle extends Shape
       </div>
       <div>
         <h5>Python</h5>
-        <pre><code>from abc import ABC, abstractmethod
+        <pre><code>import math
+from abc import ABC, abstractmethod
 
 class Shape(ABC):
     @abstractmethod
@@ -839,7 +840,7 @@ class Serializable(Protocol):
 class Circle(Shape):
     def __init__(self, radius: float):
         self.radius = radius
-    def area(self): return 3.14159 * self.radius ** 2
+    def area(self): return math.pi * self.radius ** 2
     def serialize(self): return str(vars(self))</code></pre>
       </div>
     </div>

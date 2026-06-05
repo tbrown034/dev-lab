@@ -162,7 +162,7 @@ JSON format: { "scores": { "criterion_name": score }, "reasoning": "..." }`
 }
 
 <span class="comment">// Usage</span>
-const eval = await llmJudge(
+const judgment = await llmJudge(
   "Summarize the budget article",
   modelResponse,
   ["accuracy", "conciseness", "completeness", "sourcing"]

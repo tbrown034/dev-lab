@@ -163,22 +163,24 @@ module.exports = {
     <!-- @VARIANT DIRECTIVE                           -->
     <!-- ============================================ -->
 
-    <h2>@variant: Custom Modifiers</h2>
+    <h2>@custom-variant: Custom Modifiers</h2>
 
-    <pre><code><span class="comment">/* Create a custom variant */</span>
-@variant pointer-coarse (@media (pointer: coarse));
-@variant pointer-fine (@media (pointer: fine));
+    <pre><code><span class="comment">/* Create a custom variant. @custom-variant DEFINES a new
+   variant; the bare @variant only APPLIES an existing one
+   inside a CSS rule. */</span>
+@custom-variant pointer-coarse (@media (pointer: coarse));
+@custom-variant pointer-fine (@media (pointer: fine));
 
 <span class="comment">/* Use it: class="pointer-coarse:p-4 pointer-fine:p-2"
    Touch devices get more padding, mouse users get less */</span>
 
 <span class="comment">/* Custom variant based on a data attribute */</span>
-@variant data-active (&[data-active="true"]);
+@custom-variant data-active (&[data-active="true"]);
 
 <span class="comment">/* Use it: class="data-active:bg-primary data-active:text-white" */</span>
 
 <span class="comment">/* Custom variant for container queries */</span>
-@variant @md (@container (min-width: 448px));
+@custom-variant @md (@container (min-width: 448px));
 
 <span class="comment">/* Use it: class="@md:grid-cols-2 @md:gap-4" */</span></code></pre>
 
@@ -238,7 +240,7 @@ module.exports = {
     <pre><code><span class="comment">/* v4 setup — literally this simple */</span>
 
 <span class="comment">/* 1. Install */</span>
-<span class="comment">/* npm install tailwindcss@next @tailwindcss/vite */</span>
+<span class="comment">/* npm install tailwindcss @tailwindcss/vite */</span>
 
 <span class="comment">/* 2. Add to your CSS entry file */</span>
 @import "tailwindcss";
@@ -252,26 +254,33 @@ module.exports = {
 
     <h2>Dark Mode and Multi-Theme in v4</h2>
 
-    <pre><code><span class="comment">/* Dark mode uses CSS custom properties under the hood */</span>
+    <pre><code><span class="comment">/* Define your theme tokens once */</span>
 @theme {
   --color-bg: #f5f4f1;
   --color-text: #1a1918;
 }
 
-@theme dark {
+<span class="comment">/* Option A: system dark mode via prefers-color-scheme.
+   There is no "@theme dark" — you override the custom
+   properties yourself in plain CSS. */</span>
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #060608;
+    --color-text: #e8e6f0;
+  }
+}
+
+<span class="comment">/* Option B: class-based dark mode for a manual toggle.
+   Override the same custom properties under a .dark class. */</span>
+.dark {
   --color-bg: #060608;
   --color-text: #e8e6f0;
 }
 
-<span class="comment">/* This generates:
-   :root { --color-bg: #f5f4f1; --color-text: #1a1918; }
-   @media (prefers-color-scheme: dark) {
-     :root { --color-bg: #060608; --color-text: #e8e6f0; }
-   }
-*/</span>
-
-<span class="comment">/* Or use class-based dark mode for manual toggle: */</span>
-@variant dark (&:where(.dark, .dark *));
+<span class="comment">/* To make the dark: variant follow that .dark class,
+   redefine it. @custom-variant DEFINES a variant; the
+   bare @variant only APPLIES an existing one inside a rule. */</span>
+@custom-variant dark (&:where(.dark, .dark *));
 
 <span class="comment">/* Multi-brand theming — same pattern as Lesson 05's token layers */</span>
 @layer base {
@@ -295,10 +304,10 @@ module.exports = {
       <tr><th>Feature</th><th>v3</th><th>v4</th></tr>
       <tr><td>Config</td><td><code>tailwind.config.js</code></td><td><code>@theme { }</code> in CSS</td></tr>
       <tr><td>Custom utilities</td><td>JS plugin API</td><td><code>@utility</code> directive</td></tr>
-      <tr><td>Custom variants</td><td>JS plugin API</td><td><code>@variant</code> directive</td></tr>
+      <tr><td>Custom variants</td><td>JS plugin API</td><td><code>@custom-variant</code> directive</td></tr>
       <tr><td>Content paths</td><td>Manual in config</td><td>Auto-detected</td></tr>
       <tr><td>PostCSS</td><td>Required</td><td>Not needed (uses Lightning CSS)</td></tr>
-      <tr><td>Dark mode</td><td><code>darkMode: 'class'</code> config</td><td><code>@theme dark { }</code> or <code>@variant</code></td></tr>
+      <tr><td>Dark mode</td><td><code>darkMode: 'class'</code> config</td><td>Override custom properties under <code>@media (prefers-color-scheme: dark)</code> or a <code>.dark</code> class (+ <code>@custom-variant</code>)</td></tr>
       <tr><td>CSS cascade</td><td>Specificity-based</td><td><code>@layer</code>-based</td></tr>
       <tr><td>Tokens</td><td>Locked in JS config</td><td>CSS custom properties, accessible everywhere</td></tr>
     </table>
@@ -347,7 +356,7 @@ module.exports = {
         <li>Set up a basic Tailwind v4 project with <code>@import "tailwindcss"</code></li>
         <li>Define a <code>@theme</code> block with: 4 colors, 3 spacing values, 2 font families, 2 border radii</li>
         <li>Create a custom utility with <code>@utility</code> (e.g., a glass-morphism effect)</li>
-        <li>Create a custom variant with <code>@variant</code> (e.g., for a data attribute)</li>
+        <li>Create a custom variant with <code>@custom-variant</code> (e.g., for a data attribute)</li>
         <li>Build a card component using only your custom theme tokens</li>
         <li>Verify the tokens are accessible as CSS custom properties in DevTools</li>
       </ol>
@@ -358,7 +367,7 @@ module.exports = {
       <li><strong>Tailwind v4 is CSS-first</strong> &mdash; <code>@theme</code> replaces <code>tailwind.config.js</code></li>
       <li><strong>@theme tokens become CSS custom properties</strong> &mdash; usable everywhere, not locked in JS</li>
       <li><strong>@utility creates custom utilities</strong> with all modifiers for free</li>
-      <li><strong>@variant creates custom modifiers</strong> from CSS</li>
+      <li><strong>@custom-variant creates custom modifiers</strong> from CSS</li>
       <li><strong>@layer powers the cascade</strong> &mdash; utilities always beat components</li>
       <li><strong>Oxide engine (Rust + Lightning CSS)</strong> is 10x faster than v3</li>
       <li><strong>Zero config</strong> &mdash; install, import, go. No config file, no PostCSS, no content paths</li>

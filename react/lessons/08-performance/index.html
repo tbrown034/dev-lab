@@ -168,16 +168,18 @@ const handleClick = useCallback(() =&gt; {
     </div>
 
     <div class="aha">
-      <p><strong>The rule of thumb:</strong> useMemo and useCallback are useful when they prevent downstream work &mdash; either skipping a memo'd child's render, or avoiding an effect re-run. If nobody downstream checks the reference, memoizing is pure overhead. The React team has said they may auto-memoize everything in the future (React Compiler / React Forget), which would make manual memoization unnecessary.</p>
+      <p><strong>The rule of thumb:</strong> useMemo and useCallback are useful when they prevent downstream work &mdash; either skipping a memo'd child's render, or avoiding an effect re-run. If nobody downstream checks the reference, memoizing is pure overhead. The React Compiler now auto-memoizes for you, which makes most manual memoization unnecessary.</p>
     </div>
 
     <!-- ============================================ -->
     <!-- THE REACT COMPILER                           -->
     <!-- ============================================ -->
 
-    <h2>React Compiler (React Forget): The Future</h2>
+    <h2>React Compiler: Now Stable</h2>
 
-    <p>The React team is building a compiler that automatically inserts useMemo and useCallback where beneficial. It analyzes your component code at build time and adds memoization that a human would struggle to optimize correctly.</p>
+    <p>The React Compiler &mdash; formerly known by the codename React Forget &mdash; is a build-time tool that automatically inserts useMemo and useCallback where beneficial. It analyzes your component code at build time and adds memoization that a human would struggle to optimize correctly.</p>
+
+    <p>It shipped as stable (1.0) in 2025 and is supported out of the box in Next.js 16. You no longer have to choose between manual memoization and going without &mdash; the compiler handles reference stability for you.</p>
 
     <pre><code><span class="comment">// What you write:</span>
 function ArticleCard({ article, onLike }) {

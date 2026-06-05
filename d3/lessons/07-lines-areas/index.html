@@ -200,7 +200,7 @@
 
     <div class="nav-footer">
       <a href="/d3/lessons/06-transitions-interactivity/">&larr; Lesson 06: Axes &amp; Margins Convention</a>
-      <a href="/d3/lessons/08-arcs-pies/">Lesson 08: Lines &amp; Areas &rarr;</a>
+      <a href="/d3/lessons/08-arcs-pies/">Lesson 08: Lines, Areas &amp; Time Series &rarr;</a>
     </div>
   </div>
 
@@ -252,7 +252,7 @@
         xAxisG.selectAll("text").attr("fill", "#888");
         xAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
 
-        yAxisG.transition().duration(600).call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d/1000}k`));
+        yAxisG.transition().duration(600).call(d3.axisLeft(y).ticks(5).tickFormat(d => `${(d/1000).toFixed(1)}M`));
         yAxisG.selectAll("text").attr("fill", "#888");
         yAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
 
@@ -374,7 +374,7 @@
         xAxisG.selectAll("text").attr("fill", "#888").attr("font-size", "10");
         xAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
 
-        yAxisG.transition().duration(500).call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d/1000}k`));
+        yAxisG.transition().duration(500).call(d3.axisLeft(y).ticks(5).tickFormat(d => `${(d/1000).toFixed(1)}M`));
         yAxisG.selectAll("text").attr("fill", "#888");
         yAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
 

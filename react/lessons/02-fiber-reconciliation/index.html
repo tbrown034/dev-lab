@@ -207,7 +207,7 @@ wipFiber.alternate === currentFiber</code></pre>
       <li><strong>Assign priorities:</strong> User interactions get high priority, data fetches get lower priority</li>
     </ol>
 
-    <pre><code><span class="comment">// Simplified work loop (what React does internally)</span>
+    <pre><code><span class="comment">// Conceptual illustration of the work loop (not React's real scheduler)</span>
 function workLoop(deadline) {
   while (nextUnitOfWork &amp;&amp; deadline.timeRemaining() &gt; 1) {
     nextUnitOfWork = performUnitOfWork(nextUnitOfWork);
@@ -231,6 +231,10 @@ function performUnitOfWork(fiber) {
     nextFiber = nextFiber.return; <span class="comment">// Walk up to parent</span>
   }
 }</code></pre>
+
+    <div class="callout">
+      <p><strong>That scheduler is illustrative, not literal.</strong> The loop above uses <code>requestIdleCallback</code> for clarity, but React doesn't actually rely on it &mdash; its scheduler package builds its own priority-aware timing on top of a <code>MessageChannel</code> (with <code>setTimeout</code> as a fallback), because <code>requestIdleCallback</code> fires too infrequently and inconsistently across browsers.</p>
+    </div>
 
     <div class="callout">
       <p><strong>The traversal order matters.</strong> React walks the fiber tree depth-first: process a node, go to its first child, go to its sibling, walk back up to the parent. This means the return/child/sibling pointers encode the entire traversal &mdash; no call stack needed. That's why it's interruptible: the "where am I?" state is in the data structure, not on the JavaScript call stack.</p>

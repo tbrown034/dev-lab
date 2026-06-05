@@ -313,6 +313,8 @@ grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));</code></pre>
 .gallery .wide { grid-column: span 2; }
 .gallery .tall { grid-row: span 2; }</code></pre>
 
+    <p><strong>This is not true masonry.</strong> <code>grid-auto-flow: dense</code> just backfills holes left by spanning items — every item still snaps to the rigid row-and-column track structure. Real masonry packs items with uneven heights and no fixed rows. For that you need the dedicated <code>masonry</code> value (still experimental and behind flags in most browsers) or a JavaScript library.</p>
+
     <!-- ============================================ -->
     <!-- QUIZ                                         -->
     <!-- ============================================ -->

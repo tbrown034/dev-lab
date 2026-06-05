@@ -659,7 +659,9 @@ class Article(models.Model):
     attachment = models.FileField(upload_to='attachments/', blank=True)
 
 <span class="comment"># forms.py</span>
-class ArticleForm(ModelForm):
+from django import forms
+
+class ArticleForm(forms.ModelForm):
     class Meta:
         model = Article
         fields = ['title', 'cover_image', 'attachment']

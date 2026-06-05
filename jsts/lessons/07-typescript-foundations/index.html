@@ -320,7 +320,7 @@ type FetchParams = Parameters&lt;typeof fetch&gt;;
       <div class="question">
         <p>1. Why does <code>const x = "hello"</code> have type <code>"hello"</code> but <code>let x = "hello"</code> has type <code>string</code>?</p>
         <button onclick="this.nextElementSibling.style.display='block'">Reveal Answer</button>
-        <div class="answer"><code>const</code> can never be reassigned, so TypeScript narrows to the literal type <code>"hello"</code>. <code>let</code> can be reassigned to any string, so TypeScript widens to <code>string</code>. This is called "literal widening."</div>
+        <div class="answer"><code>const</code> can never be reassigned, so TypeScript keeps the literal type <code>"hello"</code>. <code>let</code> can be reassigned to any string, so TypeScript widens the literal to <code>string</code>. That widening of a literal type is called "literal widening."</div>
       </div>
 
       <div class="question">

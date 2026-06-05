@@ -184,7 +184,7 @@ export async function createArticle(formData: FormData) {
   revalidatePath('/articles');
 
   <span class="comment">// 4. Redirect</span>
-  redirect(`/articles/${article.slug}`);
+  redirect(`/articles/${article.id}`);
 }</code></pre>
 
     <pre><code><span class="comment">// Using Server Actions with useActionState (React 19+)</span>

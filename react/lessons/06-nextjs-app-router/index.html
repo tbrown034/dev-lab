@@ -242,7 +242,7 @@ export default async function ArticleModal({ params }) {
       <tr><td><strong>Request Memoization</strong></td><td>Server</td><td>Deduplicate identical fetches in one render</td><td>One request lifecycle</td></tr>
       <tr><td><strong>Data Cache</strong></td><td>Server</td><td>Cached fetch() responses</td><td>Until revalidated</td></tr>
       <tr><td><strong>Full Route Cache</strong></td><td>Server</td><td>Static HTML + RSC payload</td><td>Until revalidated</td></tr>
-      <tr><td><strong>Router Cache</strong></td><td>Client</td><td>RSC payloads for visited routes</td><td>Session (or 30s/5min)</td></tr>
+      <tr><td><strong>Router Cache</strong></td><td>Client</td><td>RSC payloads for visited routes</td><td>Default 0 for dynamic page segments (configurable via staleTimes)</td></tr>
     </table>
 
     <pre><code><span class="comment">// Control caching per-fetch</span>

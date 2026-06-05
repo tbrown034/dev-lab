@@ -499,7 +499,8 @@ import numpy as np
 from os.path import join as path_join
 
 <span class="comment"># Dynamic import</span>
-module = __import__("utils")
+import importlib
+module = importlib.import_module("utils")
 
 <span class="comment"># Relative imports (within a package)</span>
 from . import utils

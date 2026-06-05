@@ -168,9 +168,9 @@ const articleSchema = z.object({
   body: z.string()
     .min(50, 'Article must be at least 50 characters'),
   category: z.enum(['politics', 'tech', 'culture', 'opinion'], {
-    errorMap: () =&gt; ({ message: 'Please select a category' }),
+    error: () =&gt; 'Please select a category',
   }),
-  tags: z.array(z.string()).min(1, 'Add at least one tag'),
+  tags: z.array(z.object({ value: z.string() })).min(1, 'Add at least one tag'),
   published: z.boolean().default(false),
   publishDate: z.date().optional(),
 }).refine(

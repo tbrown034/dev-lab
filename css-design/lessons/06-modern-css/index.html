@@ -112,9 +112,9 @@ body:has(.modal[open]) {
 }
 
 <span class="comment">/* Conditional grid: 2 columns if there are enough items */</span>
-.list:has(:nth-child(4)) {
+.list:has(&gt; :nth-child(4)) {
   grid-template-columns: 1fr 1fr;
-  <span class="comment">/* Only use 2 columns when there are 4+ items */</span>
+  <span class="comment">/* Only use 2 columns when the list has 4+ direct children */</span>
 }</code></pre>
 
     <div class="aha">

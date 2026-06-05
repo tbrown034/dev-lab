@@ -355,11 +355,12 @@ urlpatterns = [
 
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise&lt;{ id: string }&gt; }
 ) {
+  const { id } = await params;
   const article = await db.article
     .findUnique({
-      where: { id: params.id }
+      where: { id }
     });
   if (!article)
     return NextResponse.json(
@@ -370,10 +371,11 @@ export async function GET(
 }
 
 export async function PUT(req, { params }) {
+  const { id } = await params;
   const body = await req.json();
   const article = await db.article
     .update({
-      where: { id: params.id },
+      where: { id },
       data: body,
     });
   return NextResponse.json(article);
@@ -382,8 +384,9 @@ export async function PUT(req, { params }) {
 export async function DELETE(
   req, { params }
 ) {
+  const { id } = await params;
   await db.article.delete({
-    where: { id: params.id },
+    where: { id },
   });
   return new Response(null,
     { status: 204 });

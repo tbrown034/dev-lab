@@ -228,7 +228,7 @@ export async function searchArticles({ query, n_results = 5 }) {
     article_id: results.metadatas[0][i].article_id,
     title: results.metadatas[0][i].title,
     date: results.metadatas[0][i].date,
-    relevance: results.distances ? 1 - results.distances[0][i] : null
+    relevance: results.distances?.[0] ? 1 - results.distances[0][i] : null // 1 - distance assumes cosine distance
   }));
 }
 

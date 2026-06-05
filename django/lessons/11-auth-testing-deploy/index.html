@@ -191,7 +191,7 @@ def create_article(request):
 <span class="comment"># {% endif %}</span>
 
 <span class="comment"># Groups — bundle permissions together</span>
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 
 editors = Group.objects.create(name='Editors')
 editors.permissions.add(
@@ -293,9 +293,24 @@ def test_article_creation():
     assert article.author.username == 'trevor'
     assert str(article) == 'Election Results 2024'  <span class="comment"># tests __str__</span>
 
+<span class="comment"># For this to pass, the Article model must auto-generate its slug on save:</span>
+<span class="comment">#</span>
+<span class="comment">#   from django.utils.text import slugify</span>
+<span class="comment">#</span>
+<span class="comment">#   class Article(models.Model):</span>
+<span class="comment">#       def save(self, *args, **kwargs):</span>
+<span class="comment">#           if not self.slug:</span>
+<span class="comment">#               self.slug = slugify(self.title)</span>
+<span class="comment">#           super().save(*args, **kwargs)</span>
+
 @pytest.mark.django_db
 def test_article_slug_auto_generated():
-    article = Article.objects.create(title='Breaking News Today')
+    user = User.objects.create_user(username='trevor', password='pass')
+    article = Article.objects.create(
+        title='Breaking News Today',
+        body='...',
+        author=user,
+    )
     assert article.slug == 'breaking-news-today'</code></pre>
 
     <h3>Fixtures &amp; Factories</h3>
@@ -480,7 +495,15 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',  <span class="comment"># add after security</span>
     ...
 ]
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'</code></pre>
+<span class="comment"># Django 4.2+ uses the STORAGES dict (STATICFILES_STORAGE is deprecated)</span>
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}</code></pre>
 
     <div class="callout">
       <p><strong>WhiteNoise is Django's "Vercel for static files."</strong> It serves static files directly from your Python process with compression and caching headers. For most projects, it's all you need. For high-traffic sites, offload to nginx, a CDN, or S3 &mdash; like how Vercel puts static assets on its CDN edge network.</p>
@@ -574,7 +597,7 @@ pip freeze &gt; requirements.txt
 web: gunicorn mysite.wsgi:application --bind 0.0.0.0:$PORT
 
 <span class="comment"># 3. Create runtime.txt (optional)</span>
-python-3.12.0
+python-3.13.4
 
 <span class="comment"># 4. Deploy</span>
 <span class="comment"># Connect your GitHub repo to Railway</span>

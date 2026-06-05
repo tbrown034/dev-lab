@@ -28,8 +28,8 @@
     <p>Every framework makes tradeoffs along a few key axes. Understanding where each framework sits on these spectrums is more useful than memorizing features.</p>
 
     <table>
-      <tr><th>Axis</th><th>Next.js</th><th>Remix</th><th>Astro</th><th>SvelteKit</th></tr>
-      <tr><td><strong>Rendering</strong></td><td>RSC + SSR + SSG + ISR</td><td>SSR + Client</td><td>SSG + Islands</td><td>SSR + Client</td></tr>
+      <tr><th>Axis</th><th>Next.js</th><th>React Router v7 (Remix)</th><th>Astro</th><th>SvelteKit</th></tr>
+      <tr><td><strong>Rendering</strong></td><td>RSC + SSR + SSG + ISR</td><td>SSR + SSG + Client</td><td>SSG + Islands</td><td>SSR + Client</td></tr>
       <tr><td><strong>JS shipped</strong></td><td>Moderate (RSC helps)</td><td>Full app hydration</td><td>Near-zero (by default)</td><td>Less than React</td></tr>
       <tr><td><strong>Data pattern</strong></td><td>Server Components + Actions</td><td>Loaders + Actions (web forms)</td><td>Frontmatter + fetch</td><td>Load functions</td></tr>
       <tr><td><strong>Complexity</strong></td><td>High (many concepts)</td><td>Medium (web-standard APIs)</td><td>Low (content-focused)</td><td>Medium (new language)</td></tr>
@@ -89,7 +89,9 @@ export default async function DashboardPage() {
     <!-- REMIX                                        -->
     <!-- ============================================ -->
 
-    <h2>Remix: Web Standards First</h2>
+    <h2>React Router v7 (formerly Remix): Web Standards First</h2>
+
+    <p style="color: var(--text-muted); font-size: 1rem; margin-bottom: 1rem;">Remix and React Router merged. As of React Router v7 (stable), Remix's full-stack features &mdash; loaders, actions, nested routing, server rendering &mdash; ship as React Router's "framework mode." The migration path is Remix &rarr; React Router v7. Remix the brand lives on as a separate, RSC-first reboot (announced as v3), but the framework you reach for today is React Router v7.</p>
 
     <h3>Architecture bets</h3>
 
@@ -113,13 +115,14 @@ export default async function DashboardPage() {
     <h3>Weaknesses</h3>
 
     <ul>
-      <li>No RSC support &mdash; all component JavaScript ships to the client</li>
+      <li>Full app hydration by default &mdash; without RSC, most component JavaScript ships to the client</li>
       <li>Smaller ecosystem and community than Next.js</li>
-      <li>No static generation (SSG) &mdash; everything is SSR</li>
-      <li>Shopify acquisition creates uncertainty about direction</li>
+      <li>The Remix-to-React-Router merge means recent churn in naming, imports, and docs to navigate</li>
+      <li>Fewer batteries-included rendering features than Next.js (no ISR-style revalidation primitive)</li>
     </ul>
 
-    <pre><code><span class="comment">// Remix pattern: Loader + Action</span>
+    <pre><code><span class="comment">// Loader + Action pattern (shown with classic Remix imports;</span>
+<span class="comment">// in React Router v7 these come from 'react-router')</span>
 import { json, redirect } from '@remix-run/node';
 import { useLoaderData, Form } from '@remix-run/react';
 
@@ -163,7 +166,7 @@ export default function ArticlePage() {
 }</code></pre>
 
     <div class="callout">
-      <p><strong>Remix's insight:</strong> HTML forms already do mutations. The <code>&lt;form&gt;</code> element has handled POST requests for 30 years. Remix enhances this with JavaScript when available (instant feedback, optimistic updates) but the form still works without it. This makes Remix apps inherently more robust than apps that require JavaScript for basic functionality.</p>
+      <p><strong>The Remix insight (now in React Router v7):</strong> HTML forms already do mutations. The <code>&lt;form&gt;</code> element has handled POST requests for 30 years. The framework enhances this with JavaScript when available (instant feedback, optimistic updates) but the form still works without it. This makes these apps inherently more robust than apps that require JavaScript for basic functionality.</p>
     </div>
 
     <!-- ============================================ -->

@@ -35,7 +35,7 @@
 
     <h2>Part 1: The Problem</h2>
 
-    <p>In Lesson 01, we wrote things like this:</p>
+    <p>When you bind data by hand, you end up writing things like this:</p>
 
     <pre><code>.attr("width", d =&gt; d.pop / 100)</code></pre>
 
@@ -241,7 +241,7 @@ const svg = d3.select("#chart")
 
     <div class="side-by-side">
       <div>
-        <h5>Lesson 01 (magic numbers)</h5>
+        <h5>Before (magic numbers)</h5>
         <pre><code>.attr("x", (d,i) =&gt; i * 100)
 .attr("y", d =&gt; 300 - d.pop/150)
 .attr("width", 80)
@@ -251,7 +251,7 @@ const svg = d3.select("#chart")
 // No labels for viewer</span></code></pre>
       </div>
       <div>
-        <h5>Lesson 02 (scales)</h5>
+        <h5>After (scales)</h5>
         <pre><code>.attr("x", d =&gt; x(d.state))
 .attr("y", d =&gt; y(d.pop))
 .attr("width", x.bandwidth())
@@ -325,7 +325,7 @@ svg.attr("viewBox", "0 0 700 400")  <span class="comment">// define coordinate s
     <!-- EXERCISE -->
     <div class="exercise">
       <h4>Exercise: Upgrade Your Chart</h4>
-      <p>Open <code>code/exercises/02-exercise.js</code>. Take the bar chart from Lesson 01 and upgrade it:</p>
+      <p>Open <code>code/exercises/02-exercise.js</code>. Take the hardcoded bar chart and upgrade it:</p>
       <ol>
         <li>Set up the margins convention</li>
         <li>Create a <code>scaleBand</code> for X and <code>scaleLinear</code> for Y</li>
@@ -559,7 +559,7 @@ svg.attr("viewBox", "0 0 700 400")  <span class="comment">// define coordinate s
 
       // Y axis
       const yAxis = svg.append("g")
-        .call(d3.axisLeft(y).ticks(6).tickFormat(d => `${d / 1000}k`));
+        .call(d3.axisLeft(y).ticks(6).tickFormat(d => `${(d / 1000).toFixed(1)}M`));
       yAxis.selectAll("text").attr("fill", "#999");
       yAxis.selectAll(".domain, .tick line").attr("stroke", "#333");
 

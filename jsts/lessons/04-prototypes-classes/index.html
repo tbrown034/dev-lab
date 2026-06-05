@@ -331,7 +331,9 @@ greet();                   <span class="comment">// "Hi, I'm undefined" (plain c
 
 const button = document.createElement('button');
 button.addEventListener('click', reporter.greet);
-<span class="comment">// When clicked: "Hi, I'm " (this = the button element)</span>
+<span class="comment">// When clicked: "Hi, I'm " (this = the button element; logs empty</span>
+<span class="comment">// because a button's .name property defaults to "" — it'd be</span>
+<span class="comment">// undefined on an element with no name property at all)</span>
 </code></pre>
 
     <h3>Fixing <code>this</code></h3>

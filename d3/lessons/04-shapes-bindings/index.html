@@ -417,7 +417,7 @@ $0.__data__    <span class="comment">// → the data object bound to that elemen
       xAxisG.selectAll("text").attr("fill", "#888");
       xAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
 
-      yAxisG.transition().duration(600).call(d3.axisLeft(yScale).ticks(5).tickFormat(d => `${d/1000}k`));
+      yAxisG.transition().duration(600).call(d3.axisLeft(yScale).ticks(5).tickFormat(d => `${(d/1000).toFixed(1)}M`));
       yAxisG.selectAll("text").attr("fill", "#888");
       yAxisG.selectAll(".domain, .tick line").attr("stroke", "#333");
 

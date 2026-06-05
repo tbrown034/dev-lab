@@ -151,6 +151,8 @@ function useState(initialValue) {
   return [hook.state, setState];
 }</code></pre>
 
+    <p>One more simplification: this version stores hooks in an array indexed by position (<code>memoizedState?.[hookIndex]</code>). React actually stores them as a linked list, where each hook points to the next via <code>.next</code> &mdash; the model the rest of this lesson uses. The array is easier to read, but the linked list is what ships.</p>
+
     <h3>Why functional updates exist</h3>
 
     <pre><code><span class="comment">// Direct update — uses the value from THIS render's closure</span>

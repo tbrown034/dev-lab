@@ -150,9 +150,9 @@ async function Dashboard() {
       &lt;h1&gt;Analytics Dashboard&lt;/h1&gt;
       {/* These props must be serializable */}
       &lt;InteractiveChart
-        data={data.chartPoints}      <span class="comment">// ✓ array of objects</span>
-        title="Monthly Visitors"      <span class="comment">// ✓ string</span>
-        onHover={handleHover}         <span class="comment">// ✗ FAILS — functions can't serialize</span>
+        data={data.chartPoints}      <span class="comment">// OK: array of objects</span>
+        title="Monthly Visitors"      <span class="comment">// OK: string</span>
+        onHover={handleHover}         <span class="comment">// ERROR: functions can't serialize</span>
       /&gt;
     &lt;/div&gt;
   );
