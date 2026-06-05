@@ -183,6 +183,10 @@
     .track[data-color="css-design"] .track-icon { background: rgba(168,85,247,0.12); color: var(--accent-css); }
     .track[data-color="css-design"] .track-tag { background: rgba(168,85,247,0.1); color: var(--accent-css); }
     .track[data-color="css-design"] .track-status { color: var(--accent-css); }
+    .track[data-color="ai"]::after { background: linear-gradient(90deg, var(--accent-ai), transparent); }
+    .track[data-color="ai"] .track-icon { background: rgba(244,114,182,0.12); color: var(--accent-ai); }
+    .track[data-color="ai"] .track-tag { background: rgba(244,114,182,0.1); color: var(--accent-ai); }
+    .track[data-color="ai"] .track-status { color: var(--accent-ai); }
     .track .track-port {
       font-family: var(--mono);
       font-size: 0.7rem;
@@ -462,6 +466,21 @@
         <div class="track-footer">
           <span class="track-status">In progress</span>
           <span class="track-port">/r/</span>
+        </div>
+      </a>
+
+      <a href="/ai-llm/" class="track" data-color="ai">
+        <div class="track-icon">AI</div>
+        <h3>AI &amp; LLMs</h3>
+        <p class="track-desc">Build with language models, concepts first. Tokens and context, prompt engineering, the Claude API, tool use, RAG, embeddings, agents, and evals.</p>
+        <div class="track-tags">
+          <span class="track-tag">13 Lessons</span>
+          <span class="track-tag">AI Tutor</span>
+          <span class="track-tag">Claude API</span>
+        </div>
+        <div class="track-footer">
+          <span class="track-status">Active</span>
+          <span class="track-port">/ai-llm/</span>
         </div>
       </a>
     </div>
